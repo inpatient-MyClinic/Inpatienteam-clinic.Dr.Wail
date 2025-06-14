@@ -11,6 +11,7 @@ import MyRequests from "./pages/MyRequests";
 import Analytics from "./pages/Analytics";
 import SettingsDirectory from "./pages/SettingsDirectory";
 import NotificationsLogs from "./pages/NotificationsLogs";
+import RequestWireframe from "./pages/RequestWireframe";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings-directory" element={<SettingsDirectory />} />
           <Route path="/notifications-logs" element={<NotificationsLogs />} />
+          <Route path="/request-wireframe" element={<RequestWireframe />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

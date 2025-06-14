@@ -8,6 +8,7 @@ const navItems = [
   { label: "Analytics", to: "/analytics" },
   { label: "Settings & Directory", to: "/settings-directory" },
   { label: "Notifications & Logs", to: "/notifications-logs" },
+  { label: "نموذج الطلب (Wireframe)", to: "/request-wireframe" },
 ];
 
 export default function NavMenu() {
