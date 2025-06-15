@@ -5,7 +5,7 @@ export default function RequestWireframe() {
   return (
     <div className="max-w-2xl mx-auto py-12 px-4">
       <h1 className="text-2xl font-bold text-blue-900 mb-4 text-center">
-        📝 نموذج الطلب – Wireframe
+        نموذج الطلب – Wireframe
       </h1>
       <div className="grid grid-cols-1 gap-3">
         <WireframeField label="RequestID (Auto)" />
@@ -56,3 +56,4 @@ function WireframeField({ label, big = false }: { label: string; big?: boolean }
     </div>
   );
 }
+

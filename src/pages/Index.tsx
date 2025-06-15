@@ -1,8 +1,11 @@
 
 import Header from "@/components/Header";
 import NavMenu from "@/components/NavMenu";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-gray-50 font-sans">
       <Header />
@@ -13,6 +16,7 @@ const Index = () => {
         </h2>
         <button
           className="mt-2 px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg shadow transition"
+          onClick={() => navigate("/login")}
         >
           Login
         </button>

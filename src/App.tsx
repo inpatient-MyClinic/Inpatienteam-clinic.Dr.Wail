@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,8 @@ import Analytics from "./pages/Analytics";
 import SettingsDirectory from "./pages/SettingsDirectory";
 import NotificationsLogs from "./pages/NotificationsLogs";
 import RequestWireframe from "./pages/RequestWireframe";
+import Login from "./pages/Login";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-request" element={<CreateRequest />} />
           <Route path="/my-requests" element={<MyRequests />} />
