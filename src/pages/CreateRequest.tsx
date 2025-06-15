@@ -190,7 +190,7 @@ const CreateRequest = () => {
                       .filter(([k, v]) => typeof v === "string" && v && k !== "patientName" && k !== "patientNationalId")
                       .map(([k, v]) => (
                         <span key={k}>
-                          {k.replace(/([A-Z])/g, " $1")}: {v};{" "}
+                          {`${k.replace(/([A-Z])/g, " $1")}: ${v}; `}
                         </span>
                       ))}
                   </div>
