@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Sidebar,
@@ -32,8 +31,16 @@ const sidebarMenu = [
     label: "Users",
     key: "users",
     submenu: [
-      { label: "Nurse", key: "nurse" },
-      { label: "Doctors", key: "doctors" },
+      {
+        label: "Nurse",
+        key: "nurse",
+        onClick: (navigate: (to: string) => void) => navigate("/nurse-dashboard"),
+      },
+      {
+        label: "Doctors",
+        key: "doctors",
+        onClick: (navigate: (to: string) => void) => navigate("/doctor-dashboard"),
+      },
       { label: "Case Coordinators", key: "case-coordinators" },
       { label: "Hospital", key: "hospital" },
       { label: "Finance", key: "finance" },
@@ -84,8 +91,7 @@ export default function AdminDashboard() {
                         <SidebarMenuSub>
                           {item.submenu.map((sub) => (
                             <SidebarMenuSubItem key={sub.key}>
-                              <SidebarMenuSubButton asChild size="sm">
-                                {/* Could link to filtered views or user management pages */}
+                              <SidebarMenuSubButton asChild size="sm" onClick={() => sub.onClick && sub.onClick(navigate)}>
                                 <span>{sub.label}</span>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -164,4 +170,3 @@ export default function AdminDashboard() {
     </SidebarProvider>
   );
 }
-

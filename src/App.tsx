@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,8 @@ import NotificationsLogs from "./pages/NotificationsLogs";
 import RequestWireframe from "./pages/RequestWireframe";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
+import DoctorDashboard from "./pages/DoctorDashboard";
+import NurseDashboard from "./pages/NurseDashboard";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,8 @@ const App = () => (
           <Route path="/settings-directory" element={<SettingsDirectory />} />
           <Route path="/notifications-logs" element={<NotificationsLogs />} />
           <Route path="/request-wireframe" element={<RequestWireframe />} />
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+          <Route path="/nurse-dashboard" element={<NurseDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
