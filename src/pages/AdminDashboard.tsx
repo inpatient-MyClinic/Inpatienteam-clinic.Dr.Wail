@@ -58,6 +58,12 @@ export default function AdminDashboard() {
                   >
                     • Hospital Dashboard
                   </a>
+                  <a
+                    href="/case-coordinator-dashboard"
+                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
+                  >
+                    • Case Coordinator Dashboard
+                  </a>
                 </div>
               )}
             </AccordionContent>
