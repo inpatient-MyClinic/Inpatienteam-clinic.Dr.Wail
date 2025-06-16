@@ -1,6 +1,6 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -118,6 +118,11 @@ export default function CaseCoordinatorDashboard() {
       {/* Sidebar */}
       <aside className="w-[19rem] bg-green-50 flex flex-col items-center p-6 border-r">
         <h1 className="text-xl font-bold mb-6 text-center">Case Coordinator</h1>
+        
+        <Button className="w-full mb-6 bg-green-600 hover:bg-green-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Request
+        </Button>
         
         <div className="flex flex-col gap-4 w-full mb-6">
           {stats.map((stat) => (
