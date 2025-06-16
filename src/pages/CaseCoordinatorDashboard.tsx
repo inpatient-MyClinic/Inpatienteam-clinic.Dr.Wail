@@ -1,6 +1,8 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, FileExcel } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -84,6 +86,7 @@ const myRequests = [
 export default function CaseCoordinatorDashboard() {
   const [filter, setFilter] = useState<string>("all");
   const [requests, setRequests] = useState(allRequests);
+  const navigate = useNavigate();
   const coordinatorName = "John Smith"; // This would come from auth context
 
   const getFilteredRequests = () => {
@@ -109,6 +112,23 @@ export default function CaseCoordinatorDashboard() {
     );
   };
 
+  const updateStatus = (requestId: number, newStatus: string) => {
+    setRequests(prev =>
+      prev.map(req =>
+        req.id === requestId ? { ...req, status: newStatus } : req
+      )
+    );
+  };
+
+  const exportToExcel = () => {
+    console.log("Exporting case coordinator requests to Excel with filter:", filter);
+    // Implementation for Excel export would go here
+  };
+
+  const createNewRequest = () => {
+    navigate("/create-request");
+  };
+
   const filteredRequests = getFilteredRequests();
   const leftSideRequests = filter === "mine" ? myRequests : allRequests;
   const rightSideRequests = filter === "mine" ? requests.filter(req => req.coordinator === coordinatorName) : [];
@@ -119,7 +139,7 @@ export default function CaseCoordinatorDashboard() {
       <aside className="w-[19rem] bg-green-50 flex flex-col items-center p-6 border-r">
         <h1 className="text-xl font-bold mb-6 text-center">Case Coordinator</h1>
         
-        <Button className="w-full mb-6 bg-green-600 hover:bg-green-700">
+        <Button className="w-full mb-6 bg-green-600 hover:bg-green-700" onClick={createNewRequest}>
           <Plus className="w-4 h-4 mr-2" />
           Create New Request
         </Button>
@@ -151,6 +171,10 @@ export default function CaseCoordinatorDashboard() {
               {f.label}
             </Button>
           ))}
+          <Button onClick={exportToExcel} variant="outline">
+            <FileExcel className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
         </div>
 
         <div className="flex h-full">
@@ -199,19 +223,28 @@ export default function CaseCoordinatorDashboard() {
                         </TableCell>
                         <TableCell>{req.coordinator || "Unassigned"}</TableCell>
                         <TableCell>
-                          {!req.coordinator && req.status === "New" ? (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => assignToMe(req.id)}
-                            >
-                              Assign to Me
-                            </Button>
-                          ) : (
-                            <Button size="sm" variant="outline">
-                              View
-                            </Button>
-                          )}
+                          <div className="flex gap-2">
+                            {!req.coordinator && req.status === "New" ? (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => assignToMe(req.id)}
+                              >
+                                Assign to Me
+                              </Button>
+                            ) : req.coordinator === coordinatorName && req.status === "Under Process" ? (
+                              <Button 
+                                size="sm" 
+                                onClick={() => updateStatus(req.id, "Completed")}
+                              >
+                                Complete
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline">
+                                View
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

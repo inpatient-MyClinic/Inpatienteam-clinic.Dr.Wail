@@ -1,8 +1,9 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const DOCTOR_NURSE_FIELDS = [
   { key: "dateOfRequest", label: "Date of Request", type: "date" },
@@ -89,19 +90,42 @@ const CreateRequest = () => {
     setForm((prev: any) => ({ ...prev, attachments: "Attached" }));
   }
 
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Which patient this edit is for: match by patientNationalId if present.
     let reqs = [...requests];
     if (editingRequestIndex !== null) {
       reqs[editingRequestIndex] = { ...reqs[editingRequestIndex], ...form };
+      toast({
+        title: "Request Updated",
+        description: "Request has been successfully updated.",
+      });
     } else {
-      reqs.push({ ...form });
+      // Add status as "Submitted" for new requests
+      reqs.push({ ...form, status: "Submitted" });
+      toast({
+        title: "Request Created",
+        description: "Request has been successfully created and submitted.",
+      });
     }
     setRequests(reqs);
     setForm({});
     setAttachments(null);
     setEditingRequestIndex(null);
+    
+    // Navigate back to appropriate dashboard after 2 seconds
+    setTimeout(() => {
+      if (role === "doctor_nurse") {
+        navigate("/doctor-dashboard");
+      } else if (role === "coordinator") {
+        navigate("/case-coordinator-dashboard");
+      } else if (role === "hospital") {
+        navigate("/hospital-dashboard");
+      }
+    }, 2000);
   }
 
   // Find all created patients (by NationalID)
@@ -115,21 +139,14 @@ const CreateRequest = () => {
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
-      <h2 className="text-2xl font-bold text-blue-900 mb-4 text-center">Create Request</h2>
-      <div className="mb-4 flex gap-2 justify-center">
-        {roles.map((r) => (
-          <Button
-            key={r.value}
-            variant={r.value === role ? "default" : "outline"}
-            onClick={() => {
-              setRole(r.value);
-              setForm({});
-              setEditingRequestIndex(null);
-            }}
-          >
-            {r.label}
-          </Button>
-        ))}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-blue-900">Create Request</h2>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate(-1)}
+        >
+          Back to Dashboard
+        </Button>
       </div>
       {knownPatients.length > 0 && (
         <div className="mb-6">

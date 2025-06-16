@@ -1,6 +1,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Plus, FileExcel } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const stats = [
   { label: "New Requests", key: "new", color: "bg-blue-600", count: 5 },
@@ -25,7 +27,7 @@ const demoRequests = [
     phone: "0501231234",
     agreedSurgeryDate: "2025-06-20",
     hospital: "King Fahad",
-    status: "Scheduled",
+    status: "Submitted",
   },
   {
     id: 2,
@@ -34,23 +36,43 @@ const demoRequests = [
     phone: "0509679678",
     agreedSurgeryDate: "2025-06-24",
     hospital: "King Faisal",
-    status: "Pending",
+    status: "Under Process",
   },
 ];
 
 export default function DoctorDashboard() {
   const [filter, setFilter] = useState<string | null>(null);
-  // For demonstration, filtered list is static.
+  const [requests, setRequests] = useState(demoRequests);
+  const navigate = useNavigate();
+
   const filteredRequests = filter
-    ? demoRequests.filter((r) => r.status === "Scheduled")
-    : demoRequests;
+    ? requests.filter((r) => r.status === "Scheduled")
+    : requests;
+
+  const updateStatus = (requestId: number, newStatus: string) => {
+    setRequests(prev =>
+      prev.map(req =>
+        req.id === requestId ? { ...req, status: newStatus } : req
+      )
+    );
+  };
+
+  const exportToExcel = () => {
+    console.log("Exporting doctor requests to Excel with filter:", filter);
+    // Implementation for Excel export would go here
+  };
+
+  const createNewRequest = () => {
+    navigate("/create-request");
+  };
 
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-        <Button className="w-full mb-8" variant="default">
-          + Create New Request
+        <Button className="w-full mb-8" variant="default" onClick={createNewRequest}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Request
         </Button>
         <div className="flex flex-col gap-4 w-full">
           {stats.map((stat) => (
@@ -87,6 +109,10 @@ export default function DoctorDashboard() {
           >
             Clear Filter
           </Button>
+          <Button onClick={exportToExcel} variant="outline">
+            <FileExcel className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
         </div>
         {/* Requests table */}
         <div className="overflow-x-auto">
@@ -99,7 +125,7 @@ export default function DoctorDashboard() {
                 <th className="p-2">Agreed Date of Surgery</th>
                 <th className="p-2">Hospital</th>
                 <th className="p-2">Status</th>
-                <th className="p-2"></th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -117,11 +143,38 @@ export default function DoctorDashboard() {
                     <td className="p-2">{req.phone}</td>
                     <td className="p-2">{req.agreedSurgeryDate}</td>
                     <td className="p-2">{req.hospital}</td>
-                    <td className="p-2">{req.status}</td>
                     <td className="p-2">
-                      <Button size="sm" variant="outline">
-                        View
-                      </Button>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        req.status === "Submitted" ? "bg-blue-100 text-blue-800" :
+                        req.status === "Under Process" ? "bg-yellow-100 text-yellow-800" :
+                        req.status === "Scheduled" ? "bg-purple-100 text-purple-800" :
+                        "bg-green-100 text-green-800"
+                      }`}>
+                        {req.status}
+                      </span>
+                    </td>
+                    <td className="p-2">
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          View
+                        </Button>
+                        {req.status === "Submitted" && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => updateStatus(req.id, "Under Process")}
+                          >
+                            Process
+                          </Button>
+                        )}
+                        {req.status === "Under Process" && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => updateStatus(req.id, "Scheduled")}
+                          >
+                            Schedule
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
