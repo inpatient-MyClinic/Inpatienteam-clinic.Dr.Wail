@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ const DoctorDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
-  // Sample requests data with proper structure
+  // Sample requests data with complete structure
   const [requests, setRequests] = useState([
     {
       id: 1,
