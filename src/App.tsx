@@ -14,6 +14,7 @@ import SettingsDirectory from "./pages/SettingsDirectory";
 import NotificationsLogs from "./pages/NotificationsLogs";
 import RequestWireframe from "./pages/RequestWireframe";
 import Login from "./pages/Login";
+import Registration from "./pages/Registration";
 import RoleSelection from "./pages/RoleSelection";
 import AdminDashboard from "./pages/AdminDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
@@ -32,7 +33,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<RoleSelection />} />
+          <Route path="/" element={<Registration />} />
+          <Route path="/role-selection" element={<RoleSelection />} />
           <Route path="/welcome" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
@@ -49,7 +51,6 @@ const App = () => (
           <Route path="/case-coordinator-dashboard" element={<CaseCoordinatorDashboard />} />
           <Route path="/finance-dashboard" element={<FinanceDashboard />} />
           <Route path="/customer-care-dashboard" element={<CustomerCareDashboard />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

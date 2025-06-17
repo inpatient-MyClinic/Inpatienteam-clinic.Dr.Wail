@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Upload, X } from "lucide-react";
 
 // Specialty and doctor data
 const specialties = [
@@ -75,6 +75,7 @@ const servicesBySpecialty = {
 const CreateRequest = () => {
   const [form, setForm] = useState<any>({});
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("");
+  const [attachments, setAttachments] = useState<File[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -90,16 +91,35 @@ const CreateRequest = () => {
     setForm((prev: any) => ({ 
       ...prev, 
       specialty,
-      doctorName: "", // Reset doctor when specialty changes
-      serviceDescription: "" // Reset service when specialty changes
+      doctorName: "", 
+      serviceDescription: ""
     }));
+  }
+
+  function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setAttachments(prev => [...prev, ...newFiles]);
+    }
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    // Set status as "Pending" for new requests
-    const requestData = { ...form, status: "Pending", dateCreated: new Date().toISOString() };
+    const requestData = { 
+      ...form, 
+      status: "Pending", 
+      dateCreated: new Date().toISOString(),
+      attachments: attachments.map(file => file.name),
+      statusHistory: [
+        { status: "Pending", timestamp: new Date().toISOString(), user: "System" }
+      ]
+    };
     
     console.log("New request created:", requestData);
     
@@ -108,7 +128,6 @@ const CreateRequest = () => {
       description: "Request has been successfully created with status: Pending",
     });
     
-    // Navigate back to appropriate dashboard after 2 seconds
     setTimeout(() => {
       navigate(-1);
     }, 2000);
@@ -152,6 +171,30 @@ const CreateRequest = () => {
             onChange={(e) => handleFieldChange("patientMobileNo", e.target.value)}
             required
           />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Hospital MRN</label>
+          <Input
+            value={form.hospitalMRN || ""}
+            onChange={(e) => handleFieldChange("hospitalMRN", e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Hospital Name</label>
+          <Select value={form.hospitalName || ""} onValueChange={(value) => handleFieldChange("hospitalName", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select hospital" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="King Fahad Hospital">King Fahad Hospital</SelectItem>
+              <SelectItem value="King Faisal Hospital">King Faisal Hospital</SelectItem>
+              <SelectItem value="King Abdulaziz Hospital">King Abdulaziz Hospital</SelectItem>
+              <SelectItem value="Prince Sultan Hospital">Prince Sultan Hospital</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
@@ -231,6 +274,26 @@ const CreateRequest = () => {
         </div>
 
         <div>
+          <label className="block font-medium text-gray-600 mb-1">Expected Revenue (SAR)</label>
+          <Input
+            type="number"
+            value={form.expectedRevenue || ""}
+            onChange={(e) => handleFieldChange("expectedRevenue", e.target.value)}
+            placeholder="Enter expected revenue"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Actual Revenue (SAR)</label>
+          <Input
+            type="number"
+            value={form.actualRevenue || ""}
+            onChange={(e) => handleFieldChange("actualRevenue", e.target.value)}
+            placeholder="Enter actual revenue (if completed)"
+          />
+        </div>
+
+        <div>
           <label className="block font-medium text-gray-600 mb-1">History</label>
           <Textarea
             value={form.history || ""}
@@ -246,6 +309,46 @@ const CreateRequest = () => {
             onChange={(e) => handleFieldChange("notes", e.target.value)}
             rows={2}
           />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Attachments</label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+              id="file-upload"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            />
+            <label
+              htmlFor="file-upload"
+              className="flex flex-col items-center cursor-pointer"
+            >
+              <Upload className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-600">Click to upload files</span>
+              <span className="text-xs text-gray-400">PDF, DOC, DOCX, JPG, PNG</span>
+            </label>
+          </div>
+          
+          {attachments.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {attachments.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAttachment(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <Button type="submit" className="w-full">

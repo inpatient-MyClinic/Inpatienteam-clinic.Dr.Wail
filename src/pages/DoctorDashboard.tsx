@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import StatusChangeModal from "@/components/StatusChangeModal";
 
 const stats = [
   { label: "New Requests", key: "new", color: "bg-blue-600", count: 5 },
@@ -42,11 +43,56 @@ const demoRequests = [
 export default function DoctorDashboard() {
   const [filter, setFilter] = useState<string | null>(null);
   const [requests, setRequests] = useState(demoRequests);
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    requestId: number | null;
+    currentStatus: string;
+    newStatus: string;
+  }>({
+    isOpen: false,
+    requestId: null,
+    currentStatus: "",
+    newStatus: ""
+  });
   const navigate = useNavigate();
 
   const filteredRequests = filter
-    ? requests.filter((r) => r.status === "Scheduled")
+    ? requests.filter((r) => {
+        const date = new Date(r.agreedSurgeryDate);
+        const now = new Date();
+        if (filter === "day") return date.toDateString() === now.toDateString();
+        if (filter === "week") return date >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (filter === "month") return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+        return true;
+      })
     : requests;
+
+  const openStatusModal = (requestId: number, currentStatus: string, newStatus: string) => {
+    setStatusModal({
+      isOpen: true,
+      requestId,
+      currentStatus,
+      newStatus
+    });
+  };
+
+  const handleStatusChange = (reason: string) => {
+    if (statusModal.requestId) {
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === statusModal.requestId 
+            ? { 
+                ...req, 
+                status: statusModal.newStatus,
+                statusReason: reason,
+                lastUpdated: new Date().toISOString()
+              } 
+            : req
+        )
+      );
+      console.log(`Status changed for request ${statusModal.requestId}: ${statusModal.currentStatus} → ${statusModal.newStatus}`, reason);
+    }
+  };
 
   const updateStatus = (requestId: number, newStatus: string) => {
     setRequests(prev =>
@@ -121,8 +167,10 @@ export default function DoctorDashboard() {
                 <th className="p-2">Patient Name</th>
                 <th className="p-2">ID Number</th>
                 <th className="p-2">Phone</th>
-                <th className="p-2">Agreed Date of Surgery</th>
+                <th className="p-2">Hospital MRN</th>
+                <th className="p-2">Surgery Date</th>
                 <th className="p-2">Hospital</th>
+                <th className="p-2">Revenue</th>
                 <th className="p-2">Status</th>
                 <th className="p-2">Actions</th>
               </tr>
@@ -130,7 +178,7 @@ export default function DoctorDashboard() {
             <tbody>
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-6">
+                  <td colSpan={9} className="text-center text-gray-400 py-6">
                     No requests found.
                   </td>
                 </tr>
@@ -140,14 +188,17 @@ export default function DoctorDashboard() {
                     <td className="p-2">{req.patientName}</td>
                     <td className="p-2">{req.idNumber}</td>
                     <td className="p-2">{req.phone}</td>
+                    <td className="p-2">{req.hospitalMRN || "N/A"}</td>
                     <td className="p-2">{req.agreedSurgeryDate}</td>
                     <td className="p-2">{req.hospital}</td>
+                    <td className="p-2">{req.expectedRevenue ? `${req.expectedRevenue} SAR` : "N/A"}</td>
                     <td className="p-2">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.status === "Submitted" ? "bg-blue-100 text-blue-800" :
+                        req.status === "Pending" ? "bg-blue-100 text-blue-800" :
                         req.status === "Under Process" ? "bg-yellow-100 text-yellow-800" :
-                        req.status === "Scheduled" ? "bg-purple-100 text-purple-800" :
-                        "bg-green-100 text-green-800"
+                        req.status === "Approved" ? "bg-green-100 text-green-800" :
+                        req.status === "Done" ? "bg-purple-100 text-purple-800" :
+                        "bg-red-100 text-red-800"
                       }`}>
                         {req.status}
                       </span>
@@ -157,20 +208,20 @@ export default function DoctorDashboard() {
                         <Button size="sm" variant="outline">
                           View
                         </Button>
-                        {req.status === "Submitted" && (
+                        {req.status === "Need More Justification" && (
                           <Button 
                             size="sm" 
-                            onClick={() => updateStatus(req.id, "Under Process")}
+                            onClick={() => openStatusModal(req.id, req.status, "Pending")}
                           >
-                            Process
+                            Resubmit
                           </Button>
                         )}
-                        {req.status === "Under Process" && (
+                        {req.status === "Pending" && (
                           <Button 
                             size="sm" 
-                            onClick={() => updateStatus(req.id, "Scheduled")}
+                            onClick={() => openStatusModal(req.id, req.status, "Under Process")}
                           >
-                            Schedule
+                            Process
                           </Button>
                         )}
                       </div>
@@ -182,6 +233,15 @@ export default function DoctorDashboard() {
           </table>
         </div>
       </main>
+
+      <StatusChangeModal
+        isOpen={statusModal.isOpen}
+        onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleStatusChange}
+        currentStatus={statusModal.currentStatus}
+        newStatus={statusModal.newStatus}
+        requestId={statusModal.requestId || 0}
+      />
     </div>
   );
 }
