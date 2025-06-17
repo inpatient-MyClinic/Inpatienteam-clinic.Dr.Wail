@@ -1,6 +1,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -27,24 +29,12 @@ const stats = [
   { label: "Inactive Users", key: "inactive", color: "bg-red-500", count: 5 },
 ];
 
-// Sample analytics data
 const conversionData = { done: 45, total: 100, rate: 45 };
-const utilizationData = [
-  { name: "King Abdulaziz Hospital", requests: 25 },
-  { name: "Prince Sultan Hospital", requests: 20 },
-  { name: "King Faisal Hospital", requests: 15 },
-];
-
 const hospitalPieData = [
   { name: "King Abdulaziz", value: 40, fill: "#0088FE" },
   { name: "Prince Sultan", value: 35, fill: "#00C49F" },
   { name: "King Faisal", value: 25, fill: "#FFBB28" },
 ];
-
-const lossTreeData = {
-  pending: { scheduled: 5, planned: 3, nvd: 2, underProcess: 8 },
-  cancelled: { doctor: 3, insurance: 2, hospital: 1, patient: 4 }
-};
 
 const volumeGrowthData = [
   { month: "Jan", requests: 20 },
@@ -62,126 +52,153 @@ const financeData = {
 };
 
 export default function AdminDashboard() {
-  const [openSubmenus, setOpenSubmenus] = useState({
-    users: false,
-    settings: false,
-  });
+  const navigate = useNavigate();
   const [analyticsFilter, setAnalyticsFilter] = useState("day");
-
-  const toggleSubmenu = (submenu: string) => {
-    setOpenSubmenus((prev) => ({
-      ...prev,
-      [submenu]: !prev[submenu],
-    }));
-  };
 
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
-      <aside className="w-[19rem] bg-gray-50 flex flex-col items-start p-6 border-r">
-        <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
+      <aside className="w-80 bg-blue-50 flex flex-col p-6 border-r border-blue-200">
+        <div className="text-center mb-8">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="My Clinic Logo" 
+            className="h-10 w-auto mx-auto mb-3"
+          />
+          <h1 className="text-2xl font-bold text-blue-900">Admin Dashboard</h1>
+          <p className="text-sm text-blue-700">System Management</p>
+        </div>
 
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="multiple" className="w-full mb-8">
           <AccordionItem value="users">
-            <AccordionTrigger onClick={() => toggleSubmenu("users")}>
-              Users
+            <AccordionTrigger className="text-blue-900 font-semibold">
+              User Management
             </AccordionTrigger>
             <AccordionContent>
-              {openSubmenus.users && (
-                <div className="ml-6 space-y-2 mt-2">
-                  <a
-                    href="/doctor-dashboard"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Doctor Dashboard
-                  </a>
-                  <a
-                    href="/nurse-dashboard"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Nurse Dashboard
-                  </a>
-                  <a
-                    href="/hospital-dashboard"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Hospital Dashboard
-                  </a>
-                  <a
-                    href="/case-coordinator-dashboard"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Case Coordinator Dashboard
-                  </a>
-                  <a
-                    href="/finance-dashboard"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Finance Dashboard
-                  </a>
-                  <a
-                    href="/customer-care-dashboard"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Customer Care Dashboard
-                  </a>
-                </div>
-              )}
+              <div className="ml-4 space-y-3 mt-3">
+                <a
+                  href="/doctor-dashboard"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Doctor Dashboard
+                </a>
+                <a
+                  href="/nurse-dashboard"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Nurse Dashboard
+                </a>
+                <a
+                  href="/hospital-dashboard"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Hospital Dashboard
+                </a>
+                <a
+                  href="/case-coordinator-dashboard"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Case Coordinator Dashboard
+                </a>
+                <a
+                  href="/finance-dashboard"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Finance Dashboard
+                </a>
+                <a
+                  href="/customer-care-dashboard"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Customer Care Dashboard
+                </a>
+              </div>
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="settings">
-            <AccordionTrigger onClick={() => toggleSubmenu("settings")}>
-              Settings
+            <AccordionTrigger className="text-blue-900 font-semibold">
+              System Settings
             </AccordionTrigger>
             <AccordionContent>
-              {openSubmenus.settings && (
-                <div className="ml-6 space-y-2 mt-2">
-                  <a
-                    href="#"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • General
-                  </a>
-                  <a
-                    href="#"
-                    className="block text-sm text-blue-700 hover:text-blue-900 transition-colors"
-                  >
-                    • Security
-                  </a>
-                </div>
-              )}
+              <div className="ml-4 space-y-3 mt-3">
+                <a
+                  href="/settings-directory"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Settings & Directory
+                </a>
+                <a
+                  href="#"
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                >
+                  • Security Settings
+                </a>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
 
-        <div className="flex flex-col gap-4 w-full mt-8">
+        <div className="flex flex-col gap-4 w-full mb-8">
           {stats.map((stat) => (
             <div
               key={stat.key}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 ${stat.color} text-white`}
+              className={`flex items-center justify-between rounded-lg px-4 py-3 ${stat.color} text-white shadow-sm`}
             >
-              <span className="text-xs">{stat.label}:</span>
-              <span className="font-bold text-lg">{stat.count}</span>
+              <span className="text-sm font-medium">{stat.label}</span>
+              <span className="font-bold text-xl">{stat.count}</span>
             </div>
           ))}
         </div>
+
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 bg-white">
         <div className="flex h-full">
           {/* Left Side - Welcome Message */}
-          <div className="flex-1 p-6">
-            <h2 className="text-2xl font-bold mb-4">Welcome to the Admin Dashboard!</h2>
-            <p className="text-gray-600">Here, you can manage users and system settings.</p>
+          <div className="flex-1 p-8">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl font-bold mb-6 text-blue-900">Welcome to Admin Dashboard</h2>
+              <p className="text-gray-600 text-lg leading-relaxed mb-8">
+                Manage your healthcare system with comprehensive tools for user management, 
+                system configuration, and real-time analytics. Monitor all activities and 
+                ensure optimal performance across all departments.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">Quick Actions</h3>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• View all user dashboards</li>
+                    <li>• Manage system settings</li>
+                    <li>• Monitor real-time analytics</li>
+                  </ul>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-2">System Status</h3>
+                  <ul className="text-sm text-green-700 space-y-1">
+                    <li>• All systems operational</li>
+                    <li>• 15 active users online</li>
+                    <li>• Real-time sync enabled</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right Side - Analytics */}
-          <div className="flex-1 p-6 border-l bg-gray-50">
-            <div className="mb-4 flex justify-between items-center">
-              <h3 className="text-xl font-bold">Analytics Dashboard</h3>
+          <div className="flex-1 p-8 border-l bg-gray-50">
+            <div className="mb-6 flex justify-between items-center">
+              <h3 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h3>
               <Select value={analyticsFilter} onValueChange={setAnalyticsFilter}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -196,23 +213,20 @@ export default function AdminDashboard() {
 
             <div className="space-y-6">
               {/* Conversion Rate */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-semibold mb-2">Conversion Rate</h4>
-                <div className="text-2xl font-bold text-green-600">
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h4 className="font-semibold mb-3 text-gray-900">Conversion Rate</h4>
+                <div className="text-3xl font-bold text-green-600 mb-2">
                   {conversionData.rate}%
                 </div>
                 <p className="text-sm text-gray-600">
-                  {conversionData.done} done out of {conversionData.total} requests
+                  {conversionData.done} completed out of {conversionData.total} total requests
                 </p>
               </div>
 
-              {/* Hospital Pie Chart */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-semibold mb-2">Requests by Hospital</h4>
-                <ChartContainer
-                  config={{}}
-                  className="h-48"
-                >
+              {/* Hospital Distribution */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h4 className="font-semibold mb-4 text-gray-900">Requests by Hospital</h4>
+                <ChartContainer config={{}} className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -234,17 +248,14 @@ export default function AdminDashboard() {
               </div>
 
               {/* Volume Growth */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-semibold mb-2">Volume Growth</h4>
-                <ChartContainer
-                  config={{}}
-                  className="h-48"
-                >
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h4 className="font-semibold mb-4 text-gray-900">Monthly Volume Growth</h4>
+                <ChartContainer config={{}} className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={volumeGrowthData}>
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Bar dataKey="requests" fill="#8884d8" />
+                      <Bar dataKey="requests" fill="#3B82F6" />
                       <ChartTooltip content={<ChartTooltipContent />} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -252,32 +263,23 @@ export default function AdminDashboard() {
               </div>
 
               {/* Finance KPIs */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-semibold mb-2">Finance KPIs</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  <div>
-                    <span className="text-sm text-gray-600">YTD Growth: </span>
-                    <span className="font-bold text-green-600">+{financeData.ytdGrowth}%</span>
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h4 className="font-semibold mb-4 text-gray-900">Financial Overview</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">YTD Growth</span>
+                    <span className="font-bold text-green-600 text-lg">+{financeData.ytdGrowth}%</span>
                   </div>
-                  <div>
-                    <span className="text-sm text-gray-600">YTD Achievement: </span>
-                    <span className="font-bold text-blue-600">{financeData.ytdAchievement}%</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">YTD Achievement</span>
+                    <span className="font-bold text-blue-600 text-lg">{financeData.ytdAchievement}%</span>
                   </div>
-                  <div>
-                    <span className="text-sm text-gray-600">YTD Revenue: </span>
-                    <span className="font-bold text-purple-600">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">YTD Revenue</span>
+                    <span className="font-bold text-purple-600 text-lg">
                       ${financeData.ytdRevenue.toLocaleString()}
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Loss Tree Summary */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h4 className="font-semibold mb-2">Loss Analysis</h4>
-                <div className="text-sm space-y-1">
-                  <div>Pending Issues: {Object.values(lossTreeData.pending).reduce((a, b) => a + b, 0)}</div>
-                  <div>Cancellations: {Object.values(lossTreeData.cancelled).reduce((a, b) => a + b, 0)}</div>
                 </div>
               </div>
             </div>
