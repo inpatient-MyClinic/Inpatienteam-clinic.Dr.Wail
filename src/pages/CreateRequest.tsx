@@ -72,7 +72,14 @@ const CreateRequest = () => {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-blue-900">Create New Request</h2>
+        <div className="flex items-center gap-4">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="Doctor Portal Logo" 
+            className="h-10 w-auto"
+          />
+          <h2 className="text-2xl font-bold text-blue-900">Create New Request</h2>
+        </div>
         <Button 
           variant="outline" 
           onClick={() => navigate(-1)}

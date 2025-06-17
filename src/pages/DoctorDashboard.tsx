@@ -100,7 +100,14 @@ const DoctorDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-blue-900">Doctor Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="Doctor Portal Logo" 
+            className="h-12 w-auto"
+          />
+          <h1 className="text-3xl font-bold text-blue-900">Doctor Dashboard</h1>
+        </div>
         <div className="flex gap-3">
           <Button onClick={() => navigate("/create-request")} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
