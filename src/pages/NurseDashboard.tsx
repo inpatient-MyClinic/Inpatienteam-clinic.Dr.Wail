@@ -1,7 +1,23 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+
+// Request workflow statuses
+const REQUEST_STATUSES = {
+  PENDING: "Pending",
+  UNDER_PROCESS: "Under Process", 
+  PATIENT_CONTACTED: "Patient Contacted",
+  SUBMITTED_TO_INSURANCE: "Submitted to Insurance",
+  APPROVED_BY_HOSPITAL: "Approved by Hospital",
+  REJECTED: "Rejected",
+  DONE: "Done",
+  NEED_JUSTIFICATION: "Need Justification",
+  NOT_COMPLETED: "Not Completed",
+  DELAYED: "Delayed"
+};
 
 const stats = [
   { label: "New Requests", key: "new", color: "bg-blue-600", count: 2 },
@@ -18,52 +34,151 @@ const filters = [
   { label: "Year to Date", value: "ytd" },
 ];
 
-const demoRequests = [
-  {
-    id: 1,
-    patientName: "Layla Hasan",
-    idNumber: "2019988776",
-    phone: "0554447777",
-    agreedSurgeryDate: "2025-07-12",
-    hospital: "King Khaled",
-    status: "Submitted",
-  },
-  {
-    id: 2,
-    patientName: "Khaled Ali",
-    idNumber: "2015566778",
-    phone: "0508889992",
-    agreedSurgeryDate: "2025-07-14",
-    hospital: "King Abdulaziz",
-    status: "Under Process",
-  },
-];
-
 export default function NurseDashboard() {
   const [filter, setFilter] = useState<string | null>(null);
-  const [requests, setRequests] = useState(demoRequests);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Sample requests - nurse can only see requests they created
+  const [requests, setRequests] = useState([
+    {
+      id: 1,
+      patientName: "Layla Hasan",
+      idNumber: "2019988776",
+      phone: "0554447777",
+      agreedSurgeryDate: "2025-07-12",
+      hospital: "King Khaled",
+      status: REQUEST_STATUSES.PENDING,
+      createdBy: "Nurse Sara", // Current nurse
+      assignedDoctor: "Dr. Ahmed Salem",
+      createdAt: "2024-01-10T11:00:00Z",
+      attachments: ["patient_records.pdf"],
+      isDelayed: false,
+      notifications: []
+    },
+    {
+      id: 2,
+      patientName: "Khaled Ali",
+      idNumber: "2015566778", 
+      phone: "0508889992",
+      agreedSurgeryDate: "2025-07-14",
+      hospital: "King Abdulaziz",
+      status: REQUEST_STATUSES.NOT_COMPLETED,
+      createdBy: "Nurse Sara", // Current nurse
+      assignedDoctor: "Dr. Mohammed Ali",
+      createdAt: "2024-01-09T15:30:00Z",
+      attachments: [],
+      isDelayed: false,
+      notifications: ["Request marked as incomplete by coordinator - additional documentation required"]
+    },
+  ]);
 
-  const filteredRequests = filter
-    ? requests.filter((r) => r.status === "Pending")
-    : requests;
+  const currentNurseName = "Nurse Sara";
+
+  // Check for delayed requests
+  useEffect(() => {
+    const checkDelayedRequests = () => {
+      const now = new Date();
+      const businessStart = 9; // 9 AM
+      const businessEnd = 20; // 8 PM
+      
+      setRequests(prev => prev.map(req => {
+        if (req.status === REQUEST_STATUSES.PENDING) {
+          const createdTime = new Date(req.createdAt);
+          const hoursDiff = (now.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
+          
+          const currentHour = now.getHours();
+          const isBusinessHours = currentHour >= businessStart && currentHour <= businessEnd;
+          
+          if (hoursDiff >= 4 && isBusinessHours && !req.isDelayed) {
+            return {
+              ...req,
+              isDelayed: true,
+              status: REQUEST_STATUSES.DELAYED,
+              notifications: [...req.notifications, "Request automatically forwarded to hospital due to delay"]
+            };
+          }
+        }
+        return req;
+      }));
+    };
+
+    const interval = setInterval(checkDelayedRequests, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter to show only requests created by this nurse
+  const filteredRequests = requests.filter(request => 
+    request.createdBy === currentNurseName
+  );
 
   const updateStatus = (requestId: number, newStatus: string) => {
     setRequests(prev =>
       prev.map(req =>
-        req.id === requestId ? { ...req, status: newStatus } : req
+        req.id === requestId ? { 
+          ...req, 
+          status: newStatus,
+          notifications: [...req.notifications, `Status updated to ${newStatus}`]
+        } : req
       )
     );
+
+    toast({
+      title: "Status Updated",
+      description: `Request ${requestId} status changed to ${newStatus}`,
+    });
   };
 
   const exportToExcel = () => {
     console.log("Exporting nurse requests to Excel with filter:", filter);
-    // Implementation for Excel export would go here
+    toast({
+      title: "Export Started",
+      description: "Excel file generation in progress...",
+    });
   };
 
   const createNewRequest = () => {
     navigate("/create-request");
   };
+
+  const getStatusBadge = (status: string, isDelayed: boolean = false) => {
+    const colors = {
+      [REQUEST_STATUSES.PENDING]: "bg-blue-100 text-blue-800",
+      [REQUEST_STATUSES.UNDER_PROCESS]: "bg-yellow-100 text-yellow-800",
+      [REQUEST_STATUSES.PATIENT_CONTACTED]: "bg-purple-100 text-purple-800",
+      [REQUEST_STATUSES.SUBMITTED_TO_INSURANCE]: "bg-orange-100 text-orange-800",
+      [REQUEST_STATUSES.APPROVED_BY_HOSPITAL]: "bg-cyan-100 text-cyan-800",
+      [REQUEST_STATUSES.DONE]: "bg-green-100 text-green-800",
+      [REQUEST_STATUSES.REJECTED]: "bg-red-100 text-red-800",
+      [REQUEST_STATUSES.NEED_JUSTIFICATION]: "bg-pink-100 text-pink-800",
+      [REQUEST_STATUSES.NOT_COMPLETED]: "bg-gray-100 text-gray-800",
+      [REQUEST_STATUSES.DELAYED]: "bg-red-200 text-red-900"
+    };
+    
+    const baseColor = colors[status] || "bg-gray-100 text-gray-800";
+    const delayedColor = isDelayed ? "bg-red-200 text-red-900" : baseColor;
+    
+    return (
+      <div className="flex items-center gap-1">
+        <span className={`px-2 py-1 rounded text-xs ${delayedColor}`}>
+          {status}
+        </span>
+        {isDelayed && <AlertTriangle className="w-3 h-3 text-red-600" />}
+      </div>
+    );
+  };
+
+  // Handle notifications for incomplete requests
+  useEffect(() => {
+    const incompleteRequests = requests.filter(req => req.status === REQUEST_STATUSES.NOT_COMPLETED);
+    incompleteRequests.forEach(req => {
+      toast({
+        title: "Action Required",
+        description: `Request ${req.id} for ${req.patientName} needs completion`,
+        variant: "destructive",
+      });
+    });
+  }, [requests, toast]);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -83,8 +198,27 @@ export default function NurseDashboard() {
               <span className="font-bold text-lg">{stat.count}</span>
             </div>
           ))}
+          
+          {/* Delayed Requests Counter */}
+          <div className="flex items-center gap-2 rounded-lg px-4 py-2 bg-red-600 text-white">
+            <Clock className="w-4 h-4" />
+            <span className="text-xs">Delayed:</span>
+            <span className="font-bold text-lg">
+              {filteredRequests.filter(req => req.isDelayed).length}
+            </span>
+          </div>
+          
+          {/* Incomplete Requests Counter */}
+          <div className="flex items-center gap-2 rounded-lg px-4 py-2 bg-orange-600 text-white">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="text-xs">Incomplete:</span>
+            <span className="font-bold text-lg">
+              {filteredRequests.filter(req => req.status === REQUEST_STATUSES.NOT_COMPLETED).length}
+            </span>
+          </div>
         </div>
       </aside>
+      
       {/* Main */}
       <main className="flex-1 bg-white p-6">
         {/* Filter bar */}
@@ -113,6 +247,7 @@ export default function NurseDashboard() {
             Export Excel
           </Button>
         </div>
+        
         {/* Requests table */}
         <div className="overflow-x-auto">
           <table className="w-full border text-sm rounded">
@@ -123,6 +258,7 @@ export default function NurseDashboard() {
                 <th className="p-2">Phone</th>
                 <th className="p-2">Agreed Date of Surgery</th>
                 <th className="p-2">Hospital</th>
+                <th className="p-2">Assigned Doctor</th>
                 <th className="p-2">Status</th>
                 <th className="p-2">Actions</th>
               </tr>
@@ -130,7 +266,7 @@ export default function NurseDashboard() {
             <tbody>
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-6">
+                  <td colSpan={8} className="text-center text-gray-400 py-6">
                     No requests found.
                   </td>
                 </tr>
@@ -142,35 +278,30 @@ export default function NurseDashboard() {
                     <td className="p-2">{req.phone}</td>
                     <td className="p-2">{req.agreedSurgeryDate}</td>
                     <td className="p-2">{req.hospital}</td>
+                    <td className="p-2">{req.assignedDoctor}</td>
                     <td className="p-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req.status === "Submitted" ? "bg-blue-100 text-blue-800" :
-                        req.status === "Under Process" ? "bg-yellow-100 text-yellow-800" :
-                        req.status === "Scheduled" ? "bg-purple-100 text-purple-800" :
-                        "bg-green-100 text-green-800"
-                      }`}>
-                        {req.status}
-                      </span>
+                      {getStatusBadge(req.status, req.isDelayed)}
                     </td>
                     <td className="p-2">
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
                           View
                         </Button>
-                        {req.status === "Submitted" && (
+                        {req.status === REQUEST_STATUSES.NOT_COMPLETED && (
                           <Button 
                             size="sm" 
-                            onClick={() => updateStatus(req.id, "Under Process")}
+                            onClick={() => updateStatus(req.id, REQUEST_STATUSES.PENDING)}
                           >
-                            Process
+                            Complete & Resubmit
                           </Button>
                         )}
-                        {req.status === "Under Process" && (
+                        {req.status === REQUEST_STATUSES.PENDING && (
                           <Button 
                             size="sm" 
-                            onClick={() => updateStatus(req.id, "Ready")}
+                            variant="outline"
+                            onClick={() => updateStatus(req.id, REQUEST_STATUSES.UNDER_PROCESS)}
                           >
-                            Mark Ready
+                            Process
                           </Button>
                         )}
                       </div>
