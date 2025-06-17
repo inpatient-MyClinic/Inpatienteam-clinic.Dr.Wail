@@ -1,115 +1,180 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { UserCheck, Stethoscope, Heart, Building2, Users, Calculator, Headphones } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { 
+  UserCog, 
+  Stethoscope, 
+  Heart, 
+  Building2, 
+  Users, 
+  TrendingUp, 
+  HeartHandshake,
+  ArrowLeft
+} from "lucide-react";
 
 const roles = [
-  { 
-    label: "Doctor", 
-    value: "doctor", 
-    route: "/doctor-dashboard", 
-    icon: Stethoscope,
-    color: "bg-blue-600 hover:bg-blue-700",
-    description: "View and manage patient requests"
+  {
+    id: "admin",
+    title: "System Administrator",
+    description: "Manage users, settings, and system configuration",
+    icon: <UserCog className="w-8 h-8" />,
+    path: "/admin",
+    color: "bg-purple-500",
+    features: ["User Management", "System Settings", "Analytics Overview"]
   },
-  { 
-    label: "Nurse", 
-    value: "nurse", 
-    route: "/nurse-dashboard", 
-    icon: Heart,
-    color: "bg-red-600 hover:bg-red-700",
-    description: "Assist with patient care coordination"
+  {
+    id: "doctor",
+    title: "Doctor",
+    description: "Review requests and manage patient cases",
+    icon: <Stethoscope className="w-8 h-8" />,
+    path: "/doctor-dashboard",
+    color: "bg-blue-500",
+    features: ["Patient Cases", "Medical Reviews", "Treatment Plans"]
   },
-  { 
-    label: "Case Coordinator", 
-    value: "coordinator", 
-    route: "/case-coordinator-dashboard", 
-    icon: Users,
-    color: "bg-green-600 hover:bg-green-700",
-    description: "Coordinate patient cases and requests"
+  {
+    id: "nurse",
+    title: "Nurse",
+    description: "Create and track patient requests",
+    icon: <Heart className="w-8 h-8" />,
+    path: "/nurse-dashboard",
+    color: "bg-green-500",
+    features: ["Request Creation", "Patient Monitoring", "Care Coordination"]
   },
-  { 
-    label: "Hospital", 
-    value: "hospital", 
-    route: "/hospital-dashboard", 
-    icon: Building2,
-    color: "bg-purple-600 hover:bg-purple-700",
-    description: "Manage hospital operations"
+  {
+    id: "hospital",
+    title: "Hospital Staff",
+    description: "Manage hospital operations and approvals",
+    icon: <Building2 className="w-8 h-8" />,
+    path: "/hospital-dashboard",
+    color: "bg-orange-500",
+    features: ["Approval Workflow", "Resource Management", "Staff Coordination"]
   },
-  { 
-    label: "Finance", 
-    value: "finance", 
-    route: "/finance-dashboard", 
-    icon: Calculator,
-    color: "bg-yellow-600 hover:bg-yellow-700",
-    description: "Handle financial operations and payments"
+  {
+    id: "coordinator",
+    title: "Case Coordinator",
+    description: "Coordinate between departments and track progress",
+    icon: <Users className="w-8 h-8" />,
+    path: "/case-coordinator-dashboard",
+    color: "bg-cyan-500",
+    features: ["Case Management", "Inter-department Communication", "Progress Tracking"]
   },
-  { 
-    label: "Customer Care", 
-    value: "customer-care", 
-    route: "/customer-care-dashboard", 
-    icon: Headphones,
-    color: "bg-indigo-600 hover:bg-indigo-700",
-    description: "Support customers and send surveys"
+  {
+    id: "finance",
+    title: "Finance Department",
+    description: "Handle billing, payments, and financial reporting",
+    icon: <TrendingUp className="w-8 h-8" />,
+    path: "/finance-dashboard",
+    color: "bg-emerald-500",
+    features: ["Revenue Tracking", "Financial Reports", "Billing Management"]
   },
-  { 
-    label: "Admin", 
-    value: "admin", 
-    route: "/admin", 
-    icon: UserCheck,
-    color: "bg-gray-600 hover:bg-gray-700",
-    description: "System administration and analytics"
-  },
+  {
+    id: "customer-care",
+    title: "Customer Care",
+    description: "Manage post-surgery follow-ups and patient satisfaction",
+    icon: <HeartHandshake className="w-8 h-8" />,
+    path: "/customer-care-dashboard",
+    color: "bg-pink-500",
+    features: ["Patient Follow-up", "Satisfaction Surveys", "Support Management"]
+  }
 ];
 
 export default function RoleSelection() {
   const navigate = useNavigate();
 
-  const handleRoleSelect = (route: string) => {
-    navigate(route);
+  const handleRoleSelect = (path: string) => {
+    navigate(path);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 to-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-blue-900">Inpatient Management System</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      {/* Header */}
+      <header className="w-full py-6 bg-white/80 backdrop-blur-sm shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img 
+              src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+              alt="My Clinic Logo" 
+              className="h-10 w-auto"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-blue-900">My Clinic – In-patient</h1>
+              <p className="text-blue-700 text-sm">Role Selection</p>
+            </div>
+          </div>
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
         </div>
       </header>
-      
-      <main className="flex-1 flex items-center justify-center py-12 px-4">
-        <div className="max-w-4xl w-full">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Select Your Role</h2>
-            <p className="text-gray-600">Choose your role to access the appropriate dashboard</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {roles.map((role) => {
-              const Icon = role.icon;
-              return (
-                <Button
-                  key={role.value}
-                  onClick={() => handleRoleSelect(role.route)}
-                  className={`h-auto p-6 flex flex-col items-center gap-4 ${role.color} text-white`}
-                  variant="default"
-                >
-                  <Icon size={48} />
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold">{role.label}</h3>
-                    <p className="text-sm opacity-90 mt-1">{role.description}</p>
-                  </div>
-                </Button>
-              );
-            })}
-          </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            Select Your Role
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Choose your role to access your personalized dashboard and tools
+          </p>
         </div>
-      </main>
-      
-      <footer className="py-4 text-center text-gray-500 text-sm">
-        © inpatient Dr. wail
-      </footer>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {roles.map((role) => (
+            <Card 
+              key={role.id} 
+              className="hover:shadow-lg transition-all duration-200 cursor-pointer group hover:-translate-y-1"
+              onClick={() => handleRoleSelect(role.path)}
+            >
+              <CardHeader className="text-center pb-4">
+                <div className={`${role.color} text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                  {role.icon}
+                </div>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  {role.title}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600">
+                  {role.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-2 mb-4">
+                  {role.features.map((feature, index) => (
+                    <li key={index} className="text-sm text-gray-600 flex items-center">
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  className="w-full"
+                  onClick={() => handleRoleSelect(role.path)}
+                >
+                  Access Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <p className="text-gray-600 mb-4">
+            Don't see your role? Contact your system administrator for access.
+          </p>
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/login")}
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            Direct Login
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

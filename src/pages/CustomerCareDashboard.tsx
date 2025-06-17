@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Download } from "lucide-react";
+import { MessageSquare, Download, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -57,6 +58,7 @@ const timeFilters = ["All Time", "This Week", "This Month", "Last Month", "This 
 export default function CustomerCareDashboard() {
   const [requests, setRequests] = useState(doneRequests);
   const [selectedTimeFilter, setSelectedTimeFilter] = useState("All Time");
+  const navigate = useNavigate();
 
   const sendSurvey = (requestId: number) => {
     setRequests(prev =>
@@ -76,7 +78,15 @@ export default function CustomerCareDashboard() {
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-purple-50 flex flex-col items-center p-6 border-r">
-        <h1 className="text-xl font-bold mb-6 text-center">Customer Care</h1>
+        <div className="text-center mb-6">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="My Clinic Logo" 
+            className="h-8 w-auto mx-auto mb-2"
+          />
+          <h1 className="text-xl font-bold text-purple-900">Customer Care</h1>
+          <p className="text-sm text-purple-700">Dashboard</p>
+        </div>
         
         <div className="flex flex-col gap-4 w-full mb-6">
           {stats.map((stat) => (
@@ -89,12 +99,21 @@ export default function CustomerCareDashboard() {
             </div>
           ))}
         </div>
+
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 mt-auto"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 bg-white">
         {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 p-6 border-b">
+        <div className="flex flex-wrap gap-3 p-6 border-b bg-white">
           <Select value={selectedTimeFilter} onValueChange={setSelectedTimeFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Select Time Period" />
