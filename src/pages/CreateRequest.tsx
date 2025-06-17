@@ -1,146 +1,123 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-const DOCTOR_NURSE_FIELDS = [
-  { key: "dateOfRequest", label: "Date of Request", type: "date" },
-  { key: "patientName", label: "Patients Name", type: "text" },
-  { key: "patientNationalId", label: "Patients National ID", type: "text" },
-  { key: "patientMobileNo", label: "Patients Mobile No.", type: "text" },
-  { key: "specialty", label: "Specialty", type: "text" },
-  { key: "admissionType", label: "Type of Admission", type: "text" },
-  { key: "serviceDescription", label: "Service Description of referred service", type: "textarea" },
-  { key: "doctorName", label: "Treating Doctors Name", type: "text" },
-  { key: "expectedSurgeryDate", label: "Expected date of Surgery", type: "date" },
-  { key: "laterality", label: "Laterality", type: "text" },
-  { key: "notes", label: "Notes (optional)", type: "textarea" },
-  { key: "history", label: "History", type: "textarea" },
-  { key: "attachments", label: "Attachments", type: "file" },
+// Specialty and doctor data
+const specialties = [
+  { value: "cardiology", label: "Cardiology" },
+  { value: "orthopedics", label: "Orthopedics" },
+  { value: "neurology", label: "Neurology" },
+  { value: "general_surgery", label: "General Surgery" },
+  { value: "pediatrics", label: "Pediatrics" },
 ];
 
-const COORDINATOR_FIELDS = [
-  { key: "caseManager", label: "Case Manager", type: "text" },
-  { key: "patientContacted", label: "Patient Contacted", type: "text" },
-  { key: "insuranceCash", label: "Insurance/Cash", type: "text" },
-  { key: "insuranceNumber", label: "Insurance Number", type: "text" },
-];
+const doctorsBySpecialty = {
+  cardiology: [
+    { value: "dr_ahmed_hassan", label: "Dr. Ahmed Hassan" },
+    { value: "dr_fatima_ali", label: "Dr. Fatima Ali" },
+  ],
+  orthopedics: [
+    { value: "dr_omar_khalil", label: "Dr. Omar Khalil" },
+    { value: "dr_sara_mahmoud", label: "Dr. Sara Mahmoud" },
+  ],
+  neurology: [
+    { value: "dr_mohamed_ibrahim", label: "Dr. Mohamed Ibrahim" },
+    { value: "dr_nora_hassan", label: "Dr. Nora Hassan" },
+  ],
+  general_surgery: [
+    { value: "dr_khaled_ahmed", label: "Dr. Khaled Ahmed" },
+    { value: "dr_layla_omar", label: "Dr. Layla Omar" },
+  ],
+  pediatrics: [
+    { value: "dr_ali_salem", label: "Dr. Ali Salem" },
+    { value: "dr_maryam_farouk", label: "Dr. Maryam Farouk" },
+  ],
+};
 
-const HOSPITAL_FIELDS = [
-  { key: "hospitalFileNumber", label: "Hospital File Number", type: "text" },
-  { key: "approvalDate", label: "Approval Date", type: "date" },
-  { key: "approvalNumber", label: "Approval Number", type: "text" },
-  { key: "approvalStatus", label: "Approval Status", type: "text" },
-  { key: "orDate", label: "Agreed/Booked/OR date (mm/dd/yyyy)", type: "date" },
-  { key: "operationStatus", label: "Status of Operation", type: "text" },
-  { key: "reasonPendingCancel", label: "Reason of Pending or Cancellation", type: "textarea" },
-  { key: "failureCategory", label: "Category of Failure", type: "text" },
-];
-
-const roles = [
-  { label: "Doctor/Nurse", value: "doctor_nurse" },
-  { label: "Case Coordinator", value: "coordinator" },
-  { label: "Hospital", value: "hospital" },
-];
-
-function getFieldsForRole(role: string) {
-  if (role === "doctor_nurse") return DOCTOR_NURSE_FIELDS;
-  if (role === "coordinator") return COORDINATOR_FIELDS;
-  if (role === "hospital") return HOSPITAL_FIELDS;
-  return [];
-}
-
-/**
- * Get a display name for a request entry.
- */
-function getRequestSummary(req: any): string {
-  if (req.patientName) return `${req.patientName} (${req.patientNationalId || ""})`;
-  if (req.patientNationalId) return req.patientNationalId;
-  if (req.hospitalFileNumber) return `Hospital File ${req.hospitalFileNumber}`;
-  return "Request";
-}
-
-const initialRequests: any[] = [];
+const servicesBySpecialty = {
+  cardiology: [
+    "Cardiac Catheterization",
+    "Coronary Angioplasty",
+    "Pacemaker Implantation",
+    "Heart Valve Repair",
+  ],
+  orthopedics: [
+    "Joint Replacement Surgery",
+    "Arthroscopic Surgery",
+    "Fracture Repair",
+    "Spine Surgery",
+  ],
+  neurology: [
+    "Brain Tumor Surgery",
+    "Spinal Cord Surgery",
+    "Epilepsy Surgery",
+    "Deep Brain Stimulation",
+  ],
+  general_surgery: [
+    "Appendectomy",
+    "Gallbladder Surgery",
+    "Hernia Repair",
+    "Bowel Surgery",
+  ],
+  pediatrics: [
+    "Pediatric Heart Surgery",
+    "Cleft Palate Repair",
+    "Pediatric Orthopedic Surgery",
+    "Neonatal Surgery",
+  ],
+};
 
 const CreateRequest = () => {
-  // Simulate roles by session state (for demo).
-  const [role, setRole] = useState("doctor_nurse");
-  // This is in-memory only (lost on refresh); in real app this would be stored backend.
-  const [requests, setRequests] = useState(initialRequests);
-  // Track new or editing
   const [form, setForm] = useState<any>({});
-  const [attachments, setAttachments] = useState<FileList | null>(null);
-  const [editingRequestIndex, setEditingRequestIndex] = useState<number | null>(null);
-  const fields = getFieldsForRole(role);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // When user picks a request, load it for editing/updating by other roles.
-  function loadRequestForEdit(idx: number) {
-    setEditingRequestIndex(idx);
-    setForm(requests[idx]);
-  }
+  const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
+  const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
 
   function handleFieldChange(key: string, value: any) {
     setForm((prev: any) => ({ ...prev, [key]: value }));
   }
 
-  function handleAttachmentChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setAttachments(e.target.files);
-    setForm((prev: any) => ({ ...prev, attachments: "Attached" }));
+  function handleSpecialtyChange(specialty: string) {
+    setSelectedSpecialty(specialty);
+    setForm((prev: any) => ({ 
+      ...prev, 
+      specialty,
+      doctorName: "", // Reset doctor when specialty changes
+      serviceDescription: "" // Reset service when specialty changes
+    }));
   }
-
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Which patient this edit is for: match by patientNationalId if present.
-    let reqs = [...requests];
-    if (editingRequestIndex !== null) {
-      reqs[editingRequestIndex] = { ...reqs[editingRequestIndex], ...form };
-      toast({
-        title: "Request Updated",
-        description: "Request has been successfully updated.",
-      });
-    } else {
-      // Add status as "Submitted" for new requests
-      reqs.push({ ...form, status: "Submitted" });
-      toast({
-        title: "Request Created",
-        description: "Request has been successfully created and submitted.",
-      });
-    }
-    setRequests(reqs);
-    setForm({});
-    setAttachments(null);
-    setEditingRequestIndex(null);
+    
+    // Set status as "Pending" for new requests
+    const requestData = { ...form, status: "Pending", dateCreated: new Date().toISOString() };
+    
+    console.log("New request created:", requestData);
+    
+    toast({
+      title: "Request Created",
+      description: "Request has been successfully created with status: Pending",
+    });
     
     // Navigate back to appropriate dashboard after 2 seconds
     setTimeout(() => {
-      if (role === "doctor_nurse") {
-        navigate("/doctor-dashboard");
-      } else if (role === "coordinator") {
-        navigate("/case-coordinator-dashboard");
-      } else if (role === "hospital") {
-        navigate("/hospital-dashboard");
-      }
+      navigate(-1);
     }, 2000);
   }
-
-  // Find all created patients (by NationalID)
-  const knownPatients = requests
-    .map((r, idx) => ({
-      id: idx,
-      summary: getRequestSummary(r),
-      patientNationalId: r.patientNationalId || r.insuranceNumber || r.hospitalFileNumber
-    }))
-    .filter((r) => r.patientNationalId);
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-blue-900">Create Request</h2>
+        <h2 className="text-2xl font-bold text-blue-900">Create New Request</h2>
         <Button 
           variant="outline" 
           onClick={() => navigate(-1)}
@@ -148,79 +125,133 @@ const CreateRequest = () => {
           Back to Dashboard
         </Button>
       </div>
-      {knownPatients.length > 0 && (
-        <div className="mb-6">
-          <div className="text-sm font-bold mb-2">Known Requests/Patients:</div>
-          <div className="flex flex-wrap gap-2">
-            {knownPatients.map((p, i) => (
-              <Button
-                key={p.id}
-                variant="secondary"
-                size="sm"
-                onClick={() => loadRequestForEdit(p.id)}
-              >
-                {p.summary}
-              </Button>
-            ))}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">Selecting will load their details so you can update with your role’s fields.</div>
-        </div>
-      )}
+
       <form className="space-y-5" onSubmit={handleSubmit}>
-        {fields.map((f) => (
-          <div key={f.key}>
-            <label className="block font-medium text-gray-600 mb-1">{f.label}</label>
-            {f.type === "textarea" ? (
-              <Textarea
-                value={form[f.key] || ""}
-                onChange={(e) => handleFieldChange(f.key, e.target.value)}
-                className="w-full"
-                rows={3}
-              />
-            ) : f.type === "file" ? (
-              <Input type="file" onChange={handleAttachmentChange} multiple />
-            ) : (
-              <Input
-                type={f.type}
-                value={form[f.key] || ""}
-                onChange={(e) => handleFieldChange(f.key, e.target.value)}
-              />
-            )}
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Patient Name</label>
+          <Input
+            value={form.patientName || ""}
+            onChange={(e) => handleFieldChange("patientName", e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Patient National ID</label>
+          <Input
+            value={form.patientNationalId || ""}
+            onChange={(e) => handleFieldChange("patientNationalId", e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Patient Mobile No.</label>
+          <Input
+            value={form.patientMobileNo || ""}
+            onChange={(e) => handleFieldChange("patientMobileNo", e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Specialty</label>
+          <Select value={selectedSpecialty} onValueChange={handleSpecialtyChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select specialty" />
+            </SelectTrigger>
+            <SelectContent>
+              {specialties.map((specialty) => (
+                <SelectItem key={specialty.value} value={specialty.value}>
+                  {specialty.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedSpecialty && (
+          <div>
+            <label className="block font-medium text-gray-600 mb-1">Treating Doctor Name</label>
+            <Select value={form.doctorName || ""} onValueChange={(value) => handleFieldChange("doctorName", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select doctor" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDoctors.map((doctor) => (
+                  <SelectItem key={doctor.value} value={doctor.label}>
+                    {doctor.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        ))}
+        )}
+
+        {selectedSpecialty && (
+          <div>
+            <label className="block font-medium text-gray-600 mb-1">Service Description</label>
+            <Select value={form.serviceDescription || ""} onValueChange={(value) => handleFieldChange("serviceDescription", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select service" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableServices.map((service) => (
+                  <SelectItem key={service} value={service}>
+                    {service}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Expected Surgery Date</label>
+          <Input
+            type="date"
+            value={form.expectedSurgeryDate || ""}
+            onChange={(e) => handleFieldChange("expectedSurgeryDate", e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Type of Admission</label>
+          <Select value={form.admissionType || ""} onValueChange={(value) => handleFieldChange("admissionType", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select admission type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="inpatient">Inpatient</SelectItem>
+              <SelectItem value="outpatient">Outpatient</SelectItem>
+              <SelectItem value="day_surgery">Day Surgery</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">History</label>
+          <Textarea
+            value={form.history || ""}
+            onChange={(e) => handleFieldChange("history", e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Notes (optional)</label>
+          <Textarea
+            value={form.notes || ""}
+            onChange={(e) => handleFieldChange("notes", e.target.value)}
+            rows={2}
+          />
+        </div>
+
         <Button type="submit" className="w-full">
-          {editingRequestIndex !== null ? "Update Request" : "Create Request"}
+          Create Request
         </Button>
       </form>
-      <div className="mt-10">
-        <h3 className="text-lg font-bold mb-2 text-blue-900">All Requests (in session only)</h3>
-        {requests.length === 0 ? (
-          <div className="text-gray-400 italic">No requests yet.</div>
-        ) : (
-          <ul className="space-y-3">
-            {requests.map((req, idx) => (
-              <li key={idx} className="p-2 border rounded text-sm flex gap-2">
-                <div className="flex-1">
-                  <div className="font-semibold">{getRequestSummary(req)}</div>
-                  <div className="text-gray-500">
-                    {Object.entries(req)
-                      .filter(([k, v]) => typeof v === "string" && v && k !== "patientName" && k !== "patientNationalId")
-                      .map(([k, v]) => (
-                        <span key={k}>
-                          {`${k.replace(/([A-Z])/g, " $1")}: ${v}; `}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-                <Button size="sm" type="button" variant="ghost" onClick={() => loadRequestForEdit(idx)}>
-                  Act / Edit
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="text-xs text-gray-400 mt-2">Data is kept only until you refresh the page. Attachments are not stored.</div>
-      </div>
     </div>
   );
 };

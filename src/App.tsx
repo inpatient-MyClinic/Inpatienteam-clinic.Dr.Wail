@@ -14,6 +14,7 @@ import SettingsDirectory from "./pages/SettingsDirectory";
 import NotificationsLogs from "./pages/NotificationsLogs";
 import RequestWireframe from "./pages/RequestWireframe";
 import Login from "./pages/Login";
+import RoleSelection from "./pages/RoleSelection";
 import AdminDashboard from "./pages/AdminDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import NurseDashboard from "./pages/NurseDashboard";
@@ -31,7 +32,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<RoleSelection />} />
+          <Route path="/welcome" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />

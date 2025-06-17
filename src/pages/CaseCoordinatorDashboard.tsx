@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, FileExcel } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -172,7 +171,7 @@ export default function CaseCoordinatorDashboard() {
             </Button>
           ))}
           <Button onClick={exportToExcel} variant="outline">
-            <FileExcel className="w-4 h-4 mr-2" />
+            <Download className="w-4 h-4 mr-2" />
             Export Excel
           </Button>
         </div>
