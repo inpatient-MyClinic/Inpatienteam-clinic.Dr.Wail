@@ -131,8 +131,8 @@ const allRequests = [
 
 export default function CaseCoordinatorDashboard() {
   const [filter, setFilter] = useState<string>("all");
-  const [hospitalFilter, setHospitalFilter] = useState<string>("");
-  const [specialtyFilter, setSpecialtyFilter] = useState<string>("");
+  const [hospitalFilter, setHospitalFilter] = useState<string>("all");
+  const [specialtyFilter, setSpecialtyFilter] = useState<string>("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("");
   const [requests, setRequests] = useState(allRequests);
   const navigate = useNavigate();
@@ -198,10 +198,10 @@ export default function CaseCoordinatorDashboard() {
     }
 
     // Apply additional filters
-    if (hospitalFilter) {
+    if (hospitalFilter && hospitalFilter !== "all") {
       filtered = filtered.filter(req => req.hospital === hospitalFilter);
     }
-    if (specialtyFilter) {
+    if (specialtyFilter && specialtyFilter !== "all") {
       filtered = filtered.filter(req => req.specialty === specialtyFilter);
     }
     if (doctorFilter) {
@@ -381,7 +381,7 @@ export default function CaseCoordinatorDashboard() {
                 <SelectValue placeholder="Hospital" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Hospitals</SelectItem>
+                <SelectItem value="all">All Hospitals</SelectItem>
                 {hospitals.map((hospital) => (
                   <SelectItem key={hospital} value={hospital}>
                     {hospital}
@@ -395,7 +395,7 @@ export default function CaseCoordinatorDashboard() {
                 <SelectValue placeholder="Specialty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Specialties</SelectItem>
+                <SelectItem value="all">All Specialties</SelectItem>
                 {specialties.map((specialty) => (
                   <SelectItem key={specialty} value={specialty}>
                     {specialty}
