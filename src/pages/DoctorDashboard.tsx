@@ -13,7 +13,7 @@ const DoctorDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
-  // Sample requests data with complete structure
+  // Sample requests data - includes requests created by doctor AND under doctor's name
   const [requests, setRequests] = useState([
     {
       id: 1,
@@ -25,7 +25,9 @@ const DoctorDashboard = () => {
       hospitalMRN: "MRN001",
       expectedRevenue: 15000,
       actualRevenue: 0,
-      status: "Pending"
+      status: "Pending",
+      createdBy: "Dr. Ahmed Salem", // This request was created by this doctor
+      assignedDoctor: "Dr. Ahmed Salem"
     },
     {
       id: 2,
@@ -37,9 +39,17 @@ const DoctorDashboard = () => {
       hospitalMRN: "MRN002",
       expectedRevenue: 25000,
       actualRevenue: 25000,
-      status: "Done"
+      status: "Done",
+      createdBy: "Nurse Sara", // This request was created by nurse but assigned to this doctor
+      assignedDoctor: "Dr. Ahmed Salem"
     }
   ]);
+
+  // Filter to show only requests created by this doctor OR assigned to this doctor
+  const currentDoctorName = "Dr. Ahmed Salem"; // This would come from auth context
+  const filteredRequests = requests.filter(request => 
+    request.createdBy === currentDoctorName || request.assignedDoctor === currentDoctorName
+  );
 
   const handleStatusChange = (request: any, status: string) => {
     setSelectedRequest(request);
@@ -70,25 +80,33 @@ const DoctorDashboard = () => {
             alt="Doctor Portal Logo" 
             className="h-12 w-auto"
           />
-          <h1 className="text-3xl font-bold text-blue-900">Doctor Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-blue-900">Doctor Dashboard</h1>
+            <p className="text-gray-600">Requests created by you or assigned to you</p>
+          </div>
         </div>
         <div className="flex gap-3">
           <Button onClick={() => navigate("/create-request")} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Create Request
           </Button>
-          <ExportButton requests={requests} />
+          <ExportButton requests={filteredRequests} />
         </div>
       </div>
 
       <div className="grid gap-6">
-        {requests.map((request) => (
+        {filteredRequests.map((request) => (
           <RequestCard
             key={request.id}
             request={request}
             onStatusChange={handleStatusChange}
           />
         ))}
+        {filteredRequests.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No requests found. Create your first request or wait for assignments.</p>
+          </div>
+        )}
       </div>
 
       <StatusChangeModal

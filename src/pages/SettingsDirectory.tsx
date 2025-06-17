@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import DoctorManagement from "@/components/DoctorManagement";
+import ServicePricingTable from "@/components/ServicePricingTable";
+import CustomFieldsManager from "@/components/CustomFieldsManager";
 
 const userCategories = [
   "Admin",
@@ -179,13 +181,15 @@ const SettingsDirectory = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-blue-900">Settings & Directory</h1>
-        <p className="text-gray-600">Manage users, roles, and system permissions</p>
+        <p className="text-gray-600">Manage users, roles, doctors, pricing, and system settings</p>
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="categories">Category Privileges</TabsTrigger>
+          <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
+          <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
+          <TabsTrigger value="fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
         </TabsList>
 
@@ -316,39 +320,16 @@ const SettingsDirectory = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="categories" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Privileges</CardTitle>
-              <CardDescription>Configure default privileges for each user category</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                {userCategories.map(category => (
-                  <Card key={category}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg">{category}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {privileges.map(privilege => (
-                          <label key={privilege.id} className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={categoryPrivileges[category]?.includes(privilege.id) || false}
-                              onChange={() => updateCategoryPrivileges(category, privilege.id)}
-                              className="rounded"
-                            />
-                            <span className="text-sm">{privilege.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="doctors" className="space-y-6">
+          <DoctorManagement />
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-6">
+          <ServicePricingTable />
+        </TabsContent>
+
+        <TabsContent value="fields" className="space-y-6">
+          <CustomFieldsManager />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
