@@ -1,10 +1,12 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 import NurseSidebar from "@/components/nurse/NurseSidebar";
 import NurseFilters from "@/components/nurse/NurseFilters";
 import NurseRequestsTable from "@/components/nurse/NurseRequestsTable";
-import DateRangeFilter from "@/components/DateRangeFilter";
 import NurseHospitalPrivileges from "@/components/nurse/NurseHospitalPrivileges";
 import NurseAnalytics from "@/components/nurse/NurseAnalytics";
 import { useNurseRequests } from "@/hooks/useNurseRequests";
@@ -14,11 +16,6 @@ export default function NurseDashboard() {
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [doctorFilter, setDoctorFilter] = useState("all");
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
-  
-  // Date filtering states
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   
   const navigate = useNavigate();
   
@@ -35,26 +32,7 @@ export default function NurseDashboard() {
       const matchesStatus = !activeStatusFilter || 
         (activeStatusFilter === 'delayed' ? request.isDelayed : request.status === activeStatusFilter);
       
-      // Date filtering logic
-      const requestDate = new Date(request.createdAt);
-      const matchesDate = selectedDates.length === 0 || selectedDates.some(date => 
-        date.toDateString() === requestDate.toDateString()
-      );
-      
-      // Week filtering (simplified - you can enhance this)
-      const matchesWeek = selectedWeeks.length === 0 || selectedWeeks.some(week => {
-        const weekNum = Math.ceil(requestDate.getDate() / 7);
-        return week === `Week ${weekNum}`;
-      });
-      
-      // Month filtering
-      const matchesMonth = selectedMonths.length === 0 || selectedMonths.some(month => {
-        const monthNames = ["January", "February", "March", "April", "May", "June", 
-                           "July", "August", "September", "October", "November", "December"];
-        return month === monthNames[requestDate.getMonth()];
-      });
-      
-      return matchesSpecialty && matchesDoctor && matchesStatus && matchesDate && matchesWeek && matchesMonth;
+      return matchesSpecialty && matchesDoctor && matchesStatus;
     });
   };
 
@@ -64,20 +42,15 @@ export default function NurseDashboard() {
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
     specialtyFilter !== "all" || 
-    doctorFilter !== "all" ||
-    selectedDates.length > 0 ||
-    selectedWeeks.length > 0 ||
-    selectedMonths.length > 0
+    doctorFilter !== "all"
   );
-
-  const clearAllDateFilters = () => {
-    setSelectedDates([]);
-    setSelectedWeeks([]);
-    setSelectedMonths([]);
-  };
 
   const createNewRequest = () => {
     navigate("/create-request");
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -91,21 +64,16 @@ export default function NurseDashboard() {
       />
       
       <main className="flex-1 bg-white p-6">
-        {/* Date Range Filter */}
-        <div className="mb-4">
-          <DateRangeFilter
-            selectedDates={selectedDates}
-            selectedWeeks={selectedWeeks}
-            selectedMonths={selectedMonths}
-            onDateSelect={setSelectedDates}
-            onWeekSelect={setSelectedWeeks}
-            onMonthSelect={setSelectedMonths}
-            onClearAll={clearAllDateFilters}
-          />
-        </div>
-
-        {/* Export Button */}
-        <div className="mb-4 flex justify-end">
+        {/* Export and Print Buttons */}
+        <div className="mb-4 flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handlePrint}
+            className="flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
           <ExportButton 
             requests={requests}
             filteredRequests={finalFilteredRequests}

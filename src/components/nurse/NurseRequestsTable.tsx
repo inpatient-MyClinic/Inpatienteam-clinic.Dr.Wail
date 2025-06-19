@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Eye, Download, FileText, Send, Filter, X, Printer, Calendar } from "lucide-react";
+import { AlertTriangle, Eye, Download, FileText, Send, Filter, X, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -392,18 +392,6 @@ export default function NurseRequestsTable({
 
   return (
     <div className="overflow-x-auto mb-8">
-      {/* Print Button */}
-      <div className="mb-4 flex justify-end">
-        <Button 
-          variant="outline" 
-          onClick={() => window.print()}
-          className="flex items-center gap-2"
-        >
-          <Printer className="w-4 h-4" />
-          Print
-        </Button>
-      </div>
-
       {/* Clear Table Filters Button */}
       {hasTableFilters && (
         <div className="mb-4 flex justify-between items-center">
