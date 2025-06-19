@@ -1,12 +1,14 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, FileText, Send, Filter, X } from "lucide-react";
+import { Eye, Download, FileText, Send, Filter, X, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 
 interface Request {
@@ -45,7 +47,6 @@ export default function RequestsTable({
   REQUEST_STATUSES
 }: RequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   
   // Filter states
   const [serviceFilter, setServiceFilter] = useState("");
@@ -286,116 +287,182 @@ export default function RequestsTable({
 
   return (
     <div className="overflow-x-auto mb-8">
-      {/* Filter Controls */}
-      <div className="mb-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </Button>
-          
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              onClick={clearAllFilters}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700"
-            >
-              <X className="w-4 h-4" />
-              Clear All Filters
-            </Button>
-          )}
-        </div>
-
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-            {/* Service Description Filter */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Service Description</Label>
-              <Input
-                placeholder="Filter by service..."
-                value={serviceFilter}
-                onChange={(e) => setServiceFilter(e.target.value)}
-                className="w-full"
-              />
-            </div>
-
-            {/* Hospital Filter */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Hospital</Label>
-              <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All hospitals" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All hospitals</SelectItem>
-                  {uniqueHospitals.map((hospital) => (
-                    <SelectItem key={hospital} value={hospital}>
-                      {hospital}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Status Filter */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
-                  {uniqueStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Payment Status Filter */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Payment Status</Label>
-              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All payment statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All payment statuses</SelectItem>
-                  {uniquePaymentStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Clear All Filters Button */}
+      {hasActiveFilters && (
+        <div className="mb-4 flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            Showing {filteredRequests.length} of {requests.length} requests (filtered)
           </div>
-        )}
-      </div>
-
-      {/* Results count */}
-      <div className="mb-2 text-sm text-gray-600">
-        Showing {filteredRequests.length} of {requests.length} requests
-        {hasActiveFilters && " (filtered)"}
-      </div>
+          <Button
+            variant="ghost"
+            onClick={clearAllFilters}
+            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+          >
+            <X className="w-4 h-4" />
+            Clear All Filters
+          </Button>
+        </div>
+      )}
 
       <table className="w-full border text-sm rounded">
         <thead className="bg-blue-100 text-blue-900">
           <tr>
             <th className="p-2">Patient Name</th>
             <th className="p-2">MRN</th>
-            <th className="p-2">Service Description</th>
-            <th className="p-2">Hospital</th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Service Description
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Service</Label>
+                      <Input
+                        placeholder="Search services..."
+                        value={serviceFilter}
+                        onChange={(e) => setServiceFilter(e.target.value)}
+                        className="w-full"
+                      />
+                      {serviceFilter && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setServiceFilter("")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Hospital
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Hospital</Label>
+                      <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select hospital" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="">All hospitals</SelectItem>
+                          {uniqueHospitals.map((hospital) => (
+                            <SelectItem key={hospital} value={hospital}>
+                              {hospital}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {hospitalFilter && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setHospitalFilter("")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
             <th className="p-2">Agreed Date of Surgery</th>
-            <th className="p-2">Status</th>
-            <th className="p-2">Payment Status</th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Status
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Status</Label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="">All statuses</SelectItem>
+                          {uniqueStatuses.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {statusFilter && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setStatusFilter("")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Payment Status
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Payment</Label>
+                      <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select payment status" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="">All payment statuses</SelectItem>
+                          {uniquePaymentStatuses.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {paymentStatusFilter && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setPaymentStatusFilter("")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
             <th className="p-2">Actions</th>
           </tr>
         </thead>
