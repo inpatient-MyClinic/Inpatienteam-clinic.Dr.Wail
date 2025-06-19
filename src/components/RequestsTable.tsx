@@ -50,9 +50,9 @@ export default function RequestsTable({
   
   // Filter states
   const [serviceFilter, setServiceFilter] = useState("");
-  const [hospitalFilter, setHospitalFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
+  const [hospitalFilter, setHospitalFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   
   const { toast } = useToast();
 
@@ -74,21 +74,21 @@ export default function RequestsTable({
   const filteredRequests = requests.filter(request => {
     const matchesService = serviceFilter === "" || 
       request.serviceDescription.toLowerCase().includes(serviceFilter.toLowerCase());
-    const matchesHospital = hospitalFilter === "" || request.hospital === hospitalFilter;
-    const matchesStatus = statusFilter === "" || request.status === statusFilter;
-    const matchesPaymentStatus = paymentStatusFilter === "" || request.paymentStatus === paymentStatusFilter;
+    const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
+    const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+    const matchesPaymentStatus = paymentStatusFilter === "all" || request.paymentStatus === paymentStatusFilter;
     
     return matchesService && matchesHospital && matchesStatus && matchesPaymentStatus;
   });
 
   const clearAllFilters = () => {
     setServiceFilter("");
-    setHospitalFilter("");
-    setStatusFilter("");
-    setPaymentStatusFilter("");
+    setHospitalFilter("all");
+    setStatusFilter("all");
+    setPaymentStatusFilter("all");
   };
 
-  const hasActiveFilters = serviceFilter || hospitalFilter || statusFilter || paymentStatusFilter;
+  const hasActiveFilters = serviceFilter || hospitalFilter !== "all" || statusFilter !== "all" || paymentStatusFilter !== "all";
 
   const submitJustification = (requestId: number) => {
     if (!justificationText.trim()) {
@@ -359,7 +359,7 @@ export default function RequestsTable({
                           <SelectValue placeholder="Select hospital" />
                         </SelectTrigger>
                         <SelectContent className="bg-white">
-                          <SelectItem value="">All hospitals</SelectItem>
+                          <SelectItem value="all">All hospitals</SelectItem>
                           {uniqueHospitals.map((hospital) => (
                             <SelectItem key={hospital} value={hospital}>
                               {hospital}
@@ -367,11 +367,11 @@ export default function RequestsTable({
                           ))}
                         </SelectContent>
                       </Select>
-                      {hospitalFilter && (
+                      {hospitalFilter !== "all" && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => setHospitalFilter("")}
+                          onClick={() => setHospitalFilter("all")}
                           className="w-full text-xs"
                         >
                           Clear
@@ -400,7 +400,7 @@ export default function RequestsTable({
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent className="bg-white">
-                          <SelectItem value="">All statuses</SelectItem>
+                          <SelectItem value="all">All statuses</SelectItem>
                           {uniqueStatuses.map((status) => (
                             <SelectItem key={status} value={status}>
                               {status}
@@ -408,11 +408,11 @@ export default function RequestsTable({
                           ))}
                         </SelectContent>
                       </Select>
-                      {statusFilter && (
+                      {statusFilter !== "all" && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => setStatusFilter("")}
+                          onClick={() => setStatusFilter("all")}
                           className="w-full text-xs"
                         >
                           Clear
@@ -440,7 +440,7 @@ export default function RequestsTable({
                           <SelectValue placeholder="Select payment status" />
                         </SelectTrigger>
                         <SelectContent className="bg-white">
-                          <SelectItem value="">All payment statuses</SelectItem>
+                          <SelectItem value="all">All payment statuses</SelectItem>
                           {uniquePaymentStatuses.map((status) => (
                             <SelectItem key={status} value={status}>
                               {status}
@@ -448,11 +448,11 @@ export default function RequestsTable({
                           ))}
                         </SelectContent>
                       </Select>
-                      {paymentStatusFilter && (
+                      {paymentStatusFilter !== "all" && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => setPaymentStatusFilter("")}
+                          onClick={() => setPaymentStatusFilter("all")}
                           className="w-full text-xs"
                         >
                           Clear
