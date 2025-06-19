@@ -1,45 +1,49 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Users, Hospital, UserCheck, Shield, TrendingUp, HeartHandshake } from "lucide-react";
+import { Users, Hospital, UserCheck, Shield, TrendingUp, HeartHandshake, Eye, EyeOff } from "lucide-react";
 import Footer from "@/components/Footer";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const features = [
-    {
-      icon: <Users className="w-8 h-8 text-blue-600" />,
-      title: "Multi-Role Access",
-      description: "Dedicated dashboards for doctors, nurses, hospitals, and coordinators"
-    },
-    {
-      icon: <Hospital className="w-8 h-8 text-blue-600" />,
-      title: "Hospital Integration",
-      description: "Seamless workflow management across healthcare institutions"
-    },
-    {
-      icon: <UserCheck className="w-8 h-8 text-blue-600" />,
-      title: "Patient Care Focus",
-      description: "Streamlined surgical case management for better outcomes"
-    },
-    {
-      icon: <Shield className="w-8 h-8 text-blue-600" />,
-      title: "Secure Platform",
-      description: "HIPAA-compliant data handling and user authentication"
-    },
-    {
-      icon: <TrendingUp className="w-8 h-8 text-blue-600" />,
-      title: "Analytics & Insights",
-      description: "Real-time reporting and performance metrics"
-    },
-    {
-      icon: <HeartHandshake className="w-8 h-8 text-blue-600" />,
-      title: "Customer Care",
-      description: "Post-surgery follow-up and patient satisfaction tracking"
-    }
-  ];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    
+    // Simulate authentication
+    setTimeout(() => {
+      setSubmitting(false);
+      // Redirect based on email domain or default to admin
+      if (email.includes("admin")) {
+        navigate("/admin");
+      } else if (email.includes("doctor")) {
+        navigate("/doctor-dashboard");
+      } else if (email.includes("nurse")) {
+        navigate("/nurse-dashboard");
+      } else if (email.includes("hospital")) {
+        navigate("/hospital-dashboard");
+      } else if (email.includes("coordinator")) {
+        navigate("/case-coordinator-dashboard");
+      } else if (email.includes("finance")) {
+        navigate("/finance-dashboard");
+      } else if (email.includes("customer")) {
+        navigate("/customer-care-dashboard");
+      } else {
+        navigate("/role-selection");
+      }
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
@@ -95,20 +99,72 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="max-w-6xl mx-auto px-4 py-20">
-        <h3 className="text-4xl font-bold text-center text-gray-900 mb-16">
-          Comprehensive Healthcare Management
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div key={index} className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-              <div className="mb-6">{feature.icon}</div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h4>
-              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-            </div>
-          ))}
-        </div>
+      {/* Login Section */}
+      <section className="max-w-2xl mx-auto px-4 py-20">
+        <Card className="shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-blue-900">Sign In</CardTitle>
+            <CardDescription>
+              Access your healthcare management dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {submitting ? "Signing In..." : "Sign In"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </section>
 
       {/* CTA Section */}
