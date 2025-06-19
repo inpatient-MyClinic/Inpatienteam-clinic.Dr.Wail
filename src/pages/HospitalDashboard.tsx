@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -197,61 +196,65 @@ export default function HospitalDashboard() {
     <div className="flex min-h-screen">
       {/* Left Sidebar for Status Filters */}
       <div className="w-64 bg-gray-50 border-r border-gray-200 p-4">
-        <h2 className="text-lg font-semibold mb-4">Filter by Status</h2>
+        <div className="text-center mb-6">
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Hospital Dashboard</h1>
+          <p className="text-sm text-gray-600">Nurse Sarah Johnson</p>
+        </div>
+        
         <div className="space-y-3">
           <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Pending" ? "bg-yellow-100 border-2 border-yellow-300" : "hover:bg-gray-100 border border-gray-200"
+            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-yellow-500 text-white hover:bg-yellow-600 ${
+              activeStatusFilter === "Pending" ? "ring-2 ring-yellow-300" : ""
             }`}
             onClick={() => handleStatusIconClick("Pending")}
           >
             <div className="flex items-center">
-              <Clock className="w-5 h-5 text-yellow-600 mr-3" />
+              <Clock className="w-5 h-5 mr-3" />
               <span className="text-sm font-medium">Pending</span>
             </div>
-            <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">{statusCounts.pending}</span>
+            <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.pending}</span>
           </div>
 
           <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Need Justification" ? "bg-orange-100 border-2 border-orange-300" : "hover:bg-gray-100 border border-gray-200"
+            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-orange-500 text-white hover:bg-orange-600 ${
+              activeStatusFilter === "Need Justification" ? "ring-2 ring-orange-300" : ""
             }`}
             onClick={() => handleStatusIconClick("Need Justification")}
           >
             <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-orange-600 mr-3" />
+              <AlertCircle className="w-5 h-5 mr-3" />
               <span className="text-sm font-medium">Need Justification</span>
             </div>
-            <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full">{statusCounts.needJustification}</span>
+            <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.needJustification}</span>
           </div>
 
           <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Rejected" ? "bg-red-100 border-2 border-red-300" : "hover:bg-gray-100 border border-gray-200"
+            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-red-500 text-white hover:bg-red-600 ${
+              activeStatusFilter === "Rejected" ? "ring-2 ring-red-300" : ""
             }`}
             onClick={() => handleStatusIconClick("Rejected")}
           >
             <div className="flex items-center">
-              <XCircle className="w-5 h-5 text-red-600 mr-3" />
+              <XCircle className="w-5 h-5 mr-3" />
               <span className="text-sm font-medium">Rejected</span>
             </div>
-            <span className="text-sm bg-red-100 text-red-800 px-2 py-1 rounded-full">{statusCounts.rejected}</span>
+            <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.rejected}</span>
           </div>
 
           <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Approved" ? "bg-green-100 border-2 border-green-300" : "hover:bg-gray-100 border border-gray-200"
+            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-green-500 text-white hover:bg-green-600 ${
+              activeStatusFilter === "Approved" ? "ring-2 ring-green-300" : ""
             }`}
             onClick={() => handleStatusIconClick("Approved")}
           >
             <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+              <CheckCircle className="w-5 h-5 mr-3" />
               <span className="text-sm font-medium">Done</span>
             </div>
-            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">{statusCounts.approved}</span>
+            <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.approved}</span>
           </div>
 
-          {Boolean(activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0 || selectedMonths.length > 0) && (
+          {hasActiveFilters && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -268,9 +271,6 @@ export default function HospitalDashboard() {
       <div className="flex-1 p-6 space-y-6">
         {/* Header with Date Filters and Export Buttons */}
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
-          
-          {/* Date Filters and Export Buttons */}
           <div className="flex items-center gap-4">
             {/* Day Filter */}
             <div>
@@ -324,8 +324,10 @@ export default function HospitalDashboard() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Export Buttons */}
+          </div>
+          
+          {/* Export Buttons */}
+          <div className="flex items-center gap-4">
             <Button variant="outline" size="sm" onClick={handlePrint}>
               <Printer className="w-4 h-4 mr-2" />
               Print
