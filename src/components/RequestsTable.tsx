@@ -1,11 +1,13 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, FileText } from "lucide-react";
+import { Eye, Download, FileText, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface Request {
@@ -23,11 +25,13 @@ interface Request {
   medicalHistory?: string;
   additionalNotes?: string;
   attachments?: string[];
+  expectedSurgeryDate?: string;
 }
 
 interface RequestsTableProps {
   requests: Request[];
   onJustificationSubmit: (requestId: number, justification: string) => void;
+  onRequestModification: (requestId: number, expectedSurgeryDate: string, hospital: string) => void;
   getStatusBadge: (status: string) => JSX.Element;
   getPaymentStatusBadge: (status: string) => JSX.Element;
   REQUEST_STATUSES: Record<string, string>;
@@ -36,12 +40,25 @@ interface RequestsTableProps {
 export default function RequestsTable({
   requests,
   onJustificationSubmit,
+  onRequestModification,
   getStatusBadge,
   getPaymentStatusBadge,
   REQUEST_STATUSES
 }: RequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
+  const [editingSurgeryDate, setEditingSurgeryDate] = useState("");
+  const [editingHospital, setEditingHospital] = useState("");
+  const [hasModifications, setHasModifications] = useState(false);
   const { toast } = useToast();
+
+  const availableHospitals = [
+    "King Khaled Hospital",
+    "King Abdulaziz Hospital", 
+    "King Faisal Hospital",
+    "Prince Sultan Hospital",
+    "King Fahd Hospital",
+    "National Guard Hospital"
+  ];
 
   const submitJustification = (requestId: number) => {
     if (!justificationText.trim()) {
@@ -57,117 +74,217 @@ export default function RequestsTable({
     setJustificationText("");
   };
 
-  const ViewRequestDialog = ({ request }: { request: Request }) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Eye className="w-4 h-4 mr-1" />
-          View
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Request Details - {request.patientName}</DialogTitle>
-          <DialogDescription>
-            Complete request information and medical details
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Patient & Hospital Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="font-semibold">Patient Information</Label>
-              <div className="mt-2 space-y-1">
-                <p><span className="font-medium">Name:</span> {request.patientName}</p>
-                <p><span className="font-medium">MRN:</span> {request.mrn}</p>
+  const handleModificationSubmit = (requestId: number) => {
+    if (!editingSurgeryDate || !editingHospital) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    onRequestModification(requestId, editingSurgeryDate, editingHospital);
+    setEditingSurgeryDate("");
+    setEditingHospital("");
+    setHasModifications(false);
+    
+    toast({
+      title: "Request Modified",
+      description: "Request has been updated and notifications sent to case coordinator and hospital",
+    });
+  };
+
+  const handleFieldChange = (field: 'surgeryDate' | 'hospital', value: string, original: any) => {
+    if (field === 'surgeryDate') {
+      setEditingSurgeryDate(value);
+      setHasModifications(value !== original.expectedSurgeryDate);
+    } else {
+      setEditingHospital(value);
+      setHasModifications(value !== original.hospital);
+    }
+  };
+
+  const ViewRequestDialog = ({ request }: { request: Request }) => {
+    const [localSurgeryDate, setLocalSurgeryDate] = useState(request.expectedSurgeryDate || "");
+    const [localHospital, setLocalHospital] = useState(request.hospital || "");
+    const [localHasModifications, setLocalHasModifications] = useState(false);
+
+    const handleLocalFieldChange = (field: 'surgeryDate' | 'hospital', value: string) => {
+      if (field === 'surgeryDate') {
+        setLocalSurgeryDate(value);
+        setLocalHasModifications(value !== request.expectedSurgeryDate || localHospital !== request.hospital);
+      } else {
+        setLocalHospital(value);
+        setLocalHasModifications(value !== request.hospital || localSurgeryDate !== request.expectedSurgeryDate);
+      }
+    };
+
+    const handleLocalSubmit = () => {
+      if (!localSurgeryDate || !localHospital) {
+        toast({
+          title: "Error",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      onRequestModification(request.id, localSurgeryDate, localHospital);
+      setLocalHasModifications(false);
+      
+      toast({
+        title: "Request Modified",
+        description: "Request has been updated and notifications sent to case coordinator and hospital",
+      });
+    };
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Eye className="w-4 h-4 mr-1" />
+            View
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Request Details - {request.patientName}</DialogTitle>
+            <DialogDescription>
+              Complete request information and medical details
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Patient & Hospital Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="font-semibold">Patient Information</Label>
+                <div className="mt-2 space-y-1">
+                  <p><span className="font-medium">Name:</span> {request.patientName}</p>
+                  <p><span className="font-medium">MRN:</span> {request.mrn}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="font-semibold">Referred Hospital</Label>
+                <div className="mt-2">
+                  <Select value={localHospital} onValueChange={(value) => handleLocalFieldChange('hospital', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select hospital" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableHospitals.map((hospital) => (
+                        <SelectItem key={hospital} value={hospital}>
+                          {hospital}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
+
+            {/* Expected Surgery Date */}
             <div>
-              <Label className="font-semibold">Referred Hospital</Label>
+              <Label className="font-semibold">Expected Surgery Date</Label>
               <div className="mt-2">
-                <Badge variant="outline" className="text-sm">
-                  {request.hospital}
-                </Badge>
+                <Input
+                  type="date"
+                  value={localSurgeryDate}
+                  onChange={(e) => handleLocalFieldChange('surgeryDate', e.target.value)}
+                />
               </div>
             </div>
-          </div>
 
-          {/* Service Description */}
-          <div>
-            <Label className="font-semibold">Service Description</Label>
-            <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
-              {request.serviceDescription}
-            </div>
-          </div>
-
-          {/* Original Request */}
-          <div>
-            <Label className="font-semibold">Original Request</Label>
-            <div className="mt-1 p-3 bg-blue-50 rounded-md text-sm">
-              {request.originalRequest}
-            </div>
-          </div>
-
-          {/* Medical History */}
-          {request.medicalHistory && (
+            {/* Service Description */}
             <div>
-              <Label className="font-semibold">Medical History</Label>
-              <div className="mt-1 p-3 bg-yellow-50 rounded-md text-sm">
-                {request.medicalHistory}
+              <Label className="font-semibold">Service Description</Label>
+              <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
+                {request.serviceDescription}
               </div>
             </div>
-          )}
 
-          {/* Additional Notes */}
-          {request.additionalNotes && (
+            {/* Original Request */}
             <div>
-              <Label className="font-semibold">Additional Notes</Label>
-              <div className="mt-1 p-3 bg-green-50 rounded-md text-sm">
-                {request.additionalNotes}
+              <Label className="font-semibold">Original Request</Label>
+              <div className="mt-1 p-3 bg-blue-50 rounded-md text-sm">
+                {request.originalRequest}
               </div>
             </div>
-          )}
 
-          {/* Attachments */}
-          {request.attachments && request.attachments.length > 0 && (
-            <div>
-              <Label className="font-semibold">Attachments</Label>
-              <div className="mt-2 space-y-2">
-                {request.attachments.map((attachment, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
-                    <div className="flex items-center">
-                      <FileText className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-sm">{attachment}</span>
+            {/* Medical History */}
+            {request.medicalHistory && (
+              <div>
+                <Label className="font-semibold">Medical History</Label>
+                <div className="mt-1 p-3 bg-yellow-50 rounded-md text-sm">
+                  {request.medicalHistory}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Notes */}
+            {request.additionalNotes && (
+              <div>
+                <Label className="font-semibold">Additional Notes</Label>
+                <div className="mt-1 p-3 bg-green-50 rounded-md text-sm">
+                  {request.additionalNotes}
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            {request.attachments && request.attachments.length > 0 && (
+              <div>
+                <Label className="font-semibold">Attachments</Label>
+                <div className="mt-2 space-y-2">
+                  {request.attachments.map((attachment, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
+                      <div className="flex items-center">
+                        <FileText className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="text-sm">{attachment}</span>
+                      </div>
+                      <Button size="sm" variant="ghost">
+                        <Download className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button size="sm" variant="ghost">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Status Information */}
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-            <div>
-              <Label className="font-semibold">Current Status</Label>
-              <div className="mt-1">
-                {getStatusBadge(request.status)}
+            {/* Status Information */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div>
+                <Label className="font-semibold">Current Status</Label>
+                <div className="mt-1">
+                  {getStatusBadge(request.status)}
+                </div>
+              </div>
+              <div>
+                <Label className="font-semibold">Payment Status</Label>
+                <div className="mt-1">
+                  {getPaymentStatusBadge(request.paymentStatus)}
+                </div>
               </div>
             </div>
-            <div>
-              <Label className="font-semibold">Payment Status</Label>
-              <div className="mt-1">
-                {getPaymentStatusBadge(request.paymentStatus)}
+
+            {/* Submit Modifications Button */}
+            {localHasModifications && (
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={handleLocalSubmit}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="w-4 h-4 mr-2 text-white" />
+                  Submit Modifications
+                </Button>
               </div>
-            </div>
+            )}
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="overflow-x-auto mb-8">

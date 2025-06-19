@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -65,7 +64,8 @@ export default function DoctorDashboard() {
       justificationNeeded: false,
       medicalHistory: "Patient has a history of hypertension, diabetes mellitus, and previous myocardial infarction in 2019. Current medications include metformin, lisinopril, and aspirin.",
       additionalNotes: "Patient is stable but requires urgent surgical intervention. Family history of cardiac disease.",
-      attachments: ["ECG_Report_Ahmed_Mohamed.pdf", "Cardiac_Catheterization_Results.pdf", "Blood_Tests_Jan2024.pdf"]
+      attachments: ["ECG_Report_Ahmed_Mohamed.pdf", "Cardiac_Catheterization_Results.pdf", "Blood_Tests_Jan2024.pdf"],
+      expectedSurgeryDate: "2024-02-15"
     },
     {
       id: 2,
@@ -81,7 +81,8 @@ export default function DoctorDashboard() {
       justificationNeeded: true,
       medicalHistory: "Patient has severe osteoarthritis in both knees with significant pain and mobility limitation. Previous conservative treatments including physiotherapy and steroid injections have failed.",
       additionalNotes: "Patient is unable to walk more than 50 meters without severe pain. Quality of life significantly affected.",
-      attachments: ["X-Ray_Knee_Fatima_Ali.pdf", "MRI_Results.pdf"]
+      attachments: ["X-Ray_Knee_Fatima_Ali.pdf", "MRI_Results.pdf"],
+      expectedSurgeryDate: "2024-02-20"
     },
     {
       id: 3,
@@ -97,7 +98,8 @@ export default function DoctorDashboard() {
       justificationNeeded: false,
       medicalHistory: "Previously healthy 28-year-old male with no significant medical history.",
       additionalNotes: "Surgery completed successfully. Patient recovered well post-operatively.",
-      attachments: ["CT_Scan_Abdomen.pdf", "Post_Op_Report.pdf"]
+      attachments: ["CT_Scan_Abdomen.pdf", "Post_Op_Report.pdf"],
+      expectedSurgeryDate: "2024-01-08"
     },
     {
       id: 4,
@@ -113,7 +115,8 @@ export default function DoctorDashboard() {
       justificationNeeded: false,
       medicalHistory: "Patient presented with headaches and visual disturbances. MRI confirmed 3cm meningioma in right frontal lobe.",
       additionalNotes: "Patient is neurologically stable. Tumor is accessible and suitable for surgical resection.",
-      attachments: ["Brain_MRI_Layla_Ibrahim.pdf", "Neurological_Assessment.pdf", "Pre_Op_Clearance.pdf"]
+      attachments: ["Brain_MRI_Layla_Ibrahim.pdf", "Neurological_Assessment.pdf", "Pre_Op_Clearance.pdf"],
+      expectedSurgeryDate: "2024-02-10"
     }
   ]);
 
@@ -192,6 +195,31 @@ export default function DoctorDashboard() {
     });
   };
 
+  const handleRequestModification = (requestId: number, expectedSurgeryDate: string, hospital: string) => {
+    const originalRequest = requests.find(req => req.id === requestId);
+    
+    setRequests(prev =>
+      prev.map(req =>
+        req.id === requestId ? { 
+          ...req, 
+          expectedSurgeryDate,
+          hospital,
+          status: REQUEST_STATUSES.UNDER_PROCESS
+        } : req
+      )
+    );
+
+    // Simulate notifications to case coordinator and hospital
+    console.log(`Notification sent to Case Coordinator: Request ${requestId} has been modified`);
+    console.log(`Notification sent to ${hospital}: New request assigned from ${originalRequest?.hospital}`);
+    console.log(`Request removed from ${originalRequest?.hospital} and assigned to ${hospital}`);
+
+    toast({
+      title: "Request Modified Successfully",
+      description: `Request transferred to ${hospital}. Notifications sent to case coordinator and hospital.`,
+    });
+  };
+
   const printPage = () => {
     window.print();
     toast({
@@ -261,6 +289,7 @@ export default function DoctorDashboard() {
         <RequestsTable
           requests={filteredRequests}
           onJustificationSubmit={handleJustificationSubmit}
+          onRequestModification={handleRequestModification}
           getStatusBadge={getStatusBadge}
           getPaymentStatusBadge={getPaymentStatusBadge}
           REQUEST_STATUSES={REQUEST_STATUSES}
