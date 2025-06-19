@@ -104,7 +104,8 @@ export default function RequestsTable({
     setPaymentStatusFilter("all");
   };
 
-  const hasActiveFilters = serviceFilter || hospitalFilter !== "all" || statusFilter !== "all" || paymentStatusFilter !== "all";
+  // Fix the boolean calculation for hasActiveFilters
+  const hasActiveFilters = Boolean(serviceFilter || hospitalFilter !== "all" || statusFilter !== "all" || paymentStatusFilter !== "all");
 
   const submitJustification = (requestId: number) => {
     if (!justificationText.trim()) {
