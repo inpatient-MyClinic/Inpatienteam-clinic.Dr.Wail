@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
 import HospitalAnalytics from "@/components/hospital/HospitalAnalytics";
 import Footer from "@/components/Footer";
+import * as XLSX from 'xlsx';
 
 // Sample data - in a real app, this would come from your backend
 const sampleRequests = [
@@ -174,9 +175,65 @@ export default function HospitalDashboard() {
   };
 
   const handleExportToExcel = () => {
+    // Use filtered data if filters are active, otherwise use all data
+    const dataToExport = hasActiveFilters ? filteredRequests : sampleRequests;
+    
+    // Prepare data for Excel export
+    const excelData = dataToExport.map(req => ({
+      'Patient Name': req.patientName,
+      'MRN': req.mrn,
+      'Phone': req.phone || 'Not provided',
+      'National ID': req.nationalId || 'Not provided',
+      'Age': req.age || 'Not provided',
+      'Gender': req.gender || 'Not provided',
+      'Service Description': req.serviceDescription,
+      'Specialty': req.specialty,
+      'Doctor': req.doctor,
+      'Expected Surgery Date': new Date(req.expectedSurgeryDate).toLocaleDateString(),
+      'Status': req.status,
+      'Submission Date': new Date(req.submissionDate).toLocaleDateString(),
+      'Lead Time': req.leadTime,
+      'Medical History': req.medicalHistory || 'Not provided',
+      'Current Medications': req.currentMedications || 'Not provided',
+      'Allergies': req.allergies || 'Not provided',
+      'Insurance Provider': req.insuranceProvider || 'Not provided',
+      'Insurance Number': req.insuranceNumber || 'Not provided',
+      'Emergency Contact': req.emergencyContact || 'Not provided',
+      'Referring Doctor': req.referringDoctor || 'Not provided',
+      'Priority': req.priority || 'Not provided',
+      'Additional Notes': req.additionalNotes || 'Not provided'
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Auto-size columns
+    const columnWidths = [];
+    const headers = Object.keys(excelData[0] || {});
+    headers.forEach((header, index) => {
+      const maxLength = Math.max(
+        header.length,
+        ...excelData.map(row => String(row[header] || '').length)
+      );
+      columnWidths[index] = { wch: Math.min(maxLength + 2, 50) };
+    });
+    worksheet['!cols'] = columnWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Hospital Requests');
+
+    // Generate filename with timestamp and filter status
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filterStatus = hasActiveFilters ? '_filtered' : '_all';
+    const filename = `hospital_requests${filterStatus}_${timestamp}.xlsx`;
+
+    // Export file
+    XLSX.writeFile(workbook, filename);
+
     toast({
-      title: "Export Initiated",
-      description: "Your Excel file is being prepared for download.",
+      title: "Export Completed",
+      description: `Exported ${dataToExport.length} requests to ${filename}`,
     });
   };
 
@@ -201,6 +258,15 @@ export default function HospitalDashboard() {
       {/* Left Sidebar for Status Filters */}
       <div className="flex flex-1">
         <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col">
+          {/* Logo */}
+          <div className="text-center mb-4">
+            <img 
+              src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+              alt="My Clinic Logo" 
+              className="h-16 w-auto mx-auto mb-2"
+            />
+          </div>
+          
           <div className="text-center mb-6">
             <h1 className="text-xl font-bold text-gray-800 mb-2">Hospital Dashboard</h1>
             <p className="text-sm text-gray-600">Nurse Sarah Johnson</p>

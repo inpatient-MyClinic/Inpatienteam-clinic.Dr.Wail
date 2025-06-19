@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import ViewRequestDialog from "./ViewRequestDialog";
 
 interface HospitalRequestsTableProps {
@@ -35,12 +36,142 @@ export default function HospitalRequestsTable({
   statusFilter,
   setStatusFilter
 }: HospitalRequestsTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageRequests = filteredRequests.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [surgeryDateFilter, specialtyFilter, doctorFilter, statusFilter]);
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <Pagination className="mt-4">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentPage > 1) setCurrentPage(currentPage - 1);
+              }}
+              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+          
+          {startPage > 1 && (
+            <>
+              <PaginationItem>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(1);
+                  }}
+                  className="cursor-pointer"
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
+              {startPage > 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+            </>
+          )}
+          
+          {pages.map((page) => (
+            <PaginationItem key={page}>
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(page);
+                }}
+                isActive={currentPage === page}
+                className="cursor-pointer"
+              >
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+          
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(totalPages);
+                  }}
+                  className="cursor-pointer"
+                >
+                  {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            </>
+          )}
+          
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+              }}
+              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Hospital Requests ({filteredRequests.length} of {totalRequests})</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Pagination Info */}
+        <div className="mb-4 flex justify-between items-center text-sm text-gray-600">
+          <div>
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredRequests.length)} of {filteredRequests.length} entries
+          </div>
+          <div>
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full border text-sm">
             <thead className="bg-blue-100 text-blue-900">
@@ -182,14 +313,14 @@ export default function HospitalRequestsTable({
               </tr>
             </thead>
             <tbody>
-              {filteredRequests.length === 0 ? (
+              {currentPageRequests.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center text-gray-400 py-6">
                     No requests match the current filters.
                   </td>
                 </tr>
               ) : (
-                filteredRequests.map((request) => (
+                currentPageRequests.map((request) => (
                   <tr key={request.id} className="border-b hover:bg-gray-50">
                     <td className="p-2">{request.patientName}</td>
                     <td className="p-2">{request.mrn}</td>
@@ -215,6 +346,8 @@ export default function HospitalRequestsTable({
             </tbody>
           </table>
         </div>
+
+        {renderPagination()}
       </CardContent>
     </Card>
   );
