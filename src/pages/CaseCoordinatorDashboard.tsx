@@ -180,6 +180,7 @@ export default function CaseCoordinatorDashboard() {
   const [specialtyFilter, setSpecialtyFilter] = useState<string>("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("");
   const [requests, setRequests] = useState<OverdueRequest[]>(allRequests);
+  const [sidebarFilter, setSidebarFilter] = useState<string | null>(null);
   
   // Date filter states
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -467,29 +468,79 @@ export default function CaseCoordinatorDashboard() {
   const getFilteredRequests = () => {
     let filtered = requests;
 
-    // Filter by main filter
-    switch (filter) {
-      case "mine":
-        filtered = filtered.filter(req => req.coordinator === coordinatorName);
-        break;
-      case "process":
-        filtered = filtered.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS);
-        break;
-      case "completed":
-        filtered = filtered.filter(req => req.status === REQUEST_STATUSES.DONE);
-        break;
-      case "delayed":
-        filtered = filtered.filter(req => req.isDelayed);
-        break;
-      case "justification":
-        filtered = filtered.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION);
-        break;
-      case "submitted_hospital":
-        filtered = filtered.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL);
-        break;
-      default:
-        // Show all requests
-        break;
+    // Apply sidebar filter first
+    if (sidebarFilter) {
+      switch (sidebarFilter) {
+        case "overdue":
+          filtered = filtered.filter(req => req.isOverdue);
+          break;
+        case "new":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.NEW);
+          break;
+        case "pending":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.PENDING);
+          break;
+        case "underProcess":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS);
+          break;
+        case "completed":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.DONE);
+          break;
+        case "rejected":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.REJECTED);
+          break;
+        case "needJustification":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION);
+          break;
+        case "delayed":
+          filtered = filtered.filter(req => req.isDelayed || false);
+          break;
+        case "submittedToHospital":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL);
+          break;
+        case "myAssigned":
+          filtered = filtered.filter(req => req.coordinator === coordinatorName);
+          break;
+        case "myUnderProcess":
+          filtered = filtered.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS);
+          break;
+        case "myCompleted":
+          filtered = filtered.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.DONE);
+          break;
+        case "myNeedJustification":
+          filtered = filtered.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.NEED_JUSTIFICATION);
+          break;
+        case "myOverdue":
+          filtered = filtered.filter(req => req.coordinator === coordinatorName && req.isOverdue);
+          break;
+      }
+    }
+
+    // Filter by main filter (if no sidebar filter is active)
+    if (!sidebarFilter) {
+      switch (filter) {
+        case "mine":
+          filtered = filtered.filter(req => req.coordinator === coordinatorName);
+          break;
+        case "process":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS);
+          break;
+        case "completed":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.DONE);
+          break;
+        case "delayed":
+          filtered = filtered.filter(req => req.isDelayed);
+          break;
+        case "justification":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION);
+          break;
+        case "submitted_hospital":
+          filtered = filtered.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL);
+          break;
+        default:
+          // Show all requests
+          break;
+      }
     }
 
     // Apply hospital filters (multiple selection)
@@ -702,6 +753,15 @@ export default function CaseCoordinatorDashboard() {
     }
   };
 
+  const handleSidebarStatClick = (statKey: string) => {
+    if (sidebarFilter === statKey) {
+      setSidebarFilter(null); // Clear filter if clicking the same stat
+    } else {
+      setSidebarFilter(statKey);
+      setFilter("all"); // Reset main filter when using sidebar filter
+    }
+  };
+
   const filteredRequests = getFilteredRequests();
 
   const handleClearAllDateFilters = () => {
@@ -726,86 +786,159 @@ export default function CaseCoordinatorDashboard() {
           Create New Request
         </Button>
 
-        {/* Overdue Counter */}
-        <div className="w-full mb-4">
+        {/* Overdue Counter - Clickable */}
+        <div className="w-full mb-4 cursor-pointer" onClick={() => handleSidebarStatClick("overdue")}>
           <OverdueCounter 
             overdueCount={allStats.overdue} 
             totalRequests={requests.length}
-            className="w-full"
+            className={`w-full transition-all ${sidebarFilter === "overdue" ? "ring-2 ring-green-500 bg-green-100" : ""}`}
           />
         </div>
         
-        {/* All Requests Statistics */}
+        {/* All Requests Statistics - Clickable */}
         <div className="w-full mb-4">
           <h3 className="text-sm font-semibold text-green-900 mb-2">All Requests Overview</h3>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between bg-blue-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-blue-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-blue-200 ${
+                sidebarFilter === "new" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("new")}
+            >
               <span className="text-xs text-blue-800">New:</span>
               <span className="font-bold text-sm text-blue-800">{allStats.new}</span>
             </div>
-            <div className="flex items-center justify-between bg-yellow-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-yellow-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-yellow-200 ${
+                sidebarFilter === "pending" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("pending")}
+            >
               <span className="text-xs text-yellow-800">Pending:</span>
               <span className="font-bold text-sm text-yellow-800">{allStats.pending}</span>
             </div>
-            <div className="flex items-center justify-between bg-orange-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-orange-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-orange-200 ${
+                sidebarFilter === "underProcess" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("underProcess")}
+            >
               <span className="text-xs text-orange-800">Under Process:</span>
               <span className="font-bold text-sm text-orange-800">{allStats.underProcess}</span>
             </div>
-            <div className="flex items-center justify-between bg-green-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-green-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-green-200 ${
+                sidebarFilter === "completed" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("completed")}
+            >
               <span className="text-xs text-green-800">Completed:</span>
               <span className="font-bold text-sm text-green-800">{allStats.completed}</span>
             </div>
-            <div className="flex items-center justify-between bg-red-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-red-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-red-200 ${
+                sidebarFilter === "rejected" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("rejected")}
+            >
               <span className="text-xs text-red-800">Rejected:</span>
               <span className="font-bold text-sm text-red-800">{allStats.rejected}</span>
             </div>
-            <div className="flex items-center justify-between bg-pink-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-pink-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-pink-200 ${
+                sidebarFilter === "needJustification" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("needJustification")}
+            >
               <span className="text-xs text-pink-800">Need Justification:</span>
               <span className="font-bold text-sm text-pink-800">{allStats.needJustification}</span>
             </div>
-            <div className="flex items-center justify-between bg-red-200 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-red-200 rounded px-3 py-2 cursor-pointer transition-all hover:bg-red-300 ${
+                sidebarFilter === "delayed" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("delayed")}
+            >
               <span className="text-xs text-red-900">Delayed:</span>
               <span className="font-bold text-sm text-red-900">{allStats.delayed}</span>
             </div>
-            <div className="flex items-center justify-between bg-indigo-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-indigo-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-indigo-200 ${
+                sidebarFilter === "submittedToHospital" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("submittedToHospital")}
+            >
               <span className="text-xs text-indigo-800">Submitted to Hospital:</span>
               <span className="font-bold text-sm text-indigo-800">{allStats.submittedToHospital}</span>
-            </div>
-            <div className="flex items-center justify-between bg-red-200 rounded px-3 py-2">
-              <span className="text-xs text-red-900">Overdue:</span>
-              <span className="font-bold text-sm text-red-900">{allStats.overdue}</span>
             </div>
           </div>
         </div>
 
-        {/* My Assigned Requests Statistics */}
+        {/* My Assigned Requests Statistics - Clickable */}
         <div className="w-full mb-4">
           <h3 className="text-sm font-semibold text-green-900 mb-2">My Assigned Cases</h3>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between bg-purple-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-purple-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-purple-200 ${
+                sidebarFilter === "myAssigned" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("myAssigned")}
+            >
               <span className="text-xs text-purple-800">Assigned to Me:</span>
               <span className="font-bold text-sm text-purple-800">
                 {myStats.assigned}/{myStats.total} ({myStats.assignmentRate}%)
               </span>
             </div>
-            <div className="flex items-center justify-between bg-orange-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-orange-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-orange-200 ${
+                sidebarFilter === "myUnderProcess" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("myUnderProcess")}
+            >
               <span className="text-xs text-orange-800">My Under Process:</span>
               <span className="font-bold text-sm text-orange-800">{myStats.myUnderProcess}</span>
             </div>
-            <div className="flex items-center justify-between bg-green-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-green-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-green-200 ${
+                sidebarFilter === "myCompleted" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("myCompleted")}
+            >
               <span className="text-xs text-green-800">My Completed:</span>
               <span className="font-bold text-sm text-green-800">{myStats.myCompleted}</span>
             </div>
-            <div className="flex items-center justify-between bg-pink-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-pink-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-pink-200 ${
+                sidebarFilter === "myNeedJustification" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("myNeedJustification")}
+            >
               <span className="text-xs text-pink-800">My Need Justification:</span>
               <span className="font-bold text-sm text-pink-800">{myStats.myNeedJustification}</span>
             </div>
-            <div className="flex items-center justify-between bg-red-100 rounded px-3 py-2">
+            <div 
+              className={`flex items-center justify-between bg-red-100 rounded px-3 py-2 cursor-pointer transition-all hover:bg-red-200 ${
+                sidebarFilter === "myOverdue" ? "ring-2 ring-green-500" : ""
+              }`}
+              onClick={() => handleSidebarStatClick("myOverdue")}
+            >
               <span className="text-xs text-red-800">My Overdue:</span>
               <span className="font-bold text-sm text-red-800">{myStats.myOverdue}</span>
             </div>
           </div>
         </div>
+
+        {/* Clear Filter Button */}
+        {sidebarFilter && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setSidebarFilter(null)}
+            className="w-full mb-4 border-green-300 text-green-700 hover:bg-green-100"
+          >
+            Clear Filter
+          </Button>
+        )}
 
         <Button 
           variant="outline"
@@ -826,14 +959,41 @@ export default function CaseCoordinatorDashboard() {
             {filters.map((f) => (
               <Button
                 key={f.value}
-                variant={filter === f.value ? "default" : "outline"}
-                onClick={() => setFilter(f.value)}
+                variant={filter === f.value && !sidebarFilter ? "default" : "outline"}
+                onClick={() => {
+                  setFilter(f.value);
+                  setSidebarFilter(null);
+                }}
                 size="sm"
+                disabled={!!sidebarFilter}
               >
                 {f.label}
               </Button>
             ))}
           </div>
+          
+          {/* Active Filter Indicator */}
+          {sidebarFilter && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-2 rounded">
+              <span>Active Filter:</span>
+              <span className="font-medium">
+                {sidebarFilter === "overdue" && "Overdue Requests"}
+                {sidebarFilter === "new" && "New Requests"}
+                {sidebarFilter === "pending" && "Pending Requests"}
+                {sidebarFilter === "underProcess" && "Under Process"}
+                {sidebarFilter === "completed" && "Completed Requests"}
+                {sidebarFilter === "rejected" && "Rejected Requests"}
+                {sidebarFilter === "needJustification" && "Need Justification"}
+                {sidebarFilter === "delayed" && "Delayed Requests"}
+                {sidebarFilter === "submittedToHospital" && "Submitted to Hospital"}
+                {sidebarFilter === "myAssigned" && "My Assigned Cases"}
+                {sidebarFilter === "myUnderProcess" && "My Under Process"}
+                {sidebarFilter === "myCompleted" && "My Completed"}
+                {sidebarFilter === "myNeedJustification" && "My Need Justification"}
+                {sidebarFilter === "myOverdue" && "My Overdue"}
+              </span>
+            </div>
+          )}
           
           {/* Date Range Filter */}
           <DateRangeFilter
@@ -911,11 +1071,29 @@ export default function CaseCoordinatorDashboard() {
 
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-4">
-            {filter === "mine" ? "My Assigned Requests" : 
-             filter === "delayed" ? "Delayed Requests" :
-             filter === "justification" ? "Requests Needing Justification" :
-             filter === "submitted_hospital" ? "Submitted to Hospital" :
-             "All Requests"}
+            {sidebarFilter ? (
+              sidebarFilter === "overdue" ? "Overdue Requests" :
+              sidebarFilter === "new" ? "New Requests" :
+              sidebarFilter === "pending" ? "Pending Requests" :
+              sidebarFilter === "underProcess" ? "Under Process Requests" :
+              sidebarFilter === "completed" ? "Completed Requests" :
+              sidebarFilter === "rejected" ? "Rejected Requests" :
+              sidebarFilter === "needJustification" ? "Requests Needing Justification" :
+              sidebarFilter === "delayed" ? "Delayed Requests" :
+              sidebarFilter === "submittedToHospital" ? "Submitted to Hospital" :
+              sidebarFilter === "myAssigned" ? "My Assigned Cases" :
+              sidebarFilter === "myUnderProcess" ? "My Under Process Cases" :
+              sidebarFilter === "myCompleted" ? "My Completed Cases" :
+              sidebarFilter === "myNeedJustification" ? "My Cases Needing Justification" :
+              sidebarFilter === "myOverdue" ? "My Overdue Cases" :
+              "Filtered Requests"
+            ) : (
+              filter === "mine" ? "My Assigned Requests" : 
+              filter === "delayed" ? "Delayed Requests" :
+              filter === "justification" ? "Requests Needing Justification" :
+              filter === "submitted_hospital" ? "Submitted to Hospital" :
+              "All Requests"
+            )}
           </h2>
           
           <div className="overflow-x-auto mb-8">
