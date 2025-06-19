@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NurseStats from "./NurseStats";
+import NurseAnalytics from "./NurseAnalytics";
 import { NurseRequest } from "@/hooks/useNurseRequests";
 
 interface NurseSidebarProps {
@@ -19,6 +20,13 @@ export default function NurseSidebar({
 }: NurseSidebarProps) {
   const navigate = useNavigate();
 
+  const hospitalPrivileges = [
+    { name: "King Khaled Hospital", cases: 12 },
+    { name: "King Abdulaziz Hospital", cases: 8 },
+    { name: "King Faisal Hospital", cases: 15 },
+    { name: "Prince Sultan Hospital", cases: 6 },
+  ];
+
   return (
     <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
       <div className="text-center mb-4">
@@ -31,12 +39,30 @@ export default function NurseSidebar({
         <p className="text-xs text-blue-700">{currentNurseName}</p>
       </div>
 
-      <Button className="w-full mb-8" variant="default" onClick={onCreateNewRequest}>
+      <Button className="w-full mb-6" variant="default" onClick={onCreateNewRequest}>
         <Plus className="w-4 h-4 mr-2" />
         Create New Request
       </Button>
 
       <NurseStats filteredRequests={filteredRequests} />
+
+      {/* Hospital Privileges */}
+      <div className="w-full mt-6">
+        <h3 className="text-sm font-semibold text-blue-900 mb-3">Hospital Privileges</h3>
+        <div className="space-y-2">
+          {hospitalPrivileges.map((hospital) => (
+            <div
+              key={hospital.name}
+              className="flex justify-between items-center p-2 bg-white rounded-lg border text-xs"
+            >
+              <span className="text-gray-700 truncate">{hospital.name}</span>
+              <span className="font-bold text-blue-600">{hospital.cases}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <NurseAnalytics filteredRequests={filteredRequests} />
 
       <Button 
         variant="outline"

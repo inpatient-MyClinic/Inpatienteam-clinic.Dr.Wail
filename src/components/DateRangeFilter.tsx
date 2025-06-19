@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, X } from "lucide-react";
+import { Calendar as CalendarIcon, X, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,13 @@ const weeks = [
   "Week 1", "Week 2", "Week 3", "Week 4", "Week 5"
 ];
 
+const timeFilters = [
+  { label: "Day", value: "day" },
+  { label: "Week", value: "week" },
+  { label: "Month", value: "month" },
+  { label: "Year to Date", value: "ytd" },
+];
+
 export default function DateRangeFilter({
   selectedDates,
   selectedWeeks,
@@ -38,20 +45,11 @@ export default function DateRangeFilter({
   onClearAll
 }: DateRangeFilterProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [filter, setFilter] = useState<string | null>(null);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-    
-    const isSelected = selectedDates.some(d => 
-      d.toDateString() === date.toDateString()
-    );
-    
-    if (isSelected) {
-      onDateSelect(selectedDates.filter(d => 
-        d.toDateString() !== date.toDateString()
-      ));
-    } else {
-      onDateSelect([...selectedDates, date]);
+  const handleDateSelect = (dates: Date[] | undefined) => {
+    if (dates) {
+      onDateSelect(dates);
     }
   };
 
@@ -88,84 +86,100 @@ export default function DateRangeFilter({
   const hasFilters = selectedDates.length > 0 || selectedWeeks.length > 0 || selectedMonths.length > 0;
 
   return (
-    <div className="flex flex-wrap gap-3 mb-4">
-      {/* Calendar Date Picker */}
-      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm">
-            <CalendarIcon className="w-4 h-4 mr-2" />
-            Select Dates
-            {selectedDates.length > 0 && (
+    <div className="space-y-4">
+      {/* Time Filter Buttons */}
+      <div className="flex flex-wrap gap-3">
+        <div className="flex gap-2">
+          {timeFilters.map((f) => (
+            <Button
+              key={f.value}
+              variant={filter === f.value ? "default" : "outline"}
+              onClick={() => setFilter(filter === f.value ? null : f.value)}
+              size="sm"
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Calendar Date Picker */}
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm">
+              <CalendarIcon className="w-4 h-4 mr-2" />
+              Select Dates
+              {selectedDates.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {selectedDates.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="multiple"
+              selected={selectedDates}
+              onSelect={handleDateSelect}
+              className={cn("p-3")}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {/* Week Selector */}
+        <Select onValueChange={handleWeekSelect}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Select Weeks" />
+            {selectedWeeks.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {selectedDates.length}
+                {selectedWeeks.length}
               </Badge>
             )}
+          </SelectTrigger>
+          <SelectContent>
+            {weeks.map((week) => (
+              <SelectItem key={week} value={week}>
+                <div className="flex items-center justify-between w-full">
+                  {week}
+                  {selectedWeeks.includes(week) && (
+                    <span className="ml-2 text-blue-600">✓</span>
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Month Selector */}
+        <Select onValueChange={handleMonthSelect}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Select Months" />
+            {selectedMonths.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {selectedMonths.length}
+              </Badge>
+            )}
+          </SelectTrigger>
+          <SelectContent>
+            {months.map((month) => (
+              <SelectItem key={month} value={month}>
+                <div className="flex items-center justify-between w-full">
+                  {month}
+                  {selectedMonths.includes(month) && (
+                    <span className="ml-2 text-blue-600">✓</span>
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Clear All Filters */}
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={onClearAll}>
+            Clear All Filters
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="multiple"
-            selected={selectedDates}
-            onSelect={(dates) => onDateSelect(dates || [])}
-            className={cn("p-3 pointer-events-auto")}
-          />
-        </PopoverContent>
-      </Popover>
-
-      {/* Week Selector */}
-      <Select onValueChange={handleWeekSelect}>
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Select Weeks" />
-          {selectedWeeks.length > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              {selectedWeeks.length}
-            </Badge>
-          )}
-        </SelectTrigger>
-        <SelectContent>
-          {weeks.map((week) => (
-            <SelectItem key={week} value={week}>
-              <div className="flex items-center justify-between w-full">
-                {week}
-                {selectedWeeks.includes(week) && (
-                  <span className="ml-2 text-blue-600">✓</span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Month Selector */}
-      <Select onValueChange={handleMonthSelect}>
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Select Months" />
-          {selectedMonths.length > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              {selectedMonths.length}
-            </Badge>
-          )}
-        </SelectTrigger>
-        <SelectContent>
-          {months.map((month) => (
-            <SelectItem key={month} value={month}>
-              <div className="flex items-center justify-between w-full">
-                {month}
-                {selectedMonths.includes(month) && (
-                  <span className="ml-2 text-blue-600">✓</span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Clear All Filters */}
-      {hasFilters && (
-        <Button variant="ghost" size="sm" onClick={onClearAll}>
-          Clear All Filters
-        </Button>
-      )}
+        )}
+      </div>
 
       {/* Selected Filters Display */}
       <div className="flex flex-wrap gap-2">
