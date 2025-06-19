@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle, Clock, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, XCircle, Plus, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -86,6 +86,7 @@ export default function HospitalDashboard() {
   const [filter, setFilter] = useState<string | null>(null);
   const [requests, setRequests] = useState(demoRequests);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const currentHospitalStaff = "Hospital Admin 1";
   
   // Filter requests for current hospital
@@ -237,13 +238,22 @@ export default function HospitalDashboard() {
     }
   };
 
+  const createNewRequest = () => {
+    navigate("/create-request");
+  };
+
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-        <h1 className="text-xl font-bold mb-8 text-center text-blue-900">Hospital Dashboard</h1>
+        <h1 className="text-xl font-bold mb-4 text-center text-blue-900">Hospital Dashboard</h1>
         
-        <div className="flex flex-col gap-4 w-full">
+        <Button className="w-full mb-6" variant="default" onClick={createNewRequest}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Request
+        </Button>
+        
+        <div className="flex flex-col gap-4 w-full mb-8">
           {stats.map((stat) => (
             <div
               key={stat.key}
@@ -254,6 +264,15 @@ export default function HospitalDashboard() {
             </div>
           ))}
         </div>
+
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
       </aside>
       
       {/* Main */}

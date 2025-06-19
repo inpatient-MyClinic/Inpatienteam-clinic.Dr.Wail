@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -50,6 +49,31 @@ const financeData = {
   ytdAchievement: 82.3,
   ytdRevenue: 2500000
 };
+
+// Hospital lead time data
+const hospitalLeadTimeData = [
+  {
+    hospital: "King Abdulaziz Hospital",
+    patientContactLeadTime: 2.5, // hours from request received to patient contacted
+    approvalLeadTime: 18.5, // hours from patient contacted to approval
+    totalRequests: 45,
+    completedRequests: 38
+  },
+  {
+    hospital: "Prince Sultan Hospital", 
+    patientContactLeadTime: 3.2,
+    approvalLeadTime: 22.8,
+    totalRequests: 35,
+    completedRequests: 28
+  },
+  {
+    hospital: "King Faisal Hospital",
+    patientContactLeadTime: 4.1,
+    approvalLeadTime: 28.3,
+    totalRequests: 25,
+    completedRequests: 20
+  }
+];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -212,6 +236,39 @@ export default function AdminDashboard() {
             </div>
 
             <div className="space-y-6">
+              {/* Hospital Lead Time Analysis */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <h4 className="font-semibold mb-4 text-gray-900">Hospital Lead Time Performance</h4>
+                <div className="space-y-4">
+                  {hospitalLeadTimeData.map((hospital) => (
+                    <div key={hospital.hospital} className="border rounded-lg p-4">
+                      <h5 className="font-medium text-blue-900 mb-3">{hospital.hospital}</h5>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-blue-50 p-3 rounded">
+                          <p className="text-xs text-blue-600 mb-1">Patient Contact Lead Time</p>
+                          <p className="text-lg font-bold text-blue-800">{hospital.patientContactLeadTime}h</p>
+                          <p className="text-xs text-blue-600">From request to contact</p>
+                        </div>
+                        <div className="bg-green-50 p-3 rounded">
+                          <p className="text-xs text-green-600 mb-1">Approval Lead Time</p>
+                          <p className="text-lg font-bold text-green-800">{hospital.approvalLeadTime}h</p>
+                          <p className="text-xs text-green-600">From contact to approval</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Completion Rate:</span>
+                          <span className="font-medium">
+                            {Math.round((hospital.completedRequests / hospital.totalRequests) * 100)}% 
+                            ({hospital.completedRequests}/{hospital.totalRequests})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Conversion Rate */}
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <h4 className="font-semibold mb-3 text-gray-900">Conversion Rate</h4>
