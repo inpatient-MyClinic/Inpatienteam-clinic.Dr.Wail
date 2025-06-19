@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, Send, Filter, X } from "lucide-react";
@@ -101,37 +102,6 @@ export default function RequestsTable({
 
     onJustificationSubmit(requestId, justificationText);
     setJustificationText("");
-  };
-
-  const handleModificationSubmit = (requestId: number) => {
-    if (!editingSurgeryDate || !editingHospital) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    onRequestModification(requestId, editingSurgeryDate, editingHospital);
-    setEditingSurgeryDate("");
-    setEditingHospital("");
-    setHasModifications(false);
-    
-    toast({
-      title: "Request Modified",
-      description: "Request has been updated and notifications sent to case coordinator and hospital",
-    });
-  };
-
-  const handleFieldChange = (field: 'surgeryDate' | 'hospital', value: string, original: any) => {
-    if (field === 'surgeryDate') {
-      setEditingSurgeryDate(value);
-      setHasModifications(value !== original.expectedSurgeryDate);
-    } else {
-      setEditingHospital(value);
-      setHasModifications(value !== original.hospital);
-    }
   };
 
   const ViewRequestDialog = ({ request }: { request: Request }) => {
