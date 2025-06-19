@@ -3,30 +3,58 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { DoctorRequest } from "@/hooks/useDoctorRequests";
 
 interface DoctorSidebarProps {
   currentDoctorName: string;
-  stats: Array<{
-    label: string;
-    key: string;
-    color: string;
-    count: number;
-  }>;
-  selectedStatuses: string[];
-  onStatusClick: (status: string) => void;
-  onClearStatusFilter: () => void;
+  filteredRequests: DoctorRequest[];
   onCreateNewRequest: () => void;
+  activeStatusFilter: string | null;
+  onStatusFilterClick: (status: string | null) => void;
 }
 
 export default function DoctorSidebar({
   currentDoctorName,
-  stats,
-  selectedStatuses,
-  onStatusClick,
-  onClearStatusFilter,
-  onCreateNewRequest
+  filteredRequests,
+  onCreateNewRequest,
+  activeStatusFilter,
+  onStatusFilterClick
 }: DoctorSidebarProps) {
   const navigate = useNavigate();
+
+  // Calculate stats from filtered requests
+  const stats = [
+    {
+      label: "Pending",
+      key: "pending",
+      color: "bg-yellow-500",
+      count: filteredRequests.filter(req => req.status === "Pending").length
+    },
+    {
+      label: "Under Process", 
+      key: "under_process",
+      color: "bg-blue-500",
+      count: filteredRequests.filter(req => req.status === "Under Process").length
+    },
+    {
+      label: "Done",
+      key: "done", 
+      color: "bg-green-500",
+      count: filteredRequests.filter(req => req.status === "Done").length
+    },
+    {
+      label: "Delayed",
+      key: "delayed",
+      color: "bg-red-500", 
+      count: filteredRequests.filter(req => req.isDelayed).length
+    },
+    {
+      label: "Rejected",
+      key: "rejected",
+      color: "bg-gray-500",
+      count: filteredRequests.filter(req => req.status === "Rejected").length
+    }
+  ];
 
   return (
     <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
@@ -51,22 +79,22 @@ export default function DoctorSidebar({
           <div
             key={stat.key}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
-              selectedStatuses.length === 0 || selectedStatuses.includes(stat.label) 
+              !activeStatusFilter || activeStatusFilter === stat.label 
                 ? stat.color 
                 : stat.color + ' opacity-50'
             } text-white`}
-            onClick={() => onStatusClick(stat.label)}
+            onClick={() => onStatusFilterClick(activeStatusFilter === stat.label ? null : stat.label)}
           >
             <span className="text-xs">{stat.label}:</span>
             <span className="font-bold text-lg">{stat.count}</span>
           </div>
         ))}
         
-        {selectedStatuses.length > 0 && (
+        {activeStatusFilter && (
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={onClearStatusFilter}
+            onClick={() => onStatusFilterClick(null)}
             className="mt-2"
           >
             Clear Filter

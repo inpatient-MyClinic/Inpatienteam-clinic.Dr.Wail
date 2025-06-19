@@ -9,10 +9,19 @@ interface HospitalPrivilege {
 }
 
 interface HospitalPrivilegesProps {
-  privileges: HospitalPrivilege[];
+  privileges?: HospitalPrivilege[];
 }
 
-export default function HospitalPrivileges({ privileges }: HospitalPrivilegesProps) {
+export default function HospitalPrivileges({ privileges = [] }: HospitalPrivilegesProps) {
+  const defaultPrivileges = [
+    { name: "King Khaled Hospital", cases: 12 },
+    { name: "King Abdulaziz Hospital", cases: 8 },
+    { name: "King Faisal Hospital", cases: 15 },
+    { name: "Prince Sultan Hospital", cases: 6 }
+  ];
+
+  const hospitalPrivileges = privileges.length > 0 ? privileges : defaultPrivileges;
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -21,7 +30,7 @@ export default function HospitalPrivileges({ privileges }: HospitalPrivilegesPro
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {privileges.map((hospital, index) => (
+          {hospitalPrivileges.map((hospital, index) => (
             <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
               <Badge variant="secondary" className="flex-1">
                 {hospital.name}

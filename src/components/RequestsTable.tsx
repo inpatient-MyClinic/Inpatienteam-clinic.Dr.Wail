@@ -11,41 +11,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import ExportButton from "./ExportButton";
-
-interface Request {
-  id: number;
-  patientName: string;
-  mrn: string;
-  serviceDescription: string;
-  hospital: string;
-  status: string;
-  paymentStatus: string;
-  assignedDoctor: string;
-  createdAt: string;
-  originalRequest: string;
-  justificationNeeded: boolean;
-  medicalHistory?: string;
-  additionalNotes?: string;
-  attachments?: string[];
-  expectedSurgeryDate?: string;
-}
+import { DoctorRequest, REQUEST_STATUSES } from "@/hooks/useDoctorRequests";
 
 interface RequestsTableProps {
-  requests: Request[];
-  onJustificationSubmit: (requestId: number, justification: string) => void;
-  onRequestModification: (requestId: number, expectedSurgeryDate: string, hospital: string) => void;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPaymentStatusBadge: (status: string) => JSX.Element;
-  REQUEST_STATUSES: Record<string, string>;
+  filteredRequests: DoctorRequest[];
+  updateStatus: (requestId: number, newStatus: string) => void;
 }
 
 export default function RequestsTable({
-  requests,
-  onJustificationSubmit,
-  onRequestModification,
-  getStatusBadge,
-  getPaymentStatusBadge,
-  REQUEST_STATUSES
+  filteredRequests,
+  updateStatus
 }: RequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
   
@@ -53,7 +28,6 @@ export default function RequestsTable({
   const [serviceFilter, setServiceFilter] = useState("");
   const [hospitalFilter, setHospitalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,41 +45,58 @@ export default function RequestsTable({
   ];
 
   // Get unique values for filter dropdowns
-  const uniqueStatuses = [...new Set(requests.map(req => req.status))];
-  const uniquePaymentStatuses = [...new Set(requests.map(req => req.paymentStatus))];
-  const uniqueHospitals = [...new Set(requests.map(req => req.hospital))];
+  const uniqueStatuses = [...new Set(filteredRequests.map(req => req.status))];
+  const uniqueHospitals = [...new Set(filteredRequests.map(req => req.hospital))];
 
   // Filter requests based on all filter criteria
-  const filteredRequests = requests.filter(request => {
+  const tableFilteredRequests = filteredRequests.filter(request => {
     const matchesService = serviceFilter === "" || 
       request.serviceDescription.toLowerCase().includes(serviceFilter.toLowerCase());
     const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
-    const matchesPaymentStatus = paymentStatusFilter === "all" || request.paymentStatus === paymentStatusFilter;
     
-    return matchesService && matchesHospital && matchesStatus && matchesPaymentStatus;
+    return matchesService && matchesHospital && matchesStatus;
   });
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const totalPages = Math.ceil(tableFilteredRequests.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageRequests = filteredRequests.slice(startIndex, endIndex);
+  const currentPageRequests = tableFilteredRequests.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [serviceFilter, hospitalFilter, statusFilter, paymentStatusFilter]);
+  }, [serviceFilter, hospitalFilter, statusFilter]);
 
   const clearAllFilters = () => {
     setServiceFilter("");
     setHospitalFilter("all");
     setStatusFilter("all");
-    setPaymentStatusFilter("all");
   };
 
-  // Fix the boolean calculation for hasActiveFilters
-  const hasActiveFilters = Boolean(serviceFilter || hospitalFilter !== "all" || statusFilter !== "all" || paymentStatusFilter !== "all");
+  const hasActiveFilters = Boolean(serviceFilter || hospitalFilter !== "all" || statusFilter !== "all");
+
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, string> = {
+      [REQUEST_STATUSES.PENDING]: "bg-yellow-100 text-yellow-800",
+      [REQUEST_STATUSES.UNDER_PROCESS]: "bg-blue-100 text-blue-800",
+      [REQUEST_STATUSES.PATIENT_CONTACTED]: "bg-purple-100 text-purple-800",
+      [REQUEST_STATUSES.SUBMITTED_TO_INSURANCE]: "bg-indigo-100 text-indigo-800",
+      [REQUEST_STATUSES.APPROVED_BY_HOSPITAL]: "bg-green-100 text-green-800",
+      [REQUEST_STATUSES.REJECTED]: "bg-red-100 text-red-800",
+      [REQUEST_STATUSES.DONE]: "bg-green-100 text-green-800",
+      [REQUEST_STATUSES.NEED_JUSTIFICATION]: "bg-orange-100 text-orange-800",
+      [REQUEST_STATUSES.NOT_COMPLETED]: "bg-gray-100 text-gray-800",
+      [REQUEST_STATUSES.DELAYED]: "bg-red-100 text-red-800"
+    };
+
+    return (
+      <Badge className={statusColors[status] || "bg-gray-100 text-gray-800"}>
+        {status}
+      </Badge>
+    );
+  };
 
   const submitJustification = (requestId: number) => {
     if (!justificationText.trim()) {
@@ -117,11 +108,15 @@ export default function RequestsTable({
       return;
     }
 
-    onJustificationSubmit(requestId, justificationText);
+    updateStatus(requestId, REQUEST_STATUSES.SUBMITTED_TO_INSURANCE);
     setJustificationText("");
+    toast({
+      title: "Justification Submitted",
+      description: "Request has been resubmitted with additional justification",
+    });
   };
 
-  const ViewRequestDialog = ({ request }: { request: Request }) => {
+  const ViewRequestDialog = ({ request }: { request: DoctorRequest }) => {
     const [localSurgeryDate, setLocalSurgeryDate] = useState(request.expectedSurgeryDate || "");
     const [localHospital, setLocalHospital] = useState(request.hospital || "");
     const [localHasModifications, setLocalHasModifications] = useState(false);
@@ -146,7 +141,7 @@ export default function RequestsTable({
         return;
       }
 
-      onRequestModification(request.id, localSurgeryDate, localHospital);
+      // Here you would typically update the request with the new data
       setLocalHasModifications(false);
       
       toast({
@@ -220,34 +215,6 @@ export default function RequestsTable({
               </div>
             </div>
 
-            {/* Original Request */}
-            <div>
-              <Label className="font-semibold">Original Request</Label>
-              <div className="mt-1 p-3 bg-blue-50 rounded-md text-sm">
-                {request.originalRequest}
-              </div>
-            </div>
-
-            {/* Medical History */}
-            {request.medicalHistory && (
-              <div>
-                <Label className="font-semibold">Medical History</Label>
-                <div className="mt-1 p-3 bg-yellow-50 rounded-md text-sm">
-                  {request.medicalHistory}
-                </div>
-              </div>
-            )}
-
-            {/* Additional Notes */}
-            {request.additionalNotes && (
-              <div>
-                <Label className="font-semibold">Additional Notes</Label>
-                <div className="mt-1 p-3 bg-green-50 rounded-md text-sm">
-                  {request.additionalNotes}
-                </div>
-              </div>
-            )}
-
             {/* Attachments */}
             {request.attachments && request.attachments.length > 0 && (
               <div>
@@ -269,18 +236,10 @@ export default function RequestsTable({
             )}
 
             {/* Status Information */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              <div>
-                <Label className="font-semibold">Current Status</Label>
-                <div className="mt-1">
-                  {getStatusBadge(request.status)}
-                </div>
-              </div>
-              <div>
-                <Label className="font-semibold">Payment Status</Label>
-                <div className="mt-1">
-                  {getPaymentStatusBadge(request.paymentStatus)}
-                </div>
+            <div className="pt-4 border-t">
+              <Label className="font-semibold">Current Status</Label>
+              <div className="mt-1">
+                {getStatusBadge(request.status)}
               </div>
             </div>
 
@@ -413,8 +372,8 @@ export default function RequestsTable({
       {/* Export Button */}
       <div className="mb-4 flex justify-end">
         <ExportButton 
-          requests={requests}
-          filteredRequests={filteredRequests}
+          requests={filteredRequests}
+          filteredRequests={tableFilteredRequests}
           hasActiveFilters={hasActiveFilters}
         />
       </div>
@@ -423,7 +382,7 @@ export default function RequestsTable({
       {hasActiveFilters && (
         <div className="mb-4 flex justify-between items-center">
           <div className="text-sm text-gray-600">
-            Showing {filteredRequests.length} of {requests.length} requests (filtered)
+            Showing {tableFilteredRequests.length} of {filteredRequests.length} requests (filtered)
           </div>
           <Button
             variant="ghost"
@@ -439,7 +398,7 @@ export default function RequestsTable({
       {/* Pagination Info */}
       <div className="mb-4 flex justify-between items-center text-sm text-gray-600">
         <div>
-          Showing {startIndex + 1} to {Math.min(endIndex, filteredRequests.length)} of {filteredRequests.length} entries
+          Showing {startIndex + 1} to {Math.min(endIndex, tableFilteredRequests.length)} of {tableFilteredRequests.length} entries
         </div>
         <div>
           Page {currentPage} of {totalPages}
@@ -565,53 +524,13 @@ export default function RequestsTable({
                 </Popover>
               </div>
             </th>
-            <th className="p-2 relative">
-              <div className="flex items-center justify-between">
-                Payment Status
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                      <Filter className="h-3 w-3" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Filter by Payment</Label>
-                      <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select payment status" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="all">All payment statuses</SelectItem>
-                          {uniquePaymentStatuses.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {paymentStatusFilter !== "all" && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setPaymentStatusFilter("all")}
-                          className="w-full text-xs"
-                        >
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </th>
             <th className="p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {currentPageRequests.length === 0 ? (
             <tr>
-              <td colSpan={8} className="text-center text-gray-400 py-6">
+              <td colSpan={7} className="text-center text-gray-400 py-6">
                 {hasActiveFilters ? "No requests match the current filters." : "No requests found."}
               </td>
             </tr>
@@ -632,9 +551,6 @@ export default function RequestsTable({
                   {getStatusBadge(req.status)}
                 </td>
                 <td className="p-2">
-                  {getPaymentStatusBadge(req.paymentStatus)}
-                </td>
-                <td className="p-2">
                   <div className="flex gap-2">
                     {req.status === REQUEST_STATUSES.NEED_JUSTIFICATION ? (
                       <>
@@ -653,9 +569,9 @@ export default function RequestsTable({
                             </DialogHeader>
                             <div className="space-y-4">
                               <div>
-                                <Label>Original Request</Label>
+                                <Label>Service Description</Label>
                                 <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
-                                  {req.originalRequest}
+                                  {req.serviceDescription}
                                 </div>
                               </div>
                               <div>

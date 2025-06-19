@@ -1,24 +1,25 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DoctorRequest } from "@/hooks/useDoctorRequests";
 
 interface DoctorAnalyticsProps {
-  totalRequests: number;
-  doneRequests: number;
-  rejectedRequests: number;
-  conversionRate: string;
-  approvalRate: string;
-  rejectionRate: string;
+  filteredRequests: DoctorRequest[];
+  currentDoctorName: string;
 }
 
 export default function DoctorAnalytics({
-  totalRequests,
-  doneRequests,
-  rejectedRequests,
-  conversionRate,
-  approvalRate,
-  rejectionRate
+  filteredRequests,
+  currentDoctorName
 }: DoctorAnalyticsProps) {
+  const totalRequests = filteredRequests.length;
+  const doneRequests = filteredRequests.filter(req => req.status === "Done").length;
+  const rejectedRequests = filteredRequests.filter(req => req.status === "Rejected").length;
+  
+  const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : "0";
+  const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : "0";
+  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
+
   return (
     <Card>
       <CardHeader>
