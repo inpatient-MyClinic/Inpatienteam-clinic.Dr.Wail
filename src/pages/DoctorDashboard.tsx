@@ -158,15 +158,35 @@ const DoctorDashboard = () => {
 
   // Filter to show only requests created by this doctor OR assigned to this doctor
   const currentDoctorName = "Dr. Ahmed Salem";
-  const filteredRequests = requests.filter(request => {
-    const matchesDoctor = request.createdBy === currentDoctorName || request.assignedDoctor === currentDoctorName;
+  const doctorRequests = requests.filter(request => {
+    return request.createdBy === currentDoctorName || request.assignedDoctor === currentDoctorName;
+  });
+
+  // Calculate rejection statistics for this doctor
+  const rejectedRequests = doctorRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length;
+  const totalRequests = doctorRequests.length;
+  const rejectionRate = totalRequests > 0 ? Math.round((rejectedRequests / totalRequests) * 100) : 0;
+
+  // Update stats to reflect doctor's actual data
+  const doctorStats = [
+    { label: "New Requests", key: "new", color: "bg-blue-600", 
+      count: doctorRequests.filter(req => req.status === REQUEST_STATUSES.PENDING).length },
+    { label: "Under Process", key: "process", color: "bg-yellow-500", 
+      count: doctorRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS).length },
+    { label: "Completed", key: "done", color: "bg-green-600", 
+      count: doctorRequests.filter(req => req.status === REQUEST_STATUSES.DONE).length },
+    { label: "Rejected", key: "rejected", color: "bg-red-500", 
+      count: rejectedRequests },
+  ];
+
+  const filteredRequests = doctorRequests.filter(request => {
     const matchesSearch = searchTerm === "" || 
       request.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.fileNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.serviceDescription.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesHospital = hospitalFilter === "" || request.hospital === hospitalFilter;
     
-    return matchesDoctor && matchesSearch && matchesHospital;
+    return matchesSearch && matchesHospital;
   });
 
   const handleStatusChange = (request: any, status: string) => {
@@ -303,13 +323,23 @@ const DoctorDashboard = () => {
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
+        <div className="text-center mb-4">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="My Clinic Logo" 
+            className="h-8 w-auto mx-auto mb-2"
+          />
+          <h1 className="text-lg font-bold text-blue-900">Doctor Dashboard</h1>
+          <p className="text-xs text-blue-700">{currentDoctorName}</p>
+        </div>
+
         <Button className="w-full mb-8" variant="default" onClick={createNewRequest}>
           <Plus className="w-4 h-4 mr-2" />
           Create New Request
         </Button>
         
         <div className="flex flex-col gap-4 w-full">
-          {stats.map((stat) => (
+          {doctorStats.map((stat) => (
             <div
               key={stat.key}
               className={`flex items-center gap-2 rounded-lg px-4 py-2 ${stat.color} text-white`}
@@ -327,7 +357,27 @@ const DoctorDashboard = () => {
               {filteredRequests.filter(req => req.isDelayed).length}
             </span>
           </div>
+
+          {/* Rejection Rate */}
+          <div className="flex flex-col gap-1 rounded-lg px-4 py-3 bg-red-100 text-red-800 border border-red-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium">Rejection Rate:</span>
+              <span className="font-bold text-lg">{rejectionRate}%</span>
+            </div>
+            <div className="text-xs text-red-600">
+              {rejectedRequests} rejected out of {totalRequests} total
+            </div>
+          </div>
         </div>
+
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
       </aside>
 
       {/* Main */}

@@ -184,6 +184,16 @@ export default function NurseDashboard() {
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
+        <div className="text-center mb-4">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="My Clinic Logo" 
+            className="h-8 w-auto mx-auto mb-2"
+          />
+          <h1 className="text-lg font-bold text-blue-900">Nurse Dashboard</h1>
+          <p className="text-xs text-blue-700">{currentNurseName}</p>
+        </div>
+
         <Button className="w-full mb-8" variant="default" onClick={createNewRequest}>
           <Plus className="w-4 h-4 mr-2" />
           Create New Request
@@ -217,6 +227,15 @@ export default function NurseDashboard() {
             </span>
           </div>
         </div>
+
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
       </aside>
       
       {/* Main */}
@@ -315,4 +334,3 @@ export default function NurseDashboard() {
       </main>
     </div>
   );
-}

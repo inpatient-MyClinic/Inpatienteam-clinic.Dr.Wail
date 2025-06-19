@@ -9,7 +9,6 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import CreateRequest from "./pages/CreateRequest";
 import MyRequests from "./pages/MyRequests";
-import Analytics from "./pages/Analytics";
 import SettingsDirectory from "./pages/SettingsDirectory";
 import NotificationsLogs from "./pages/NotificationsLogs";
 import RequestWireframe from "./pages/RequestWireframe";
@@ -40,7 +39,6 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-request" element={<CreateRequest />} />
           <Route path="/my-requests" element={<MyRequests />} />
-          <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings-directory" element={<SettingsDirectory />} />
           <Route path="/notifications-logs" element={<NotificationsLogs />} />
           <Route path="/request-wireframe" element={<RequestWireframe />} />

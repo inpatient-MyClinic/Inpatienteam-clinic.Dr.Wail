@@ -76,42 +76,42 @@ export default function AdminDashboard() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="ml-4 space-y-3 mt-3">
-                <a
-                  href="/doctor-dashboard"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                <button
+                  onClick={() => navigate("/doctor-dashboard")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Doctor Dashboard
-                </a>
-                <a
-                  href="/nurse-dashboard"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                </button>
+                <button
+                  onClick={() => navigate("/nurse-dashboard")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Nurse Dashboard
-                </a>
-                <a
-                  href="/hospital-dashboard"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                </button>
+                <button
+                  onClick={() => navigate("/hospital-dashboard")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Hospital Dashboard
-                </a>
-                <a
-                  href="/case-coordinator-dashboard"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                </button>
+                <button
+                  onClick={() => navigate("/case-coordinator-dashboard")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Case Coordinator Dashboard
-                </a>
-                <a
-                  href="/finance-dashboard"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                </button>
+                <button
+                  onClick={() => navigate("/finance-dashboard")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Finance Dashboard
-                </a>
-                <a
-                  href="/customer-care-dashboard"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                </button>
+                <button
+                  onClick={() => navigate("/customer-care-dashboard")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Customer Care Dashboard
-                </a>
+                </button>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -121,18 +121,18 @@ export default function AdminDashboard() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="ml-4 space-y-3 mt-3">
-                <a
-                  href="/settings-directory"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                <button
+                  onClick={() => navigate("/settings-directory")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Settings & Directory
-                </a>
-                <a
-                  href="#"
-                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
+                </button>
+                <button
+                  onClick={() => navigate("#")}
+                  className="block text-sm text-blue-700 hover:text-blue-900 transition-colors py-1 w-full text-left"
                 >
                   • Security Settings
-                </a>
+                </button>
               </div>
             </AccordionContent>
           </AccordionItem>

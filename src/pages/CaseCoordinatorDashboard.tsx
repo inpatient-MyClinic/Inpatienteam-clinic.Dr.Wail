@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Clock, AlertTriangle, Bell } from "lucide-react";
+import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -131,7 +130,7 @@ const allRequests = [
 
 export default function CaseCoordinatorDashboard() {
   const [filter, setFilter] = useState<string>("all");
-  const [hospitalFilter, setHospitalFilter] = useState<string>("all");
+  const [hospitalFilter, setHhospitalFilter] = useState<string>("all");
   const [specialtyFilter, setSpecialtyFilter] = useState<string>("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("");
   const [requests, setRequests] = useState(allRequests);
@@ -171,6 +170,27 @@ export default function CaseCoordinatorDashboard() {
     const interval = setInterval(checkDelayedRequests, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Calculate statistics for all requests
+  const allStats = {
+    new: requests.filter(req => req.status === REQUEST_STATUSES.NEW).length,
+    pending: requests.filter(req => req.status === REQUEST_STATUSES.PENDING).length,
+    underProcess: requests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
+    completed: requests.filter(req => req.status === REQUEST_STATUSES.DONE).length,
+    rejected: requests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length,
+    needJustification: requests.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
+    delayed: requests.filter(req => req.isDelayed).length,
+  };
+
+  // Calculate statistics for coordinator's assigned requests
+  const myStats = {
+    assigned: requests.filter(req => req.coordinator === coordinatorName).length,
+    total: requests.length,
+    assignmentRate: requests.length > 0 ? Math.round((requests.filter(req => req.coordinator === coordinatorName).length / requests.length) * 100) : 0,
+    myUnderProcess: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
+    myCompleted: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.DONE).length,
+    myNeedJustification: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
+  };
 
   const getFilteredRequests = () => {
     let filtered = requests;
@@ -316,45 +336,94 @@ export default function CaseCoordinatorDashboard() {
   };
 
   const filteredRequests = getFilteredRequests();
-  const delayedCount = requests.filter(req => req.isDelayed).length;
-  const justificationCount = requests.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length;
 
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-green-50 flex flex-col items-center p-6 border-r">
-        <h1 className="text-xl font-bold mb-6 text-center">Case Coordinator</h1>
+        <div className="text-center mb-4">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="My Clinic Logo" 
+            className="h-8 w-auto mx-auto mb-2"
+          />
+          <h1 className="text-lg font-bold text-green-900">Case Coordinator</h1>
+          <p className="text-xs text-green-700">John Smith</p>
+        </div>
         
         <Button className="w-full mb-6 bg-green-600 hover:bg-green-700" onClick={createNewRequest}>
           <Plus className="w-4 h-4 mr-2" />
           Create New Request
         </Button>
         
-        <div className="flex flex-col gap-4 w-full mb-6">
-          {stats.map((stat) => (
-            <div
-              key={stat.key}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 ${stat.color} text-white`}
-            >
-              <span className="text-xs">{stat.label}:</span>
-              <span className="font-bold text-lg">{stat.count}</span>
+        {/* All Requests Statistics */}
+        <div className="w-full mb-4">
+          <h3 className="text-sm font-semibold text-green-900 mb-2">All Requests Overview</h3>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between bg-blue-100 rounded px-3 py-2">
+              <span className="text-xs text-blue-800">New:</span>
+              <span className="font-bold text-sm text-blue-800">{allStats.new}</span>
             </div>
-          ))}
-          
-          {/* Delayed Requests Counter */}
-          <div className="flex items-center gap-2 rounded-lg px-4 py-2 bg-red-600 text-white">
-            <Clock className="w-4 h-4" />
-            <span className="text-xs">Delayed:</span>
-            <span className="font-bold text-lg">{delayedCount}</span>
-          </div>
-          
-          {/* Need Justification Counter */}
-          <div className="flex items-center gap-2 rounded-lg px-4 py-2 bg-pink-600 text-white">
-            <Bell className="w-4 h-4" />
-            <span className="text-xs">Need Justification:</span>
-            <span className="font-bold text-lg">{justificationCount}</span>
+            <div className="flex items-center justify-between bg-yellow-100 rounded px-3 py-2">
+              <span className="text-xs text-yellow-800">Pending:</span>
+              <span className="font-bold text-sm text-yellow-800">{allStats.pending}</span>
+            </div>
+            <div className="flex items-center justify-between bg-orange-100 rounded px-3 py-2">
+              <span className="text-xs text-orange-800">Under Process:</span>
+              <span className="font-bold text-sm text-orange-800">{allStats.underProcess}</span>
+            </div>
+            <div className="flex items-center justify-between bg-green-100 rounded px-3 py-2">
+              <span className="text-xs text-green-800">Completed:</span>
+              <span className="font-bold text-sm text-green-800">{allStats.completed}</span>
+            </div>
+            <div className="flex items-center justify-between bg-red-100 rounded px-3 py-2">
+              <span className="text-xs text-red-800">Rejected:</span>
+              <span className="font-bold text-sm text-red-800">{allStats.rejected}</span>
+            </div>
+            <div className="flex items-center justify-between bg-pink-100 rounded px-3 py-2">
+              <span className="text-xs text-pink-800">Need Justification:</span>
+              <span className="font-bold text-sm text-pink-800">{allStats.needJustification}</span>
+            </div>
+            <div className="flex items-center justify-between bg-red-200 rounded px-3 py-2">
+              <span className="text-xs text-red-900">Delayed:</span>
+              <span className="font-bold text-sm text-red-900">{allStats.delayed}</span>
+            </div>
           </div>
         </div>
+
+        {/* My Assigned Requests Statistics */}
+        <div className="w-full mb-4">
+          <h3 className="text-sm font-semibold text-green-900 mb-2">My Assigned Cases</h3>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between bg-purple-100 rounded px-3 py-2">
+              <span className="text-xs text-purple-800">Assigned to Me:</span>
+              <span className="font-bold text-sm text-purple-800">
+                {myStats.assigned}/{myStats.total} ({myStats.assignmentRate}%)
+              </span>
+            </div>
+            <div className="flex items-center justify-between bg-orange-100 rounded px-3 py-2">
+              <span className="text-xs text-orange-800">My Under Process:</span>
+              <span className="font-bold text-sm text-orange-800">{myStats.myUnderProcess}</span>
+            </div>
+            <div className="flex items-center justify-between bg-green-100 rounded px-3 py-2">
+              <span className="text-xs text-green-800">My Completed:</span>
+              <span className="font-bold text-sm text-green-800">{myStats.myCompleted}</span>
+            </div>
+            <div className="flex items-center justify-between bg-pink-100 rounded px-3 py-2">
+              <span className="text-xs text-pink-800">My Need Justification:</span>
+              <span className="font-bold text-sm text-pink-800">{myStats.myNeedJustification}</span>
+            </div>
+          </div>
+        </div>
+
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 mt-auto border-green-300 text-green-700 hover:bg-green-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
       </aside>
 
       {/* Main Content */}
@@ -376,7 +445,7 @@ export default function CaseCoordinatorDashboard() {
           
           {/* Additional Filters */}
           <div className="flex gap-3 flex-wrap">
-            <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
+            <Select value={hospitalFilter} onValueChange={setHhospitalFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Hospital" />
               </SelectTrigger>
