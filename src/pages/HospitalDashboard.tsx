@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle, Clock, XCircle, Plus, ArrowLeft } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, XCircle, Plus, ArrowLeft, TrendingUp, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Request workflow statuses
@@ -18,14 +19,6 @@ const REQUEST_STATUSES = {
   NOT_COMPLETED: "Not Completed",
   DELAYED: "Delayed"
 };
-
-const stats = [
-  { label: "New Requests", key: "new", color: "bg-blue-600", count: 12 },
-  { label: "Patient Contacted", key: "contacted", color: "bg-purple-500", count: 8 },
-  { label: "Submitted to Insurance", key: "insurance", color: "bg-orange-500", count: 15 },
-  { label: "Approved", key: "approved", color: "bg-green-600", count: 25 },
-  { label: "Rejected", key: "rejected", color: "bg-red-500", count: 3 },
-];
 
 const filters = [
   { label: "Day", value: "day" },
@@ -48,7 +41,9 @@ const demoRequests = [
     coordinator: "John Smith",
     assignedHospitalStaff: null,
     notifications: [],
-    createdAt: "2024-01-10T10:00:00Z"
+    createdAt: "2024-01-10T10:00:00Z",
+    patientContactedAt: null,
+    approvedAt: null
   },
   {
     id: 2,
@@ -63,7 +58,9 @@ const demoRequests = [
     coordinator: "Jane Doe",
     assignedHospitalStaff: "Hospital Admin 1",
     notifications: ["Patient contacted successfully"],
-    createdAt: "2024-01-08T14:30:00Z"
+    createdAt: "2024-01-08T14:30:00Z",
+    patientContactedAt: "2024-01-09T10:15:00Z",
+    approvedAt: null
   },
   {
     id: 3,
@@ -74,12 +71,31 @@ const demoRequests = [
     hospital: "King Abdulaziz Hospital",
     specialty: "Neurosurgery",
     doctorName: "Dr. Mohammed Hassan",
-    status: REQUEST_STATUSES.SUBMITTED_TO_INSURANCE,
+    status: REQUEST_STATUSES.APPROVED_BY_HOSPITAL,
     coordinator: "John Smith",
     assignedHospitalStaff: "Hospital Admin 2",
-    notifications: ["Submitted to insurance provider"],
-    createdAt: "2024-01-05T09:15:00Z"
+    notifications: ["Submitted to insurance provider", "Request approved by hospital"],
+    createdAt: "2024-01-05T09:15:00Z",
+    patientContactedAt: "2024-01-06T11:30:00Z",
+    approvedAt: "2024-01-10T16:45:00Z"
   },
+  {
+    id: 4,
+    patientName: "Ahmed Khalil",
+    idNumber: "2016789012",
+    phone: "0523456789",
+    agreedSurgeryDate: "2025-07-05",
+    hospital: "King Abdulaziz Hospital",
+    specialty: "General Surgery",
+    doctorName: "Dr. Layla Hassan",
+    status: REQUEST_STATUSES.DONE,
+    coordinator: "Jane Doe",
+    assignedHospitalStaff: "Hospital Admin 1",
+    notifications: ["Patient contacted successfully", "Request approved by hospital", "Surgery completed successfully"],
+    createdAt: "2024-01-03T08:00:00Z",
+    patientContactedAt: "2024-01-04T09:30:00Z",
+    approvedAt: "2024-01-08T14:20:00Z"
+  }
 ];
 
 export default function HospitalDashboard() {
@@ -88,20 +104,72 @@ export default function HospitalDashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const currentHospitalStaff = "Hospital Admin 1";
+  const currentHospital = "King Abdulaziz Hospital";
   
   // Filter requests for current hospital
   const filteredRequests = requests.filter(request => 
-    request.hospital === "King Abdulaziz Hospital" // Current hospital
+    request.hospital === currentHospital
   );
 
+  // Calculate lead time metrics for current hospital only
+  const leadTimeMetrics = useMemo(() => {
+    const hospitalRequests = requests.filter(req => req.hospital === currentHospital);
+    
+    // Patient Contact Lead Time (from creation to patient contacted)
+    const contactLeadTimes = hospitalRequests
+      .filter(req => req.patientContactedAt)
+      .map(req => {
+        const created = new Date(req.createdAt);
+        const contacted = new Date(req.patientContactedAt!);
+        return (contacted.getTime() - created.getTime()) / (1000 * 60 * 60); // hours
+      });
+
+    // Approval Lead Time (from creation to approval)
+    const approvalLeadTimes = hospitalRequests
+      .filter(req => req.approvedAt)
+      .map(req => {
+        const created = new Date(req.createdAt);
+        const approved = new Date(req.approvedAt!);
+        return (approved.getTime() - created.getTime()) / (1000 * 60 * 60); // hours
+      });
+
+    const avgContactLeadTime = contactLeadTimes.length > 0 
+      ? contactLeadTimes.reduce((a, b) => a + b, 0) / contactLeadTimes.length 
+      : 0;
+
+    const avgApprovalLeadTime = approvalLeadTimes.length > 0 
+      ? approvalLeadTimes.reduce((a, b) => a + b, 0) / approvalLeadTimes.length 
+      : 0;
+
+    const contactRate = hospitalRequests.length > 0 
+      ? (contactLeadTimes.length / hospitalRequests.length) * 100 
+      : 0;
+
+    const approvalRate = hospitalRequests.length > 0 
+      ? (approvalLeadTimes.length / hospitalRequests.length) * 100 
+      : 0;
+
+    return {
+      avgContactLeadTime: Math.round(avgContactLeadTime),
+      avgApprovalLeadTime: Math.round(avgApprovalLeadTime),
+      contactRate: Math.round(contactRate),
+      approvalRate: Math.round(approvalRate),
+      totalRequests: hospitalRequests.length
+    };
+  }, [requests, currentHospital]);
+
   const updateStatus = (requestId: number, newStatus: string, notification?: string) => {
+    const now = new Date().toISOString();
+    
     setRequests(prev =>
       prev.map(req =>
         req.id === requestId ? { 
           ...req, 
           status: newStatus,
           assignedHospitalStaff: currentHospitalStaff,
-          notifications: [...req.notifications, notification || `Status updated to ${newStatus}`]
+          notifications: [...req.notifications, notification || `Status updated to ${newStatus}`],
+          patientContactedAt: newStatus === REQUEST_STATUSES.PATIENT_CONTACTED ? now : req.patientContactedAt,
+          approvedAt: newStatus === REQUEST_STATUSES.APPROVED_BY_HOSPITAL ? now : req.approvedAt
         } : req
       )
     );
@@ -247,6 +315,7 @@ export default function HospitalDashboard() {
       {/* Sidebar */}
       <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
         <h1 className="text-xl font-bold mb-4 text-center text-blue-900">Hospital Dashboard</h1>
+        <p className="text-sm text-blue-700 mb-4">{currentHospital}</p>
         
         <Button className="w-full mb-6" variant="default" onClick={createNewRequest}>
           <Plus className="w-4 h-4 mr-2" />
@@ -277,6 +346,84 @@ export default function HospitalDashboard() {
       
       {/* Main */}
       <main className="flex-1 bg-white p-6">
+        {/* Hospital Lead Time Performance */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <TrendingUp className="w-6 h-6" />
+            Hospital Lead Time Performance
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Timer className="w-4 h-4 text-blue-600" />
+                  Avg Contact Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {leadTimeMetrics.avgContactLeadTime}h
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Time to contact patient
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-green-600" />
+                  Avg Approval Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {leadTimeMetrics.avgApprovalLeadTime}h
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Time to approval
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  Contact Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {leadTimeMetrics.contactRate}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Patients contacted
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-orange-600" />
+                  Approval Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  {leadTimeMetrics.approvalRate}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Requests approved
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 mb-6 justify-end">
           {filters.map((f) => (
