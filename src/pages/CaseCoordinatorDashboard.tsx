@@ -761,22 +761,10 @@ export default function CaseCoordinatorDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 bg-white">
-        {/* Date Range Filter */}
-        <div className="flex justify-end p-4 border-b bg-gray-50">
-          <DateRangeFilter
-            selectedDates={selectedDates}
-            selectedWeeks={selectedWeeks}
-            selectedMonths={selectedMonths}
-            onDateSelect={setSelectedDates}
-            onWeekSelect={setSelectedWeeks}
-            onMonthSelect={setSelectedMonths}
-            onClearAll={handleClearAllDateFilters}
-          />
-        </div>
-
-        {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 p-6 border-b">
-          <div className="flex gap-3 flex-wrap">
+        {/* Filter bar with Date Range Filter */}
+        <div className="flex flex-col gap-4 p-6 border-b">
+          {/* Main filter buttons */}
+          <div className="flex flex-wrap gap-3">
             {filters.map((f) => (
               <Button
                 key={f.value}
@@ -788,6 +776,17 @@ export default function CaseCoordinatorDashboard() {
               </Button>
             ))}
           </div>
+          
+          {/* Date Range Filter */}
+          <DateRangeFilter
+            selectedDates={selectedDates}
+            selectedWeeks={selectedWeeks}
+            selectedMonths={selectedMonths}
+            onDateSelect={setSelectedDates}
+            onWeekSelect={setSelectedWeeks}
+            onMonthSelect={setSelectedMonths}
+            onClearAll={handleClearAllDateFilters}
+          />
           
           {/* Additional Filters */}
           <div className="flex gap-3 flex-wrap">

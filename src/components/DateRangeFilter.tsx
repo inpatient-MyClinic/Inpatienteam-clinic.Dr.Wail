@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, X, Printer } from "lucide-react";
+import { Calendar as CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -28,13 +28,6 @@ const weeks = [
   "Week 1", "Week 2", "Week 3", "Week 4", "Week 5"
 ];
 
-const timeFilters = [
-  { label: "Day", value: "day" },
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "Year to Date", value: "ytd" },
-];
-
 export default function DateRangeFilter({
   selectedDates,
   selectedWeeks,
@@ -45,7 +38,6 @@ export default function DateRangeFilter({
   onClearAll
 }: DateRangeFilterProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [filter, setFilter] = useState<string | null>(null);
 
   const handleDateSelect = (dates: Date[] | undefined) => {
     if (dates) {
@@ -87,21 +79,8 @@ export default function DateRangeFilter({
 
   return (
     <div className="space-y-4">
-      {/* Time Filter Buttons */}
+      {/* Date Filter Controls */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex gap-2">
-          {timeFilters.map((f) => (
-            <Button
-              key={f.value}
-              variant={filter === f.value ? "default" : "outline"}
-              onClick={() => setFilter(filter === f.value ? null : f.value)}
-              size="sm"
-            >
-              {f.label}
-            </Button>
-          ))}
-        </div>
-
         {/* Calendar Date Picker */}
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
