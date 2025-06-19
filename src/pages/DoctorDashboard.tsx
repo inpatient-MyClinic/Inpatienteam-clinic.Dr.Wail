@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Clock, AlertTriangle, ArrowLeft, Eye, Printer } from "lucide-react";
@@ -129,11 +130,19 @@ export default function DoctorDashboard() {
   const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : 0;
   const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : 0;
 
-  const handleFilterClick = (filter: string) => {
-    if (selectedFilters.includes(filter)) {
-      setSelectedFilters(prev => prev.filter(f => f !== filter));
+  const handleFilterClick = (filterValue: string) => {
+    if (selectedFilters.includes(filterValue)) {
+      setSelectedFilters(prev => prev.filter(f => f !== filterValue));
     } else {
-      setSelectedFilters(prev => [...prev, filter]);
+      setSelectedFilters(prev => [...prev, filterValue]);
+    }
+  };
+
+  const handleStatusClick = (status: string) => {
+    if (selectedStatuses.includes(status)) {
+      setSelectedStatuses(prev => prev.filter(s => s !== status));
+    } else {
+      setSelectedStatuses(prev => [...prev, status]);
     }
   };
 
@@ -141,8 +150,12 @@ export default function DoctorDashboard() {
     setSelectedFilters([]);
   };
 
+  const clearStatusFilter = () => {
+    setSelectedStatuses([]);
+  };
+
   const exportToExcel = () => {
-    console.log("Exporting doctor requests to Excel with filter:", filter);
+    console.log("Exporting doctor requests to Excel with filters:", selectedFilters);
     toast({
       title: "Export Started",
       description: "Excel file generation in progress...",
@@ -418,7 +431,7 @@ export default function DoctorDashboard() {
                     {hospital.name}
                   </Badge>
                   <span className="text-sm text-gray-600 ml-2">
-                    {hospital.cases} cases
+                    {hospital.cases} cases referred
                   </span>
                 </div>
               ))}
