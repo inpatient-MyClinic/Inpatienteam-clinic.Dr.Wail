@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import DoctorManagement from "@/components/DoctorManagement";
 import ServicePricingTable from "@/components/ServicePricingTable";
 import CustomFieldsManager from "@/components/CustomFieldsManager";
+import PrivilegeManagement from "./PrivilegeManagement";
 
 const userCategories = [
   "Admin",
@@ -181,14 +182,15 @@ const SettingsDirectory = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-blue-900">Settings & Directory</h1>
-        <p className="text-gray-600">Manage users, roles, doctors, pricing, and system settings</p>
+        <p className="text-gray-600">Manage users, roles, doctors, pricing, privileges, and system settings</p>
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
           <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
+          <TabsTrigger value="privileges">Privilege Management</TabsTrigger>
           <TabsTrigger value="fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
         </TabsList>
@@ -326,6 +328,10 @@ const SettingsDirectory = () => {
 
         <TabsContent value="pricing" className="space-y-6">
           <ServicePricingTable />
+        </TabsContent>
+
+        <TabsContent value="privileges" className="space-y-6">
+          <PrivilegeManagement />
         </TabsContent>
 
         <TabsContent value="fields" className="space-y-6">
