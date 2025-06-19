@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Clock, AlertTriangle, ArrowLeft, Eye } from "lucide-react";
+import { Plus, Download, Clock, AlertTriangle, ArrowLeft, Eye, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +43,7 @@ const filters = [
 ];
 
 export default function DoctorDashboard() {
-  const [filter, setFilter] = useState<string | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -108,12 +107,12 @@ export default function DoctorDashboard() {
 
   const currentDoctorName = "Dr. Ahmed Salem";
 
-  // Doctor's hospital privileges
+  // Doctor's hospital privileges with case counts
   const doctorPrivileges = [
-    "King Khaled Hospital",
-    "King Abdulaziz Hospital", 
-    "King Faisal Hospital",
-    "Prince Sultan Hospital"
+    { name: "King Khaled Hospital", cases: 15 },
+    { name: "King Abdulaziz Hospital", cases: 8 }, 
+    { name: "King Faisal Hospital", cases: 12 },
+    { name: "Prince Sultan Hospital", cases: 6 }
   ];
 
   // Filter requests by selected statuses
@@ -127,18 +126,19 @@ export default function DoctorDashboard() {
   const doneRequests = requests.filter(req => req.status === REQUEST_STATUSES.DONE).length;
   const rejectedRequests = requests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length;
   const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : 0;
+  const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : 0;
   const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : 0;
 
-  const handleStatusClick = (status: string) => {
-    if (selectedStatuses.includes(status)) {
-      setSelectedStatuses(prev => prev.filter(s => s !== status));
+  const handleFilterClick = (filter: string) => {
+    if (selectedFilters.includes(filter)) {
+      setSelectedFilters(prev => prev.filter(f => f !== filter));
     } else {
-      setSelectedStatuses(prev => [...prev, status]);
+      setSelectedFilters(prev => [...prev, filter]);
     }
   };
 
-  const clearStatusFilter = () => {
-    setSelectedStatuses([]);
+  const clearTimeFilter = () => {
+    setSelectedFilters([]);
   };
 
   const exportToExcel = () => {
@@ -179,6 +179,14 @@ export default function DoctorDashboard() {
     });
 
     setJustificationText("");
+  };
+
+  const printPage = () => {
+    window.print();
+    toast({
+      title: "Print Started",
+      description: "Printing page...",
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -277,8 +285,8 @@ export default function DoctorDashboard() {
           {filters.map((f) => (
             <Button
               key={f.value}
-              variant={filter === f.value ? "default" : "outline"}
-              onClick={() => setFilter(filter === f.value ? null : f.value)}
+              variant={selectedFilters.includes(f.value) ? "default" : "outline"}
+              onClick={() => handleFilterClick(f.value)}
               size="sm"
             >
               {f.label}
@@ -287,15 +295,19 @@ export default function DoctorDashboard() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setFilter(null)}
+            onClick={clearTimeFilter}
             className="ml-2"
-            disabled={!filter}
+            disabled={selectedFilters.length === 0}
           >
             Clear Filter
           </Button>
           <Button onClick={exportToExcel} variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export Excel
+          </Button>
+          <Button onClick={printPage} variant="outline">
+            <Printer className="w-4 h-4 mr-2" />
+            Print
           </Button>
         </div>
         
@@ -399,11 +411,16 @@ export default function DoctorDashboard() {
             <CardDescription>Hospitals where you have active privileges</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {doctorPrivileges.map((hospital, index) => (
-                <Badge key={index} variant="secondary" className="justify-center p-2">
-                  {hospital}
-                </Badge>
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <Badge variant="secondary" className="flex-1">
+                    {hospital.name}
+                  </Badge>
+                  <span className="text-sm text-gray-600 ml-2">
+                    {hospital.cases} cases
+                  </span>
+                </div>
               ))}
             </div>
           </CardContent>
@@ -415,12 +432,19 @@ export default function DoctorDashboard() {
             <CardTitle>Analytics</CardTitle>
             <CardDescription>Performance metrics for your requests</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Conversion Rate</h3>
               <p className="text-4xl font-bold text-green-600">{conversionRate}%</p>
               <p className="text-sm text-gray-500">
                 ({doneRequests} done / {totalRequests} total requests)
+              </p>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Approval Rate</h3>
+              <p className="text-4xl font-bold text-blue-600">{approvalRate}%</p>
+              <p className="text-sm text-gray-500">
+                ({totalRequests - rejectedRequests} approved / {totalRequests} total requests)
               </p>
             </div>
             <div className="text-center">
