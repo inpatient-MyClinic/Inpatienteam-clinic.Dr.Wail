@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, Send, Filter, X } from "lucide-react";
@@ -394,6 +393,7 @@ export default function RequestsTable({
             <th className="p-2">MRN</th>
             <th className="p-2">Service Description</th>
             <th className="p-2">Hospital</th>
+            <th className="p-2">Agreed Date of Surgery</th>
             <th className="p-2">Status</th>
             <th className="p-2">Payment Status</th>
             <th className="p-2">Actions</th>
@@ -402,7 +402,7 @@ export default function RequestsTable({
         <tbody>
           {filteredRequests.length === 0 ? (
             <tr>
-              <td colSpan={7} className="text-center text-gray-400 py-6">
+              <td colSpan={8} className="text-center text-gray-400 py-6">
                 {hasActiveFilters ? "No requests match the current filters." : "No requests found."}
               </td>
             </tr>
@@ -413,6 +413,12 @@ export default function RequestsTable({
                 <td className="p-2">{req.mrn}</td>
                 <td className="p-2">{req.serviceDescription}</td>
                 <td className="p-2">{req.hospital}</td>
+                <td className="p-2">
+                  {req.expectedSurgeryDate ? 
+                    new Date(req.expectedSurgeryDate).toLocaleDateString() : 
+                    "Not set"
+                  }
+                </td>
                 <td className="p-2">
                   {getStatusBadge(req.status)}
                 </td>
