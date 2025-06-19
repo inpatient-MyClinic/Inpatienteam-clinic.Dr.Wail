@@ -111,6 +111,44 @@ export default function HospitalDashboard() {
     request.hospital === currentHospital
   );
 
+  // Calculate stats for sidebar
+  const stats = useMemo(() => {
+    const hospitalRequests = filteredRequests;
+    
+    return [
+      {
+        key: "total",
+        label: "Total Requests",
+        count: hospitalRequests.length,
+        color: "bg-blue-500"
+      },
+      {
+        key: "pending",
+        label: "Pending",
+        count: hospitalRequests.filter(r => r.status === REQUEST_STATUSES.UNDER_PROCESS).length,
+        color: "bg-orange-500"
+      },
+      {
+        key: "contacted",
+        label: "Patient Contacted",
+        count: hospitalRequests.filter(r => r.status === REQUEST_STATUSES.PATIENT_CONTACTED).length,
+        color: "bg-purple-500"
+      },
+      {
+        key: "approved",
+        label: "Approved",
+        count: hospitalRequests.filter(r => r.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL).length,
+        color: "bg-green-500"
+      },
+      {
+        key: "completed",
+        label: "Completed",
+        count: hospitalRequests.filter(r => r.status === REQUEST_STATUSES.DONE).length,
+        color: "bg-emerald-600"
+      }
+    ];
+  }, [filteredRequests]);
+
   // Calculate lead time metrics for current hospital only
   const leadTimeMetrics = useMemo(() => {
     const hospitalRequests = requests.filter(req => req.hospital === currentHospital);
