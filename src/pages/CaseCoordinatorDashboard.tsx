@@ -4,6 +4,7 @@ import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft } from "lucide-re
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import {
   Table,
   TableBody,
@@ -135,6 +136,12 @@ export default function CaseCoordinatorDashboard() {
   const [specialtyFilter, setSpecialtyFilter] = useState<string>("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("");
   const [requests, setRequests] = useState(allRequests);
+  
+  // Date filter states
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const coordinatorName = "John Smith";
@@ -229,6 +236,37 @@ export default function CaseCoordinatorDashboard() {
       filtered = filtered.filter(req => req.doctorName === doctorFilter);
     }
 
+    // Apply date filters
+    if (selectedDates.length > 0 || selectedWeeks.length > 0 || selectedMonths.length > 0) {
+      filtered = filtered.filter(req => {
+        const requestDate = new Date(req.agreedSurgeryDate);
+        
+        // Check selected specific dates
+        if (selectedDates.length > 0) {
+          const matchesDate = selectedDates.some(date => 
+            date.toDateString() === requestDate.toDateString()
+          );
+          if (matchesDate) return true;
+        }
+        
+        // Check selected weeks
+        if (selectedWeeks.length > 0) {
+          const weekNumber = Math.ceil(requestDate.getDate() / 7);
+          const weekLabel = `Week ${weekNumber}`;
+          if (selectedWeeks.includes(weekLabel)) return true;
+        }
+        
+        // Check selected months
+        if (selectedMonths.length > 0) {
+          const monthName = requestDate.toLocaleDateString('en-US', { month: 'long' });
+          if (selectedMonths.includes(monthName)) return true;
+        }
+        
+        // If no date filters match and we have date filters, exclude this request
+        return selectedDates.length === 0 && selectedWeeks.length === 0 && selectedMonths.length === 0;
+      });
+    }
+
     return filtered;
   };
 
@@ -296,7 +334,7 @@ export default function CaseCoordinatorDashboard() {
 
   const exportToExcel = () => {
     console.log("Exporting case coordinator requests to Excel with filters:", { 
-      filter, hospitalFilter, specialtyFilter, doctorFilter 
+      filter, hospitalFilter, specialtyFilter, doctorFilter, selectedDates, selectedWeeks, selectedMonths 
     });
     toast({
       title: "Export Started",
@@ -337,6 +375,12 @@ export default function CaseCoordinatorDashboard() {
   };
 
   const filteredRequests = getFilteredRequests();
+
+  const handleClearAllDateFilters = () => {
+    setSelectedDates([]);
+    setSelectedWeeks([]);
+    setSelectedMonths([]);
+  };
 
   return (
     <div className="flex min-h-screen w-full">
@@ -426,6 +470,19 @@ export default function CaseCoordinatorDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 bg-white">
+        {/* Date Range Filter */}
+        <div className="flex justify-end p-4 border-b bg-gray-50">
+          <DateRangeFilter
+            selectedDates={selectedDates}
+            selectedWeeks={selectedWeeks}
+            selectedMonths={selectedMonths}
+            onDateSelect={setSelectedDates}
+            onWeekSelect={setSelectedWeeks}
+            onMonthSelect={setSelectedMonths}
+            onClearAll={handleClearAllDateFilters}
+          />
+        </div>
+
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 p-6 border-b">
           <div className="flex gap-3 flex-wrap">
