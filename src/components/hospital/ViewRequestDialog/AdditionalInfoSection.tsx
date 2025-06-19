@@ -8,11 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface AdditionalInfoSectionProps {
   localData: any;
-  request: any;
   onFieldChange: (field: string, value: string) => void;
 }
 
-export default function AdditionalInfoSection({ localData, request, onFieldChange }: AdditionalInfoSectionProps) {
+export default function AdditionalInfoSection({ localData, onFieldChange }: AdditionalInfoSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -23,7 +22,7 @@ export default function AdditionalInfoSection({ localData, request, onFieldChang
           <div>
             <Label>Diagnosis Code</Label>
             <Input
-              value={localData.diagnosisCode}
+              value={localData.diagnosisCode || ""}
               onChange={(e) => onFieldChange('diagnosisCode', e.target.value)}
               className="mt-1"
               placeholder="Enter diagnosis code..."
@@ -32,7 +31,7 @@ export default function AdditionalInfoSection({ localData, request, onFieldChang
           <div>
             <Label>Procedure Code</Label>
             <Input
-              value={localData.procedureCode}
+              value={localData.procedureCode || ""}
               onChange={(e) => onFieldChange('procedureCode', e.target.value)}
               className="mt-1"
               placeholder="Enter procedure code..."
@@ -55,13 +54,9 @@ export default function AdditionalInfoSection({ localData, request, onFieldChang
           </Select>
         </div>
         <div>
-          <span className="font-medium text-sm text-gray-600">Submission Date:</span>{' '}
-          {new Date(request.submissionDate).toLocaleDateString()}
-        </div>
-        <div>
           <Label>Additional Notes</Label>
           <Textarea
-            value={localData.additionalNotes}
+            value={localData.additionalNotes || ""}
             onChange={(e) => onFieldChange('additionalNotes', e.target.value)}
             className="mt-1"
             rows={3}
