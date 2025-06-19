@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
@@ -187,7 +186,7 @@ export default function HospitalDashboard() {
     setSelectedDates([]);
   };
 
-  const hasActiveFilters = activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0;
+  const hasActiveFilters = Boolean(activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0);
 
   return (
     <div className="p-6 space-y-6">
