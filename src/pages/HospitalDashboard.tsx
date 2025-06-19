@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,14 +86,54 @@ export default function HospitalDashboard() {
   const [justificationText, setJustificationText] = useState("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
 
+  // Apply all filters whenever any filter changes
+  useEffect(() => {
+    let filtered = [...sampleRequests];
+
+    // Apply status filter from sidebar
+    if (activeStatusFilter) {
+      filtered = filtered.filter(req => req.status === activeStatusFilter);
+    }
+
+    // Apply column filters
+    if (surgeryDateFilter) {
+      filtered = filtered.filter(req => req.expectedSurgeryDate === surgeryDateFilter);
+    }
+    if (specialtyFilter) {
+      filtered = filtered.filter(req => 
+        req.specialty.toLowerCase().includes(specialtyFilter.toLowerCase())
+      );
+    }
+    if (doctorFilter) {
+      filtered = filtered.filter(req => 
+        req.doctor.toLowerCase().includes(doctorFilter.toLowerCase())
+      );
+    }
+    if (statusFilter) {
+      filtered = filtered.filter(req => req.status === statusFilter);
+    }
+
+    // Apply date filters
+    if (selectedDates.length > 0) {
+      filtered = filtered.filter(req => {
+        const reqDate = new Date(req.expectedSurgeryDate);
+        return selectedDates.some(selectedDate => 
+          reqDate.toDateString() === selectedDate.toDateString()
+        );
+      });
+    }
+
+    setFilteredRequests(filtered);
+  }, [activeStatusFilter, surgeryDateFilter, specialtyFilter, doctorFilter, statusFilter, selectedDates]);
+
   const totalRequests = sampleRequests.length;
   const doneRequests = sampleRequests.filter(req => req.status === "Approved").length;
   const approvedRequests = sampleRequests.filter(req => req.status === "Approved").length;
   const rejectedRequests = sampleRequests.filter(req => req.status === "Rejected").length;
 
-  const conversionRate = ((doneRequests / totalRequests) * 100).toFixed(1);
-  const approvalRate = ((approvedRequests / totalRequests) * 100).toFixed(1);
-  const rejectionRate = ((rejectedRequests / totalRequests) * 100).toFixed(1);
+  const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : "0";
+  const approvalRate = totalRequests > 0 ? ((approvedRequests / totalRequests) * 100).toFixed(1) : "0";
+  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
 
   const statusCounts = {
     pending: sampleRequests.filter(req => req.status === "Pending").length,
@@ -104,11 +144,6 @@ export default function HospitalDashboard() {
 
   const handleStatusIconClick = (status: string) => {
     setActiveStatusFilter(activeStatusFilter === status ? null : status);
-    if (activeStatusFilter === status) {
-      setFilteredRequests(sampleRequests);
-    } else {
-      setFilteredRequests(sampleRequests.filter(req => req.status === status));
-    }
   };
 
   const handleExportToExcel = () => {
@@ -127,6 +162,15 @@ export default function HospitalDashboard() {
       toast({
         title: "Error",
         description: "Please provide justification text.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (modifiedStatus === "Rejected" && !justificationText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide rejection reason.",
         variant: "destructive"
       });
       return;
@@ -151,7 +195,52 @@ export default function HospitalDashboard() {
     }
   };
 
+  const clearAllFilters = () => {
+    setActiveStatusFilter(null);
+    setSurgeryDateFilter("");
+    setSpecialtyFilter("");
+    setDoctorFilter("");
+    setStatusFilter("");
+    setSelectedDates([]);
+  };
+
   const ViewRequestDialog = ({ request }: { request: any }) => {
+    const [localSurgeryDate, setLocalSurgeryDate] = useState(request.expectedSurgeryDate);
+    const [localStatus, setLocalStatus] = useState("");
+    const [localJustification, setLocalJustification] = useState("");
+    const [localAttachment, setLocalAttachment] = useState<File | null>(null);
+
+    const handleLocalSubmit = () => {
+      if (localStatus === "Need Justification" && !localJustification.trim()) {
+        toast({
+          title: "Error",
+          description: "Please provide justification text.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (localStatus === "Rejected" && !localJustification.trim()) {
+        toast({
+          title: "Error",
+          description: "Please provide rejection reason.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Request Updated",
+        description: "Request has been modified and notifications sent to doctor and case coordinator.",
+      });
+
+      // Reset form
+      setLocalSurgeryDate(request.expectedSurgeryDate);
+      setLocalStatus("");
+      setLocalJustification("");
+      setLocalAttachment(null);
+    };
+
     return (
       <Dialog>
         <DialogTrigger asChild>
@@ -198,8 +287,8 @@ export default function HospitalDashboard() {
                   <Label>Agreed Date of Surgery</Label>
                   <Input
                     type="date"
-                    value={modifiedSurgeryDate || request.expectedSurgeryDate}
-                    onChange={(e) => setModifiedSurgeryDate(e.target.value)}
+                    value={localSurgeryDate}
+                    onChange={(e) => setLocalSurgeryDate(e.target.value)}
                     className="mt-1"
                   />
                 </div>
@@ -207,11 +296,11 @@ export default function HospitalDashboard() {
                 {/* Status Change */}
                 <div>
                   <Label>Status Change</Label>
-                  <Select value={modifiedStatus} onValueChange={setModifiedStatus}>
+                  <Select value={localStatus} onValueChange={setLocalStatus}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select new status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="Approved">Approved</SelectItem>
                       <SelectItem value="Rejected">Rejected</SelectItem>
                       <SelectItem value="Need Justification">Need More Justification</SelectItem>
@@ -219,15 +308,20 @@ export default function HospitalDashboard() {
                   </Select>
                 </div>
 
-                {/* Justification Section - Only show if "Need Justification" is selected */}
-                {modifiedStatus === "Need Justification" && (
-                  <div className="space-y-4 p-4 bg-yellow-50 rounded-lg">
+                {/* Justification Section - Show for both Need Justification and Rejected */}
+                {(localStatus === "Need Justification" || localStatus === "Rejected") && (
+                  <div className={`space-y-4 p-4 rounded-lg ${localStatus === "Need Justification" ? "bg-yellow-50" : "bg-red-50"}`}>
                     <div>
-                      <Label>Reason for Justification</Label>
+                      <Label>
+                        {localStatus === "Need Justification" ? "Reason for Justification" : "Reason for Rejection"}
+                      </Label>
                       <Textarea
-                        placeholder="Please provide the reason for requesting additional justification..."
-                        value={justificationText}
-                        onChange={(e) => setJustificationText(e.target.value)}
+                        placeholder={localStatus === "Need Justification" 
+                          ? "Please provide the reason for requesting additional justification..." 
+                          : "Please provide the reason for rejection..."
+                        }
+                        value={localJustification}
+                        onChange={(e) => setLocalJustification(e.target.value)}
                         className="mt-1"
                         rows={4}
                       />
@@ -238,7 +332,12 @@ export default function HospitalDashboard() {
                       <div className="mt-1 flex items-center gap-2">
                         <Input
                           type="file"
-                          onChange={handleFileUpload}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setLocalAttachment(file);
+                            }
+                          }}
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                           className="flex-1"
                         />
@@ -246,45 +345,9 @@ export default function HospitalDashboard() {
                           <Upload className="w-4 h-4" />
                         </Button>
                       </div>
-                      {attachmentFile && (
+                      {localAttachment && (
                         <p className="text-sm text-green-600 mt-1">
-                          File selected: {attachmentFile.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Rejection Section - Only show if "Rejected" is selected */}
-                {modifiedStatus === "Rejected" && (
-                  <div className="space-y-4 p-4 bg-red-50 rounded-lg">
-                    <div>
-                      <Label>Reason for Rejection</Label>
-                      <Textarea
-                        placeholder="Please provide the reason for rejection..."
-                        value={justificationText}
-                        onChange={(e) => setJustificationText(e.target.value)}
-                        className="mt-1"
-                        rows={4}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Upload Rejection Document</Label>
-                      <div className="mt-1 flex items-center gap-2">
-                        <Input
-                          type="file"
-                          onChange={handleFileUpload}
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          className="flex-1"
-                        />
-                        <Button size="sm" variant="outline">
-                          <Upload className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {attachmentFile && (
-                        <p className="text-sm text-green-600 mt-1">
-                          File selected: {attachmentFile.name}
+                          File selected: {localAttachment.name}
                         </p>
                       )}
                     </div>
@@ -293,9 +356,9 @@ export default function HospitalDashboard() {
 
                 {/* Submit Button */}
                 <Button 
-                  onClick={() => handleRequestModification(request.id)}
+                  onClick={handleLocalSubmit}
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={!modifiedStatus}
+                  disabled={!localStatus}
                 >
                   <Send className="w-4 h-4 mr-2" />
                   Submit Modifications
@@ -378,7 +441,7 @@ export default function HospitalDashboard() {
             <CardContent className="space-y-3">
               <div 
                 className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeStatusFilter === "Pending" ? "bg-yellow-100 border-yellow-300" : "hover:bg-gray-50"
+                  activeStatusFilter === "Pending" ? "bg-yellow-100 border-2 border-yellow-300" : "hover:bg-gray-50 border"
                 }`}
                 onClick={() => handleStatusIconClick("Pending")}
               >
@@ -391,7 +454,7 @@ export default function HospitalDashboard() {
 
               <div 
                 className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeStatusFilter === "Approved" ? "bg-green-100 border-green-300" : "hover:bg-gray-50"
+                  activeStatusFilter === "Approved" ? "bg-green-100 border-2 border-green-300" : "hover:bg-gray-50 border"
                 }`}
                 onClick={() => handleStatusIconClick("Approved")}
               >
@@ -404,7 +467,7 @@ export default function HospitalDashboard() {
 
               <div 
                 className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeStatusFilter === "Rejected" ? "bg-red-100 border-red-300" : "hover:bg-gray-50"
+                  activeStatusFilter === "Rejected" ? "bg-red-100 border-2 border-red-300" : "hover:bg-gray-50 border"
                 }`}
                 onClick={() => handleStatusIconClick("Rejected")}
               >
@@ -417,7 +480,7 @@ export default function HospitalDashboard() {
 
               <div 
                 className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeStatusFilter === "Need Justification" ? "bg-orange-100 border-orange-300" : "hover:bg-gray-50"
+                  activeStatusFilter === "Need Justification" ? "bg-orange-100 border-2 border-orange-300" : "hover:bg-gray-50 border"
                 }`}
                 onClick={() => handleStatusIconClick("Need Justification")}
               >
@@ -427,6 +490,17 @@ export default function HospitalDashboard() {
                 </div>
                 <Badge variant="secondary">{statusCounts.needJustification}</Badge>
               </div>
+
+              {(activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0) && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearAllFilters}
+                  className="w-full mt-4"
+                >
+                  Clear All Filters
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -447,14 +521,14 @@ export default function HospitalDashboard() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <Calendar className="mr-2 h-4 w-4" />
-                        Select Days
+                        {selectedDates.length > 0 ? `${selectedDates.length} days selected` : "Select Days"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 bg-white" align="start">
                       <CalendarComponent
                         mode="multiple"
                         selected={selectedDates}
-                        onSelect={setSelectedDates}
+                        onSelect={(dates) => setSelectedDates(dates || [])}
                         className="rounded-md border"
                       />
                     </PopoverContent>
@@ -468,7 +542,7 @@ export default function HospitalDashboard() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select month for weeks" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="01">January 2024</SelectItem>
                       <SelectItem value="02">February 2024</SelectItem>
                       <SelectItem value="03">March 2024</SelectItem>
@@ -481,11 +555,11 @@ export default function HospitalDashboard() {
                 <div>
                   <Label>Filter by Month</Label>
                   <div className="flex gap-2">
-                    <Select value={selectedMonths.join(',')} onValueChange={(value) => setSelectedMonths(value.split(','))}>
+                    <Select value={selectedMonths.join(',')} onValueChange={(value) => setSelectedMonths(value ? value.split(',') : [])}>
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Select months" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         <SelectItem value="01">January</SelectItem>
                         <SelectItem value="02">February</SelectItem>
                         <SelectItem value="03">March</SelectItem>
@@ -507,7 +581,7 @@ export default function HospitalDashboard() {
           {/* Requests Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Hospital Requests</CardTitle>
+              <CardTitle>Hospital Requests ({filteredRequests.length} of {totalRequests})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -526,13 +600,25 @@ export default function HospitalDashboard() {
                                 <Filter className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64 p-3">
+                            <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
+                              <Label className="text-sm font-medium">Filter by Date</Label>
                               <Input
                                 type="date"
                                 value={surgeryDateFilter}
                                 onChange={(e) => setSurgeryDateFilter(e.target.value)}
                                 placeholder="Filter by date"
+                                className="mt-1"
                               />
+                              {surgeryDateFilter && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => setSurgeryDateFilter("")}
+                                  className="w-full text-xs mt-2"
+                                >
+                                  Clear
+                                </Button>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -546,12 +632,24 @@ export default function HospitalDashboard() {
                                 <Filter className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64 p-3">
+                            <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
+                              <Label className="text-sm font-medium">Filter by Specialty</Label>
                               <Input
                                 value={specialtyFilter}
                                 onChange={(e) => setSpecialtyFilter(e.target.value)}
                                 placeholder="Filter by specialty"
+                                className="mt-1"
                               />
+                              {specialtyFilter && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => setSpecialtyFilter("")}
+                                  className="w-full text-xs mt-2"
+                                >
+                                  Clear
+                                </Button>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -565,12 +663,24 @@ export default function HospitalDashboard() {
                                 <Filter className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64 p-3">
+                            <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
+                              <Label className="text-sm font-medium">Filter by Doctor</Label>
                               <Input
                                 value={doctorFilter}
                                 onChange={(e) => setDoctorFilter(e.target.value)}
                                 placeholder="Filter by doctor"
+                                className="mt-1"
                               />
+                              {doctorFilter && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => setDoctorFilter("")}
+                                  className="w-full text-xs mt-2"
+                                >
+                                  Clear
+                                </Button>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -584,18 +694,29 @@ export default function HospitalDashboard() {
                                 <Filter className="h-3 w-3" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-64 p-3">
+                            <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
+                              <Label className="text-sm font-medium">Filter by Status</Label>
                               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger>
+                                <SelectTrigger className="mt-1">
                                   <SelectValue placeholder="Filter by status" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white">
                                   <SelectItem value="Pending">Pending</SelectItem>
                                   <SelectItem value="Approved">Approved</SelectItem>
                                   <SelectItem value="Rejected">Rejected</SelectItem>
                                   <SelectItem value="Need Justification">Need Justification</SelectItem>
                                 </SelectContent>
                               </Select>
+                              {statusFilter && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => setStatusFilter("")}
+                                  className="w-full text-xs mt-2"
+                                >
+                                  Clear
+                                </Button>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -604,28 +725,36 @@ export default function HospitalDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRequests.map((request) => (
-                      <tr key={request.id} className="border-b">
-                        <td className="p-2">{request.patientName}</td>
-                        <td className="p-2">{request.mrn}</td>
-                        <td className="p-2">{request.serviceDescription}</td>
-                        <td className="p-2">{new Date(request.expectedSurgeryDate).toLocaleDateString()}</td>
-                        <td className="p-2">{request.specialty}</td>
-                        <td className="p-2">{request.doctor}</td>
-                        <td className="p-2">
-                          <Badge variant={
-                            request.status === "Approved" ? "default" :
-                            request.status === "Rejected" ? "destructive" :
-                            request.status === "Pending" ? "secondary" : "outline"
-                          }>
-                            {request.status}
-                          </Badge>
-                        </td>
-                        <td className="p-2">
-                          <ViewRequestDialog request={request} />
+                    {filteredRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="text-center text-gray-400 py-6">
+                          No requests match the current filters.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredRequests.map((request) => (
+                        <tr key={request.id} className="border-b hover:bg-gray-50">
+                          <td className="p-2">{request.patientName}</td>
+                          <td className="p-2">{request.mrn}</td>
+                          <t className="p-2">{request.serviceDescription}</td>
+                          <td className="p-2">{new Date(request.expectedSurgeryDate).toLocaleDateString()}</td>
+                          <td className="p-2">{request.specialty}</td>
+                          <td className="p-2">{request.doctor}</td>
+                          <td className="p-2">
+                            <Badge variant={
+                              request.status === "Approved" ? "default" :
+                              request.status === "Rejected" ? "destructive" :
+                              request.status === "Pending" ? "secondary" : "outline"
+                            }>
+                              {request.status}
+                            </Badge>
+                          </td>
+                          <td className="p-2">
+                            <ViewRequestDialog request={request} />
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
