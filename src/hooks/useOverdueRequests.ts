@@ -6,6 +6,7 @@ export interface OverdueRequest {
   id: number;
   patientName: string;
   mrn?: string;
+  idNumber?: string;
   phone: string;
   agreedSurgeryDate: string;
   hospital: string;
@@ -15,9 +16,13 @@ export interface OverdueRequest {
   coordinator: string | null;
   createdAt: string;
   isOverdue: boolean;
+  isDelayed?: boolean;
   overdueTimestamp?: string;
   attachments: string[];
   notifications: string[];
+  rejectionCause?: string | null;
+  pendingCause?: string | null;
+  plannedCause?: string | null;
 }
 
 export const useOverdueRequests = () => {

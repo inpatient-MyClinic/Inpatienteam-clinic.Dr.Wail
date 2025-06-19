@@ -23,6 +23,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -209,7 +215,7 @@ export default function CaseCoordinatorDashboard() {
     completed: requests.filter(req => req.status === REQUEST_STATUSES.DONE).length,
     rejected: requests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length,
     needJustification: requests.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
-    delayed: requests.filter(req => req.isDelayed).length,
+    delayed: requests.filter(req => req.isDelayed || false).length,
     submittedToHospital: requests.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
     overdue: requests.filter(req => req.isOverdue).length,
   };
@@ -948,7 +954,7 @@ export default function CaseCoordinatorDashboard() {
                       <TableCell>{req.specialty}</TableCell>
                       <TableCell>{req.doctorName}</TableCell>
                       <TableCell>
-                        {getStatusBadge(req.status, req.isOverdue)}
+                        {getStatusBadge(req.status, req.isDelayed || false)}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
