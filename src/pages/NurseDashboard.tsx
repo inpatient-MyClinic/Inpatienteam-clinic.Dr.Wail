@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExportButton from "@/components/ExportButton";
@@ -6,6 +5,8 @@ import NurseSidebar from "@/components/nurse/NurseSidebar";
 import NurseFilters from "@/components/nurse/NurseFilters";
 import NurseRequestsTable from "@/components/nurse/NurseRequestsTable";
 import DateRangeFilter from "@/components/DateRangeFilter";
+import NurseHospitalPrivileges from "@/components/nurse/NurseHospitalPrivileges";
+import NurseAnalytics from "@/components/nurse/NurseAnalytics";
 import { useNurseRequests } from "@/hooks/useNurseRequests";
 import { doctorsBySpecialty } from "@/data/medicalData";
 
@@ -123,6 +124,12 @@ export default function NurseDashboard() {
           filteredRequests={finalFilteredRequests}
           updateStatus={updateStatus}
         />
+
+        {/* Hospital Privileges */}
+        <NurseHospitalPrivileges />
+
+        {/* Analytics */}
+        <NurseAnalytics filteredRequests={filteredRequests} currentNurseName={currentNurseName} />
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
