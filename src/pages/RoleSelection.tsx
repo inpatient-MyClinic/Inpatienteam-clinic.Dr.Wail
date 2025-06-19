@@ -13,6 +13,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import Footer from "@/components/Footer";
+import Logo from "@/components/Logo";
 
 const roles = [
   {
@@ -93,11 +94,7 @@ export default function RoleSelection() {
       <header className="w-full py-6 bg-white/80 backdrop-blur-sm shadow-sm">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-              alt="My Clinic Logo" 
-              className="h-10 w-auto"
-            />
+            <Logo size="sm" showText={false} />
             <div>
               <h1 className="text-2xl font-bold text-blue-900">My Clinic – In-patient</h1>
               <p className="text-blue-700 text-sm">Role Selection</p>

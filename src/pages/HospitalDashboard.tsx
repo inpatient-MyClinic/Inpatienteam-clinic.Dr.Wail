@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, FileText, ArrowLeft } from "lucide-react";
@@ -11,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
 import HospitalAnalytics from "@/components/hospital/HospitalAnalytics";
 import Footer from "@/components/Footer";
+import Logo from "@/components/Logo";
 import * as XLSX from 'xlsx';
 
 // Sample data - in a real app, this would come from your backend
@@ -260,15 +260,7 @@ export default function HospitalDashboard() {
       <div className="flex flex-1">
         <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col">
           {/* Logo */}
-          <div className="text-center mb-4">
-            <div className="bg-blue-600 rounded-lg p-3 mb-2">
-              <img 
-                src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-                alt="My Clinic Logo" 
-                className="h-16 w-auto mx-auto filter brightness-0 invert"
-              />
-            </div>
-          </div>
+          <Logo size="lg" showText={false} className="mb-4" />
           
           <div className="text-center mb-6">
             <h1 className="text-xl font-bold text-gray-800 mb-2">Hospital Dashboard</h1>

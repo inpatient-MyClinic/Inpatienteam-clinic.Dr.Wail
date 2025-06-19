@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NurseStats from "./NurseStats";
+import Logo from "@/components/Logo";
 import { NurseRequest } from "@/hooks/useNurseRequests";
 
 interface NurseSidebarProps {
@@ -25,12 +25,9 @@ export default function NurseSidebar({
 
   return (
     <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
+      <Logo size="sm" showText={false} className="mb-4" />
+      
       <div className="text-center mb-4">
-        <img 
-          src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-          alt="My Clinic Logo" 
-          className="h-8 w-auto mx-auto mb-2"
-        />
         <h1 className="text-lg font-bold text-blue-900">Nurse Dashboard</h1>
         <p className="text-xs text-blue-700">{currentNurseName}</p>
       </div>
