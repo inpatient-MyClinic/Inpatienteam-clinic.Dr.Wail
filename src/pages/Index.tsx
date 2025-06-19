@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Users, Hospital, UserCheck, Shield, TrendingUp, HeartHandshake } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -144,6 +145,8 @@ const Index = () => {
           </p>
         </div>
       </footer>
+      
+      <Footer />
     </div>
   );
 };

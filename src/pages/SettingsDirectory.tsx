@@ -7,6 +7,7 @@ import CustomFieldsManager from "@/components/CustomFieldsManager";
 import PrivilegeManagement from "./PrivilegeManagement";
 import UserManagement from "@/components/settings/UserManagement";
 import SystemSettings from "@/components/settings/SystemSettings";
+import Footer from "@/components/Footer";
 
 const SettingsDirectory = () => {
   return (
@@ -50,6 +51,8 @@ const SettingsDirectory = () => {
           <SystemSettings />
         </TabsContent>
       </Tabs>
+      
+      <Footer />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import {
   HeartHandshake,
   ArrowLeft
 } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const roles = [
   {
@@ -175,6 +175,8 @@ export default function RoleSelection() {
           </Button>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
