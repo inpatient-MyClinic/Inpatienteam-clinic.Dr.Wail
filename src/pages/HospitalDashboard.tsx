@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, FileText, ArrowLeft } from "lucide-react";
@@ -260,11 +261,13 @@ export default function HospitalDashboard() {
         <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col">
           {/* Logo */}
           <div className="text-center mb-4">
-            <img 
-              src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-              alt="My Clinic Logo" 
-              className="h-16 w-auto mx-auto mb-2"
-            />
+            <div className="bg-blue-600 rounded-lg p-3 mb-2">
+              <img 
+                src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+                alt="My Clinic Logo" 
+                className="h-16 w-auto mx-auto filter brightness-0 invert"
+              />
+            </div>
           </div>
           
           <div className="text-center mb-6">
