@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft } from "lucide-react";
+import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft, Eye, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
@@ -18,6 +17,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -226,6 +229,249 @@ export default function CaseCoordinatorDashboard() {
     needJustification: requests.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
     delayed: requests.filter(req => req.isDelayed).length,
     submittedToHospital: requests.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
+  };
+
+  // Calculate statistics for coordinator's assigned requests
+  const myStats = {
+    assigned: requests.filter(req => req.coordinator === coordinatorName).length,
+    total: requests.length,
+    assignmentRate: requests.length > 0 ? Math.round((requests.filter(req => req.coordinator === coordinatorName).length / requests.length) * 100) : 0,
+    myUnderProcess: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
+    myCompleted: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.DONE).length,
+    myNeedJustification: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
+  };
+
+  // Analytics calculations
+  const myRequests = requests.filter(req => req.coordinator === coordinatorName);
+  const conversionRate = myRequests.length > 0 ? ((myRequests.filter(req => req.status === REQUEST_STATUSES.DONE).length / myRequests.length) * 100).toFixed(1) : "0";
+  const utilizationRate = requests.length > 0 ? ((myRequests.length / requests.length) * 100).toFixed(1) : "0";
+
+  // Loss tree calculations
+  const lossTreeData = {
+    notDone: {
+      total: myRequests.filter(req => req.status !== REQUEST_STATUSES.DONE).length,
+      scheduled: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
+        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Doctor").length,
+        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Patient").length,
+        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Hospital").length,
+        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Insurance").length,
+      },
+      pending: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
+        doctor: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Doctor").length,
+        patient: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Patient").length,
+        hospital: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Hospital").length,
+        insurance: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Insurance").length,
+      },
+      planned: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL).length,
+        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Doctor").length,
+        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Patient").length,
+        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Hospital").length,
+        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Insurance").length,
+      },
+      rejected: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length,
+        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Doctor").length,
+        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Patient").length,
+        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Hospital").length,
+        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Insurance").length,
+      }
+    }
+  };
+
+  const ViewRequestDialog = ({ request }: { request: any }) => {
+    const [localSurgeryDate, setLocalSurgeryDate] = useState(request.agreedSurgeryDate || "");
+    const [localHospital, setLocalHospital] = useState(request.hospital || "");
+    const [localStatus, setLocalStatus] = useState(request.status || "");
+    const [localNotes, setLocalNotes] = useState("");
+    const [localHasModifications, setLocalHasModifications] = useState(false);
+
+    const handleLocalFieldChange = (field: 'surgeryDate' | 'hospital' | 'status' | 'notes', value: string) => {
+      if (field === 'surgeryDate') {
+        setLocalSurgeryDate(value);
+        setLocalHasModifications(
+          value !== request.agreedSurgeryDate || 
+          localHospital !== request.hospital || 
+          localStatus !== request.status
+        );
+      } else if (field === 'hospital') {
+        setLocalHospital(value);
+        setLocalHasModifications(
+          value !== request.hospital || 
+          localSurgeryDate !== request.agreedSurgeryDate || 
+          localStatus !== request.status
+        );
+      } else if (field === 'status') {
+        setLocalStatus(value);
+        setLocalHasModifications(
+          value !== request.status || 
+          localSurgeryDate !== request.agreedSurgeryDate || 
+          localHospital !== request.hospital
+        );
+      } else if (field === 'notes') {
+        setLocalNotes(value);
+      }
+    };
+
+    const handleLocalSubmit = () => {
+      if (!localSurgeryDate || !localHospital) {
+        toast({
+          title: "Error",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update the request with new data
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === request.id ? {
+            ...req,
+            agreedSurgeryDate: localSurgeryDate,
+            hospital: localHospital,
+            status: localStatus,
+            notifications: [...req.notifications, `Request updated by ${coordinatorName}`]
+          } : req
+        )
+      );
+
+      setLocalHasModifications(false);
+      
+      toast({
+        title: "Request Updated",
+        description: "Request has been updated successfully",
+      });
+    };
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Eye className="w-4 h-4 mr-1" />
+            View
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Request Details - {request.patientName}</DialogTitle>
+            <DialogDescription>
+              Complete request information and medical details
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Patient Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="font-semibold">Patient Information</Label>
+                <div className="mt-2 space-y-1">
+                  <p><span className="font-medium">Name:</span> {request.patientName}</p>
+                  <p><span className="font-medium">Phone:</span> {request.phone}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="font-semibold">Medical Information</Label>
+                <div className="mt-2 space-y-1">
+                  <p><span className="font-medium">Specialty:</span> {request.specialty}</p>
+                  <p><span className="font-medium">Doctor:</span> {request.doctorName}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Editable Hospital */}
+            <div>
+              <Label className="font-semibold">Hospital</Label>
+              <div className="mt-2">
+                <Select value={localHospital} onValueChange={(value) => handleLocalFieldChange('hospital', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select hospital" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hospitals.map((hospital) => (
+                      <SelectItem key={hospital} value={hospital}>
+                        {hospital}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Editable Expected Surgery Date */}
+            <div>
+              <Label className="font-semibold">Expected Surgery Date</Label>
+              <div className="mt-2">
+                <Input
+                  type="date"
+                  value={localSurgeryDate}
+                  onChange={(e) => handleLocalFieldChange('surgeryDate', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Editable Status */}
+            <div>
+              <Label className="font-semibold">Status</Label>
+              <div className="mt-2">
+                <Select value={localStatus} onValueChange={(value) => handleLocalFieldChange('status', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(REQUEST_STATUSES).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* History/Notes */}
+            <div>
+              <Label className="font-semibold">History & Notes</Label>
+              <div className="mt-2">
+                <Textarea
+                  placeholder="Add notes or history..."
+                  value={localNotes}
+                  onChange={(e) => handleLocalFieldChange('notes', e.target.value)}
+                  rows={4}
+                />
+              </div>
+              {request.notifications && request.notifications.length > 0 && (
+                <div className="mt-4">
+                  <Label className="font-medium text-sm">Request History</Label>
+                  <div className="mt-2 space-y-1">
+                    {request.notifications.map((notification: string, index: number) => (
+                      <div key={index} className="text-sm p-2 bg-gray-50 rounded">
+                        {notification}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Modifications Button */}
+            {localHasModifications && (
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={handleLocalSubmit}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="w-4 h-4 mr-2 text-white" />
+                  Save Changes
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   // Calculate statistics for coordinator's assigned requests
@@ -665,21 +911,19 @@ export default function CaseCoordinatorDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Patient Name</TableHead>
-                  <TableHead>ID Number</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Surgery Date</TableHead>
                   <TableHead>Hospital</TableHead>
                   <TableHead>Specialty</TableHead>
                   <TableHead>Doctor</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Coordinator</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRequests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-gray-400 py-6">
+                    <TableCell colSpan={8} className="text-center text-gray-400 py-6">
                       No requests found.
                     </TableCell>
                   </TableRow>
@@ -687,7 +931,6 @@ export default function CaseCoordinatorDashboard() {
                   filteredRequests.map((req) => (
                     <TableRow key={req.id}>
                       <TableCell>{req.patientName}</TableCell>
-                      <TableCell>{req.idNumber}</TableCell>
                       <TableCell>{req.phone}</TableCell>
                       <TableCell>{req.agreedSurgeryDate}</TableCell>
                       <TableCell>{req.hospital}</TableCell>
@@ -696,10 +939,10 @@ export default function CaseCoordinatorDashboard() {
                       <TableCell>
                         {getStatusBadge(req.status, req.isDelayed)}
                       </TableCell>
-                      <TableCell>{req.coordinator || "Unassigned"}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {!req.coordinator && (req.status === REQUEST_STATUSES.NEW || req.status === REQUEST_STATUSES.PENDING) ? (
+                          {/* Assign to Me - only show if not assigned */}
+                          {!req.coordinator && req.status === REQUEST_STATUSES.NEW && (
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -707,47 +950,31 @@ export default function CaseCoordinatorDashboard() {
                             >
                               Assign to Me
                             </Button>
-                          ) : req.coordinator === coordinatorName ? (
-                            <div className="flex gap-1">
-                              {req.status === REQUEST_STATUSES.UNDER_PROCESS && (
-                                <>
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => forwardToHospital(req.id)}
-                                  >
-                                    Forward to Hospital
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => updateStatus(req.id, REQUEST_STATUSES.NOT_COMPLETED)}
-                                  >
-                                    Mark Incomplete
-                                  </Button>
-                                </>
-                              )}
-                              {req.status === REQUEST_STATUSES.NEED_JUSTIFICATION && (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => updateStatus(req.id, REQUEST_STATUSES.UNDER_PROCESS)}
-                                >
-                                  Review Justification
-                                </Button>
-                              )}
-                              {req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => updateStatus(req.id, REQUEST_STATUSES.DONE)}
-                                >
-                                  Mark Complete
-                                </Button>
-                              )}
-                            </div>
-                          ) : (
-                            <Button size="sm" variant="outline">
-                              View
+                          )}
+                          
+                          {/* Submitted to Hospital - show if assigned to me and under process */}
+                          {req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => updateStatus(req.id, REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL)}
+                            >
+                              Submit to Hospital
                             </Button>
                           )}
+                          
+                          {/* Need Update - show if assigned to me */}
+                          {req.coordinator === coordinatorName && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => updateStatus(req.id, "Update")}
+                            >
+                              Need Update
+                            </Button>
+                          )}
+                          
+                          {/* View - always show */}
+                          <ViewRequestDialog request={req} />
                         </div>
                       </TableCell>
                     </TableRow>
