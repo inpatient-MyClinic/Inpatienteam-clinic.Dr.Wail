@@ -7,6 +7,7 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import RequestsTable from "@/components/RequestsTable";
 import HospitalPrivileges from "@/components/HospitalPrivileges";
 import DoctorAnalytics from "@/components/DoctorAnalytics";
+import Footer from "@/components/Footer";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -260,52 +261,55 @@ export default function DoctorDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen w-full">
-      <DoctorSidebar
-        currentDoctorName={currentDoctorName}
-        stats={stats}
-        selectedStatuses={selectedStatuses}
-        onStatusClick={handleStatusClick}
-        onClearStatusFilter={clearStatusFilter}
-        onCreateNewRequest={createNewRequest}
-      />
-      
-      <main className="flex-1 bg-white p-6">
-        <DateRangeFilter
-          selectedDates={selectedDates}
-          selectedWeeks={selectedWeeks}
-          selectedMonths={selectedMonths}
-          onDateSelect={setSelectedDates}
-          onWeekSelect={setSelectedWeeks}
-          onMonthSelect={setSelectedMonths}
-          onClearAll={clearAllDateFilters}
+    <div className="flex min-h-screen w-full flex-col">
+      <div className="flex flex-1">
+        <DoctorSidebar
+          currentDoctorName={currentDoctorName}
+          stats={stats}
+          selectedStatuses={selectedStatuses}
+          onStatusClick={handleStatusClick}
+          onClearStatusFilter={clearStatusFilter}
+          onCreateNewRequest={createNewRequest}
         />
         
-        <FilterBar
-          onExportExcel={exportToExcel}
-          onPrint={printPage}
-        />
-        
-        <RequestsTable
-          requests={filteredRequests}
-          onJustificationSubmit={handleJustificationSubmit}
-          onRequestModification={handleRequestModification}
-          getStatusBadge={getStatusBadge}
-          getPaymentStatusBadge={getPaymentStatusBadge}
-          REQUEST_STATUSES={REQUEST_STATUSES}
-        />
+        <main className="flex-1 bg-white p-6">
+          <DateRangeFilter
+            selectedDates={selectedDates}
+            selectedWeeks={selectedWeeks}
+            selectedMonths={selectedMonths}
+            onDateSelect={setSelectedDates}
+            onWeekSelect={setSelectedWeeks}
+            onMonthSelect={setSelectedMonths}
+            onClearAll={clearAllDateFilters}
+          />
+          
+          <FilterBar
+            onExportExcel={exportToExcel}
+            onPrint={printPage}
+          />
+          
+          <RequestsTable
+            requests={filteredRequests}
+            onJustificationSubmit={handleJustificationSubmit}
+            onRequestModification={handleRequestModification}
+            getStatusBadge={getStatusBadge}
+            getPaymentStatusBadge={getPaymentStatusBadge}
+            REQUEST_STATUSES={REQUEST_STATUSES}
+          />
 
-        <HospitalPrivileges privileges={doctorPrivileges} />
+          <HospitalPrivileges privileges={doctorPrivileges} />
 
-        <DoctorAnalytics
-          totalRequests={totalRequests}
-          doneRequests={doneRequests}
-          rejectedRequests={rejectedRequests}
-          conversionRate={conversionRate}
-          approvalRate={approvalRate}
-          rejectionRate={rejectionRate}
-        />
-      </main>
+          <DoctorAnalytics
+            totalRequests={totalRequests}
+            doneRequests={doneRequests}
+            rejectedRequests={rejectedRequests}
+            conversionRate={conversionRate}
+            approvalRate={approvalRate}
+            rejectionRate={rejectionRate}
+          />
+        </main>
+      </div>
+      <Footer />
     </div>
   );
 }

@@ -1,40 +1,46 @@
 
 import React from "react";
+import Footer from "@/components/Footer";
 
 export default function RequestWireframe() {
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4">
-      <h1 className="text-2xl font-bold text-blue-900 mb-4 text-center">
-        نموذج الطلب – Wireframe
-      </h1>
-      <div className="grid grid-cols-1 gap-3">
-        <WireframeField label="RequestID (Auto)" />
-        <WireframeField label="RequestDate (Auto)" />
-        <WireframeField label="PatientName" />
-        <WireframeField label="PatientIDNo" />
-        <WireframeField label="PatientContactNo" />
-        <WireframeField label="PatientMRN" />
-        <WireframeField label="CoverageType (Cash/Insurance)" />
-        <WireframeField label="ReferredHospital (اختيار من قائمة)" />
-        <WireframeField label="MyClinicBranch" />
-        <WireframeField label="ExpectedSurgeryDate" />
-        <WireframeField label="Specialty" />
-        <WireframeField label="DoctorName (حسب التخصص)" />
-        <WireframeField label="ServiceDescription" big />
-        <WireframeField label="InstrumentsNeeded" big />
-        <WireframeField label="History" big />
-        <WireframeField label="Attachments (ملفات/صور)" />
-        <WireframeField label="AdmissionType (Inpatient/DPU)" />
-        <WireframeField label="Status (Submitted)" />
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1">
+        <div className="max-w-2xl mx-auto py-12 px-4">
+          <h1 className="text-2xl font-bold text-blue-900 mb-4 text-center">
+            نموذج الطلب – Wireframe
+          </h1>
+          <div className="grid grid-cols-1 gap-3">
+            <WireframeField label="RequestID (Auto)" />
+            <WireframeField label="RequestDate (Auto)" />
+            <WireframeField label="PatientName" />
+            <WireframeField label="PatientIDNo" />
+            <WireframeField label="PatientContactNo" />
+            <WireframeField label="PatientMRN" />
+            <WireframeField label="CoverageType (Cash/Insurance)" />
+            <WireframeField label="ReferredHospital (اختيار من قائمة)" />
+            <WireframeField label="MyClinicBranch" />
+            <WireframeField label="ExpectedSurgeryDate" />
+            <WireframeField label="Specialty" />
+            <WireframeField label="DoctorName (حسب التخصص)" />
+            <WireframeField label="ServiceDescription" big />
+            <WireframeField label="InstrumentsNeeded" big />
+            <WireframeField label="History" big />
+            <WireframeField label="Attachments (ملفات/صور)" />
+            <WireframeField label="AdmissionType (Inpatient/DPU)" />
+            <WireframeField label="Status (Submitted)" />
+          </div>
+          <div className="flex justify-center mt-8">
+            <button className="px-8 py-3 rounded-md bg-gray-200 text-gray-700 font-semibold shadow">
+              إرسال الطلب (تجريبي)
+            </button>
+          </div>
+          <p className="mt-8 text-center text-xs text-gray-400">
+            Wireframe تخطيطي فقط — لا توجد وظائف فعلية بعد.
+          </p>
+        </div>
       </div>
-      <div className="flex justify-center mt-8">
-        <button className="px-8 py-3 rounded-md bg-gray-200 text-gray-700 font-semibold shadow">
-          إرسال الطلب (تجريبي)
-        </button>
-      </div>
-      <p className="mt-8 text-center text-xs text-gray-400">
-        Wireframe تخطيطي فقط — لا توجد وظائف فعلية بعد.
-      </p>
+      <Footer />
     </div>
   );
 }
@@ -56,4 +62,3 @@ function WireframeField({ label, big = false }: { label: string; big?: boolean }
     </div>
   );
 }
-

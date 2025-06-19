@@ -10,6 +10,7 @@ import MedicalInfoSection from "@/components/request/MedicalInfoSection";
 import SurgeryDetailsSection from "@/components/request/SurgeryDetailsSection";
 import NotesSection from "@/components/request/NotesSection";
 import AttachmentSection from "@/components/request/AttachmentSection";
+import Footer from "@/components/Footer";
 
 const CreateRequest = () => {
   const [form, setForm] = useState<Partial<RequestFormData>>({});
@@ -70,62 +71,67 @@ const CreateRequest = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <img 
-            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-            alt="Doctor Portal Logo" 
-            className="h-10 w-auto"
-          />
-          <h2 className="text-2xl font-bold text-blue-900">Create New Request</h2>
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1">
+        <div className="max-w-4xl mx-auto py-8 px-4">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <img 
+                src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+                alt="Doctor Portal Logo" 
+                className="h-10 w-auto"
+              />
+              <h2 className="text-2xl font-bold text-blue-900">Create New Request</h2>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(-1)}
+            >
+              Back to Dashboard
+            </Button>
+          </div>
+
+          <form className="space-y-8" onSubmit={handleSubmit}>
+            <PatientInfoSection 
+              form={form} 
+              onFieldChange={handleFieldChange} 
+            />
+            
+            <HospitalInfoSection 
+              form={form} 
+              onFieldChange={handleFieldChange} 
+            />
+            
+            <MedicalInfoSection 
+              form={form} 
+              selectedSpecialty={selectedSpecialty}
+              onFieldChange={handleFieldChange}
+              onSpecialtyChange={handleSpecialtyChange}
+            />
+            
+            <SurgeryDetailsSection 
+              form={form} 
+              onFieldChange={handleFieldChange} 
+            />
+            
+            <NotesSection 
+              form={form} 
+              onFieldChange={handleFieldChange} 
+            />
+            
+            <AttachmentSection 
+              attachments={attachments}
+              onFileUpload={handleFileUpload}
+              onRemoveAttachment={removeAttachment}
+            />
+
+            <Button type="submit" className="w-full">
+              Create Request
+            </Button>
+          </form>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate(-1)}
-        >
-          Back to Dashboard
-        </Button>
       </div>
-
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        <PatientInfoSection 
-          form={form} 
-          onFieldChange={handleFieldChange} 
-        />
-        
-        <HospitalInfoSection 
-          form={form} 
-          onFieldChange={handleFieldChange} 
-        />
-        
-        <MedicalInfoSection 
-          form={form} 
-          selectedSpecialty={selectedSpecialty}
-          onFieldChange={handleFieldChange}
-          onSpecialtyChange={handleSpecialtyChange}
-        />
-        
-        <SurgeryDetailsSection 
-          form={form} 
-          onFieldChange={handleFieldChange} 
-        />
-        
-        <NotesSection 
-          form={form} 
-          onFieldChange={handleFieldChange} 
-        />
-        
-        <AttachmentSection 
-          attachments={attachments}
-          onFileUpload={handleFileUpload}
-          onRemoveAttachment={removeAttachment}
-        />
-
-        <Button type="submit" className="w-full">
-          Create Request
-        </Button>
-      </form>
+      <Footer />
     </div>
   );
 };
