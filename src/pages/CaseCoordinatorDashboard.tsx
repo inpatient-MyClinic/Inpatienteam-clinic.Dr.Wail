@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/Logo";
 import {
   Table,
   TableBody,
@@ -341,12 +342,9 @@ export default function CaseCoordinatorDashboard() {
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
       <aside className="w-[19rem] bg-green-50 flex flex-col items-center p-6 border-r">
+        <Logo size="sm" showText={false} className="mb-4" />
+        
         <div className="text-center mb-4">
-          <img 
-            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-            alt="My Clinic Logo" 
-            className="h-8 w-auto mx-auto mb-2"
-          />
           <h1 className="text-lg font-bold text-green-900">Case Coordinator</h1>
           <p className="text-xs text-green-700">John Smith</p>
         </div>
