@@ -1,15 +1,12 @@
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, Download, Clock, AlertTriangle, ArrowLeft, Eye, Printer } from "lucide-react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import DoctorSidebar from "@/components/DoctorSidebar";
+import FilterBar from "@/components/FilterBar";
+import RequestsTable from "@/components/RequestsTable";
+import HospitalPrivileges from "@/components/HospitalPrivileges";
+import DoctorAnalytics from "@/components/DoctorAnalytics";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -48,7 +45,6 @@ export default function DoctorDashboard() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [justificationText, setJustificationText] = useState("");
   
   // Sample requests - doctor can see requests assigned to them
   const [requests, setRequests] = useState([
@@ -60,7 +56,7 @@ export default function DoctorDashboard() {
       hospital: "King Khaled Hospital",
       status: REQUEST_STATUSES.PENDING,
       paymentStatus: PAYMENT_STATUSES.PENDING,
-      assignedDoctor: "Dr. Ahmed Salem", // Current doctor
+      assignedDoctor: "Dr. Ahmed Salem",
       createdAt: "2024-01-10T11:00:00Z",
       originalRequest: "Patient requires cardiac bypass surgery due to severe coronary artery disease.",
       justificationNeeded: false
@@ -126,9 +122,9 @@ export default function DoctorDashboard() {
   const totalRequests = requests.length;
   const doneRequests = requests.filter(req => req.status === REQUEST_STATUSES.DONE).length;
   const rejectedRequests = requests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length;
-  const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : 0;
-  const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : 0;
-  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : 0;
+  const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : "0";
+  const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : "0";
+  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
 
   const handleFilterClick = (filterValue: string) => {
     if (selectedFilters.includes(filterValue)) {
@@ -166,16 +162,7 @@ export default function DoctorDashboard() {
     navigate("/create-request");
   };
 
-  const submitJustification = (requestId: number) => {
-    if (!justificationText.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide justification text",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleJustificationSubmit = (requestId: number, justification: string) => {
     setRequests(prev =>
       prev.map(req =>
         req.id === requestId ? { 
@@ -190,8 +177,6 @@ export default function DoctorDashboard() {
       title: "Justification Submitted",
       description: "Request has been forwarded to hospital with justification",
     });
-
-    setJustificationText("");
   };
 
   const printPage = () => {
@@ -235,240 +220,43 @@ export default function DoctorDashboard() {
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* Sidebar */}
-      <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-        <div className="text-center mb-4">
-          <img 
-            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-            alt="My Clinic Logo" 
-            className="h-8 w-auto mx-auto mb-2"
-          />
-          <h1 className="text-lg font-bold text-blue-900">Doctor Dashboard</h1>
-          <p className="text-xs text-blue-700">{currentDoctorName}</p>
-        </div>
-
-        <Button className="w-full mb-8" variant="default" onClick={createNewRequest}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Request
-        </Button>
-        
-        <div className="flex flex-col gap-2 w-full mb-4">
-          <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
-          {stats.map((stat) => (
-            <div
-              key={stat.key}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
-                selectedStatuses.length === 0 || selectedStatuses.includes(stat.label) 
-                  ? stat.color 
-                  : stat.color + ' opacity-50'
-              } text-white`}
-              onClick={() => handleStatusClick(stat.label)}
-            >
-              <span className="text-xs">{stat.label}:</span>
-              <span className="font-bold text-lg">{stat.count}</span>
-            </div>
-          ))}
-          
-          {selectedStatuses.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={clearStatusFilter}
-              className="mt-2"
-            >
-              Clear Filter
-            </Button>
-          )}
-        </div>
-
-        <Button 
-          variant="outline"
-          onClick={() => navigate("/role-selection")}
-          className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Roles
-        </Button>
-      </aside>
+      <DoctorSidebar
+        currentDoctorName={currentDoctorName}
+        stats={stats}
+        selectedStatuses={selectedStatuses}
+        onStatusClick={handleStatusClick}
+        onClearStatusFilter={clearStatusFilter}
+        onCreateNewRequest={createNewRequest}
+      />
       
-      {/* Main */}
       <main className="flex-1 bg-white p-6">
-        {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 mb-6 justify-end">
-          {filters.map((f) => (
-            <Button
-              key={f.value}
-              variant={selectedFilters.includes(f.value) ? "default" : "outline"}
-              onClick={() => handleFilterClick(f.value)}
-              size="sm"
-            >
-              {f.label}
-            </Button>
-          ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearTimeFilter}
-            className="ml-2"
-            disabled={selectedFilters.length === 0}
-          >
-            Clear Filter
-          </Button>
-          <Button onClick={exportToExcel} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button onClick={printPage} variant="outline">
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
-        </div>
+        <FilterBar
+          filters={filters}
+          selectedFilters={selectedFilters}
+          onFilterClick={handleFilterClick}
+          onClearFilter={clearTimeFilter}
+          onExportExcel={exportToExcel}
+          onPrint={printPage}
+        />
         
-        {/* Requests table */}
-        <div className="overflow-x-auto mb-8">
-          <table className="w-full border text-sm rounded">
-            <thead className="bg-blue-100 text-blue-900">
-              <tr>
-                <th className="p-2">Patient Name</th>
-                <th className="p-2">MRN</th>
-                <th className="p-2">Service Description</th>
-                <th className="p-2">Hospital</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Payment Status</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-6">
-                    No requests found.
-                  </td>
-                </tr>
-              ) : (
-                filteredRequests.map((req) => (
-                  <tr key={req.id} className="border-b">
-                    <td className="p-2">{req.patientName}</td>
-                    <td className="p-2">{req.mrn}</td>
-                    <td className="p-2">{req.serviceDescription}</td>
-                    <td className="p-2">{req.hospital}</td>
-                    <td className="p-2">
-                      {getStatusBadge(req.status)}
-                    </td>
-                    <td className="p-2">
-                      {getPaymentStatusBadge(req.paymentStatus)}
-                    </td>
-                    <td className="p-2">
-                      <div className="flex gap-2">
-                        {req.status === REQUEST_STATUSES.NEED_JUSTIFICATION ? (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                Add Justification
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Add Justification for {req.patientName}</DialogTitle>
-                                <DialogDescription>
-                                  Review the original request and provide additional justification
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label>Original Request</Label>
-                                  <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
-                                    {req.originalRequest}
-                                  </div>
-                                </div>
-                                <div>
-                                  <Label htmlFor="justification">Additional Justification</Label>
-                                  <Textarea
-                                    id="justification"
-                                    placeholder="Provide additional medical justification for this request..."
-                                    value={justificationText}
-                                    onChange={(e) => setJustificationText(e.target.value)}
-                                    className="mt-1"
-                                    rows={4}
-                                  />
-                                </div>
-                                <Button 
-                                  onClick={() => submitJustification(req.id)}
-                                  className="w-full"
-                                  disabled={!justificationText.trim()}
-                                >
-                                  Submit Justification
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        ) : (
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <RequestsTable
+          requests={filteredRequests}
+          onJustificationSubmit={handleJustificationSubmit}
+          getStatusBadge={getStatusBadge}
+          getPaymentStatusBadge={getPaymentStatusBadge}
+          REQUEST_STATUSES={REQUEST_STATUSES}
+        />
 
-        {/* Hospital Privileges */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Hospital Privileges</CardTitle>
-            <CardDescription>Hospitals where you have active privileges</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {doctorPrivileges.map((hospital, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <Badge variant="secondary" className="flex-1">
-                    {hospital.name}
-                  </Badge>
-                  <span className="text-sm text-gray-600 ml-2">
-                    {hospital.cases} cases referred
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <HospitalPrivileges privileges={doctorPrivileges} />
 
-        {/* Analytics */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Analytics</CardTitle>
-            <CardDescription>Performance metrics for your requests</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Conversion Rate</h3>
-              <p className="text-4xl font-bold text-green-600">{conversionRate}%</p>
-              <p className="text-sm text-gray-500">
-                ({doneRequests} done / {totalRequests} total requests)
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Approval Rate</h3>
-              <p className="text-4xl font-bold text-blue-600">{approvalRate}%</p>
-              <p className="text-sm text-gray-500">
-                ({totalRequests - rejectedRequests} approved / {totalRequests} total requests)
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Rejection Rate</h3>
-              <p className="text-4xl font-bold text-red-600">{rejectionRate}%</p>
-              <p className="text-sm text-gray-500">
-                ({rejectedRequests} rejected / {totalRequests} total requests)
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <DoctorAnalytics
+          totalRequests={totalRequests}
+          doneRequests={doneRequests}
+          rejectedRequests={rejectedRequests}
+          conversionRate={conversionRate}
+          approvalRate={approvalRate}
+          rejectionRate={rejectionRate}
+        />
       </main>
     </div>
   );
