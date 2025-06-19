@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 import DoctorSidebar from "@/components/DoctorSidebar";
-import FilterBar from "@/components/FilterBar";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import RequestsTable from "@/components/RequestsTable";
 import HospitalPrivileges from "@/components/HospitalPrivileges";
@@ -14,8 +13,6 @@ import { useDoctorRequests } from "@/hooks/useDoctorRequests";
 import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
 
 export default function DoctorDashboard() {
-  const [specialtyFilter, setSpecialtyFilter] = useState("all");
-  const [doctorFilter, setDoctorFilter] = useState("all");
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
@@ -35,9 +32,6 @@ export default function DoctorDashboard() {
   // Apply additional filters beyond the hook's filtering
   const applyFilters = (requests: typeof filteredRequests) => {
     return requests.filter(request => {
-      const matchesSpecialty = specialtyFilter === "all" || request.specialty === specialtyFilter;
-      const matchesDoctor = doctorFilter === "all" || request.assignedDoctorValue === doctorFilter;
-      
       // Status filter from sidebar
       const matchesStatus = !activeStatusFilter || 
         (activeStatusFilter === 'delayed' ? request.isDelayed : request.status === activeStatusFilter);
@@ -86,7 +80,7 @@ export default function DoctorDashboard() {
         }
       }
       
-      return matchesSpecialty && matchesDoctor && matchesStatus && matchesDateFilter;
+      return matchesStatus && matchesDateFilter;
     });
   };
 
@@ -95,8 +89,6 @@ export default function DoctorDashboard() {
   // Check if there are active filters
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
-    specialtyFilter !== "all" || 
-    doctorFilter !== "all" ||
     dateFilters.selectedDays.length > 0 ||
     dateFilters.selectedWeeks.length > 0 ||
     dateFilters.selectedMonths.length > 0
@@ -146,13 +138,6 @@ export default function DoctorDashboard() {
             />
           </div>
         </div>
-
-        <FilterBar 
-          specialtyFilter={specialtyFilter}
-          setSpecialtyFilter={setSpecialtyFilter}
-          doctorFilter={doctorFilter}
-          setDoctorFilter={setDoctorFilter}
-        />
         
         <RequestsTable 
           filteredRequests={finalFilteredRequests}

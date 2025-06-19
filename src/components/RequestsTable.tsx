@@ -28,6 +28,7 @@ export default function RequestsTable({
   const [serviceFilter, setServiceFilter] = useState("");
   const [hospitalFilter, setHospitalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [surgeryDateMonthFilter, setSurgeryDateMonthFilter] = useState("all");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +48,16 @@ export default function RequestsTable({
   // Get unique values for filter dropdowns
   const uniqueStatuses = [...new Set(filteredRequests.map(req => req.status))];
   const uniqueHospitals = [...new Set(filteredRequests.map(req => req.hospital))];
+  
+  // Get unique months from surgery dates
+  const uniqueSurgeryMonths = [...new Set(
+    filteredRequests
+      .filter(req => req.expectedSurgeryDate)
+      .map(req => {
+        const date = new Date(req.expectedSurgeryDate);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      })
+  )].sort();
 
   // Filter requests based on all filter criteria
   const tableFilteredRequests = filteredRequests.filter(request => {
@@ -55,7 +66,16 @@ export default function RequestsTable({
     const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
     
-    return matchesService && matchesHospital && matchesStatus;
+    // Surgery date month filter
+    const matchesSurgeryMonth = surgeryDateMonthFilter === "all" || 
+      (request.expectedSurgeryDate && 
+       (() => {
+         const date = new Date(request.expectedSurgeryDate);
+         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+         return monthKey === surgeryDateMonthFilter;
+       })());
+    
+    return matchesService && matchesHospital && matchesStatus && matchesSurgeryMonth;
   });
 
   // Calculate pagination
@@ -67,15 +87,21 @@ export default function RequestsTable({
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [serviceFilter, hospitalFilter, statusFilter]);
+  }, [serviceFilter, hospitalFilter, statusFilter, surgeryDateMonthFilter]);
 
   const clearAllFilters = () => {
     setServiceFilter("");
     setHospitalFilter("all");
     setStatusFilter("all");
+    setSurgeryDateMonthFilter("all");
   };
 
-  const hasActiveFilters = Boolean(serviceFilter || hospitalFilter !== "all" || statusFilter !== "all");
+  const hasActiveFilters = Boolean(
+    serviceFilter || 
+    hospitalFilter !== "all" || 
+    statusFilter !== "all" || 
+    surgeryDateMonthFilter !== "all"
+  );
 
   const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
@@ -483,7 +509,53 @@ export default function RequestsTable({
                 </Popover>
               </div>
             </th>
-            <th className="p-2">Agreed Date of Surgery</th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Agreed Date of Surgery
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Month</Label>
+                      <Select value={surgeryDateMonthFilter} onValueChange={setSurgeryDateMonthFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="all">All months</SelectItem>
+                          {uniqueSurgeryMonths.map((month) => {
+                            const [year, monthNum] = month.split('-');
+                            const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleDateString('en-US', { 
+                              month: 'long', 
+                              year: 'numeric' 
+                            });
+                            return (
+                              <SelectItem key={month} value={month}>
+                                {monthName}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      {surgeryDateMonthFilter !== "all" && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSurgeryDateMonthFilter("all")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
             <th className="p-2 relative">
               <div className="flex items-center justify-between">
                 Status
