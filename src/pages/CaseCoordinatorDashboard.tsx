@@ -474,56 +474,6 @@ export default function CaseCoordinatorDashboard() {
     );
   };
 
-  // Calculate statistics for coordinator's assigned requests
-  const myStats = {
-    assigned: requests.filter(req => req.coordinator === coordinatorName).length,
-    total: requests.length,
-    assignmentRate: requests.length > 0 ? Math.round((requests.filter(req => req.coordinator === coordinatorName).length / requests.length) * 100) : 0,
-    myUnderProcess: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
-    myCompleted: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.DONE).length,
-    myNeedJustification: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
-  };
-
-  // Analytics calculations
-  const myRequests = requests.filter(req => req.coordinator === coordinatorName);
-  const conversionRate = myRequests.length > 0 ? ((myRequests.filter(req => req.status === REQUEST_STATUSES.DONE).length / myRequests.length) * 100).toFixed(1) : "0";
-  const utilizationRate = requests.length > 0 ? ((myRequests.length / requests.length) * 100).toFixed(1) : "0";
-
-  // Loss tree calculations
-  const lossTreeData = {
-    notDone: {
-      total: myRequests.filter(req => req.status !== REQUEST_STATUSES.DONE).length,
-      scheduled: {
-        total: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
-        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Doctor").length,
-        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Patient").length,
-        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Hospital").length,
-        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Insurance").length,
-      },
-      pending: {
-        total: myRequests.filter(req => req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
-        doctor: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Doctor").length,
-        patient: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Patient").length,
-        hospital: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Hospital").length,
-        insurance: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Insurance").length,
-      },
-      planned: {
-        total: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL).length,
-        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Doctor").length,
-        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Patient").length,
-        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Hospital").length,
-        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Insurance").length,
-      },
-      rejected: {
-        total: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length,
-        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Doctor").length,
-        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Patient").length,
-        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Hospital").length,
-        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Insurance").length,
-      }
-    }
-  };
-
   const getFilteredRequests = () => {
     let filtered = requests;
 
