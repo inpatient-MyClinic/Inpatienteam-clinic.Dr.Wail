@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -387,48 +388,6 @@ export default function HospitalDashboard() {
         </div>
       </div>
 
-      {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {doneRequests} of {totalRequests} requests completed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{approvalRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {approvedRequests} of {totalRequests} requests approved
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejection Rate</CardTitle>
-            <XCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{rejectionRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {rejectedRequests} of {totalRequests} requests rejected
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Main Content */}
       <div className="flex gap-6">
         {/* Left Sidebar - Status Icons */}
@@ -759,6 +718,48 @@ export default function HospitalDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Analytics Cards - Moved below table */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {doneRequests} of {totalRequests} requests completed
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{approvalRate}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {approvedRequests} of {totalRequests} requests approved
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Rejection Rate</CardTitle>
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{rejectionRate}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {rejectedRequests} of {totalRequests} requests rejected
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Hospital Lead Time Performance */}
           <Card>
