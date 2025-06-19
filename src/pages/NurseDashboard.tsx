@@ -6,16 +6,35 @@ import NurseSidebar from "@/components/nurse/NurseSidebar";
 import NurseFilters from "@/components/nurse/NurseFilters";
 import NurseRequestsTable from "@/components/nurse/NurseRequestsTable";
 import { useNurseRequests } from "@/hooks/useNurseRequests";
+import { doctorsBySpecialty } from "@/data/medicalData";
 
 export default function NurseDashboard() {
   const [filter, setFilter] = useState<string | null>(null);
+  const [specialtyFilter, setSpecialtyFilter] = useState("all");
+  const [doctorFilter, setDoctorFilter] = useState("all");
   const navigate = useNavigate();
   
   const currentNurseName = "Nurse Sara";
   const { requests, filteredRequests, updateStatus } = useNurseRequests(currentNurseName);
 
+  // Apply additional filters beyond the hook's filtering
+  const applyFilters = (requests: typeof filteredRequests) => {
+    return requests.filter(request => {
+      const matchesSpecialty = specialtyFilter === "all" || request.specialty === specialtyFilter;
+      const matchesDoctor = doctorFilter === "all" || request.assignedDoctorValue === doctorFilter;
+      
+      return matchesSpecialty && matchesDoctor;
+    });
+  };
+
+  const finalFilteredRequests = applyFilters(filteredRequests);
+
   // Check if there are active filters
-  const hasActiveFilters = Boolean(filter);
+  const hasActiveFilters = Boolean(
+    filter || 
+    specialtyFilter !== "all" || 
+    doctorFilter !== "all"
+  );
 
   const createNewRequest = () => {
     navigate("/create-request");
@@ -25,7 +44,7 @@ export default function NurseDashboard() {
     <div className="flex min-h-screen w-full">
       <NurseSidebar 
         currentNurseName={currentNurseName}
-        filteredRequests={filteredRequests}
+        filteredRequests={finalFilteredRequests}
         onCreateNewRequest={createNewRequest}
       />
       
@@ -34,15 +53,22 @@ export default function NurseDashboard() {
         <div className="mb-4 flex justify-end">
           <ExportButton 
             requests={requests}
-            filteredRequests={filteredRequests}
+            filteredRequests={finalFilteredRequests}
             hasActiveFilters={hasActiveFilters}
           />
         </div>
 
-        <NurseFilters filter={filter} setFilter={setFilter} />
+        <NurseFilters 
+          filter={filter} 
+          setFilter={setFilter}
+          specialtyFilter={specialtyFilter}
+          setSpecialtyFilter={setSpecialtyFilter}
+          doctorFilter={doctorFilter}
+          setDoctorFilter={setDoctorFilter}
+        />
         
         <NurseRequestsTable 
-          filteredRequests={filteredRequests}
+          filteredRequests={finalFilteredRequests}
           updateStatus={updateStatus}
         />
       </main>

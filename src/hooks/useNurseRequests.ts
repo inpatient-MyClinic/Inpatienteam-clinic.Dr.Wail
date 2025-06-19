@@ -23,8 +23,9 @@ export interface NurseRequest {
   serviceDescription: string;
   hospital: string;
   status: string;
-  paymentStatus: string;
   assignedDoctor: string;
+  assignedDoctorValue: string;
+  specialty: string;
   createdAt: string;
   phone: string;
   expectedSurgeryDate: string;
@@ -45,8 +46,9 @@ export const useNurseRequests = (currentNurseName: string) => {
       serviceDescription: "Cardiac Surgery - Valve Replacement",
       hospital: "King Khaled Hospital",
       status: REQUEST_STATUSES.PENDING,
-      paymentStatus: "Pending",
       assignedDoctor: "Dr. Ahmed Salem",
+      assignedDoctorValue: "dr_ahmed_salem_uro",
+      specialty: "urology",
       createdAt: "2024-01-10T11:00:00Z",
       phone: "0554447777",
       expectedSurgeryDate: "2025-07-12",
@@ -62,8 +64,9 @@ export const useNurseRequests = (currentNurseName: string) => {
       serviceDescription: "Orthopedic Surgery - Hip Replacement",
       hospital: "King Abdulaziz Hospital",
       status: REQUEST_STATUSES.NOT_COMPLETED,
-      paymentStatus: "Pending",
       assignedDoctor: "Dr. Mohammed Ali",
+      assignedDoctorValue: "dr_mohammed_ibrahim_ortho",
+      specialty: "orthopedics",
       createdAt: "2024-01-09T15:30:00Z",
       phone: "0508889992",
       expectedSurgeryDate: "2025-07-14",
@@ -71,6 +74,24 @@ export const useNurseRequests = (currentNurseName: string) => {
       attachments: [],
       isDelayed: false,
       notifications: ["Request marked as incomplete by coordinator - additional documentation required"]
+    },
+    {
+      id: 3,
+      patientName: "Sara Ahmed",
+      mrn: "2020123456",
+      serviceDescription: "Upper Endoscopy",
+      hospital: "King Faisal Hospital",
+      status: REQUEST_STATUSES.UNDER_PROCESS,
+      assignedDoctor: "Dr. Ahmed Hassan",
+      assignedDoctorValue: "dr_ahmed_hassan_git",
+      specialty: "gastroenterology",
+      createdAt: "2024-01-08T09:30:00Z",
+      phone: "0551234567",
+      expectedSurgeryDate: "2025-07-20",
+      createdBy: "Nurse Sara",
+      attachments: [],
+      isDelayed: false,
+      notifications: []
     },
   ]);
 
