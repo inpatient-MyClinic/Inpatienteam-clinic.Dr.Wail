@@ -10,9 +10,9 @@ import { useNurseRequests } from "@/hooks/useNurseRequests";
 import { doctorsBySpecialty } from "@/data/medicalData";
 
 export default function NurseDashboard() {
-  const [filter, setFilter] = useState<string | null>(null);
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [doctorFilter, setDoctorFilter] = useState("all");
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   
   // Date filtering states
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -29,6 +29,10 @@ export default function NurseDashboard() {
     return requests.filter(request => {
       const matchesSpecialty = specialtyFilter === "all" || request.specialty === specialtyFilter;
       const matchesDoctor = doctorFilter === "all" || request.assignedDoctorValue === doctorFilter;
+      
+      // Status filter from sidebar
+      const matchesStatus = !activeStatusFilter || 
+        (activeStatusFilter === 'delayed' ? request.isDelayed : request.status === activeStatusFilter);
       
       // Date filtering logic
       const requestDate = new Date(request.createdAt);
@@ -49,7 +53,7 @@ export default function NurseDashboard() {
         return month === monthNames[requestDate.getMonth()];
       });
       
-      return matchesSpecialty && matchesDoctor && matchesDate && matchesWeek && matchesMonth;
+      return matchesSpecialty && matchesDoctor && matchesStatus && matchesDate && matchesWeek && matchesMonth;
     });
   };
 
@@ -57,7 +61,7 @@ export default function NurseDashboard() {
 
   // Check if there are active filters
   const hasActiveFilters = Boolean(
-    filter || 
+    activeStatusFilter ||
     specialtyFilter !== "all" || 
     doctorFilter !== "all" ||
     selectedDates.length > 0 ||
@@ -81,6 +85,8 @@ export default function NurseDashboard() {
         currentNurseName={currentNurseName}
         filteredRequests={finalFilteredRequests}
         onCreateNewRequest={createNewRequest}
+        activeStatusFilter={activeStatusFilter}
+        onStatusFilterClick={setActiveStatusFilter}
       />
       
       <main className="flex-1 bg-white p-6">
@@ -107,8 +113,6 @@ export default function NurseDashboard() {
         </div>
 
         <NurseFilters 
-          filter={filter} 
-          setFilter={setFilter}
           specialtyFilter={specialtyFilter}
           setSpecialtyFilter={setSpecialtyFilter}
           doctorFilter={doctorFilter}

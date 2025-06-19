@@ -5,24 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { specialties, doctorsBySpecialty } from "@/data/medicalData";
 
 interface NurseFiltersProps {
-  filter: string | null;
-  setFilter: (filter: string | null) => void;
   specialtyFilter: string;
   setSpecialtyFilter: (specialty: string) => void;
   doctorFilter: string;
   setDoctorFilter: (doctor: string) => void;
 }
 
-const timeFilters = [
-  { label: "Day", value: "day" },
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "Year to Date", value: "ytd" },
-];
-
 export default function NurseFilters({ 
-  filter, 
-  setFilter,
   specialtyFilter,
   setSpecialtyFilter,
   doctorFilter,
@@ -33,33 +22,17 @@ export default function NurseFilters({
     [];
 
   const clearAllFilters = () => {
-    setFilter(null);
     setSpecialtyFilter("all");
     setDoctorFilter("all");
   };
 
   const hasActiveFilters = Boolean(
-    filter || 
     specialtyFilter !== "all" || 
     doctorFilter !== "all"
   );
 
   return (
     <div className="flex flex-wrap gap-3 mb-6">
-      {/* Time Filters */}
-      <div className="flex gap-2">
-        {timeFilters.map((f) => (
-          <Button
-            key={f.value}
-            variant={filter === f.value ? "default" : "outline"}
-            onClick={() => setFilter(filter === f.value ? null : f.value)}
-            size="sm"
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
-
       {/* Specialty Filter */}
       <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
         <SelectTrigger className="w-48">

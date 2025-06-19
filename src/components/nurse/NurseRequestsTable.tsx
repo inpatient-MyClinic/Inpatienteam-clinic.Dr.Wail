@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Eye, Download, FileText, Send, Filter, X, Printer } from "lucide-react";
+import { AlertTriangle, Eye, Download, FileText, Send, Filter, X, Printer, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +35,7 @@ export default function NurseRequestsTable({
   const [serviceFilter, setServiceFilter] = useState("");
   const [hospitalFilter, setHospitalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [surgeryDateFilter, setSurgeryDateFilter] = useState("");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,8 +53,10 @@ export default function NurseRequestsTable({
       request.serviceDescription.toLowerCase().includes(serviceFilter.toLowerCase());
     const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+    const matchesSurgeryDate = surgeryDateFilter === "" || 
+      (request.expectedSurgeryDate && request.expectedSurgeryDate.includes(surgeryDateFilter));
     
-    return matchesService && matchesHospital && matchesStatus;
+    return matchesService && matchesHospital && matchesStatus && matchesSurgeryDate;
   });
 
   // Calculate pagination
@@ -66,15 +68,16 @@ export default function NurseRequestsTable({
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [serviceFilter, hospitalFilter, statusFilter]);
+  }, [serviceFilter, hospitalFilter, statusFilter, surgeryDateFilter]);
 
   const clearTableFilters = () => {
     setServiceFilter("");
     setHospitalFilter("all");
     setStatusFilter("all");
+    setSurgeryDateFilter("");
   };
 
-  const hasTableFilters = Boolean(serviceFilter || hospitalFilter !== "all" || statusFilter !== "all");
+  const hasTableFilters = Boolean(serviceFilter || hospitalFilter !== "all" || statusFilter !== "all" || surgeryDateFilter);
 
   const getStatusBadge = (status: string, isDelayed: boolean = false) => {
     const colors = {
@@ -147,8 +150,6 @@ export default function NurseRequestsTable({
         return;
       }
 
-      // Update the request with modifications
-      // This would typically call an API to update the request
       setLocalHasModifications(false);
       
       toast({
@@ -509,7 +510,39 @@ export default function NurseRequestsTable({
                 </Popover>
               </div>
             </th>
-            <th className="p-2">Agreed Date of Surgery</th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Agreed Date of Surgery
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Surgery Date</Label>
+                      <Input
+                        type="date"
+                        value={surgeryDateFilter}
+                        onChange={(e) => setSurgeryDateFilter(e.target.value)}
+                        className="w-full"
+                      />
+                      {surgeryDateFilter && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSurgeryDateFilter("")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
             <th className="p-2 relative">
               <div className="flex items-center justify-between">
                 Status
