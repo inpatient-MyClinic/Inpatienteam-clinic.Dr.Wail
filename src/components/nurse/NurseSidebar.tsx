@@ -1,0 +1,51 @@
+
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Plus, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import NurseStats from "./NurseStats";
+import { NurseRequest } from "@/hooks/useNurseRequests";
+
+interface NurseSidebarProps {
+  currentNurseName: string;
+  filteredRequests: NurseRequest[];
+  onCreateNewRequest: () => void;
+}
+
+export default function NurseSidebar({ 
+  currentNurseName, 
+  filteredRequests, 
+  onCreateNewRequest 
+}: NurseSidebarProps) {
+  const navigate = useNavigate();
+
+  return (
+    <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
+      <div className="text-center mb-4">
+        <img 
+          src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+          alt="My Clinic Logo" 
+          className="h-8 w-auto mx-auto mb-2"
+        />
+        <h1 className="text-lg font-bold text-blue-900">Nurse Dashboard</h1>
+        <p className="text-xs text-blue-700">{currentNurseName}</p>
+      </div>
+
+      <Button className="w-full mb-8" variant="default" onClick={onCreateNewRequest}>
+        <Plus className="w-4 h-4 mr-2" />
+        Create New Request
+      </Button>
+
+      <NurseStats filteredRequests={filteredRequests} />
+
+      <Button 
+        variant="outline"
+        onClick={() => navigate("/role-selection")}
+        className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Roles
+      </Button>
+    </aside>
+  );
+}
