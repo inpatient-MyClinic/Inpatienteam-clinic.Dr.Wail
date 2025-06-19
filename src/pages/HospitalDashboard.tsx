@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import HospitalSidebar from "@/components/hospital/HospitalSidebar";
-import HospitalFilters from "@/components/hospital/HospitalFilters";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
 import HospitalAnalytics from "@/components/hospital/HospitalAnalytics";
 
@@ -156,6 +158,7 @@ export default function HospitalDashboard() {
   const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
 
   const statusCounts = {
+    new: sampleRequests.filter(req => req.status === "New").length,
     pending: sampleRequests.filter(req => req.status === "Pending").length,
     approved: sampleRequests.filter(req => req.status === "Approved").length,
     rejected: sampleRequests.filter(req => req.status === "Rejected").length,
@@ -184,77 +187,172 @@ export default function HospitalDashboard() {
     setDoctorFilter("");
     setStatusFilter("");
     setSelectedDates([]);
+    setSelectedMonths([]);
   };
 
-  const hasActiveFilters = Boolean(activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0);
+  const hasActiveFilters = Boolean(activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0 || selectedMonths.length > 0);
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* Header with Status Icons and Date Filters */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handlePrint}>
+        <div className="flex items-center space-x-6">
+          <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
+          
+          {/* Status Filter Icons */}
+          <div className="flex items-center space-x-4">
+            <div 
+              className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                activeStatusFilter === "New" ? "bg-blue-100 border-2 border-blue-300" : "hover:bg-gray-50"
+              }`}
+              onClick={() => handleStatusIconClick("New")}
+            >
+              <Plus className="w-5 h-5 text-blue-600" />
+              <span className="text-sm font-medium">{statusCounts.new}</span>
+            </div>
+
+            <div 
+              className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                activeStatusFilter === "Pending" ? "bg-yellow-100 border-2 border-yellow-300" : "hover:bg-gray-50"
+              }`}
+              onClick={() => handleStatusIconClick("Pending")}
+            >
+              <Clock className="w-5 h-5 text-yellow-600" />
+              <span className="text-sm font-medium">{statusCounts.pending}</span>
+            </div>
+
+            <div 
+              className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                activeStatusFilter === "Need Justification" ? "bg-orange-100 border-2 border-orange-300" : "hover:bg-gray-50"
+              }`}
+              onClick={() => handleStatusIconClick("Need Justification")}
+            >
+              <AlertCircle className="w-5 h-5 text-orange-600" />
+              <span className="text-sm font-medium">{statusCounts.needJustification}</span>
+            </div>
+
+            <div 
+              className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                activeStatusFilter === "Rejected" ? "bg-red-100 border-2 border-red-300" : "hover:bg-gray-50"
+              }`}
+              onClick={() => handleStatusIconClick("Rejected")}
+            >
+              <XCircle className="w-5 h-5 text-red-600" />
+              <span className="text-sm font-medium">{statusCounts.rejected}</span>
+            </div>
+
+            <div 
+              className={`flex items-center space-x-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                activeStatusFilter === "Approved" ? "bg-green-100 border-2 border-green-300" : "hover:bg-gray-50"
+              }`}
+              onClick={() => handleStatusIconClick("Approved")}
+            >
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-medium">{statusCounts.approved}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Date Filters and Export Buttons */}
+        <div className="flex items-center gap-4">
+          {/* Day Filter */}
+          <div>
+            <Label className="text-sm font-medium">Day</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-auto">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {selectedDates.length > 0 ? `${selectedDates.length} days` : "Select Days"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-white" align="end">
+                <CalendarComponent
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={(dates) => setSelectedDates(dates || [])}
+                  className="rounded-md border"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Week Filter */}
+          <div>
+            <Label className="text-sm font-medium">Week</Label>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="01">January</SelectItem>
+                <SelectItem value="02">February</SelectItem>
+                <SelectItem value="03">March</SelectItem>
+                <SelectItem value="04">April</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Month Filter */}
+          <div>
+            <Label className="text-sm font-medium">Months</Label>
+            <Select value={selectedMonths.join(',')} onValueChange={(value) => setSelectedMonths(value ? value.split(',') : [])}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="01">January</SelectItem>
+                <SelectItem value="02">February</SelectItem>
+                <SelectItem value="03">March</SelectItem>
+                <SelectItem value="04">April</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && (
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
+              Clear Filters
+            </Button>
+          )}
+
+          {/* Export Buttons */}
+          <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" onClick={handleExportToExcel}>
+          <Button variant="outline" size="sm" onClick={handleExportToExcel}>
             <Download className="w-4 h-4 mr-2" />
-            Export to Excel
+            Excel
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex gap-6">
-        {/* Left Sidebar */}
-        <HospitalSidebar
-          statusCounts={statusCounts}
-          activeStatusFilter={activeStatusFilter}
-          onStatusIconClick={handleStatusIconClick}
-          onClearAllFilters={clearAllFilters}
-          hasActiveFilters={hasActiveFilters}
+      <div className="space-y-6">
+        {/* Requests Table */}
+        <HospitalRequestsTable
+          filteredRequests={filteredRequests}
+          totalRequests={totalRequests}
+          surgeryDateFilter={surgeryDateFilter}
+          setSurgeryDateFilter={setSurgeryDateFilter}
+          specialtyFilter={specialtyFilter}
+          setSpecialtyFilter={setSpecialtyFilter}
+          doctorFilter={doctorFilter}
+          setDoctorFilter={setDoctorFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
         />
 
-        {/* Right Content */}
-        <div className="flex-1 space-y-6">
-          {/* Filters */}
-          <HospitalFilters
-            selectedDates={selectedDates}
-            setSelectedDates={setSelectedDates}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-            selectedMonths={selectedMonths}
-            setSelectedMonths={setSelectedMonths}
-            onExportToExcel={handleExportToExcel}
-            onPrint={handlePrint}
-          />
-
-          {/* Requests Table */}
-          <HospitalRequestsTable
-            filteredRequests={filteredRequests}
-            totalRequests={totalRequests}
-            surgeryDateFilter={surgeryDateFilter}
-            setSurgeryDateFilter={setSurgeryDateFilter}
-            specialtyFilter={specialtyFilter}
-            setSpecialtyFilter={setSpecialtyFilter}
-            doctorFilter={doctorFilter}
-            setDoctorFilter={setDoctorFilter}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-          />
-
-          {/* Analytics Cards - Below table */}
-          <HospitalAnalytics
-            conversionRate={conversionRate}
-            approvalRate={approvalRate}
-            rejectionRate={rejectionRate}
-            doneRequests={doneRequests}
-            totalRequests={totalRequests}
-            approvedRequests={approvedRequests}
-            rejectedRequests={rejectedRequests}
-          />
-        </div>
+        {/* Analytics Cards */}
+        <HospitalAnalytics
+          conversionRate={conversionRate}
+          approvalRate={approvalRate}
+          rejectionRate={rejectionRate}
+          doneRequests={doneRequests}
+          totalRequests={totalRequests}
+          approvedRequests={approvedRequests}
+          rejectedRequests={rejectedRequests}
+        />
       </div>
     </div>
   );
