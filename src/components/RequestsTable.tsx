@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, FileText, Send } from "lucide-react";
+import { Eye, Download, FileText, Send, Filter, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,9 +45,14 @@ export default function RequestsTable({
   REQUEST_STATUSES
 }: RequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
-  const [editingSurgeryDate, setEditingSurgeryDate] = useState("");
-  const [editingHospital, setEditingHospital] = useState("");
-  const [hasModifications, setHasModifications] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filter states
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [hospitalFilter, setHospitalFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
+  
   const { toast } = useToast();
 
   const availableHospitals = [
@@ -59,6 +63,31 @@ export default function RequestsTable({
     "King Fahd Hospital",
     "National Guard Hospital"
   ];
+
+  // Get unique values for filter dropdowns
+  const uniqueStatuses = [...new Set(requests.map(req => req.status))];
+  const uniquePaymentStatuses = [...new Set(requests.map(req => req.paymentStatus))];
+  const uniqueHospitals = [...new Set(requests.map(req => req.hospital))];
+
+  // Filter requests based on all filter criteria
+  const filteredRequests = requests.filter(request => {
+    const matchesService = serviceFilter === "" || 
+      request.serviceDescription.toLowerCase().includes(serviceFilter.toLowerCase());
+    const matchesHospital = hospitalFilter === "" || request.hospital === hospitalFilter;
+    const matchesStatus = statusFilter === "" || request.status === statusFilter;
+    const matchesPaymentStatus = paymentStatusFilter === "" || request.paymentStatus === paymentStatusFilter;
+    
+    return matchesService && matchesHospital && matchesStatus && matchesPaymentStatus;
+  });
+
+  const clearAllFilters = () => {
+    setServiceFilter("");
+    setHospitalFilter("");
+    setStatusFilter("");
+    setPaymentStatusFilter("");
+  };
+
+  const hasActiveFilters = serviceFilter || hospitalFilter || statusFilter || paymentStatusFilter;
 
   const submitJustification = (requestId: number) => {
     if (!justificationText.trim()) {
@@ -288,6 +317,106 @@ export default function RequestsTable({
 
   return (
     <div className="overflow-x-auto mb-8">
+      {/* Filter Controls */}
+      <div className="mb-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+          
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              onClick={clearAllFilters}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+            >
+              <X className="w-4 h-4" />
+              Clear All Filters
+            </Button>
+          )}
+        </div>
+
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+            {/* Service Description Filter */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Service Description</Label>
+              <Input
+                placeholder="Filter by service..."
+                value={serviceFilter}
+                onChange={(e) => setServiceFilter(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {/* Hospital Filter */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Hospital</Label>
+              <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All hospitals" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All hospitals</SelectItem>
+                  {uniqueHospitals.map((hospital) => (
+                    <SelectItem key={hospital} value={hospital}>
+                      {hospital}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All statuses</SelectItem>
+                  {uniqueStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment Status Filter */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Payment Status</Label>
+              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All payment statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All payment statuses</SelectItem>
+                  {uniquePaymentStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Results count */}
+      <div className="mb-2 text-sm text-gray-600">
+        Showing {filteredRequests.length} of {requests.length} requests
+        {hasActiveFilters && " (filtered)"}
+      </div>
+
       <table className="w-full border text-sm rounded">
         <thead className="bg-blue-100 text-blue-900">
           <tr>
@@ -301,14 +430,14 @@ export default function RequestsTable({
           </tr>
         </thead>
         <tbody>
-          {requests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <tr>
               <td colSpan={7} className="text-center text-gray-400 py-6">
-                No requests found.
+                {hasActiveFilters ? "No requests match the current filters." : "No requests found."}
               </td>
             </tr>
           ) : (
-            requests.map((req) => (
+            filteredRequests.map((req) => (
               <tr key={req.id} className="border-b">
                 <td className="p-2">{req.patientName}</td>
                 <td className="p-2">{req.mrn}</td>
