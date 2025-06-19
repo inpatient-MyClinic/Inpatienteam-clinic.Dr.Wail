@@ -17,10 +17,49 @@ interface ViewRequestDialogProps {
 
 export default function ViewRequestDialog({ request }: ViewRequestDialogProps) {
   const { toast } = useToast();
-  const [localSurgeryDate, setLocalSurgeryDate] = useState(request.expectedSurgeryDate);
-  const [localStatus, setLocalStatus] = useState("");
-  const [localJustification, setLocalJustification] = useState("");
+  
+  // Local state for all editable fields
+  const [localData, setLocalData] = useState({
+    patientName: request.patientName || "",
+    mrn: request.mrn || "",
+    phone: request.phone || "",
+    nationalId: request.nationalId || "",
+    age: request.age || "",
+    gender: request.gender || "",
+    serviceDescription: request.serviceDescription || "",
+    specialty: request.specialty || "",
+    doctor: request.doctor || "",
+    priority: request.priority || "",
+    expectedSurgeryDate: request.expectedSurgeryDate || "",
+    medicalHistory: request.medicalHistory || "",
+    currentMedications: request.currentMedications || "",
+    allergies: request.allergies || "",
+    insuranceProvider: request.insuranceProvider || "",
+    insuranceNumber: request.insuranceNumber || "",
+    emergencyContact: request.emergencyContact || "",
+    referringDoctor: request.referringDoctor || "",
+    diagnosisCode: request.diagnosisCode || "",
+    procedureCode: request.procedureCode || "",
+    additionalNotes: request.additionalNotes || "",
+    status: request.status || ""
+  });
+
   const [localAttachment, setLocalAttachment] = useState<File | null>(null);
+  const [hasModifications, setHasModifications] = useState(false);
+
+  // Check if any field has been modified
+  const checkForModifications = (newData: typeof localData) => {
+    const isModified = Object.keys(newData).some(key => {
+      return newData[key as keyof typeof newData] !== (request[key] || "");
+    });
+    setHasModifications(isModified);
+  };
+
+  const handleFieldChange = (field: keyof typeof localData, value: string) => {
+    const newData = { ...localData, [field]: value };
+    setLocalData(newData);
+    checkForModifications(newData);
+  };
 
   const handlePrintRequest = () => {
     const printWindow = window.open('', '_blank');
@@ -28,7 +67,7 @@ export default function ViewRequestDialog({ request }: ViewRequestDialogProps) {
       printWindow.document.write(`
         <html>
           <head>
-            <title>Medical Request - ${request.patientName}</title>
+            <title>Medical Request - ${localData.patientName}</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
               .header { text-align: center; margin-bottom: 30px; }
@@ -49,46 +88,46 @@ export default function ViewRequestDialog({ request }: ViewRequestDialogProps) {
             <div class="grid">
               <div class="section">
                 <h2>Patient Information</h2>
-                <div class="field"><span class="label">Name:</span><span class="value">${request.patientName}</span></div>
-                <div class="field"><span class="label">MRN:</span><span class="value">${request.mrn}</span></div>
-                <div class="field"><span class="label">Phone:</span><span class="value">${request.phone || 'N/A'}</span></div>
-                <div class="field"><span class="label">National ID:</span><span class="value">${request.nationalId || 'N/A'}</span></div>
-                <div class="field"><span class="label">Age:</span><span class="value">${request.age || 'N/A'}</span></div>
-                <div class="field"><span class="label">Gender:</span><span class="value">${request.gender || 'N/A'}</span></div>
+                <div class="field"><span class="label">Name:</span><span class="value">${localData.patientName}</span></div>
+                <div class="field"><span class="label">MRN:</span><span class="value">${localData.mrn}</span></div>
+                <div class="field"><span class="label">Phone:</span><span class="value">${localData.phone}</span></div>
+                <div class="field"><span class="label">National ID:</span><span class="value">${localData.nationalId}</span></div>
+                <div class="field"><span class="label">Age:</span><span class="value">${localData.age}</span></div>
+                <div class="field"><span class="label">Gender:</span><span class="value">${localData.gender}</span></div>
               </div>
               
               <div class="section">
                 <h2>Medical Information</h2>
-                <div class="field"><span class="label">Service:</span><span class="value">${request.serviceDescription}</span></div>
-                <div class="field"><span class="label">Specialty:</span><span class="value">${request.specialty}</span></div>
-                <div class="field"><span class="label">Doctor:</span><span class="value">${request.doctor}</span></div>
-                <div class="field"><span class="label">Priority:</span><span class="value">${request.priority || 'N/A'}</span></div>
-                <div class="field"><span class="label">Surgery Date:</span><span class="value">${new Date(request.expectedSurgeryDate).toLocaleDateString()}</span></div>
+                <div class="field"><span class="label">Service:</span><span class="value">${localData.serviceDescription}</span></div>
+                <div class="field"><span class="label">Specialty:</span><span class="value">${localData.specialty}</span></div>
+                <div class="field"><span class="label">Doctor:</span><span class="value">${localData.doctor}</span></div>
+                <div class="field"><span class="label">Priority:</span><span class="value">${localData.priority}</span></div>
+                <div class="field"><span class="label">Surgery Date:</span><span class="value">${new Date(localData.expectedSurgeryDate).toLocaleDateString()}</span></div>
               </div>
             </div>
             
             <div class="section">
               <h2>Medical History & Medications</h2>
-              <div class="field"><span class="label">Medical History:</span><span class="value">${request.medicalHistory || 'No medical history provided'}</span></div>
-              <div class="field"><span class="label">Current Medications:</span><span class="value">${request.currentMedications || 'No current medications listed'}</span></div>
-              <div class="field"><span class="label">Allergies:</span><span class="value">${request.allergies || 'No known allergies'}</span></div>
+              <div class="field"><span class="label">Medical History:</span><span class="value">${localData.medicalHistory}</span></div>
+              <div class="field"><span class="label">Current Medications:</span><span class="value">${localData.currentMedications}</span></div>
+              <div class="field"><span class="label">Allergies:</span><span class="value">${localData.allergies}</span></div>
             </div>
             
             <div class="section">
               <h2>Insurance & Contact Information</h2>
-              <div class="field"><span class="label">Insurance Provider:</span><span class="value">${request.insuranceProvider || 'N/A'}</span></div>
-              <div class="field"><span class="label">Insurance Number:</span><span class="value">${request.insuranceNumber || 'N/A'}</span></div>
-              <div class="field"><span class="label">Emergency Contact:</span><span class="value">${request.emergencyContact || 'N/A'}</span></div>
-              <div class="field"><span class="label">Referring Doctor:</span><span class="value">${request.referringDoctor || 'N/A'}</span></div>
+              <div class="field"><span class="label">Insurance Provider:</span><span class="value">${localData.insuranceProvider}</span></div>
+              <div class="field"><span class="label">Insurance Number:</span><span class="value">${localData.insuranceNumber}</span></div>
+              <div class="field"><span class="label">Emergency Contact:</span><span class="value">${localData.emergencyContact}</span></div>
+              <div class="field"><span class="label">Referring Doctor:</span><span class="value">${localData.referringDoctor}</span></div>
             </div>
             
             <div class="section">
               <h2>Additional Information</h2>
-              <div class="field"><span class="label">Diagnosis Code:</span><span class="value">${request.diagnosisCode || 'N/A'}</span></div>
-              <div class="field"><span class="label">Procedure Code:</span><span class="value">${request.procedureCode || 'N/A'}</span></div>
-              <div class="field"><span class="label">Status:</span><span class="value">${request.status}</span></div>
+              <div class="field"><span class="label">Diagnosis Code:</span><span class="value">${localData.diagnosisCode}</span></div>
+              <div class="field"><span class="label">Procedure Code:</span><span class="value">${localData.procedureCode}</span></div>
+              <div class="field"><span class="label">Status:</span><span class="value">${localData.status}</span></div>
               <div class="field"><span class="label">Submission Date:</span><span class="value">${new Date(request.submissionDate).toLocaleDateString()}</span></div>
-              <div class="field"><span class="label">Additional Notes:</span><span class="value">${request.additionalNotes || 'No additional notes provided'}</span></div>
+              <div class="field"><span class="label">Additional Notes:</span><span class="value">${localData.additionalNotes}</span></div>
             </div>
           </body>
         </html>
@@ -106,37 +145,37 @@ Request ID: ${request.id}
 Date: ${new Date().toLocaleDateString()}
 
 Patient Information:
-- Name: ${request.patientName}
-- MRN: ${request.mrn}
-- Phone: ${request.phone || 'N/A'}
-- National ID: ${request.nationalId || 'N/A'}
-- Age: ${request.age || 'N/A'}
-- Gender: ${request.gender || 'N/A'}
+- Name: ${localData.patientName}
+- MRN: ${localData.mrn}
+- Phone: ${localData.phone}
+- National ID: ${localData.nationalId}
+- Age: ${localData.age}
+- Gender: ${localData.gender}
 
 Medical Information:
-- Service: ${request.serviceDescription}
-- Specialty: ${request.specialty}
-- Doctor: ${request.doctor}
-- Priority: ${request.priority || 'N/A'}
-- Surgery Date: ${new Date(request.expectedSurgeryDate).toLocaleDateString()}
+- Service: ${localData.serviceDescription}
+- Specialty: ${localData.specialty}
+- Doctor: ${localData.doctor}
+- Priority: ${localData.priority}
+- Surgery Date: ${new Date(localData.expectedSurgeryDate).toLocaleDateString()}
 
 Medical History & Medications:
-- Medical History: ${request.medicalHistory || 'N/A'}
-- Current Medications: ${request.currentMedications || 'N/A'}
-- Allergies: ${request.allergies || 'None known'}
+- Medical History: ${localData.medicalHistory}
+- Current Medications: ${localData.currentMedications}
+- Allergies: ${localData.allergies}
 
 Insurance & Contact Information:
-- Insurance Provider: ${request.insuranceProvider || 'N/A'}
-- Insurance Number: ${request.insuranceNumber || 'N/A'}
-- Emergency Contact: ${request.emergencyContact || 'N/A'}
-- Referring Doctor: ${request.referringDoctor || 'N/A'}
+- Insurance Provider: ${localData.insuranceProvider}
+- Insurance Number: ${localData.insuranceNumber}
+- Emergency Contact: ${localData.emergencyContact}
+- Referring Doctor: ${localData.referringDoctor}
 
 Additional Information:
-- Diagnosis Code: ${request.diagnosisCode || 'N/A'}
-- Procedure Code: ${request.procedureCode || 'N/A'}
-- Status: ${request.status}
+- Diagnosis Code: ${localData.diagnosisCode}
+- Procedure Code: ${localData.procedureCode}
+- Status: ${localData.status}
 - Submission Date: ${new Date(request.submissionDate).toLocaleDateString()}
-- Additional Notes: ${request.additionalNotes || 'None'}
+- Additional Notes: ${localData.additionalNotes}
     `.trim();
 
     navigator.clipboard.writeText(requestData).then(() => {
@@ -151,37 +190,37 @@ Additional Information:
     const requestData = {
       requestId: request.id,
       patientInfo: {
-        name: request.patientName,
-        mrn: request.mrn,
-        phone: request.phone,
-        nationalId: request.nationalId,
-        age: request.age,
-        gender: request.gender
+        name: localData.patientName,
+        mrn: localData.mrn,
+        phone: localData.phone,
+        nationalId: localData.nationalId,
+        age: localData.age,
+        gender: localData.gender
       },
       medicalInfo: {
-        service: request.serviceDescription,
-        specialty: request.specialty,
-        doctor: request.doctor,
-        priority: request.priority,
-        surgeryDate: request.expectedSurgeryDate
+        service: localData.serviceDescription,
+        specialty: localData.specialty,
+        doctor: localData.doctor,
+        priority: localData.priority,
+        surgeryDate: localData.expectedSurgeryDate
       },
       medicalHistory: {
-        history: request.medicalHistory,
-        medications: request.currentMedications,
-        allergies: request.allergies
+        history: localData.medicalHistory,
+        medications: localData.currentMedications,
+        allergies: localData.allergies
       },
       insurance: {
-        provider: request.insuranceProvider,
-        number: request.insuranceNumber,
-        emergencyContact: request.emergencyContact,
-        referringDoctor: request.referringDoctor
+        provider: localData.insuranceProvider,
+        number: localData.insuranceNumber,
+        emergencyContact: localData.emergencyContact,
+        referringDoctor: localData.referringDoctor
       },
       additional: {
-        diagnosisCode: request.diagnosisCode,
-        procedureCode: request.procedureCode,
-        status: request.status,
+        diagnosisCode: localData.diagnosisCode,
+        procedureCode: localData.procedureCode,
+        status: localData.status,
         submissionDate: request.submissionDate,
-        notes: request.additionalNotes
+        notes: localData.additionalNotes
       }
     };
 
@@ -190,7 +229,7 @@ Additional Information:
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `medical-request-${request.id}-${request.patientName.replace(/\s+/g, '-')}.json`;
+    link.download = `medical-request-${request.id}-${localData.patientName.replace(/\s+/g, '-')}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -203,33 +242,13 @@ Additional Information:
   };
 
   const handleLocalSubmit = () => {
-    if (localStatus === "Need Justification" && !localJustification.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide justification text.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (localStatus === "Rejected" && !localJustification.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide rejection reason.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     toast({
       title: "Request Updated",
       description: "Request has been modified and notifications sent to doctor and case coordinator.",
     });
 
-    // Reset form
-    setLocalSurgeryDate(request.expectedSurgeryDate);
-    setLocalStatus("");
-    setLocalJustification("");
+    // Reset modifications flag
+    setHasModifications(false);
     setLocalAttachment(null);
   };
 
@@ -244,7 +263,7 @@ Additional Information:
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Request Details - {request.patientName}</span>
+            <span>Request Details - {localData.patientName}</span>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={handlePrintRequest}>
                 <Printer className="w-4 h-4 mr-1" />
@@ -273,12 +292,58 @@ Additional Information:
                 <CardTitle className="text-lg">Patient Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div><span className="font-medium">Name:</span> {request.patientName}</div>
-                <div><span className="font-medium">MRN:</span> {request.mrn}</div>
-                <div><span className="font-medium">Phone:</span> {request.phone || 'N/A'}</div>
-                <div><span className="font-medium">National ID:</span> {request.nationalId || 'N/A'}</div>
-                <div><span className="font-medium">Age:</span> {request.age || 'N/A'}</div>
-                <div><span className="font-medium">Gender:</span> {request.gender || 'N/A'}</div>
+                <div>
+                  <Label>Patient Name</Label>
+                  <Input
+                    value={localData.patientName}
+                    onChange={(e) => handleFieldChange('patientName', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>MRN</Label>
+                  <Input
+                    value={localData.mrn}
+                    onChange={(e) => handleFieldChange('mrn', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input
+                    value={localData.phone}
+                    onChange={(e) => handleFieldChange('phone', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>National ID</Label>
+                  <Input
+                    value={localData.nationalId}
+                    onChange={(e) => handleFieldChange('nationalId', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Age</Label>
+                  <Input
+                    value={localData.age}
+                    onChange={(e) => handleFieldChange('age', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Gender</Label>
+                  <Select value={localData.gender} onValueChange={(value) => handleFieldChange('gender', value)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
 
@@ -287,11 +352,54 @@ Additional Information:
                 <CardTitle className="text-lg">Medical Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div><span className="font-medium">Service:</span> {request.serviceDescription}</div>
-                <div><span className="font-medium">Specialty:</span> {request.specialty}</div>
-                <div><span className="font-medium">Doctor:</span> {request.doctor}</div>
-                <div><span className="font-medium">Priority:</span> {request.priority || 'N/A'}</div>
-                <div><span className="font-medium">Surgery Date:</span> {new Date(request.expectedSurgeryDate).toLocaleDateString()}</div>
+                <div>
+                  <Label>Service Description</Label>
+                  <Textarea
+                    value={localData.serviceDescription}
+                    onChange={(e) => handleFieldChange('serviceDescription', e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <Label>Specialty</Label>
+                  <Input
+                    value={localData.specialty}
+                    onChange={(e) => handleFieldChange('specialty', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Doctor</Label>
+                  <Input
+                    value={localData.doctor}
+                    onChange={(e) => handleFieldChange('doctor', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Priority</Label>
+                  <Select value={localData.priority} onValueChange={(value) => handleFieldChange('priority', value)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Expected Surgery Date</Label>
+                  <Input
+                    type="date"
+                    value={localData.expectedSurgeryDate}
+                    onChange={(e) => handleFieldChange('expectedSurgeryDate', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -303,22 +411,34 @@ Additional Information:
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="font-medium">Medical History</Label>
-                <div className="mt-1 p-3 bg-blue-50 rounded-md text-sm">
-                  {request.medicalHistory || 'No medical history provided'}
-                </div>
+                <Label>Medical History</Label>
+                <Textarea
+                  value={localData.medicalHistory}
+                  onChange={(e) => handleFieldChange('medicalHistory', e.target.value)}
+                  className="mt-1"
+                  rows={3}
+                  placeholder="Enter medical history..."
+                />
               </div>
               <div>
-                <Label className="font-medium">Current Medications</Label>
-                <div className="mt-1 p-3 bg-green-50 rounded-md text-sm">
-                  {request.currentMedications || 'No current medications listed'}
-                </div>
+                <Label>Current Medications</Label>
+                <Textarea
+                  value={localData.currentMedications}
+                  onChange={(e) => handleFieldChange('currentMedications', e.target.value)}
+                  className="mt-1"
+                  rows={3}
+                  placeholder="Enter current medications..."
+                />
               </div>
               <div>
-                <Label className="font-medium">Allergies</Label>
-                <div className="mt-1 p-3 bg-red-50 rounded-md text-sm">
-                  {request.allergies || 'No known allergies'}
-                </div>
+                <Label>Allergies</Label>
+                <Textarea
+                  value={localData.allergies}
+                  onChange={(e) => handleFieldChange('allergies', e.target.value)}
+                  className="mt-1"
+                  rows={2}
+                  placeholder="Enter known allergies..."
+                />
               </div>
             </CardContent>
           </Card>
@@ -330,8 +450,24 @@ Additional Information:
                 <CardTitle className="text-lg">Insurance Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div><span className="font-medium">Provider:</span> {request.insuranceProvider || 'N/A'}</div>
-                <div><span className="font-medium">Insurance Number:</span> {request.insuranceNumber || 'N/A'}</div>
+                <div>
+                  <Label>Insurance Provider</Label>
+                  <Input
+                    value={localData.insuranceProvider}
+                    onChange={(e) => handleFieldChange('insuranceProvider', e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter insurance provider..."
+                  />
+                </div>
+                <div>
+                  <Label>Insurance Number</Label>
+                  <Input
+                    value={localData.insuranceNumber}
+                    onChange={(e) => handleFieldChange('insuranceNumber', e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter insurance number..."
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -340,8 +476,24 @@ Additional Information:
                 <CardTitle className="text-lg">Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div><span className="font-medium">Emergency Contact:</span> {request.emergencyContact || 'N/A'}</div>
-                <div><span className="font-medium">Referring Doctor:</span> {request.referringDoctor || 'N/A'}</div>
+                <div>
+                  <Label>Emergency Contact</Label>
+                  <Input
+                    value={localData.emergencyContact}
+                    onChange={(e) => handleFieldChange('emergencyContact', e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter emergency contact..."
+                  />
+                </div>
+                <div>
+                  <Label>Referring Doctor</Label>
+                  <Input
+                    value={localData.referringDoctor}
+                    onChange={(e) => handleFieldChange('referringDoctor', e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter referring doctor..."
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -353,15 +505,50 @@ Additional Information:
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><span className="font-medium">Diagnosis Code:</span> {request.diagnosisCode || 'N/A'}</div>
-                <div><span className="font-medium">Procedure Code:</span> {request.procedureCode || 'N/A'}</div>
-              </div>
-              <div><span className="font-medium">Submission Date:</span> {new Date(request.submissionDate).toLocaleDateString()}</div>
-              <div>
-                <Label className="font-medium">Additional Notes</Label>
-                <div className="mt-1 p-3 bg-yellow-50 rounded-md text-sm">
-                  {request.additionalNotes || 'No additional notes provided'}
+                <div>
+                  <Label>Diagnosis Code</Label>
+                  <Input
+                    value={localData.diagnosisCode}
+                    onChange={(e) => handleFieldChange('diagnosisCode', e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter diagnosis code..."
+                  />
                 </div>
+                <div>
+                  <Label>Procedure Code</Label>
+                  <Input
+                    value={localData.procedureCode}
+                    onChange={(e) => handleFieldChange('procedureCode', e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter procedure code..."
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={localData.status} onValueChange={(value) => handleFieldChange('status', value)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="Approved">Approved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                    <SelectItem value="Need Justification">Need More Justification</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Under Process">Under Process</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><span className="font-medium text-sm text-gray-600">Submission Date:</span> {new Date(request.submissionDate).toLocaleDateString()}</div>
+              <div>
+                <Label>Additional Notes</Label>
+                <Textarea
+                  value={localData.additionalNotes}
+                  onChange={(e) => handleFieldChange('additionalNotes', e.target.value)}
+                  className="mt-1"
+                  rows={3}
+                  placeholder="Enter additional notes..."
+                />
               </div>
             </CardContent>
           </Card>
@@ -390,97 +577,49 @@ Additional Information:
             </Card>
           )}
 
-          {/* Modification Section */}
-          <Card className="border-t-4 border-t-blue-500">
+          {/* Add New Attachment */}
+          <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-blue-700">Modify Request</CardTitle>
+              <CardTitle className="text-lg">Add New Attachment</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {/* Surgery Date Modification */}
-                <div>
-                  <Label>Agreed Date of Surgery</Label>
-                  <Input
-                    type="date"
-                    value={localSurgeryDate}
-                    onChange={(e) => setLocalSurgeryDate(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                {/* Status Change */}
-                <div>
-                  <Label>Status Change</Label>
-                  <Select value={localStatus} onValueChange={setLocalStatus}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select new status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
-                      <SelectItem value="Need Justification">Need More Justification</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Justification Section */}
-                {(localStatus === "Need Justification" || localStatus === "Rejected") && (
-                  <div className={`space-y-4 p-4 rounded-lg ${localStatus === "Need Justification" ? "bg-yellow-50" : "bg-red-50"}`}>
-                    <div>
-                      <Label>
-                        {localStatus === "Need Justification" ? "Reason for Justification" : "Reason for Rejection"}
-                      </Label>
-                      <Textarea
-                        placeholder={localStatus === "Need Justification" 
-                          ? "Please provide the reason for requesting additional justification..." 
-                          : "Please provide the reason for rejection..."
-                        }
-                        value={localJustification}
-                        onChange={(e) => setLocalJustification(e.target.value)}
-                        className="mt-1"
-                        rows={4}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Upload Attachment (Optional)</Label>
-                      <div className="mt-1 flex items-center gap-2">
-                        <Input
-                          type="file"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setLocalAttachment(file);
-                            }
-                          }}
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          className="flex-1"
-                        />
-                        <Button size="sm" variant="outline">
-                          <Upload className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {localAttachment && (
-                        <p className="text-sm text-green-600 mt-1">
-                          File selected: {localAttachment.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                <Button 
-                  onClick={handleLocalSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={!localStatus}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Modifications
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setLocalAttachment(file);
+                      setHasModifications(true);
+                    }
+                  }}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  className="flex-1"
+                />
+                <Button size="sm" variant="outline">
+                  <Upload className="w-4 h-4" />
                 </Button>
               </div>
+              {localAttachment && (
+                <p className="text-sm text-green-600 mt-1">
+                  File selected: {localAttachment.name}
+                </p>
+              )}
             </CardContent>
           </Card>
+
+          {/* Submit Button - Only show when modifications exist */}
+          {hasModifications && (
+            <div className="pt-4 border-t">
+              <Button 
+                onClick={handleLocalSubmit}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Submit Modifications
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
