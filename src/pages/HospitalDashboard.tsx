@@ -1,1093 +1,663 @@
-import React, { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Filter, FileText, Clock, CheckCircle, XCircle, AlertCircle, Users, TrendingUp, Download, Printer, Eye, Upload, Send } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle, Clock, XCircle, Plus, ArrowLeft, TrendingUp, Timer, CalendarIcon, X, Filter } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, isWithinInterval, getWeeksInMonth } from "date-fns";
 
-// Request workflow statuses
-const REQUEST_STATUSES = {
-  NEW: "New",
-  PENDING: "Pending",
-  UNDER_PROCESS: "Under Process", 
-  PATIENT_CONTACTED: "Patient Contacted",
-  SUBMITTED_TO_INSURANCE: "Submitted to Insurance",
-  APPROVED_BY_HOSPITAL: "Approved by Hospital",
-  REJECTED: "Rejected",
-  DONE: "Done",
-  NEED_JUSTIFICATION: "Need Justification",
-  NOT_COMPLETED: "Not Completed",
-  DELAYED: "Delayed"
-};
-
-const demoRequests = [
+// Sample data - in a real app, this would come from your backend
+const sampleRequests = [
   {
     id: 1,
-    patientName: "Nora Mohammed",
-    idNumber: "2012345678",
-    phone: "0551234567",
-    agreedSurgeryDate: "2025-06-25",
-    hospital: "King Abdulaziz Hospital",
+    patientName: "Ahmed Al-Rashid",
+    mrn: "MRN-001",
+    serviceDescription: "Cardiac Surgery - CABG",
     specialty: "Cardiology",
-    doctorName: "Dr. Ahmed Salem",
-    status: REQUEST_STATUSES.UNDER_PROCESS,
-    coordinator: "John Smith",
-    assignedHospitalStaff: null,
-    notifications: [],
-    createdAt: "2024-01-10T10:00:00Z",
-    patientContactedAt: null,
-    approvedAt: null
+    doctor: "Dr. Sarah Johnson",
+    expectedSurgeryDate: "2024-01-15",
+    status: "Pending",
+    submissionDate: "2024-01-10",
+    leadTime: 5
   },
   {
     id: 2,
-    patientName: "Omar Hassan",
-    idNumber: "2018765432",
-    phone: "0567890123",
-    agreedSurgeryDate: "2025-06-28",
-    hospital: "King Abdulaziz Hospital",
+    patientName: "Fatima Al-Zahra",
+    mrn: "MRN-002",
+    serviceDescription: "Orthopedic Surgery - Knee Replacement",
     specialty: "Orthopedics",
-    doctorName: "Dr. Sarah Ali",
-    status: REQUEST_STATUSES.PATIENT_CONTACTED,
-    coordinator: "Jane Doe",
-    assignedHospitalStaff: "Hospital Admin 1",
-    notifications: ["Patient contacted successfully"],
-    createdAt: "2024-01-08T14:30:00Z",
-    patientContactedAt: "2024-01-09T10:15:00Z",
-    approvedAt: null
+    doctor: "Dr. Michael Chen",
+    expectedSurgeryDate: "2024-01-20",
+    status: "Approved",
+    submissionDate: "2024-01-08",
+    leadTime: 12
   },
   {
     id: 3,
-    patientName: "Fatima Ali",
-    idNumber: "2014567890",
-    phone: "0512345678",
-    agreedSurgeryDate: "2025-07-02",
-    hospital: "King Abdulaziz Hospital",
+    patientName: "Omar Hassan",
+    mrn: "MRN-003",
+    serviceDescription: "Neurosurgery - Brain Tumor Removal",
     specialty: "Neurosurgery",
-    doctorName: "Dr. Mohammed Hassan",
-    status: REQUEST_STATUSES.APPROVED_BY_HOSPITAL,
-    coordinator: "John Smith",
-    assignedHospitalStaff: "Hospital Admin 2",
-    notifications: ["Submitted to insurance provider", "Request approved by hospital"],
-    createdAt: "2024-01-05T09:15:00Z",
-    patientContactedAt: "2024-01-06T11:30:00Z",
-    approvedAt: "2024-01-10T16:45:00Z"
+    doctor: "Dr. Emily Davis",
+    expectedSurgeryDate: "2024-01-25",
+    status: "Rejected",
+    submissionDate: "2024-01-12",
+    leadTime: 13
   },
   {
     id: 4,
-    patientName: "Ahmed Khalil",
-    idNumber: "2016789012",
-    phone: "0523456789",
-    agreedSurgeryDate: "2025-07-05",
-    hospital: "King Abdulaziz Hospital",
+    patientName: "Aisha Mohammad",
+    mrn: "MRN-004",
+    serviceDescription: "General Surgery - Appendectomy",
     specialty: "General Surgery",
-    doctorName: "Dr. Layla Hassan",
-    status: REQUEST_STATUSES.DONE,
-    coordinator: "Jane Doe",
-    assignedHospitalStaff: "Hospital Admin 1",
-    notifications: ["Patient contacted successfully", "Request approved by hospital", "Surgery completed successfully"],
-    createdAt: "2024-01-03T08:00:00Z",
-    patientContactedAt: "2024-01-04T09:30:00Z",
-    approvedAt: "2024-01-08T14:20:00Z"
-  },
-  {
-    id: 5,
-    patientName: "Layla Hassan",
-    idNumber: "2019876543",
-    phone: "0534567890",
-    agreedSurgeryDate: "2025-07-10",
-    hospital: "King Abdulaziz Hospital",
-    specialty: "Pediatrics",
-    doctorName: "Dr. Omar Ali",
-    status: REQUEST_STATUSES.REJECTED,
-    coordinator: "John Smith",
-    assignedHospitalStaff: "Hospital Admin 2",
-    notifications: ["Request rejected - additional documentation required"],
-    createdAt: "2024-01-02T12:00:00Z",
-    patientContactedAt: "2024-01-03T14:00:00Z",
-    approvedAt: null
+    doctor: "Dr. James Wilson",
+    expectedSurgeryDate: "2024-01-18",
+    status: "Need Justification",
+    submissionDate: "2024-01-11",
+    leadTime: 7
   }
 ];
 
 export default function HospitalDashboard() {
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
-  const [requests, setRequests] = useState(demoRequests);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const currentHospitalStaff = "Hospital Admin 1";
-  const currentHospital = "King Abdulaziz Hospital";
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>("01");
+  const [filteredRequests, setFilteredRequests] = useState(sampleRequests);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   
-  // Date filters state
-  const [dateFilters, setDateFilters] = useState<{
-    selectedDays: Date[];
-    selectedWeeks: { month: Date; weekNumbers: number[] }[];
-    selectedMonths: Date[];
-  }>({
-    selectedDays: [],
-    selectedWeeks: [],
-    selectedMonths: []
-  });
-
-  // Table column filters
+  // Column filters
   const [surgeryDateFilter, setSurgeryDateFilter] = useState("");
-  const [specialtyFilter, setSpecialtyFilter] = useState("all");
-  const [doctorFilter, setDoctorFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [specialtyFilter, setSpecialtyFilter] = useState("");
+  const [doctorFilter, setDoctorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-  // Week filter state
-  const [weekFilterMonth, setWeekFilterMonth] = useState<Date>(new Date());
+  // Request modification states
+  const [modifiedSurgeryDate, setModifiedSurgeryDate] = useState("");
+  const [modifiedStatus, setModifiedStatus] = useState("");
+  const [justificationText, setJustificationText] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
 
-  // Filter requests for current hospital
-  const hospitalRequests = requests.filter(request => 
-    request.hospital === currentHospital
-  );
+  const totalRequests = sampleRequests.length;
+  const doneRequests = sampleRequests.filter(req => req.status === "Approved").length;
+  const approvedRequests = sampleRequests.filter(req => req.status === "Approved").length;
+  const rejectedRequests = sampleRequests.filter(req => req.status === "Rejected").length;
 
-  // Apply date filters
-  const dateFilteredRequests = hospitalRequests.filter(request => {
-    if (dateFilters.selectedDays.length === 0 && dateFilters.selectedWeeks.length === 0 && dateFilters.selectedMonths.length === 0) {
-      return true;
-    }
+  const conversionRate = ((doneRequests / totalRequests) * 100).toFixed(1);
+  const approvalRate = ((approvedRequests / totalRequests) * 100).toFixed(1);
+  const rejectionRate = ((rejectedRequests / totalRequests) * 100).toFixed(1);
 
-    const requestDate = new Date(request.createdAt);
-    let matchesDateFilter = false;
-    
-    // Check selected days
-    if (dateFilters.selectedDays.length > 0) {
-      matchesDateFilter = dateFilters.selectedDays.some(day => 
-        isWithinInterval(requestDate, {
-          start: startOfDay(day),
-          end: endOfDay(day)
-        })
-      );
-    }
-    
-    // Check selected weeks
-    if (!matchesDateFilter && dateFilters.selectedWeeks.length > 0) {
-      matchesDateFilter = dateFilters.selectedWeeks.some(monthWeeks => 
-        monthWeeks.weekNumbers.some(weekNumber => {
-          const firstDayOfMonth = startOfMonth(monthWeeks.month);
-          const weekStart = addDays(firstDayOfMonth, (weekNumber - 1) * 7);
-          const weekEnd = addDays(weekStart, 6);
-          
-          return isWithinInterval(requestDate, {
-            start: startOfDay(weekStart),
-            end: endOfDay(weekEnd)
-          });
-        })
-      );
-    }
-    
-    // Check selected months
-    if (!matchesDateFilter && dateFilters.selectedMonths.length > 0) {
-      matchesDateFilter = dateFilters.selectedMonths.some(month => 
-        isWithinInterval(requestDate, {
-          start: startOfMonth(month),
-          end: endOfMonth(month)
-        })
-      );
-    }
-    
-    return matchesDateFilter;
-  });
-
-  // Apply table column filters
-  const filteredRequests = dateFilteredRequests.filter(request => {
-    const matchesSurgeryDate = surgeryDateFilter === "" || 
-      (request.agreedSurgeryDate && request.agreedSurgeryDate.includes(surgeryDateFilter));
-    const matchesSpecialty = specialtyFilter === "all" || request.specialty === specialtyFilter;
-    const matchesDoctor = doctorFilter === "all" || request.doctorName === doctorFilter;
-    const matchesStatus = statusFilter === "all" || request.status === statusFilter;
-    const matchesActiveStatus = !activeStatusFilter || request.status === activeStatusFilter;
-    
-    return matchesSurgeryDate && matchesSpecialty && matchesDoctor && matchesStatus && matchesActiveStatus;
-  });
-
-  // Calculate stats for sidebar
-  const stats = useMemo(() => {
-    const baseRequests = activeStatusFilter ? hospitalRequests : filteredRequests;
-    
-    return [
-      {
-        key: "total",
-        label: "Total Requests",
-        count: baseRequests.length,
-        color: "bg-blue-500",
-        status: null
-      },
-      {
-        key: "pending",
-        label: "Pending",
-        count: baseRequests.filter(r => r.status === REQUEST_STATUSES.UNDER_PROCESS).length,
-        color: "bg-orange-500",
-        status: REQUEST_STATUSES.UNDER_PROCESS
-      },
-      {
-        key: "contacted",
-        label: "Patient Contacted",
-        count: baseRequests.filter(r => r.status === REQUEST_STATUSES.PATIENT_CONTACTED).length,
-        color: "bg-purple-500",
-        status: REQUEST_STATUSES.PATIENT_CONTACTED
-      },
-      {
-        key: "approved",
-        label: "Approved",
-        count: baseRequests.filter(r => r.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL).length,
-        color: "bg-green-500",
-        status: REQUEST_STATUSES.APPROVED_BY_HOSPITAL
-      },
-      {
-        key: "completed",
-        label: "Completed",
-        count: baseRequests.filter(r => r.status === REQUEST_STATUSES.DONE).length,
-        color: "bg-emerald-600",
-        status: REQUEST_STATUSES.DONE
-      },
-      {
-        key: "rejected",
-        label: "Rejected",
-        count: baseRequests.filter(r => r.status === REQUEST_STATUSES.REJECTED).length,
-        color: "bg-red-500",
-        status: REQUEST_STATUSES.REJECTED
-      }
-    ];
-  }, [filteredRequests, hospitalRequests, activeStatusFilter]);
-
-  // Calculate analytics metrics
-  const analyticsMetrics = useMemo(() => {
-    const totalRequests = hospitalRequests.length;
-    const doneRequests = hospitalRequests.filter(req => req.status === REQUEST_STATUSES.DONE).length;
-    const approvedRequests = hospitalRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL).length;
-    const rejectedRequests = hospitalRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length;
-    
-    const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : "0";
-    const approvalRate = totalRequests > 0 ? ((approvedRequests / totalRequests) * 100).toFixed(1) : "0";
-    const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
-
-    return {
-      conversionRate,
-      approvalRate,
-      rejectionRate,
-      doneRequests,
-      approvedRequests,
-      rejectedRequests,
-      totalRequests
-    };
-  }, [hospitalRequests]);
-
-  // Calculate lead time metrics for current hospital only
-  const leadTimeMetrics = useMemo(() => {
-    const contactLeadTimes = hospitalRequests
-      .filter(req => req.patientContactedAt)
-      .map(req => {
-        const created = new Date(req.createdAt);
-        const contacted = new Date(req.patientContactedAt!);
-        return (contacted.getTime() - created.getTime()) / (1000 * 60 * 60); // hours
-      });
-
-    const approvalLeadTimes = hospitalRequests
-      .filter(req => req.approvedAt)
-      .map(req => {
-        const created = new Date(req.createdAt);
-        const approved = new Date(req.approvedAt!);
-        return (approved.getTime() - created.getTime()) / (1000 * 60 * 60); // hours
-      });
-
-    const avgContactLeadTime = contactLeadTimes.length > 0 
-      ? contactLeadTimes.reduce((a, b) => a + b, 0) / contactLeadTimes.length 
-      : 0;
-
-    const avgApprovalLeadTime = approvalLeadTimes.length > 0 
-      ? approvalLeadTimes.reduce((a, b) => a + b, 0) / approvalLeadTimes.length 
-      : 0;
-
-    const contactRate = hospitalRequests.length > 0 
-      ? (contactLeadTimes.length / hospitalRequests.length) * 100 
-      : 0;
-
-    const approvalRate = hospitalRequests.length > 0 
-      ? (approvalLeadTimes.length / hospitalRequests.length) * 100 
-      : 0;
-
-    return {
-      avgContactLeadTime: Math.round(avgContactLeadTime),
-      avgApprovalLeadTime: Math.round(avgApprovalLeadTime),
-      contactRate: Math.round(contactRate),
-      approvalRate: Math.round(approvalRate),
-      totalRequests: hospitalRequests.length
-    };
-  }, [hospitalRequests]);
-
-  // Get unique values for filters
-  const uniqueSpecialties = [...new Set(hospitalRequests.map(req => req.specialty))];
-  const uniqueDoctors = [...new Set(hospitalRequests.map(req => req.doctorName))];
-  const uniqueStatuses = [...new Set(hospitalRequests.map(req => req.status))];
-
-  // Generate months for dropdown
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(i);
-    return date;
-  });
-
-  // Generate weeks for selected month
-  const getWeeksForMonth = (month: Date) => {
-    const weeksInMonth = getWeeksInMonth(month);
-    const weeks = [];
-    
-    for (let weekNum = 1; weekNum <= weeksInMonth; weekNum++) {
-      const firstDayOfMonth = startOfMonth(month);
-      const weekStart = addDays(firstDayOfMonth, (weekNum - 1) * 7);
-      const weekEnd = addDays(weekStart, 6);
-      
-      weeks.push({
-        number: weekNum,
-        range: `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d')}`
-      });
-    }
-    
-    return weeks;
+  const statusCounts = {
+    pending: sampleRequests.filter(req => req.status === "Pending").length,
+    approved: sampleRequests.filter(req => req.status === "Approved").length,
+    rejected: sampleRequests.filter(req => req.status === "Rejected").length,
+    needJustification: sampleRequests.filter(req => req.status === "Need Justification").length,
   };
 
-  const handleDaySelect = (days: Date[] | undefined) => {
-    const newSelectedDays = days || [];
-    setDateFilters(prev => ({
-      ...prev,
-      selectedDays: newSelectedDays
-    }));
-  };
-
-  const handleWeekSelect = (weekNumber: number) => {
-    const monthKey = weekFilterMonth.getTime();
-    const existingMonthIndex = dateFilters.selectedWeeks.findIndex(w => w.month.getTime() === monthKey);
-    
-    let newSelectedWeeks = [...dateFilters.selectedWeeks];
-    
-    if (existingMonthIndex >= 0) {
-      const existingWeeks = newSelectedWeeks[existingMonthIndex].weekNumbers;
-      if (existingWeeks.includes(weekNumber)) {
-        newSelectedWeeks[existingMonthIndex].weekNumbers = existingWeeks.filter(w => w !== weekNumber);
-        if (newSelectedWeeks[existingMonthIndex].weekNumbers.length === 0) {
-          newSelectedWeeks = newSelectedWeeks.filter((_, i) => i !== existingMonthIndex);
-        }
-      } else {
-        newSelectedWeeks[existingMonthIndex].weekNumbers.push(weekNumber);
-      }
+  const handleStatusIconClick = (status: string) => {
+    setActiveStatusFilter(activeStatusFilter === status ? null : status);
+    if (activeStatusFilter === status) {
+      setFilteredRequests(sampleRequests);
     } else {
-      newSelectedWeeks.push({
-        month: new Date(weekFilterMonth),
-        weekNumbers: [weekNumber]
-      });
+      setFilteredRequests(sampleRequests.filter(req => req.status === status));
     }
-    
-    setDateFilters(prev => ({
-      ...prev,
-      selectedWeeks: newSelectedWeeks
-    }));
   };
 
-  const handleMonthSelect = (monthIndex: string) => {
-    const month = new Date();
-    month.setMonth(parseInt(monthIndex));
-    month.setDate(1);
-    
-    const isSelected = dateFilters.selectedMonths.some(m => m.getMonth() === month.getMonth());
-    let newSelectedMonths;
-    
-    if (isSelected) {
-      newSelectedMonths = dateFilters.selectedMonths.filter(m => m.getMonth() !== month.getMonth());
-    } else {
-      newSelectedMonths = [...dateFilters.selectedMonths, month];
-    }
-    
-    setDateFilters(prev => ({
-      ...prev,
-      selectedMonths: newSelectedMonths
-    }));
-  };
-
-  const clearDateFilters = () => {
-    setDateFilters({
-      selectedDays: [],
-      selectedWeeks: [],
-      selectedMonths: []
-    });
-  };
-
-  const clearTableFilters = () => {
-    setSurgeryDateFilter("");
-    setSpecialtyFilter("all");
-    setDoctorFilter("all");
-    setStatusFilter("all");
-  };
-
-  const hasDateFilters = dateFilters.selectedDays.length > 0 || dateFilters.selectedWeeks.length > 0 || dateFilters.selectedMonths.length > 0;
-  const hasTableFilters = surgeryDateFilter !== "" || specialtyFilter !== "all" || doctorFilter !== "all" || statusFilter !== "all";
-
-  const isWeekSelected = (weekNumber: number) => {
-    const monthKey = weekFilterMonth.getTime();
-    const monthWeeks = dateFilters.selectedWeeks.find(w => w.month.getTime() === monthKey);
-    return monthWeeks?.weekNumbers.includes(weekNumber) || false;
-  };
-
-  const updateStatus = (requestId: number, newStatus: string, notification?: string) => {
-    const now = new Date().toISOString();
-    
-    setRequests(prev =>
-      prev.map(req =>
-        req.id === requestId ? { 
-          ...req, 
-          status: newStatus,
-          assignedHospitalStaff: currentHospitalStaff,
-          notifications: [...req.notifications, notification || `Status updated to ${newStatus}`],
-          patientContactedAt: newStatus === REQUEST_STATUSES.PATIENT_CONTACTED ? now : req.patientContactedAt,
-          approvedAt: newStatus === REQUEST_STATUSES.APPROVED_BY_HOSPITAL ? now : req.approvedAt
-        } : req
-      )
-    );
-
+  const handleExportToExcel = () => {
     toast({
-      title: "Status Updated",
-      description: `Request ${requestId} status changed to ${newStatus}`,
+      title: "Export Initiated",
+      description: "Your Excel file is being prepared for download.",
     });
+  };
 
-    if (newStatus === REQUEST_STATUSES.DONE) {
-      const request = requests.find(r => r.id === requestId);
-      console.log(`Sending WhatsApp survey link to patient: ${request?.patientName}`);
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleRequestModification = (requestId: number) => {
+    if (modifiedStatus === "Need Justification" && !justificationText.trim()) {
       toast({
-        title: "Survey Sent",
-        description: "Post-surgery survey link sent to patient via WhatsApp",
+        title: "Error",
+        description: "Please provide justification text.",
+        variant: "destructive"
       });
+      return;
     }
-  };
 
-  const contactPatient = (requestId: number) => {
-    updateStatus(requestId, REQUEST_STATUSES.PATIENT_CONTACTED, "Patient successfully contacted");
-  };
-
-  const submitToInsurance = (requestId: number) => {
-    updateStatus(requestId, REQUEST_STATUSES.SUBMITTED_TO_INSURANCE, "Submitted to insurance provider for approval");
-  };
-
-  const approveRequest = (requestId: number) => {
-    updateStatus(requestId, REQUEST_STATUSES.APPROVED_BY_HOSPITAL, "Request approved by hospital");
-  };
-
-  const rejectRequest = (requestId: number) => {
-    updateStatus(requestId, REQUEST_STATUSES.REJECTED, "Request rejected - additional justification required");
-    
     toast({
-      title: "Rejection Notification Sent",
-      description: "Coordinator has been notified about the rejection",
+      title: "Request Updated",
+      description: "Request has been modified and notifications sent to doctor and case coordinator.",
     });
+
+    // Reset form
+    setModifiedSurgeryDate("");
+    setModifiedStatus("");
+    setJustificationText("");
+    setAttachmentFile(null);
   };
 
-  const markSurgeryComplete = (requestId: number) => {
-    updateStatus(requestId, REQUEST_STATUSES.DONE, "Surgery completed successfully");
-  };
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      [REQUEST_STATUSES.NEW]: "bg-blue-100 text-blue-800",
-      [REQUEST_STATUSES.PENDING]: "bg-yellow-100 text-yellow-800",
-      [REQUEST_STATUSES.UNDER_PROCESS]: "bg-orange-100 text-orange-800",
-      [REQUEST_STATUSES.PATIENT_CONTACTED]: "bg-purple-100 text-purple-800",
-      [REQUEST_STATUSES.SUBMITTED_TO_INSURANCE]: "bg-cyan-100 text-cyan-800",
-      [REQUEST_STATUSES.APPROVED_BY_HOSPITAL]: "bg-green-100 text-green-800",
-      [REQUEST_STATUSES.DONE]: "bg-green-200 text-green-900",
-      [REQUEST_STATUSES.REJECTED]: "bg-red-100 text-red-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
-
-  const getActionButtons = (request: any) => {
-    switch (request.status) {
-      case REQUEST_STATUSES.UNDER_PROCESS:
-        return (
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              onClick={() => contactPatient(request.id)}
-              className="flex items-center gap-1"
-            >
-              <CheckCircle className="w-3 h-3" />
-              Contact Patient
-            </Button>
-          </div>
-        );
-      
-      case REQUEST_STATUSES.PATIENT_CONTACTED:
-        return (
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              onClick={() => submitToInsurance(request.id)}
-              className="flex items-center gap-1"
-            >
-              <Clock className="w-3 h-3" />
-              Submit to Insurance
-            </Button>
-          </div>
-        );
-      
-      case REQUEST_STATUSES.SUBMITTED_TO_INSURANCE:
-        return (
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              onClick={() => approveRequest(request.id)}
-              className="flex items-center gap-1"
-            >
-              <CheckCircle className="w-3 h-3" />
-              Approve
-            </Button>
-            <Button 
-              size="sm" 
-              variant="destructive"
-              onClick={() => rejectRequest(request.id)}
-              className="flex items-center gap-1"
-            >
-              <XCircle className="w-3 h-3" />
-              Reject
-            </Button>
-          </div>
-        );
-      
-      case REQUEST_STATUSES.APPROVED_BY_HOSPITAL:
-        return (
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              onClick={() => markSurgeryComplete(request.id)}
-              className="flex items-center gap-1"
-            >
-              <CheckCircle className="w-3 h-3" />
-              Mark Surgery Complete
-            </Button>
-          </div>
-        );
-      
-      default:
-        return (
-          <Button size="sm" variant="outline">
-            View Details
-          </Button>
-        );
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAttachmentFile(file);
     }
   };
 
-  const createNewRequest = () => {
-    navigate("/create-request");
-  };
-
-  return (
-    <div className="flex min-h-screen w-full">
-      {/* Sidebar */}
-      <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-        <h1 className="text-xl font-bold mb-4 text-center text-blue-900">Hospital Dashboard</h1>
-        <p className="text-sm text-blue-700 mb-4">{currentHospital}</p>
-        
-        <Button className="w-full mb-6" variant="default" onClick={createNewRequest}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Request
-        </Button>
-        
-        <div className="flex flex-col gap-4 w-full mb-8">
-          {stats.map((stat) => (
-            <div
-              key={stat.key}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
-                !activeStatusFilter || activeStatusFilter === stat.status 
-                  ? stat.color 
-                  : stat.color + ' opacity-50'
-              } text-white`}
-              onClick={() => setActiveStatusFilter(activeStatusFilter === stat.status ? null : stat.status)}
-            >
-              <span className="text-xs">{stat.label}:</span>
-              <span className="font-bold text-lg">{stat.count}</span>
-            </div>
-          ))}
+  const ViewRequestDialog = ({ request }: { request: any }) => {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Eye className="w-4 h-4 mr-1" />
+            View
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Request Details - {request.patientName}</DialogTitle>
+            <DialogDescription>
+              View and modify request information
+            </DialogDescription>
+          </DialogHeader>
           
-          {activeStatusFilter && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setActiveStatusFilter(null)}
-              className="mt-2"
-            >
-              Clear Filter
-            </Button>
-          )}
-        </div>
+          <div className="space-y-6">
+            {/* Patient Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="font-semibold">Patient Information</Label>
+                <div className="mt-2 space-y-1">
+                  <p><span className="font-medium">Name:</span> {request.patientName}</p>
+                  <p><span className="font-medium">MRN:</span> {request.mrn}</p>
+                  <p><span className="font-medium">Specialty:</span> {request.specialty}</p>
+                  <p><span className="font-medium">Doctor:</span> {request.doctor}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="font-semibold">Service Description</Label>
+                <div className="mt-2 p-3 bg-gray-50 rounded-md text-sm">
+                  {request.serviceDescription}
+                </div>
+              </div>
+            </div>
 
-        <Button 
-          variant="outline"
-          onClick={() => navigate("/role-selection")}
-          className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Roles
-        </Button>
-      </aside>
-      
-      {/* Main */}
-      <main className="flex-1 bg-white p-6">
-        {/* Date Filters */}
-        <div className="mb-4 flex flex-wrap gap-2 items-center justify-end">
-          {/* Days Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
-                Filter by Days
-                {dateFilters.selectedDays.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {dateFilters.selectedDays.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="multiple"
-                selected={dateFilters.selectedDays}
-                onSelect={handleDaySelect}
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-
-          {/* Weeks Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
-                Filter by Weeks
-                {dateFilters.selectedWeeks.reduce((total, month) => total + month.weekNumbers.length, 0) > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {dateFilters.selectedWeeks.reduce((total, month) => total + month.weekNumbers.length, 0)}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-4" align="start">
-              <div className="space-y-4">
+            {/* Modification Section */}
+            <div className="border-t pt-4">
+              <Label className="font-semibold text-lg">Modify Request</Label>
+              
+              <div className="mt-4 space-y-4">
+                {/* Surgery Date Modification */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Select Month</label>
-                  <Select 
-                    value={weekFilterMonth.getMonth().toString()} 
-                    onValueChange={(value) => setWeekFilterMonth(new Date(2024, parseInt(value), 1))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
+                  <Label>Agreed Date of Surgery</Label>
+                  <Input
+                    type="date"
+                    value={modifiedSurgeryDate || request.expectedSurgeryDate}
+                    onChange={(e) => setModifiedSurgeryDate(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                {/* Status Change */}
+                <div>
+                  <Label>Status Change</Label>
+                  <Select value={modifiedStatus} onValueChange={setModifiedStatus}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select new status" />
                     </SelectTrigger>
                     <SelectContent>
-                      {months.map((month, index) => (
-                        <SelectItem key={index} value={index.toString()}>
-                          {format(month, 'MMMM yyyy')}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                      <SelectItem value="Need Justification">Need More Justification</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Select Weeks</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {getWeeksForMonth(weekFilterMonth).map((week) => (
-                      <Button
-                        key={week.number}
-                        variant={isWeekSelected(week.number) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleWeekSelect(week.number)}
-                        className="justify-start"
-                      >
-                        Week {week.number}: {week.range}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
 
-          {/* Months Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
-                Filter by Months
-                {dateFilters.selectedMonths.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {dateFilters.selectedMonths.length}
-                  </Badge>
+                {/* Justification Section - Only show if "Need Justification" is selected */}
+                {modifiedStatus === "Need Justification" && (
+                  <div className="space-y-4 p-4 bg-yellow-50 rounded-lg">
+                    <div>
+                      <Label>Reason for Justification</Label>
+                      <Textarea
+                        placeholder="Please provide the reason for requesting additional justification..."
+                        value={justificationText}
+                        onChange={(e) => setJustificationText(e.target.value)}
+                        className="mt-1"
+                        rows={4}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Upload Attachment (Optional)</Label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Input
+                          type="file"
+                          onChange={handleFileUpload}
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="flex-1"
+                        />
+                        <Button size="sm" variant="outline">
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {attachmentFile && (
+                        <p className="text-sm text-green-600 mt-1">
+                          File selected: {attachmentFile.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-4" align="start">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Months</label>
-                <div className="grid grid-cols-1 gap-1 max-h-60 overflow-y-auto">
-                  {months.map((month, index) => {
-                    const isSelected = dateFilters.selectedMonths.some(m => m.getMonth() === month.getMonth());
-                    return (
-                      <Button
-                        key={index}
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleMonthSelect(index.toString())}
-                        className="justify-start"
-                      >
-                        {format(month, 'MMMM yyyy')}
-                      </Button>
-                    );
-                  })}
-                </div>
+
+                {/* Rejection Section - Only show if "Rejected" is selected */}
+                {modifiedStatus === "Rejected" && (
+                  <div className="space-y-4 p-4 bg-red-50 rounded-lg">
+                    <div>
+                      <Label>Reason for Rejection</Label>
+                      <Textarea
+                        placeholder="Please provide the reason for rejection..."
+                        value={justificationText}
+                        onChange={(e) => setJustificationText(e.target.value)}
+                        className="mt-1"
+                        rows={4}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label>Upload Rejection Document</Label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Input
+                          type="file"
+                          onChange={handleFileUpload}
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="flex-1"
+                        />
+                        <Button size="sm" variant="outline">
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {attachmentFile && (
+                        <p className="text-sm text-green-600 mt-1">
+                          File selected: {attachmentFile.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <Button 
+                  onClick={() => handleRequestModification(request.id)}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled={!modifiedStatus}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Submit Modifications
+                </Button>
               </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Clear Date Filters */}
-          {hasDateFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearDateFilters}
-              className="text-red-600 hover:text-red-700 flex items-center gap-1"
-            >
-              <X className="w-4 h-4" />
-              Clear Date Filters
-            </Button>
-          )}
-        </div>
-
-        {/* Clear Table Filters */}
-        {hasTableFilters && (
-          <div className="mb-4 flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Showing {filteredRequests.length} of {hospitalRequests.length} requests (filtered)
             </div>
-            <Button
-              variant="ghost"
-              onClick={clearTableFilters}
-              className="flex items-center gap-2 text-red-600 hover:text-red-700"
-            >
-              <X className="w-4 h-4" />
-              Clear Table Filters
-            </Button>
           </div>
-        )}
-        
-        {/* Requests table */}
-        <div className="overflow-x-auto mb-8">
-          <table className="w-full border text-sm rounded">
-            <thead className="bg-blue-100 text-blue-900">
-              <tr>
-                <th className="p-2">Patient Name</th>
-                <th className="p-2">ID Number</th>
-                <th className="p-2">Phone</th>
-                <th className="p-2 relative">
-                  <div className="flex items-center justify-between">
-                    Surgery Date
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Filter className="h-3 w-3" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-3 bg-white border shadow-lg z-50">
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">Filter by Surgery Date</Label>
-                          <Input
-                            type="date"
-                            value={surgeryDateFilter}
-                            onChange={(e) => setSurgeryDateFilter(e.target.value)}
-                            className="w-full"
-                          />
-                          {surgeryDateFilter && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setSurgeryDateFilter("")}
-                              className="w-full text-xs"
-                            >
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </th>
-                <th className="p-2 relative">
-                  <div className="flex items-center justify-between">
-                    Specialty
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Filter className="h-3 w-3" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-3 bg-white border shadow-lg z-50">
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">Filter by Specialty</Label>
-                          <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select specialty" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white">
-                              <SelectItem value="all">All specialties</SelectItem>
-                              {uniqueSpecialties.map((specialty) => (
-                                <SelectItem key={specialty} value={specialty}>
-                                  {specialty}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {specialtyFilter !== "all" && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setSpecialtyFilter("all")}
-                              className="w-full text-xs"
-                            >
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </th>
-                <th className="p-2 relative">
-                  <div className="flex items-center justify-between">
-                    Doctor
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Filter className="h-3 w-3" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-3 bg-white border shadow-lg z-50">
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">Filter by Doctor</Label>
-                          <Select value={doctorFilter} onValueChange={setDoctorFilter}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select doctor" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white">
-                              <SelectItem value="all">All doctors</SelectItem>
-                              {uniqueDoctors.map((doctor) => (
-                                <SelectItem key={doctor} value={doctor}>
-                                  {doctor}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {doctorFilter !== "all" && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setDoctorFilter("all")}
-                              className="w-full text-xs"
-                            >
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </th>
-                <th className="p-2">Coordinator</th>
-                <th className="p-2 relative">
-                  <div className="flex items-center justify-between">
-                    Status
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Filter className="h-3 w-3" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">Filter by Status</Label>
-                          <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white">
-                              <SelectItem value="all">All statuses</SelectItem>
-                              {uniqueStatuses.map((status) => (
-                                <SelectItem key={status} value={status}>
-                                  {status}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {statusFilter !== "all" && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setStatusFilter("all")}
-                              className="w-full text-xs"
-                            >
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="text-center text-gray-400 py-6">
-                    No requests found.
-                  </td>
-                </tr>
-              ) : (
-                filteredRequests.map((req) => (
-                  <tr key={req.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-medium">{req.patientName}</td>
-                    <td className="p-2">{req.idNumber}</td>
-                    <td className="p-2">{req.phone}</td>
-                    <td className="p-2">{req.agreedSurgeryDate}</td>
-                    <td className="p-2">{req.specialty}</td>
-                    <td className="p-2">{req.doctorName}</td>
-                    <td className="p-2">{req.coordinator}</td>
-                    <td className="p-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(req.status)}`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="p-2">
-                      {getActionButtons(req)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" />
+            Print
+          </Button>
+          <Button variant="outline" onClick={handleExportToExcel}>
+            <Download className="w-4 h-4 mr-2" />
+            Export to Excel
+          </Button>
         </div>
+      </div>
 
-        {/* Hospital Lead Time Performance - Moved below table */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6" />
-            Hospital Lead Time Performance
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Timer className="w-4 h-4 text-blue-600" />
-                  Avg Contact Time
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {leadTimeMetrics.avgContactLeadTime}h
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Time to contact patient
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-green-600" />
-                  Avg Approval Time
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {leadTimeMetrics.avgApprovalLeadTime}h
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Time to approval
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600" />
-                  Contact Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">
-                  {leadTimeMetrics.contactRate}%
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Patients contacted
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-orange-600" />
-                  Approval Rate
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  {leadTimeMetrics.approvalRate}%
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Requests approved
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Analytics */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Analytics</CardTitle>
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Conversion Rate</h3>
-              <p className="text-4xl font-bold text-green-600">{analyticsMetrics.conversionRate}%</p>
-              <p className="text-sm text-gray-500">
-                ({analyticsMetrics.doneRequests} done / {analyticsMetrics.totalRequests} total requests)
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Approval Rate</h3>
-              <p className="text-4xl font-bold text-blue-600">{analyticsMetrics.approvalRate}%</p>
-              <p className="text-sm text-gray-500">
-                ({analyticsMetrics.approvedRequests} approved / {analyticsMetrics.totalRequests} total requests)
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Rejection Rate</h3>
-              <p className="text-4xl font-bold text-red-600">{analyticsMetrics.rejectionRate}%</p>
-              <p className="text-sm text-gray-500">
-                ({analyticsMetrics.rejectedRequests} rejected / {analyticsMetrics.totalRequests} total requests)
-              </p>
-            </div>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {doneRequests} of {totalRequests} requests completed
+            </p>
           </CardContent>
         </Card>
-      </main>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{approvalRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {approvedRequests} of {totalRequests} requests approved
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rejection Rate</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{rejectionRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {rejectedRequests} of {totalRequests} requests rejected
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex gap-6">
+        {/* Left Sidebar - Status Icons */}
+        <div className="w-64 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Filter by Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div 
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeStatusFilter === "Pending" ? "bg-yellow-100 border-yellow-300" : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusIconClick("Pending")}
+              >
+                <div className="flex items-center">
+                  <Clock className="w-5 h-5 text-yellow-600 mr-3" />
+                  <span>Pending</span>
+                </div>
+                <Badge variant="secondary">{statusCounts.pending}</Badge>
+              </div>
+
+              <div 
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeStatusFilter === "Approved" ? "bg-green-100 border-green-300" : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusIconClick("Approved")}
+              >
+                <div className="flex items-center">
+                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                  <span>Approved</span>
+                </div>
+                <Badge variant="secondary">{statusCounts.approved}</Badge>
+              </div>
+
+              <div 
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeStatusFilter === "Rejected" ? "bg-red-100 border-red-300" : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusIconClick("Rejected")}
+              >
+                <div className="flex items-center">
+                  <XCircle className="w-5 h-5 text-red-600 mr-3" />
+                  <span>Rejected</span>
+                </div>
+                <Badge variant="secondary">{statusCounts.rejected}</Badge>
+              </div>
+
+              <div 
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeStatusFilter === "Need Justification" ? "bg-orange-100 border-orange-300" : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusIconClick("Need Justification")}
+              >
+                <div className="flex items-center">
+                  <AlertCircle className="w-5 h-5 text-orange-600 mr-3" />
+                  <span>Need Justification</span>
+                </div>
+                <Badge variant="secondary">{statusCounts.needJustification}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Content */}
+        <div className="flex-1 space-y-6">
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Calendar Filter */}
+                <div>
+                  <Label>Filter by Day</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Select Days
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="multiple"
+                        selected={selectedDates}
+                        onSelect={setSelectedDates}
+                        className="rounded-md border"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Week Filter */}
+                <div>
+                  <Label>Filter by Week</Label>
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select month for weeks" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="01">January 2024</SelectItem>
+                      <SelectItem value="02">February 2024</SelectItem>
+                      <SelectItem value="03">March 2024</SelectItem>
+                      <SelectItem value="04">April 2024</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Month Filter with Export/Print buttons */}
+                <div>
+                  <Label>Filter by Month</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedMonths.join(',')} onValueChange={(value) => setSelectedMonths(value.split(','))}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="01">January</SelectItem>
+                        <SelectItem value="02">February</SelectItem>
+                        <SelectItem value="03">March</SelectItem>
+                        <SelectItem value="04">April</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" variant="outline" onClick={handleExportToExcel}>
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handlePrint}>
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Requests Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Hospital Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border text-sm">
+                  <thead className="bg-blue-100 text-blue-900">
+                    <tr>
+                      <th className="p-2 text-left">Patient Name</th>
+                      <th className="p-2 text-left">MRN</th>
+                      <th className="p-2 text-left">Service</th>
+                      <th className="p-2 text-left relative">
+                        <div className="flex items-center justify-between">
+                          Agreed Date of Surgery
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <Filter className="h-3 w-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-3">
+                              <Input
+                                type="date"
+                                value={surgeryDateFilter}
+                                onChange={(e) => setSurgeryDateFilter(e.target.value)}
+                                placeholder="Filter by date"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </th>
+                      <th className="p-2 text-left relative">
+                        <div className="flex items-center justify-between">
+                          Specialty
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <Filter className="h-3 w-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-3">
+                              <Input
+                                value={specialtyFilter}
+                                onChange={(e) => setSpecialtyFilter(e.target.value)}
+                                placeholder="Filter by specialty"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </th>
+                      <th className="p-2 text-left relative">
+                        <div className="flex items-center justify-between">
+                          Doctor
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <Filter className="h-3 w-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-3">
+                              <Input
+                                value={doctorFilter}
+                                onChange={(e) => setDoctorFilter(e.target.value)}
+                                placeholder="Filter by doctor"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </th>
+                      <th className="p-2 text-left relative">
+                        <div className="flex items-center justify-between">
+                          Status
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <Filter className="h-3 w-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-3">
+                              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Filter by status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Pending">Pending</SelectItem>
+                                  <SelectItem value="Approved">Approved</SelectItem>
+                                  <SelectItem value="Rejected">Rejected</SelectItem>
+                                  <SelectItem value="Need Justification">Need Justification</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </th>
+                      <th className="p-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRequests.map((request) => (
+                      <tr key={request.id} className="border-b">
+                        <td className="p-2">{request.patientName}</td>
+                        <td className="p-2">{request.mrn}</td>
+                        <td className="p-2">{request.serviceDescription}</td>
+                        <td className="p-2">{new Date(request.expectedSurgeryDate).toLocaleDateString()}</td>
+                        <td className="p-2">{request.specialty}</td>
+                        <td className="p-2">{request.doctor}</td>
+                        <td className="p-2">
+                          <Badge variant={
+                            request.status === "Approved" ? "default" :
+                            request.status === "Rejected" ? "destructive" :
+                            request.status === "Pending" ? "secondary" : "outline"
+                          }>
+                            {request.status}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          <ViewRequestDialog request={request} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Hospital Lead Time Performance */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Hospital Lead Time Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">8.5</div>
+                    <div className="text-sm text-gray-600">Average Lead Time (days)</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">85%</div>
+                    <div className="text-sm text-gray-600">On-Time Performance</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">15%</div>
+                    <div className="text-sm text-gray-600">Delayed Requests</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
