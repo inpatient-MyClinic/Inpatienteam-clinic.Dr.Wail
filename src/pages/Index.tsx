@@ -80,23 +80,6 @@ const Index = () => {
           enhance collaboration between healthcare professionals, and improve patient outcomes 
           across the entire care continuum.
         </p>
-        <div className="flex gap-6 justify-center">
-          <Button 
-            size="lg" 
-            onClick={() => navigate("/role-selection")}
-            className="bg-blue-600 hover:bg-blue-700 px-10 py-4 text-lg font-semibold"
-          >
-            Get Started
-          </Button>
-          <Button 
-            size="lg" 
-            variant="outline"
-            onClick={() => navigate("/login")}
-            className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-10 py-4 text-lg font-semibold"
-          >
-            Demo Login
-          </Button>
-        </div>
       </section>
 
       {/* Login Section */}
@@ -174,14 +157,6 @@ const Index = () => {
           <p className="text-xl mb-10 text-blue-100 leading-relaxed">
             Join healthcare institutions already using My Clinic to improve patient care and operational efficiency.
           </p>
-          <Button 
-            size="lg"
-            variant="secondary"
-            onClick={() => navigate("/role-selection")}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-10 py-4 text-lg font-semibold"
-          >
-            Start Your Journey
-          </Button>
         </div>
       </section>
 
