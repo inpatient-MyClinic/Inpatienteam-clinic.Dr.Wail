@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -61,7 +62,10 @@ export default function DoctorDashboard() {
       assignedDoctor: "Dr. Ahmed Salem",
       createdAt: "2024-01-10T11:00:00Z",
       originalRequest: "Patient requires cardiac bypass surgery due to severe coronary artery disease.",
-      justificationNeeded: false
+      justificationNeeded: false,
+      medicalHistory: "Patient has a history of hypertension, diabetes mellitus, and previous myocardial infarction in 2019. Current medications include metformin, lisinopril, and aspirin.",
+      additionalNotes: "Patient is stable but requires urgent surgical intervention. Family history of cardiac disease.",
+      attachments: ["ECG_Report_Ahmed_Mohamed.pdf", "Cardiac_Catheterization_Results.pdf", "Blood_Tests_Jan2024.pdf"]
     },
     {
       id: 2,
@@ -74,7 +78,10 @@ export default function DoctorDashboard() {
       assignedDoctor: "Dr. Ahmed Salem",
       createdAt: "2024-01-09T15:30:00Z",
       originalRequest: "Patient needs total knee replacement due to severe arthritis affecting mobility.",
-      justificationNeeded: true
+      justificationNeeded: true,
+      medicalHistory: "Patient has severe osteoarthritis in both knees with significant pain and mobility limitation. Previous conservative treatments including physiotherapy and steroid injections have failed.",
+      additionalNotes: "Patient is unable to walk more than 50 meters without severe pain. Quality of life significantly affected.",
+      attachments: ["X-Ray_Knee_Fatima_Ali.pdf", "MRI_Results.pdf"]
     },
     {
       id: 3,
@@ -87,7 +94,10 @@ export default function DoctorDashboard() {
       assignedDoctor: "Dr. Ahmed Salem",
       createdAt: "2024-01-08T09:15:00Z",
       originalRequest: "Emergency appendectomy required for acute appendicitis.",
-      justificationNeeded: false
+      justificationNeeded: false,
+      medicalHistory: "Previously healthy 28-year-old male with no significant medical history.",
+      additionalNotes: "Surgery completed successfully. Patient recovered well post-operatively.",
+      attachments: ["CT_Scan_Abdomen.pdf", "Post_Op_Report.pdf"]
     },
     {
       id: 4,
@@ -100,7 +110,10 @@ export default function DoctorDashboard() {
       assignedDoctor: "Dr. Ahmed Salem",
       createdAt: "2024-01-07T14:20:00Z",
       originalRequest: "Brain tumor removal surgery required for benign meningioma.",
-      justificationNeeded: false
+      justificationNeeded: false,
+      medicalHistory: "Patient presented with headaches and visual disturbances. MRI confirmed 3cm meningioma in right frontal lobe.",
+      additionalNotes: "Patient is neurologically stable. Tumor is accessible and suitable for surgical resection.",
+      attachments: ["Brain_MRI_Layla_Ibrahim.pdf", "Neurological_Assessment.pdf", "Pre_Op_Clearance.pdf"]
     }
   ]);
 
