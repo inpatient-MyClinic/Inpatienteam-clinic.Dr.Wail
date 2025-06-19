@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft } from "lucide-react";
@@ -14,6 +15,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -27,7 +31,8 @@ const REQUEST_STATUSES = {
   DONE: "Done",
   NEED_JUSTIFICATION: "Need Justification",
   NOT_COMPLETED: "Not Completed",
-  DELAYED: "Delayed"
+  DELAYED: "Delayed",
+  SUBMITTED_TO_HOSPITAL: "Submitted to Hospital"
 };
 
 const stats = [
@@ -44,6 +49,7 @@ const filters = [
   { label: "Completed", value: "completed" },
   { label: "Delayed", value: "delayed" },
   { label: "Need Justification", value: "justification" },
+  { label: "Submitted to Hospital", value: "submitted_hospital" },
 ];
 
 const hospitals = [
@@ -78,7 +84,10 @@ const allRequests = [
     createdAt: "2024-01-12T10:00:00Z",
     isDelayed: false,
     attachments: ["medical_report.pdf"],
-    notifications: []
+    notifications: [],
+    rejectionCause: null,
+    pendingCause: null,
+    plannedCause: null
   },
   {
     id: 2,
@@ -89,12 +98,15 @@ const allRequests = [
     hospital: "King Abdulaziz Hospital",
     specialty: "Orthopedics",
     doctorName: "Dr. Sarah Ali",
-    status: REQUEST_STATUSES.PENDING,
-    coordinator: null,
+    status: REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL,
+    coordinator: "John Smith",
     createdAt: "2024-01-10T14:30:00Z",
-    isDelayed: true,
+    isDelayed: false,
     attachments: ["xray_scan.jpg"],
-    notifications: ["Request forwarded to hospital due to delay"]
+    notifications: ["Request submitted to hospital"],
+    rejectionCause: null,
+    pendingCause: "Hospital",
+    plannedCause: null
   },
   {
     id: 3,
@@ -110,7 +122,10 @@ const allRequests = [
     createdAt: "2024-01-08T09:15:00Z",
     isDelayed: false,
     attachments: ["brain_scan.dcm", "consultation_notes.pdf"],
-    notifications: []
+    notifications: [],
+    rejectionCause: null,
+    pendingCause: null,
+    plannedCause: "Doctor"
   },
   {
     id: 4,
@@ -121,18 +136,40 @@ const allRequests = [
     hospital: "King Faisal Hospital",
     specialty: "General Surgery",
     doctorName: "Dr. Layla Ahmed",
-    status: REQUEST_STATUSES.NEED_JUSTIFICATION,
+    status: REQUEST_STATUSES.REJECTED,
     coordinator: "John Smith",
     createdAt: "2024-01-05T16:45:00Z",
     isDelayed: false,
     attachments: [],
-    notifications: ["Hospital rejected request - additional justification required"]
+    notifications: ["Request rejected by hospital"],
+    rejectionCause: "Hospital",
+    pendingCause: null,
+    plannedCause: null
+  },
+  {
+    id: 5,
+    patientName: "Sara Abdullah",
+    idNumber: "2020123456",
+    phone: "0534567890",
+    agreedSurgeryDate: "2025-07-08",
+    hospital: "King Khalid Hospital",
+    specialty: "Pediatric Surgery",
+    doctorName: "Dr. Omar Farid",
+    status: REQUEST_STATUSES.DONE,
+    coordinator: "John Smith",
+    createdAt: "2024-01-03T11:20:00Z",
+    isDelayed: false,
+    attachments: ["surgery_report.pdf"],
+    notifications: ["Surgery completed successfully"],
+    rejectionCause: null,
+    pendingCause: null,
+    plannedCause: null
   },
 ];
 
 export default function CaseCoordinatorDashboard() {
   const [filter, setFilter] = useState<string>("all");
-  const [hospitalFilter, setHhospitalFilter] = useState<string>("all");
+  const [selectedHospitals, setSelectedHospitals] = useState<string[]>([]);
   const [specialtyFilter, setSpecialtyFilter] = useState<string>("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("");
   const [requests, setRequests] = useState(allRequests);
@@ -188,6 +225,7 @@ export default function CaseCoordinatorDashboard() {
     rejected: requests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length,
     needJustification: requests.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
     delayed: requests.filter(req => req.isDelayed).length,
+    submittedToHospital: requests.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
   };
 
   // Calculate statistics for coordinator's assigned requests
@@ -198,6 +236,46 @@ export default function CaseCoordinatorDashboard() {
     myUnderProcess: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
     myCompleted: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.DONE).length,
     myNeedJustification: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
+  };
+
+  // Analytics calculations
+  const myRequests = requests.filter(req => req.coordinator === coordinatorName);
+  const conversionRate = myRequests.length > 0 ? ((myRequests.filter(req => req.status === REQUEST_STATUSES.DONE).length / myRequests.length) * 100).toFixed(1) : "0";
+  const utilizationRate = requests.length > 0 ? ((myRequests.length / requests.length) * 100).toFixed(1) : "0";
+
+  // Loss tree calculations
+  const lossTreeData = {
+    notDone: {
+      total: myRequests.filter(req => req.status !== REQUEST_STATUSES.DONE).length,
+      scheduled: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
+        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Doctor").length,
+        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Patient").length,
+        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Hospital").length,
+        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.UNDER_PROCESS && req.plannedCause === "Insurance").length,
+      },
+      pending: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
+        doctor: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Doctor").length,
+        patient: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Patient").length,
+        hospital: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Hospital").length,
+        insurance: myRequests.filter(req => (req.status === REQUEST_STATUSES.PENDING || req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL) && req.pendingCause === "Insurance").length,
+      },
+      planned: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL).length,
+        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Doctor").length,
+        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Patient").length,
+        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Hospital").length,
+        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.APPROVED_BY_HOSPITAL && req.plannedCause === "Insurance").length,
+      },
+      rejected: {
+        total: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED).length,
+        doctor: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Doctor").length,
+        patient: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Patient").length,
+        hospital: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Hospital").length,
+        insurance: myRequests.filter(req => req.status === REQUEST_STATUSES.REJECTED && req.rejectionCause === "Insurance").length,
+      }
+    }
   };
 
   const getFilteredRequests = () => {
@@ -220,15 +298,19 @@ export default function CaseCoordinatorDashboard() {
       case "justification":
         filtered = filtered.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION);
         break;
+      case "submitted_hospital":
+        filtered = filtered.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL);
+        break;
       default:
         // Show all requests
         break;
     }
 
-    // Apply additional filters
-    if (hospitalFilter && hospitalFilter !== "all") {
-      filtered = filtered.filter(req => req.hospital === hospitalFilter);
+    // Apply hospital filters (multiple selection)
+    if (selectedHospitals.length > 0) {
+      filtered = filtered.filter(req => selectedHospitals.includes(req.hospital));
     }
+    
     if (specialtyFilter && specialtyFilter !== "all") {
       filtered = filtered.filter(req => req.specialty === specialtyFilter);
     }
@@ -320,7 +402,7 @@ export default function CaseCoordinatorDashboard() {
       prev.map(req =>
         req.id === requestId ? { 
           ...req, 
-          status: REQUEST_STATUSES.UNDER_PROCESS,
+          status: REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL,
           notifications: [...req.notifications, "Request forwarded to hospital"]
         } : req
       )
@@ -334,7 +416,7 @@ export default function CaseCoordinatorDashboard() {
 
   const exportToExcel = () => {
     console.log("Exporting case coordinator requests to Excel with filters:", { 
-      filter, hospitalFilter, specialtyFilter, doctorFilter, selectedDates, selectedWeeks, selectedMonths 
+      filter, selectedHospitals, specialtyFilter, doctorFilter, selectedDates, selectedWeeks, selectedMonths 
     });
     toast({
       title: "Export Started",
@@ -358,7 +440,8 @@ export default function CaseCoordinatorDashboard() {
       [REQUEST_STATUSES.REJECTED]: "bg-red-100 text-red-800",
       [REQUEST_STATUSES.NEED_JUSTIFICATION]: "bg-pink-100 text-pink-800",
       [REQUEST_STATUSES.NOT_COMPLETED]: "bg-gray-100 text-gray-800",
-      [REQUEST_STATUSES.DELAYED]: "bg-red-200 text-red-900"
+      [REQUEST_STATUSES.DELAYED]: "bg-red-200 text-red-900",
+      [REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL]: "bg-indigo-100 text-indigo-800"
     };
     
     const baseColor = colors[status] || "bg-gray-100 text-gray-800";
@@ -372,6 +455,14 @@ export default function CaseCoordinatorDashboard() {
         {isDelayed && <AlertTriangle className="w-3 h-3 text-red-600" />}
       </div>
     );
+  };
+
+  const handleHospitalChange = (hospital: string, checked: boolean) => {
+    if (checked) {
+      setSelectedHospitals(prev => [...prev, hospital]);
+    } else {
+      setSelectedHospitals(prev => prev.filter(h => h !== hospital));
+    }
   };
 
   const filteredRequests = getFilteredRequests();
@@ -429,6 +520,10 @@ export default function CaseCoordinatorDashboard() {
             <div className="flex items-center justify-between bg-red-200 rounded px-3 py-2">
               <span className="text-xs text-red-900">Delayed:</span>
               <span className="font-bold text-sm text-red-900">{allStats.delayed}</span>
+            </div>
+            <div className="flex items-center justify-between bg-indigo-100 rounded px-3 py-2">
+              <span className="text-xs text-indigo-800">Submitted to Hospital:</span>
+              <span className="font-bold text-sm text-indigo-800">{allStats.submittedToHospital}</span>
             </div>
           </div>
         </div>
@@ -500,19 +595,40 @@ export default function CaseCoordinatorDashboard() {
           
           {/* Additional Filters */}
           <div className="flex gap-3 flex-wrap">
-            <Select value={hospitalFilter} onValueChange={setHhospitalFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Hospital" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Hospitals</SelectItem>
-                {hospitals.map((hospital) => (
-                  <SelectItem key={hospital} value={hospital}>
-                    {hospital}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Hospitals ({selectedHospitals.length})
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Select Hospitals</h4>
+                  {hospitals.map((hospital) => (
+                    <div key={hospital} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={hospital}
+                        checked={selectedHospitals.includes(hospital)}
+                        onCheckedChange={(checked) => handleHospitalChange(hospital, checked as boolean)}
+                      />
+                      <label htmlFor={hospital} className="text-sm">
+                        {hospital}
+                      </label>
+                    </div>
+                  ))}
+                  {selectedHospitals.length > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSelectedHospitals([])}
+                      className="w-full text-xs"
+                    >
+                      Clear All
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
             
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
               <SelectTrigger className="w-40">
@@ -540,10 +656,11 @@ export default function CaseCoordinatorDashboard() {
             {filter === "mine" ? "My Assigned Requests" : 
              filter === "delayed" ? "Delayed Requests" :
              filter === "justification" ? "Requests Needing Justification" :
+             filter === "submitted_hospital" ? "Submitted to Hospital" :
              "All Requests"}
           </h2>
           
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto mb-8">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -639,6 +756,151 @@ export default function CaseCoordinatorDashboard() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Analytics Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
+                <p className="text-xs text-gray-500">Done requests / My total requests</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Utilization Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{utilizationRate}%</div>
+                <p className="text-xs text-gray-500">My requests / All requests</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Cases Not Done</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{lossTreeData.notDone.total}</div>
+                <p className="text-xs text-gray-500">Under my responsibility</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">My Active Cases</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{myRequests.length}</div>
+                <p className="text-xs text-gray-500">Total assigned to me</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Loss Tree Analysis */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Loss Tree Analysis - Cases Not Completed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Scheduled */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-blue-800">Scheduled ({lossTreeData.notDone.scheduled.total})</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Doctor:</span>
+                      <span className="font-medium">{lossTreeData.notDone.scheduled.doctor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Patient:</span>
+                      <span className="font-medium">{lossTreeData.notDone.scheduled.patient}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hospital:</span>
+                      <span className="font-medium">{lossTreeData.notDone.scheduled.hospital}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Insurance:</span>
+                      <span className="font-medium">{lossTreeData.notDone.scheduled.insurance}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pending */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-yellow-800">Pending ({lossTreeData.notDone.pending.total})</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Doctor:</span>
+                      <span className="font-medium">{lossTreeData.notDone.pending.doctor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Patient:</span>
+                      <span className="font-medium">{lossTreeData.notDone.pending.patient}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hospital:</span>
+                      <span className="font-medium">{lossTreeData.notDone.pending.hospital}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Insurance:</span>
+                      <span className="font-medium">{lossTreeData.notDone.pending.insurance}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Planned */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-green-800">Planned ({lossTreeData.notDone.planned.total})</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Doctor:</span>
+                      <span className="font-medium">{lossTreeData.notDone.planned.doctor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Patient:</span>
+                      <span className="font-medium">{lossTreeData.notDone.planned.patient}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hospital:</span>
+                      <span className="font-medium">{lossTreeData.notDone.planned.hospital}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Insurance:</span>
+                      <span className="font-medium">{lossTreeData.notDone.planned.insurance}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rejected/Cancelled */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-red-800">Rejected/Cancelled ({lossTreeData.notDone.rejected.total})</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Doctor:</span>
+                      <span className="font-medium">{lossTreeData.notDone.rejected.doctor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Patient:</span>
+                      <span className="font-medium">{lossTreeData.notDone.rejected.patient}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Hospital:</span>
+                      <span className="font-medium">{lossTreeData.notDone.rejected.hospital}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Insurance:</span>
+                      <span className="font-medium">{lossTreeData.notDone.rejected.insurance}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
