@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Download, Clock, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import ExportButton from "@/components/ExportButton";
 
 // Request workflow statuses
 const REQUEST_STATUSES = {
@@ -44,14 +45,16 @@ export default function NurseDashboard() {
     {
       id: 1,
       patientName: "Layla Hasan",
-      idNumber: "2019988776",
-      phone: "0554447777",
-      agreedSurgeryDate: "2025-07-12",
-      hospital: "King Khaled",
+      mrn: "2019988776", // Changed from idNumber to mrn for consistency
+      serviceDescription: "Cardiac Surgery - Valve Replacement", // Added service description
+      hospital: "King Khaled Hospital", // Made consistent with doctor format
       status: REQUEST_STATUSES.PENDING,
-      createdBy: "Nurse Sara", // Current nurse
+      paymentStatus: "Pending", // Added payment status
       assignedDoctor: "Dr. Ahmed Salem",
       createdAt: "2024-01-10T11:00:00Z",
+      phone: "0554447777",
+      expectedSurgeryDate: "2025-07-12", // Changed from agreedSurgeryDate
+      createdBy: "Nurse Sara", // Current nurse
       attachments: ["patient_records.pdf"],
       isDelayed: false,
       notifications: []
@@ -59,14 +62,16 @@ export default function NurseDashboard() {
     {
       id: 2,
       patientName: "Khaled Ali",
-      idNumber: "2015566778", 
-      phone: "0508889992",
-      agreedSurgeryDate: "2025-07-14",
-      hospital: "King Abdulaziz",
+      mrn: "2015566778", // Changed from idNumber to mrn for consistency
+      serviceDescription: "Orthopedic Surgery - Hip Replacement", // Added service description
+      hospital: "King Abdulaziz Hospital", // Made consistent with doctor format
       status: REQUEST_STATUSES.NOT_COMPLETED,
-      createdBy: "Nurse Sara", // Current nurse
+      paymentStatus: "Pending", // Added payment status
       assignedDoctor: "Dr. Mohammed Ali",
       createdAt: "2024-01-09T15:30:00Z",
+      phone: "0508889992",
+      expectedSurgeryDate: "2025-07-14", // Changed from agreedSurgeryDate
+      createdBy: "Nurse Sara", // Current nurse
       attachments: [],
       isDelayed: false,
       notifications: ["Request marked as incomplete by coordinator - additional documentation required"]
@@ -111,6 +116,9 @@ export default function NurseDashboard() {
   const filteredRequests = requests.filter(request => 
     request.createdBy === currentNurseName
   );
+
+  // Check if there are active filters
+  const hasActiveFilters = Boolean(filter);
 
   const updateStatus = (requestId: number, newStatus: string) => {
     setRequests(prev =>
@@ -240,6 +248,15 @@ export default function NurseDashboard() {
       
       {/* Main */}
       <main className="flex-1 bg-white p-6">
+        {/* Export Button */}
+        <div className="mb-4 flex justify-end">
+          <ExportButton 
+            requests={requests}
+            filteredRequests={filteredRequests}
+            hasActiveFilters={hasActiveFilters}
+          />
+        </div>
+
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 mb-6 justify-end">
           {filters.map((f) => (
@@ -261,10 +278,6 @@ export default function NurseDashboard() {
           >
             Clear Filter
           </Button>
-          <Button onClick={exportToExcel} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
         </div>
         
         {/* Requests table */}
@@ -273,9 +286,10 @@ export default function NurseDashboard() {
             <thead className="bg-blue-100 text-blue-900">
               <tr>
                 <th className="p-2">Patient Name</th>
-                <th className="p-2">ID Number</th>
+                <th className="p-2">MRN</th>
                 <th className="p-2">Phone</th>
-                <th className="p-2">Agreed Date of Surgery</th>
+                <th className="p-2">Service Description</th>
+                <th className="p-2">Expected Surgery Date</th>
                 <th className="p-2">Hospital</th>
                 <th className="p-2">Assigned Doctor</th>
                 <th className="p-2">Status</th>
@@ -285,7 +299,7 @@ export default function NurseDashboard() {
             <tbody>
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center text-gray-400 py-6">
+                  <td colSpan={9} className="text-center text-gray-400 py-6">
                     No requests found.
                   </td>
                 </tr>
@@ -293,9 +307,10 @@ export default function NurseDashboard() {
                 filteredRequests.map((req) => (
                   <tr key={req.id} className="border-b">
                     <td className="p-2">{req.patientName}</td>
-                    <td className="p-2">{req.idNumber}</td>
+                    <td className="p-2">{req.mrn}</td>
                     <td className="p-2">{req.phone}</td>
-                    <td className="p-2">{req.agreedSurgeryDate}</td>
+                    <td className="p-2">{req.serviceDescription}</td>
+                    <td className="p-2">{req.expectedSurgeryDate}</td>
                     <td className="p-2">{req.hospital}</td>
                     <td className="p-2">{req.assignedDoctor}</td>
                     <td className="p-2">
