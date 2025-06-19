@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Download, Clock, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -334,3 +334,4 @@ export default function NurseDashboard() {
       </main>
     </div>
   );
+}
