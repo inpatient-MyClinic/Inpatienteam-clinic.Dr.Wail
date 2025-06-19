@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft, Eye, Send } from "lucide-react";
+import { Plus, Download, Clock, AlertTriangle, Bell, ArrowLeft, Eye, Send, MoreVertical, FileText, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useOverdueRequests, OverdueRequest } from "@/hooks/useOverdueRequests";
 import Logo from "@/components/Logo";
 import DateRangeFilter from "@/components/DateRangeFilter";
+import OverdueCounter from "@/components/OverdueCounter";
 import {
   Table,
   TableBody,
@@ -71,12 +73,11 @@ const specialties = [
   "Pediatric Surgery"
 ];
 
-// Sample data - expanded with workflow functionality
-const allRequests = [
+// Sample data - updated to include overdue tracking
+const allRequests: OverdueRequest[] = [
   {
     id: 1,
     patientName: "Nora Mohammed",
-    idNumber: "2012345678",
     phone: "0551234567",
     agreedSurgeryDate: "2025-06-25",
     hospital: "King Abdulaziz Hospital",
@@ -85,12 +86,9 @@ const allRequests = [
     status: REQUEST_STATUSES.NEW,
     coordinator: null,
     createdAt: "2024-01-12T10:00:00Z",
-    isDelayed: false,
+    isOverdue: false,
     attachments: ["medical_report.pdf"],
-    notifications: [],
-    rejectionCause: null,
-    pendingCause: null,
-    plannedCause: null
+    notifications: []
   },
   {
     id: 2,
@@ -104,7 +102,7 @@ const allRequests = [
     status: REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL,
     coordinator: "John Smith",
     createdAt: "2024-01-10T14:30:00Z",
-    isDelayed: false,
+    isOverdue: false,
     attachments: ["xray_scan.jpg"],
     notifications: ["Request submitted to hospital"],
     rejectionCause: null,
@@ -123,7 +121,7 @@ const allRequests = [
     status: REQUEST_STATUSES.UNDER_PROCESS,
     coordinator: "John Smith",
     createdAt: "2024-01-08T09:15:00Z",
-    isDelayed: false,
+    isOverdue: false,
     attachments: ["brain_scan.dcm", "consultation_notes.pdf"],
     notifications: [],
     rejectionCause: null,
@@ -142,7 +140,7 @@ const allRequests = [
     status: REQUEST_STATUSES.REJECTED,
     coordinator: "John Smith",
     createdAt: "2024-01-05T16:45:00Z",
-    isDelayed: false,
+    isOverdue: false,
     attachments: [],
     notifications: ["Request rejected by hospital"],
     rejectionCause: "Hospital",
@@ -161,7 +159,7 @@ const allRequests = [
     status: REQUEST_STATUSES.DONE,
     coordinator: "John Smith",
     createdAt: "2024-01-03T11:20:00Z",
-    isDelayed: false,
+    isOverdue: false,
     attachments: ["surgery_report.pdf"],
     notifications: ["Surgery completed successfully"],
     rejectionCause: null,
@@ -175,7 +173,7 @@ export default function CaseCoordinatorDashboard() {
   const [selectedHospitals, setSelectedHospitals] = useState<string[]>([]);
   const [specialtyFilter, setSpecialtyFilter] = useState<string>("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("");
-  const [requests, setRequests] = useState(allRequests);
+  const [requests, setRequests] = useState<OverdueRequest[]>(allRequests);
   
   // Date filter states
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -185,41 +183,25 @@ export default function CaseCoordinatorDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const coordinatorName = "John Smith";
+  
+  const { 
+    checkOverdueRequests, 
+    assignToHospital, 
+    sendHospitalNotification, 
+    sendHospitalEmail 
+  } = useOverdueRequests();
 
-  // Check for delayed requests (4+ hours during business hours)
+  // Check for overdue requests every minute during business hours
   useEffect(() => {
-    const checkDelayedRequests = () => {
-      const now = new Date();
-      const businessStart = 9; // 9 AM
-      const businessEnd = 20; // 8 PM
-      
-      setRequests(prev => prev.map(req => {
-        if (req.status === REQUEST_STATUSES.PENDING && !req.coordinator) {
-          const createdTime = new Date(req.createdAt);
-          const hoursDiff = (now.getTime() - createdTime.getTime()) / (1000 * 60 * 60);
-          
-          const currentHour = now.getHours();
-          const isBusinessHours = currentHour >= businessStart && currentHour <= businessEnd;
-          
-          if (hoursDiff >= 4 && isBusinessHours && !req.isDelayed) {
-            // Auto-forward to hospital
-            return {
-              ...req,
-              isDelayed: true,
-              status: REQUEST_STATUSES.DELAYED,
-              notifications: [...req.notifications, "Request automatically forwarded to hospital due to delay"]
-            };
-          }
-        }
-        return req;
-      }));
+    const checkOverdue = () => {
+      setRequests(prev => checkOverdueRequests(prev));
     };
 
-    const interval = setInterval(checkDelayedRequests, 60000);
+    const interval = setInterval(checkOverdue, 60000); // Check every minute
     return () => clearInterval(interval);
-  }, []);
+  }, [checkOverdueRequests]);
 
-  // Calculate statistics for all requests
+  // Calculate statistics including overdue counts
   const allStats = {
     new: requests.filter(req => req.status === REQUEST_STATUSES.NEW).length,
     pending: requests.filter(req => req.status === REQUEST_STATUSES.PENDING).length,
@@ -229,6 +211,7 @@ export default function CaseCoordinatorDashboard() {
     needJustification: requests.filter(req => req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
     delayed: requests.filter(req => req.isDelayed).length,
     submittedToHospital: requests.filter(req => req.status === REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL).length,
+    overdue: requests.filter(req => req.isOverdue).length,
   };
 
   // Calculate statistics for coordinator's assigned requests
@@ -239,6 +222,7 @@ export default function CaseCoordinatorDashboard() {
     myUnderProcess: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS).length,
     myCompleted: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.DONE).length,
     myNeedJustification: requests.filter(req => req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.NEED_JUSTIFICATION).length,
+    myOverdue: requests.filter(req => req.coordinator === coordinatorName && req.isOverdue).length,
   };
 
   // Analytics calculations
@@ -611,13 +595,42 @@ export default function CaseCoordinatorDashboard() {
   };
 
   const exportToExcel = () => {
-    console.log("Exporting case coordinator requests to Excel with filters:", { 
-      filter, selectedHospitals, specialtyFilter, doctorFilter, selectedDates, selectedWeeks, selectedMonths 
-    });
+    const filteredData = getFilteredRequests();
+    console.log("Exporting filtered case coordinator requests to Excel:", filteredData);
+    
+    // Include overdue information in export
+    const exportData = filteredData.map(request => ({
+      "Request ID": request.id,
+      "Patient Name": request.patientName,
+      "Phone": request.phone,
+      "Surgery Date": request.agreedSurgeryDate,
+      "Hospital": request.hospital,
+      "Specialty": request.specialty,
+      "Doctor": request.doctorName,
+      "Status": request.status,
+      "Coordinator": request.coordinator || "Unassigned",
+      "Created": new Date(request.createdAt).toLocaleDateString(),
+      "Is Overdue": request.isOverdue ? "Yes" : "No",
+      "Overdue Since": request.overdueTimestamp ? new Date(request.overdueTimestamp).toLocaleDateString() : "N/A"
+    }));
+
     toast({
       title: "Export Started",
-      description: "Excel file generation in progress...",
+      description: `Exporting ${exportData.length} requests to Excel...`,
     });
+  };
+
+  const printTable = () => {
+    const filteredData = getFilteredRequests();
+    console.log("Printing filtered requests:", filteredData);
+    
+    toast({
+      title: "Print Started",
+      description: `Preparing ${filteredData.length} requests for printing...`,
+    });
+    
+    // In a real implementation, this would open print dialog
+    window.print();
   };
 
   const createNewRequest = () => {
@@ -661,6 +674,28 @@ export default function CaseCoordinatorDashboard() {
     }
   };
 
+  const handleAssignToHospital = async (requestId: number) => {
+    const request = requests.find(req => req.id === requestId);
+    if (!request) return;
+
+    try {
+      const updatedRequest = await assignToHospital(request, false);
+      
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === requestId ? updatedRequest : req
+        )
+      );
+    } catch (error) {
+      console.error("Failed to assign to hospital:", error);
+      toast({
+        title: "Assignment Failed",
+        description: "Failed to assign request to hospital. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredRequests = getFilteredRequests();
 
   const handleClearAllDateFilters = () => {
@@ -684,6 +719,15 @@ export default function CaseCoordinatorDashboard() {
           <Plus className="w-4 h-4 mr-2" />
           Create New Request
         </Button>
+
+        {/* Overdue Counter */}
+        <div className="w-full mb-4">
+          <OverdueCounter 
+            overdueCount={allStats.overdue} 
+            totalRequests={requests.length}
+            className="w-full"
+          />
+        </div>
         
         {/* All Requests Statistics */}
         <div className="w-full mb-4">
@@ -721,6 +765,10 @@ export default function CaseCoordinatorDashboard() {
               <span className="text-xs text-indigo-800">Submitted to Hospital:</span>
               <span className="font-bold text-sm text-indigo-800">{allStats.submittedToHospital}</span>
             </div>
+            <div className="flex items-center justify-between bg-red-200 rounded px-3 py-2">
+              <span className="text-xs text-red-900">Overdue:</span>
+              <span className="font-bold text-sm text-red-900">{allStats.overdue}</span>
+            </div>
           </div>
         </div>
 
@@ -745,6 +793,10 @@ export default function CaseCoordinatorDashboard() {
             <div className="flex items-center justify-between bg-pink-100 rounded px-3 py-2">
               <span className="text-xs text-pink-800">My Need Justification:</span>
               <span className="font-bold text-sm text-pink-800">{myStats.myNeedJustification}</span>
+            </div>
+            <div className="flex items-center justify-between bg-red-100 rounded px-3 py-2">
+              <span className="text-xs text-red-800">My Overdue:</span>
+              <span className="font-bold text-sm text-red-800">{myStats.myOverdue}</span>
             </div>
           </div>
         </div>
@@ -788,7 +840,7 @@ export default function CaseCoordinatorDashboard() {
             onClearAll={handleClearAllDateFilters}
           />
           
-          {/* Additional Filters */}
+          {/* Additional Filters with Export and Print */}
           <div className="flex gap-3 flex-wrap">
             <Popover>
               <PopoverTrigger asChild>
@@ -843,6 +895,11 @@ export default function CaseCoordinatorDashboard() {
               <Download className="w-4 h-4 mr-2" />
               Export Excel
             </Button>
+            
+            <Button onClick={printTable} variant="outline">
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
           </div>
         </div>
 
@@ -878,53 +935,49 @@ export default function CaseCoordinatorDashboard() {
                   </TableRow>
                 ) : (
                   filteredRequests.map((req) => (
-                    <TableRow key={req.id}>
-                      <TableCell>{req.patientName}</TableCell>
+                    <TableRow key={req.id} className={req.isOverdue ? "bg-red-50" : ""}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {req.patientName}
+                          {req.isOverdue && <AlertTriangle className="w-4 h-4 text-red-500" />}
+                        </div>
+                      </TableCell>
                       <TableCell>{req.phone}</TableCell>
                       <TableCell>{req.agreedSurgeryDate}</TableCell>
                       <TableCell>{req.hospital}</TableCell>
                       <TableCell>{req.specialty}</TableCell>
                       <TableCell>{req.doctorName}</TableCell>
                       <TableCell>
-                        {getStatusBadge(req.status, req.isDelayed)}
+                        {getStatusBadge(req.status, req.isOverdue)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          {/* Assign to Me - only show if not assigned */}
-                          {!req.coordinator && req.status === REQUEST_STATUSES.NEW && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => assignToMe(req.id)}
-                            >
-                              Assign to Me
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
-                          )}
-                          
-                          {/* Submitted to Hospital - show if assigned to me and under process */}
-                          {req.coordinator === coordinatorName && req.status === REQUEST_STATUSES.UNDER_PROCESS && (
-                            <Button 
-                              size="sm" 
-                              onClick={() => updateStatus(req.id, REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL)}
-                            >
-                              Submit to Hospital
-                            </Button>
-                          )}
-                          
-                          {/* Need Update - show if assigned to me */}
-                          {req.coordinator === coordinatorName && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => updateStatus(req.id, "Update")}
-                            >
-                              Need Update
-                            </Button>
-                          )}
-                          
-                          {/* View - always show */}
-                          <ViewRequestDialog request={req} />
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {!req.coordinator && req.status === REQUEST_STATUSES.NEW && (
+                              <DropdownMenuItem onClick={() => assignToMe(req.id)}>
+                                Assign to Me
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {req.coordinator === coordinatorName && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleAssignToHospital(req.id)}>
+                                  Assign to Hospital
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateStatus(req.id, REQUEST_STATUSES.SUBMITTED_TO_HOSPITAL)}>
+                                  Submit to Hospital
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            
+                            <ViewRequestDialog request={req} />
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -1078,6 +1131,13 @@ export default function CaseCoordinatorDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Footer */}
+        <footer className="mt-auto p-4 border-t bg-gray-50 text-center">
+          <p className="text-sm text-gray-600">
+            Created by Dr. Wail Ahmed @My Clinic
+          </p>
+        </footer>
       </main>
     </div>
   );
