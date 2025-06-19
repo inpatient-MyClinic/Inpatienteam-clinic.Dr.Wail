@@ -2,54 +2,81 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 interface Request {
   id: number;
   patientName: string;
-  idNumber: string;
-  phone: string;
-  agreedSurgeryDate: string;
+  mrn: string;
+  serviceDescription: string;
   hospital: string;
-  hospitalMRN: string;
-  expectedRevenue: number;
-  actualRevenue: number;
   status: string;
+  paymentStatus: string;
+  assignedDoctor: string;
+  createdAt: string;
+  expectedSurgeryDate?: string;
 }
 
 interface ExportButtonProps {
   requests: Request[];
+  filteredRequests: Request[];
+  hasActiveFilters: boolean;
 }
 
-const ExportButton = ({ requests }: ExportButtonProps) => {
+const ExportButton = ({ requests, filteredRequests, hasActiveFilters }: ExportButtonProps) => {
   const exportToExcel = () => {
-    const headers = ["Patient Name", "ID Number", "Phone", "Surgery Date", "Hospital", "Status", "Expected Revenue", "Actual Revenue"];
-    const csvContent = [
-      headers.join(","),
-      ...requests.map(req => [
-        req.patientName,
-        req.idNumber,
-        req.phone,
-        req.agreedSurgeryDate,
-        req.hospital,
-        req.status,
-        req.expectedRevenue,
-        req.actualRevenue || 0
-      ].join(","))
-    ].join("\n");
+    // Use filtered data if filters are active, otherwise use all data
+    const dataToExport = hasActiveFilters ? filteredRequests : requests;
+    
+    // Prepare data for Excel export
+    const excelData = dataToExport.map(req => ({
+      'Patient Name': req.patientName,
+      'MRN': req.mrn,
+      'Service Description': req.serviceDescription,
+      'Hospital': req.hospital,
+      'Expected Surgery Date': req.expectedSurgeryDate ? 
+        new Date(req.expectedSurgeryDate).toLocaleDateString() : 
+        'Not set',
+      'Status': req.status,
+      'Payment Status': req.paymentStatus,
+      'Assigned Doctor': req.assignedDoctor,
+      'Created Date': new Date(req.createdAt).toLocaleDateString()
+    }));
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "doctor_requests.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Auto-size columns
+    const columnWidths = [];
+    const headers = Object.keys(excelData[0] || {});
+    headers.forEach((header, index) => {
+      const maxLength = Math.max(
+        header.length,
+        ...excelData.map(row => String(row[header] || '').length)
+      );
+      columnWidths[index] = { wch: Math.min(maxLength + 2, 50) };
+    });
+    worksheet['!cols'] = columnWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Doctor Requests');
+
+    // Generate filename with timestamp and filter status
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filterStatus = hasActiveFilters ? '_filtered' : '_all';
+    const filename = `doctor_requests${filterStatus}_${timestamp}.xlsx`;
+
+    // Export file
+    XLSX.writeFile(workbook, filename);
+
+    console.log(`Exported ${dataToExport.length} requests to Excel file: ${filename}`);
   };
 
   return (
     <Button variant="outline" onClick={exportToExcel} className="flex items-center gap-2">
       <Download className="w-4 h-4" />
-      Export Excel
+      Export Excel ({hasActiveFilters ? `${filteredRequests.length} filtered` : `${requests.length} all`})
     </Button>
   );
 };

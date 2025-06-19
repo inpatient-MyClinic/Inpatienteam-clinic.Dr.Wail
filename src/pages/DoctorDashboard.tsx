@@ -284,12 +284,11 @@ export default function DoctorDashboard() {
           />
           
           <FilterBar
-            onExportExcel={exportToExcel}
             onPrint={printPage}
           />
           
           <RequestsTable
-            requests={filteredRequests}
+            requests={requests}
             onJustificationSubmit={handleJustificationSubmit}
             onRequestModification={handleRequestModification}
             getStatusBadge={getStatusBadge}

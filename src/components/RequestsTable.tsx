@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
+import ExportButton from "./ExportButton";
 
 interface Request {
   id: number;
@@ -408,6 +409,15 @@ export default function RequestsTable({
 
   return (
     <div className="overflow-x-auto mb-8">
+      {/* Export Button */}
+      <div className="mb-4 flex justify-end">
+        <ExportButton 
+          requests={requests}
+          filteredRequests={filteredRequests}
+          hasActiveFilters={hasActiveFilters}
+        />
+      </div>
+
       {/* Clear All Filters Button */}
       {hasActiveFilters && (
         <div className="mb-4 flex justify-between items-center">
