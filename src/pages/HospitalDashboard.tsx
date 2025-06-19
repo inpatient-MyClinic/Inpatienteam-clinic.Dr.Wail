@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -736,7 +735,7 @@ export default function HospitalDashboard() {
                         <tr key={request.id} className="border-b hover:bg-gray-50">
                           <td className="p-2">{request.patientName}</td>
                           <td className="p-2">{request.mrn}</td>
-                          <t className="p-2">{request.serviceDescription}</td>
+                          <td className="p-2">{request.serviceDescription}</td>
                           <td className="p-2">{new Date(request.expectedSurgeryDate).toLocaleDateString()}</td>
                           <td className="p-2">{request.specialty}</td>
                           <td className="p-2">{request.doctor}</td>
