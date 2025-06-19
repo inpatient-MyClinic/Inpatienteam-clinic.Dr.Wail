@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, FileText } from "lucide-react";
+import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, FileText, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
 import HospitalAnalytics from "@/components/hospital/HospitalAnalytics";
 import Footer from "@/components/Footer";
@@ -96,6 +97,8 @@ const sampleRequests = [
 
 export default function HospitalDashboard() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
@@ -197,13 +200,13 @@ export default function HospitalDashboard() {
     <div className="flex min-h-screen flex-col">
       {/* Left Sidebar for Status Filters */}
       <div className="flex flex-1">
-        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4">
+        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col">
           <div className="text-center mb-6">
             <h1 className="text-xl font-bold text-gray-800 mb-2">Hospital Dashboard</h1>
             <p className="text-sm text-gray-600">Nurse Sarah Johnson</p>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1">
             <div 
               className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-yellow-500 text-white hover:bg-yellow-600 ${
                 activeStatusFilter === "Pending" ? "ring-2 ring-yellow-300" : ""
@@ -267,6 +270,16 @@ export default function HospitalDashboard() {
               </Button>
             )}
           </div>
+
+          {/* Back to Role button at the bottom */}
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/role-selection")}
+            className="w-full flex items-center gap-2 mt-4 border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Role
+          </Button>
         </div>
 
         {/* Main Content */}
