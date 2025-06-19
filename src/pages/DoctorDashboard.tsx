@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import DoctorSidebar from "@/components/DoctorSidebar";
 import FilterBar from "@/components/FilterBar";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import RequestsTable from "@/components/RequestsTable";
 import HospitalPrivileges from "@/components/HospitalPrivileges";
 import DoctorAnalytics from "@/components/DoctorAnalytics";
@@ -41,8 +41,10 @@ const filters = [
 ];
 
 export default function DoctorDashboard() {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -112,7 +114,7 @@ export default function DoctorDashboard() {
     { name: "Prince Sultan Hospital", cases: 6 }
   ];
 
-  // Filter requests by selected statuses
+  // Filter requests by selected statuses and date filters
   const filteredRequests = requests.filter(request => {
     if (selectedStatuses.length === 0) return true;
     return selectedStatuses.includes(request.status);
@@ -126,14 +128,6 @@ export default function DoctorDashboard() {
   const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : "0";
   const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
 
-  const handleFilterClick = (filterValue: string) => {
-    if (selectedFilters.includes(filterValue)) {
-      setSelectedFilters(prev => prev.filter(f => f !== filterValue));
-    } else {
-      setSelectedFilters(prev => [...prev, filterValue]);
-    }
-  };
-
   const handleStatusClick = (status: string) => {
     if (selectedStatuses.includes(status)) {
       setSelectedStatuses(prev => prev.filter(s => s !== status));
@@ -142,16 +136,22 @@ export default function DoctorDashboard() {
     }
   };
 
-  const clearTimeFilter = () => {
-    setSelectedFilters([]);
-  };
-
   const clearStatusFilter = () => {
     setSelectedStatuses([]);
   };
 
+  const clearAllDateFilters = () => {
+    setSelectedDates([]);
+    setSelectedWeeks([]);
+    setSelectedMonths([]);
+  };
+
   const exportToExcel = () => {
-    console.log("Exporting doctor requests to Excel with filters:", selectedFilters);
+    console.log("Exporting doctor requests to Excel with date filters:", {
+      dates: selectedDates,
+      weeks: selectedWeeks,
+      months: selectedMonths
+    });
     toast({
       title: "Export Started",
       description: "Excel file generation in progress...",
@@ -230,11 +230,17 @@ export default function DoctorDashboard() {
       />
       
       <main className="flex-1 bg-white p-6">
+        <DateRangeFilter
+          selectedDates={selectedDates}
+          selectedWeeks={selectedWeeks}
+          selectedMonths={selectedMonths}
+          onDateSelect={setSelectedDates}
+          onWeekSelect={setSelectedWeeks}
+          onMonthSelect={setSelectedMonths}
+          onClearAll={clearAllDateFilters}
+        />
+        
         <FilterBar
-          filters={filters}
-          selectedFilters={selectedFilters}
-          onFilterClick={handleFilterClick}
-          onClearFilter={clearTimeFilter}
           onExportExcel={exportToExcel}
           onPrint={printPage}
         />
