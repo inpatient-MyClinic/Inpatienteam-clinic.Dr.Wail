@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,7 +26,7 @@ export default function DoctorDashboard() {
   const navigate = useNavigate();
   
   const currentDoctorName = "Dr. Ahmed Salem";
-  const { requests, filteredRequests, updateStatus } = useDoctorRequests(currentDoctorName);
+  const { requests, filteredRequests, updateStatus, updatePaymentStatus } = useDoctorRequests(currentDoctorName);
 
   // Apply additional filters beyond the hook's filtering
   const applyFilters = (requests: typeof filteredRequests) => {
@@ -142,6 +141,7 @@ export default function DoctorDashboard() {
         <RequestsTable 
           filteredRequests={finalFilteredRequests}
           updateStatus={updateStatus}
+          updatePaymentStatus={updatePaymentStatus}
         />
 
         {/* Hospital Privileges */}

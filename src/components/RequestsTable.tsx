@@ -16,11 +16,13 @@ import { DoctorRequest, REQUEST_STATUSES } from "@/hooks/useDoctorRequests";
 interface RequestsTableProps {
   filteredRequests: DoctorRequest[];
   updateStatus: (requestId: number, newStatus: string) => void;
+  updatePaymentStatus?: (requestId: number, paymentStatus: "Paid" | "Not Paid") => void;
 }
 
 export default function RequestsTable({
   filteredRequests,
-  updateStatus
+  updateStatus,
+  updatePaymentStatus
 }: RequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
   
@@ -29,6 +31,7 @@ export default function RequestsTable({
   const [hospitalFilter, setHospitalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [surgeryDateMonthFilter, setSurgeryDateMonthFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,6 +68,7 @@ export default function RequestsTable({
       request.serviceDescription.toLowerCase().includes(serviceFilter.toLowerCase());
     const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+    const matchesPaymentStatus = paymentStatusFilter === "all" || request.paymentStatus === paymentStatusFilter;
     
     // Surgery date month filter
     const matchesSurgeryMonth = surgeryDateMonthFilter === "all" || 
@@ -75,7 +79,7 @@ export default function RequestsTable({
          return monthKey === surgeryDateMonthFilter;
        })());
     
-    return matchesService && matchesHospital && matchesStatus && matchesSurgeryMonth;
+    return matchesService && matchesHospital && matchesStatus && matchesSurgeryMonth && matchesPaymentStatus;
   });
 
   // Calculate pagination
@@ -87,20 +91,22 @@ export default function RequestsTable({
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [serviceFilter, hospitalFilter, statusFilter, surgeryDateMonthFilter]);
+  }, [serviceFilter, hospitalFilter, statusFilter, surgeryDateMonthFilter, paymentStatusFilter]);
 
   const clearAllFilters = () => {
     setServiceFilter("");
     setHospitalFilter("all");
     setStatusFilter("all");
     setSurgeryDateMonthFilter("all");
+    setPaymentStatusFilter("all");
   };
 
   const hasActiveFilters = Boolean(
     serviceFilter || 
     hospitalFilter !== "all" || 
     statusFilter !== "all" || 
-    surgeryDateMonthFilter !== "all"
+    surgeryDateMonthFilter !== "all" ||
+    paymentStatusFilter !== "all"
   );
 
   const getStatusBadge = (status: string) => {
@@ -120,6 +126,14 @@ export default function RequestsTable({
     return (
       <Badge className={statusColors[status] || "bg-gray-100 text-gray-800"}>
         {status}
+      </Badge>
+    );
+  };
+
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    return (
+      <Badge className={paymentStatus === "Paid" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+        {paymentStatus}
       </Badge>
     );
   };
@@ -596,13 +610,50 @@ export default function RequestsTable({
                 </Popover>
               </div>
             </th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
+                Payment Status
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Payment Status</Label>
+                      <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select payment status" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="all">All payment statuses</SelectItem>
+                          <SelectItem value="Paid">Paid</SelectItem>
+                          <SelectItem value="Not Paid">Not Paid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {paymentStatusFilter !== "all" && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setPaymentStatusFilter("all")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
             <th className="p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {currentPageRequests.length === 0 ? (
             <tr>
-              <td colSpan={7} className="text-center text-gray-400 py-6">
+              <td colSpan={8} className="text-center text-gray-400 py-6">
                 {hasActiveFilters ? "No requests match the current filters." : "No requests found."}
               </td>
             </tr>
@@ -621,6 +672,9 @@ export default function RequestsTable({
                 </td>
                 <td className="p-2">
                   {getStatusBadge(req.status)}
+                </td>
+                <td className="p-2">
+                  {getPaymentStatusBadge(req.paymentStatus)}
                 </td>
                 <td className="p-2">
                   <div className="flex gap-2">

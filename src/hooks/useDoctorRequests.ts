@@ -33,6 +33,7 @@ export interface DoctorRequest {
   attachments: string[];
   isDelayed: boolean;
   notifications: string[];
+  paymentStatus: "Paid" | "Not Paid";
 }
 
 export const useDoctorRequests = (currentDoctorName: string) => {
@@ -55,7 +56,8 @@ export const useDoctorRequests = (currentDoctorName: string) => {
       createdBy: "Nurse Sara",
       attachments: ["patient_records.pdf"],
       isDelayed: false,
-      notifications: []
+      notifications: [],
+      paymentStatus: "Not Paid"
     },
     {
       id: 2,
@@ -73,7 +75,8 @@ export const useDoctorRequests = (currentDoctorName: string) => {
       createdBy: "Nurse Sara",
       attachments: [],
       isDelayed: false,
-      notifications: ["Request marked as incomplete by coordinator - additional documentation required"]
+      notifications: ["Request marked as incomplete by coordinator - additional documentation required"],
+      paymentStatus: "Paid"
     },
     {
       id: 3,
@@ -91,7 +94,8 @@ export const useDoctorRequests = (currentDoctorName: string) => {
       createdBy: "Nurse Sara",
       attachments: [],
       isDelayed: false,
-      notifications: []
+      notifications: [],
+      paymentStatus: "Not Paid"
     },
   ]);
 
@@ -156,6 +160,23 @@ export const useDoctorRequests = (currentDoctorName: string) => {
     });
   };
 
+  const updatePaymentStatus = (requestId: number, paymentStatus: "Paid" | "Not Paid") => {
+    setRequests(prev =>
+      prev.map(req =>
+        req.id === requestId ? { 
+          ...req, 
+          paymentStatus,
+          notifications: [...req.notifications, `Payment status updated to ${paymentStatus}`]
+        } : req
+      )
+    );
+
+    toast({
+      title: "Payment Status Updated",
+      description: `Request ${requestId} payment status changed to ${paymentStatus}`,
+    });
+  };
+
   // Filter to show only requests assigned to this doctor
   const filteredRequests = requests.filter(request => 
     request.assignedDoctor === currentDoctorName
@@ -164,6 +185,7 @@ export const useDoctorRequests = (currentDoctorName: string) => {
   return {
     requests,
     filteredRequests,
-    updateStatus
+    updateStatus,
+    updatePaymentStatus
   };
 };
