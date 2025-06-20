@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,18 +23,24 @@ const EnhancedUserManagement = () => {
   const [editingPermissions, setEditingPermissions] = useState<Record<string, "none" | "view" | "edit">>({});
   
   // Filter states
-  const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [searchFilter, setSearchFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [specialtyFilter, setSpecialtyFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { toast } = useToast();
 
   const filteredUsers = users.filter(user => {
-    const matchesSpecialty = specialtyFilter === "all" || user.specialty === specialtyFilter;
     const matchesSearch = searchFilter === "" || 
       user.email.toLowerCase().includes(searchFilter.toLowerCase()) ||
       user.category.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || user.category === categoryFilter;
+    const matchesSpecialty = specialtyFilter === "all" || 
+      (specialtyFilter === "none" && !user.specialty) ||
+      user.specialty === specialtyFilter;
+    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
     
-    return matchesSpecialty && matchesSearch;
+    return matchesSearch && matchesCategory && matchesSpecialty && matchesStatus;
   });
 
   const addUser = () => {
@@ -187,11 +192,13 @@ const EnhancedUserManagement = () => {
   };
 
   const clearFilters = () => {
-    setSpecialtyFilter("all");
     setSearchFilter("");
+    setCategoryFilter("all");
+    setSpecialtyFilter("all");
+    setStatusFilter("all");
   };
 
-  const hasActiveFilters = specialtyFilter !== "all" || searchFilter !== "";
+  const hasActiveFilters = searchFilter !== "" || categoryFilter !== "all" || specialtyFilter !== "all" || statusFilter !== "all";
 
   return (
     <div className="space-y-6">
@@ -206,11 +213,11 @@ const EnhancedUserManagement = () => {
         onExcelUpload={handleExcelUpload}
       />
 
-      {/* Filters and Export */}
+      {/* Search and Export */}
       <Card>
         <CardHeader>
-          <CardTitle>User Filters & Export</CardTitle>
-          <CardDescription>Filter users and export data</CardDescription>
+          <CardTitle>Search & Export</CardTitle>
+          <CardDescription>Search users and export data</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 items-end mb-4">
@@ -222,23 +229,6 @@ const EnhancedUserManagement = () => {
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
               />
-            </div>
-            <div className="w-48">
-              <Label htmlFor="specialty-filter">Filter by Specialty</Label>
-              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Specialties</SelectItem>
-                  <SelectItem value="none">No Specialty</SelectItem>
-                  {specialties.map(specialty => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <Button onClick={exportToExcel} variant="outline">
               <FileDown className="w-4 h-4 mr-2" />
@@ -257,7 +247,7 @@ const EnhancedUserManagement = () => {
                 className="flex items-center gap-2 text-red-600 hover:text-red-700"
               >
                 <X className="w-4 h-4" />
-                Clear Filters
+                Clear All Filters
               </Button>
             </div>
           )}
@@ -273,6 +263,12 @@ const EnhancedUserManagement = () => {
         onCancel={cancelEditing}
         onDelete={deleteUser}
         onUpdatePermission={updatePermission}
+        categoryFilter={categoryFilter}
+        specialtyFilter={specialtyFilter}
+        statusFilter={statusFilter}
+        onCategoryFilterChange={setCategoryFilter}
+        onSpecialtyFilterChange={setSpecialtyFilter}
+        onStatusFilterChange={setStatusFilter}
       />
     </div>
   );
