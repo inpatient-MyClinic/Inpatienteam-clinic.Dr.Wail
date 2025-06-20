@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,6 @@ export default function Index() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isFirstTimeLogin, setIsFirstTimeLogin] = useState(false);
-  const [isPasswordExpired, setIsPasswordExpired] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -26,28 +26,23 @@ export default function Index() {
   };
 
   const extractUserName = (email: string) => {
-    // Handle the special personal email case
     if (email === "inpatienteam@gmail.com") {
       return "Inpatient Team";
     }
     
-    // Extract name from company email format (firstname.lastname@myclinic.com.sa)
-    const emailParts = email.split('@')[0]; // Get part before @
-    const nameParts = emailParts.split('.'); // Split by dots
+    const emailParts = email.split('@')[0];
+    const nameParts = emailParts.split('.');
     
     if (nameParts.length >= 2) {
-      // Capitalize first letter of each name part
       const firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1).toLowerCase();
       const lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1).toLowerCase();
       return `${firstName} ${lastName}`;
     }
     
-    // Fallback if email doesn't follow expected format
     return emailParts.charAt(0).toUpperCase() + emailParts.slice(1).toLowerCase();
   };
 
   const getUserRole = (email: string) => {
-    // Admin emails
     const adminEmails = [
       "wail.ahmed@myclinic.com.sa",
       "inpatienteam@gmail.com",
@@ -56,13 +51,11 @@ export default function Index() {
     
     console.log("Checking role for email:", email);
     
-    // Check if email is admin
     if (adminEmails.includes(email)) {
       console.log("User identified as admin");
       return "admin";
     }
     
-    // Determine role based on email pattern or default assignment
     if (email.includes("doctor")) {
       return "doctor";
     } else if (email.includes("hospital")) {
@@ -75,105 +68,8 @@ export default function Index() {
       return "customer-care";
     }
     
-    // Default to nurse for all other users
     console.log("User identified as nurse (default)");
     return "nurse";
-  };
-
-  const checkPasswordExpiry = (email: string) => {
-    // Simulate checking if password needs update (every 3 months)
-    const lastPasswordUpdate = localStorage.getItem(`lastPasswordUpdate_${email}`);
-    if (!lastPasswordUpdate) {
-      return true; // First time login
-    }
-    
-    const lastUpdate = new Date(lastPasswordUpdate);
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    
-    return lastUpdate < threeMonthsAgo;
-  };
-
-  const handleEmailCheck = () => {
-    if (!email) {
-      toast({
-        title: "Error",
-        description: "Please enter your email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid Email",
-        description: "Please use your company email address ending with @myclinic.com.sa or the authorized personal email",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if user exists and password status
-    const userExists = localStorage.getItem(`user_${email}`);
-    const passwordExpired = checkPasswordExpiry(email);
-
-    if (!userExists) {
-      setIsFirstTimeLogin(true);
-      toast({
-        title: "Welcome!",
-        description: "First time login detected. Please create your password.",
-      });
-    } else if (passwordExpired) {
-      setIsPasswordExpired(true);
-      toast({
-        title: "Password Update Required",
-        description: "Your password has expired. Please create a new password.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePasswordCreation = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (password.length < 8) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const userRole = getUserRole(email);
-    const userName = extractUserName(email);
-
-    // Save user with extracted name and password update timestamp
-    localStorage.setItem(`user_${email}`, JSON.stringify({
-      email,
-      name: userName,
-      role: userRole,
-      createdAt: new Date().toISOString()
-    }));
-    localStorage.setItem(`password_${email}`, password);
-    localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
-
-    toast({
-      title: "Password Created Successfully",
-      description: `Welcome ${userName}! Redirecting to your dashboard...`,
-    });
-
-    // Redirect based on role - users only see their own dashboard
-    redirectToUserDashboard(userRole);
   };
 
   const redirectToUserDashboard = (userRole: string) => {
@@ -196,10 +92,53 @@ export default function Index() {
       case "customer-care":
         navigate("/customer-care-dashboard");
         break;
-      default: // nurse
+      default:
         navigate("/nurse-dashboard");
         break;
     }
+  };
+
+  const handlePasswordCreation = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const userRole = getUserRole(email);
+    const userName = extractUserName(email);
+
+    localStorage.setItem(`user_${email}`, JSON.stringify({
+      email,
+      name: userName,
+      role: userRole,
+      createdAt: new Date().toISOString()
+    }));
+    localStorage.setItem(`password_${email}`, password);
+    localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
+
+    toast({
+      title: "Account Created Successfully",
+      description: `Welcome ${userName}! Redirecting to your dashboard...`,
+    });
+
+    setTimeout(() => {
+      redirectToUserDashboard(userRole);
+    }, 1000);
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -207,8 +146,8 @@ export default function Index() {
     
     if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Missing Information",
+        description: "Please enter both email and password",
         variant: "destructive",
       });
       return;
@@ -217,30 +156,29 @@ export default function Index() {
     if (!validateEmail(email)) {
       toast({
         title: "Invalid Email",
-        description: "Please use your company email address ending with @myclinic.com.sa or the authorized personal email",
+        description: "Please use your company email (@myclinic.com.sa) or the authorized email (inpatienteam@gmail.com)",
         variant: "destructive",
+      });
+      return;
+    }
+
+    const userExists = localStorage.getItem(`user_${email}`);
+    
+    if (!userExists) {
+      setIsFirstTimeLogin(true);
+      toast({
+        title: "First Time Login",
+        description: "Please create your password to access the system.",
       });
       return;
     }
 
     const savedPassword = localStorage.getItem(`password_${email}`);
-    const userExists = localStorage.getItem(`user_${email}`);
-
-    if (!userExists || savedPassword !== password) {
+    
+    if (savedPassword !== password) {
       toast({
-        title: "Login Failed",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if password needs update
-    if (checkPasswordExpiry(email)) {
-      setIsPasswordExpired(true);
-      toast({
-        title: "Password Update Required",
-        description: "Your password has expired. Please create a new password.",
+        title: "Incorrect Password",
+        description: "Please check your password and try again",
         variant: "destructive",
       });
       return;
@@ -257,8 +195,9 @@ export default function Index() {
       description: `Welcome back, ${userName}!`,
     });
     
-    // Redirect to user's specific dashboard
-    redirectToUserDashboard(userRole);
+    setTimeout(() => {
+      redirectToUserDashboard(userRole);
+    }, 500);
   };
 
   return (
@@ -280,7 +219,7 @@ export default function Index() {
           </CardHeader>
           
           <CardContent>
-            {!isFirstTimeLogin && !isPasswordExpired ? (
+            {!isFirstTimeLogin ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
@@ -289,12 +228,12 @@ export default function Index() {
                     type="email"
                     placeholder="yourname@myclinic.com.sa"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onBlur={handleEmailCheck}
+                    onChange={(e) => setEmail(e.target.value.toLowerCase().trim())}
                     className="w-full"
+                    required
                   />
                   <p className="text-xs text-gray-500">
-                    Use your company email ending with @myclinic.com.sa
+                    Use your company email (@myclinic.com.sa) or inpatienteam@gmail.com
                   </p>
                 </div>
                 
@@ -307,6 +246,7 @@ export default function Index() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full"
+                    required
                   />
                 </div>
 
@@ -329,12 +269,10 @@ export default function Index() {
               <form onSubmit={handlePasswordCreation} className="space-y-4">
                 <div className="bg-blue-50 p-4 rounded-lg mb-4">
                   <h3 className="font-semibold text-blue-900 mb-2">
-                    {isFirstTimeLogin ? "Welcome to My Clinic!" : "Password Update Required"}
+                    Welcome to My Clinic!
                   </h3>
                   <p className="text-sm text-blue-700">
-                    {isFirstTimeLogin 
-                      ? "Please create your password to access the system." 
-                      : "Your password has expired. Please create a new password for security."}
+                    Please create your password to access the system.
                   </p>
                 </div>
 
@@ -350,14 +288,15 @@ export default function Index() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">Create Password</Label>
                   <Input
                     id="newPassword"
                     type="password"
-                    placeholder="Create a new password (min 8 characters)"
+                    placeholder="Create a password (min 6 characters)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full"
+                    required
                   />
                 </div>
 
@@ -366,15 +305,16 @@ export default function Index() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Confirm your new password"
+                    placeholder="Confirm your password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full"
+                    required
                   />
                 </div>
 
                 <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                  {isFirstTimeLogin ? "Create Password & Access System" : "Update Password"}
+                  Create Password & Access System
                 </Button>
 
                 <Button 
@@ -383,7 +323,6 @@ export default function Index() {
                   className="w-full"
                   onClick={() => {
                     setIsFirstTimeLogin(false);
-                    setIsPasswordExpired(false);
                     setPassword("");
                     setConfirmPassword("");
                   }}
@@ -395,7 +334,7 @@ export default function Index() {
             
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
-                Company email required • Password updates every 3 months
+                Authorized staff only • Company email required
               </p>
             </div>
           </CardContent>
