@@ -27,23 +27,34 @@ export default function CaseCoordinatorLossTree({
 
   const pendingAnalysis = getDelayAnalysis("pending");
   const scheduledAnalysis = getDelayAnalysis("scheduled");
-  const postponedAnalysis = getDelayAnalysis("postponed");
-  const rejectedAnalysis = getDelayAnalysis("rejected");
-  const cancelledAnalysis = getDelayAnalysis("cancelled");
+  const underProcessAnalysis = getDelayAnalysis("under process");
+  const rejectedCancelledAnalysis = {
+    total: getDelayAnalysis("rejected").total + getDelayAnalysis("cancelled").total,
+    causes: {
+      ...getDelayAnalysis("rejected").causes,
+      ...Object.entries(getDelayAnalysis("cancelled").causes).reduce((acc, [key, value]) => {
+        acc[key] = (acc[key] || 0) + value;
+        return acc;
+      }, {} as Record<string, number>)
+    }
+  };
 
   const DelayBreakdown = ({ title, analysis }: { title: string; analysis: { total: number; causes: Record<string, number> } }) => (
-    <div className="p-4 border rounded-lg">
-      <h4 className="font-semibold text-gray-900 mb-2">{title}</h4>
-      <p className="text-2xl font-bold text-blue-600 mb-3">{analysis.total}</p>
+    <div className="flex-1 p-4 border rounded-lg">
+      <h4 className="font-semibold text-gray-900 mb-2 text-center">{title}</h4>
+      <p className="text-2xl font-bold text-blue-600 mb-3 text-center">{analysis.total}</p>
       <div className="space-y-2">
-        {Object.entries(analysis.causes).map(([cause, count]) => (
-          <div key={cause} className="flex items-center text-sm">
-            <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium mr-2">
-              {count}
-            </span>
-            <span className="capitalize">{cause}</span>
-          </div>
-        ))}
+        {["doctor", "insurance", "hospital", "patient"].map(cause => {
+          const count = analysis.causes[cause] || 0;
+          return (
+            <div key={cause} className="flex items-center text-sm">
+              <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium mr-2">
+                {count}
+              </span>
+              <span className="capitalize">{cause}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -54,12 +65,11 @@ export default function CaseCoordinatorLossTree({
         <CardTitle>Loss Tree Analysis</CardTitle>
         <CardDescription>Breakdown of delay causes by status category</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <CardContent className="flex gap-4">
         <DelayBreakdown title="Pending" analysis={pendingAnalysis} />
         <DelayBreakdown title="Scheduled" analysis={scheduledAnalysis} />
-        <DelayBreakdown title="Postponed" analysis={postponedAnalysis} />
-        <DelayBreakdown title="Rejected" analysis={rejectedAnalysis} />
-        <DelayBreakdown title="Cancelled" analysis={cancelledAnalysis} />
+        <DelayBreakdown title="Under Process" analysis={underProcessAnalysis} />
+        <DelayBreakdown title="Rejected/Cancelled" analysis={rejectedCancelledAnalysis} />
       </CardContent>
     </Card>
   );
