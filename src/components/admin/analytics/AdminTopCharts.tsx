@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface TopData {
   name: string;
@@ -15,58 +14,31 @@ interface AdminTopChartsProps {
 }
 
 export default function AdminTopCharts({ top5Specialties, top5Hospitals, top5Doctors }: AdminTopChartsProps) {
+  const ListCard = ({ title, data, color }: { title: string; data: TopData[]; color: string }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {data.map((item, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span className="font-medium text-gray-900">{item.name}</span>
+              <span className={`px-3 py-1 rounded-full text-sm font-bold text-white ${color}`}>
+                {item.count}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Top 5 Specialties</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={top5Specialties}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" fontSize={12} />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Top 5 Hospitals</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={top5Hospitals}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" fontSize={12} />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Top 5 Doctors</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={top5Doctors}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" fontSize={12} />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#ffc658" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <ListCard title="Top 5 Specialties" data={top5Specialties} color="bg-blue-600" />
+      <ListCard title="Top 5 Hospitals" data={top5Hospitals} color="bg-green-600" />
+      <ListCard title="Top 5 Doctors" data={top5Doctors} color="bg-yellow-600" />
     </div>
   );
 }

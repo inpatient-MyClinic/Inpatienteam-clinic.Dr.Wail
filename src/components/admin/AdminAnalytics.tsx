@@ -64,29 +64,33 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const top5Hospitals = getTop5('hospital');
   const top5Doctors = getTop5('user');
 
-  // Loss Tree Analysis Data
+  // Loss Tree Analysis Data - updated to match case coordinator style
   const pendingCount = data.filter(item => item.status === "Pending").length;
   const inProgressCount = data.filter(item => item.status === "In Progress").length;
+  const cancelledRejectedCount = data.filter(item => 
+    item.status === "Cancelled" || item.status === "Rejected"
+  ).length;
   
   const lossTreeData = [
-    { stage: "Received", count: totalRequests, percentage: 100 },
+    { stage: "Pending", count: pendingCount, percentage: totalRequests > 0 ? Number((pendingCount / totalRequests * 100).toFixed(1)) : 0 },
     { stage: "In Progress", count: inProgressCount, percentage: totalRequests > 0 ? Number((inProgressCount / totalRequests * 100).toFixed(1)) : 0 },
     { stage: "Completed", count: completedRequests, percentage: totalRequests > 0 ? Number((completedRequests / totalRequests * 100).toFixed(1)) : 0 },
-    { stage: "Pending", count: pendingCount, percentage: totalRequests > 0 ? Number((pendingCount / totalRequests * 100).toFixed(1)) : 0 }
+    { stage: "Cancelled/Rejected", count: cancelledRejectedCount, percentage: totalRequests > 0 ? Number((cancelledRejectedCount / totalRequests * 100).toFixed(1)) : 0 }
   ];
 
   // NPS Score calculation (simulated)
-  const npsScore = 72; // This would come from actual survey data
+  const npsScore = 72;
 
-  // Status data for pie chart
+  // Status data for pie chart - updated to include cancelled/rejected
   const statusData = [
     { name: "Completed", value: completedRequests },
     { name: "In Progress", value: inProgressCount },
-    { name: "Pending", value: pendingCount }
+    { name: "Pending", value: pendingCount },
+    { name: "Cancelled/Rejected", value: cancelledRejectedCount }
   ];
 
-  // Chart colors
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  // Chart colors - updated for 4 categories
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   if (!data || data.length === 0) {
     return (
@@ -131,17 +135,17 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
         npsScore={npsScore}
       />
 
-      {/* Top 5 Charts */}
+      {/* Top 5 Charts - now as vertical lists */}
       <AdminTopCharts
         top5Specialties={top5Specialties}
         top5Hospitals={top5Hospitals}
         top5Doctors={top5Doctors}
       />
 
-      {/* Loss Tree Analysis */}
+      {/* Loss Tree Analysis - updated style */}
       <AdminLossTreeChart lossTreeData={lossTreeData} />
 
-      {/* Status Distribution */}
+      {/* Status Distribution - updated with cancelled/rejected */}
       <AdminStatusDistribution statusData={statusData} colors={COLORS} />
     </div>
   );
