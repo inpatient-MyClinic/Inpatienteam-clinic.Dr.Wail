@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Download, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
+import NurseDateFilters from "@/components/nurse/NurseDateFilters";
+import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
+import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload";
 import {
   Table,
   TableBody,
@@ -11,13 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
 
 const stats = [
   { label: "Total Done", key: "total", color: "bg-blue-600", count: 45 },
@@ -25,10 +24,10 @@ const stats = [
   { label: "Pending Survey", key: "pending", color: "bg-yellow-500", count: 10 },
 ];
 
-// Sample done requests data
-const doneRequests = [
+// Sample done requests data with survey responses
+const initialDoneRequests = [
   {
-    id: 1,
+    id: "TXN001",
     patientName: "Nora Mohammed",
     idNumber: "2012345678",
     phone: "0551234567",
@@ -36,11 +35,14 @@ const doneRequests = [
     hospitalName: "King Abdulaziz Hospital",
     procedure: "Cardiac Surgery",
     treatingDoctor: "Dr. Ahmed Al-Rashid",
-    surveySent: false,
+    surveySent: true,
+    surveyResponded: true,
+    npsScore: 9,
     completionDate: "2025-06-15",
+    status: "done"
   },
   {
-    id: 2,
+    id: "TXN002",
     patientName: "Omar Hassan",
     idNumber: "2018765432",
     phone: "0567890123",
@@ -49,33 +51,164 @@ const doneRequests = [
     procedure: "Orthopedic Surgery",
     treatingDoctor: "Dr. Sarah Al-Mahmoud",
     surveySent: true,
+    surveyResponded: false,
     completionDate: "2025-06-10",
+    status: "done"
+  },
+  {
+    id: "TXN003",
+    patientName: "Fatima Ali",
+    idNumber: "2019876543",
+    phone: "0512345678",
+    hospitalMRN: "MRN009876",
+    hospitalName: "Medical Center",
+    procedure: "General Surgery",
+    treatingDoctor: "Dr. Mohammed Hassan",
+    surveySent: false,
+    surveyResponded: false,
+    completionDate: "2025-06-20",
+    status: "done"
   },
 ];
 
-const timeFilters = ["All Time", "This Week", "This Month", "Last Month", "This Year"];
-
 export default function CustomerCareDashboard() {
-  const [requests, setRequests] = useState(doneRequests);
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState("All Time");
+  const [requests, setRequests] = useState(initialDoneRequests);
+  const [dateFilters, setDateFilters] = useState<{
+    selectedDays: Date[];
+    selectedWeeks: { month: Date; weekNumbers: number[] }[];
+    selectedMonths: Date[];
+  }>({
+    selectedDays: [],
+    selectedWeeks: [],
+    selectedMonths: []
+  });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Calculate unread messages for customer-care role
-  const unreadCount = 2; // This would typically come from a hook or API
+  const unreadCount = 2;
 
-  const sendSurvey = (requestId: number) => {
+  // Auto-send survey when request is marked as done
+  useEffect(() => {
+    requests.forEach(request => {
+      if (request.status === "done" && !request.surveySent) {
+        setTimeout(() => {
+          setRequests(prev =>
+            prev.map(req =>
+              req.id === request.id ? { ...req, surveySent: true } : req
+            )
+          );
+          console.log(`Auto-sent WhatsApp survey to ${request.patientName} for request ${request.id}`);
+          toast({
+            title: "Survey sent automatically",
+            description: `WhatsApp survey sent to ${request.patientName}`,
+          });
+        }, 1000);
+      }
+    });
+  }, [requests, toast]);
+
+  // Apply date filters
+  const applyFilters = (requests: typeof initialDoneRequests) => {
+    return requests.filter(request => {
+      const requestDate = new Date(request.completionDate);
+      let matchesDateFilter = true;
+      
+      if (dateFilters.selectedDays.length > 0 || dateFilters.selectedWeeks.length > 0 || dateFilters.selectedMonths.length > 0) {
+        matchesDateFilter = false;
+        
+        // Check selected days
+        if (dateFilters.selectedDays.length > 0) {
+          matchesDateFilter = dateFilters.selectedDays.some(day => 
+            isWithinInterval(requestDate, {
+              start: startOfDay(day),
+              end: endOfDay(day)
+            })
+          );
+        }
+        
+        // Check selected weeks
+        if (!matchesDateFilter && dateFilters.selectedWeeks.length > 0) {
+          matchesDateFilter = dateFilters.selectedWeeks.some(monthWeeks => 
+            monthWeeks.weekNumbers.some(weekNumber => {
+              const firstDayOfMonth = startOfMonth(monthWeeks.month);
+              const weekStart = addDays(firstDayOfMonth, (weekNumber - 1) * 7);
+              const weekEnd = addDays(weekStart, 6);
+              
+              return isWithinInterval(requestDate, {
+                start: startOfDay(weekStart),
+                end: endOfDay(weekEnd)
+              });
+            })
+          );
+        }
+        
+        // Check selected months
+        if (!matchesDateFilter && dateFilters.selectedMonths.length > 0) {
+          matchesDateFilter = dateFilters.selectedMonths.some(month => 
+            isWithinInterval(requestDate, {
+              start: startOfMonth(month),
+              end: endOfMonth(month)
+            })
+          );
+        }
+      }
+      
+      return matchesDateFilter;
+    });
+  };
+
+  const filteredRequests = applyFilters(requests);
+
+  const handleDateFilterChange = (filters: typeof dateFilters) => {
+    setDateFilters(filters);
+  };
+
+  const sendSurvey = (requestId: string) => {
     setRequests(prev =>
       prev.map(req =>
         req.id === requestId ? { ...req, surveySent: true } : req
       )
     );
-    // This would send WhatsApp survey to the patient
     console.log("Sending WhatsApp survey to patient for request:", requestId);
   };
 
-  const exportToExcel = () => {
-    console.log("Exporting customer care data to Excel with filter:", selectedTimeFilter);
+  const handleSurveyResponseUpload = (responses: { id: string; responded: boolean; npsScore?: number }[]) => {
+    setRequests(prev =>
+      prev.map(request => {
+        const response = responses.find(r => r.id === request.id);
+        if (response) {
+          return {
+            ...request,
+            surveyResponded: response.responded,
+            npsScore: response.npsScore
+          };
+        }
+        return request;
+      })
+    );
   };
+
+  const exportToExcel = () => {
+    console.log("Exporting customer care data to Excel with current filters");
+  };
+
+  // Calculate NPS and analytics based on filtered data
+  const calculateNPS = (requests: typeof filteredRequests) => {
+    const respondedRequests = requests.filter(r => r.surveyResponded && r.npsScore !== undefined);
+    if (respondedRequests.length === 0) return 0;
+    
+    const promoters = respondedRequests.filter(r => r.npsScore! >= 9).length;
+    const detractors = respondedRequests.filter(r => r.npsScore! <= 6).length;
+    
+    return Math.round(((promoters - detractors) / respondedRequests.length) * 100);
+  };
+
+  const monthlyNPS = calculateNPS(filteredRequests);
+  const ytdNPS = calculateNPS(requests); // All requests for YTD
+  const targetNPS = 75;
+  const complaintsOpen = 3;
+  const complaintsClosed = 12;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -117,18 +250,9 @@ export default function CustomerCareDashboard() {
       <main className="flex-1 bg-white">
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 p-6 border-b bg-white justify-between">
-          <Select value={selectedTimeFilter} onValueChange={setSelectedTimeFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select Time Period" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeFilters.map((filter) => (
-                <SelectItem key={filter} value={filter}>
-                  {filter}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div>
+            <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
+          </div>
 
           <div className="flex gap-2">
             <MessagingIcons currentUserRole="customer-care" unreadCount={unreadCount} />
@@ -139,8 +263,13 @@ export default function CustomerCareDashboard() {
           </div>
         </div>
 
-        {/* Requests Table */}
         <div className="p-6">
+          {/* Upload Section */}
+          <div className="mb-4">
+            <SurveyResponseUpload onUpdateResponses={handleSurveyResponseUpload} />
+          </div>
+
+          {/* Requests Table */}
           <h2 className="text-lg font-semibold mb-4">Completed Requests - Survey Management</h2>
           <div className="overflow-x-auto">
             <Table>
@@ -155,11 +284,13 @@ export default function CustomerCareDashboard() {
                   <TableHead>Treating Doctor</TableHead>
                   <TableHead>Completion Date</TableHead>
                   <TableHead>Survey Status</TableHead>
+                  <TableHead>Response Status</TableHead>
+                  <TableHead>NPS Score</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.map((req) => (
+                {filteredRequests.map((req) => (
                   <TableRow key={req.id}>
                     <TableCell>{req.patientName}</TableCell>
                     <TableCell>{req.idNumber}</TableCell>
@@ -175,6 +306,16 @@ export default function CustomerCareDashboard() {
                       }`}>
                         {req.surveySent ? "Survey Sent" : "Pending"}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        req.surveyResponded ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {req.surveyResponded ? "Responded" : "No Response"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {req.npsScore !== undefined ? req.npsScore : "-"}
                     </TableCell>
                     <TableCell>
                       {!req.surveySent ? (
@@ -195,6 +336,15 @@ export default function CustomerCareDashboard() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Analytics */}
+          <CustomerCareAnalytics
+            monthlyNPS={monthlyNPS}
+            ytdNPS={ytdNPS}
+            targetNPS={targetNPS}
+            complaintsOpen={complaintsOpen}
+            complaintsClosed={complaintsClosed}
+          />
         </div>
       </main>
     </div>
