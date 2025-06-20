@@ -27,15 +27,15 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="bg-blue-50 p-4 rounded-lg mb-4">
         <h3 className="font-semibold text-blue-900 mb-2">
-          Welcome to My Clinic!
+          Administrator Setup
         </h3>
         <p className="text-sm text-blue-700">
-          Please create your password to access the system.
+          Create your administrator password to access the system management panel.
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
+        <Label htmlFor="email">Administrator Email</Label>
         <Input
           id="email"
           type="email"
@@ -46,11 +46,11 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="newPassword">Create Password</Label>
+        <Label htmlFor="newPassword">Create Admin Password</Label>
         <Input
           id="newPassword"
           type="password"
-          placeholder="Create a password (min 6 characters)"
+          placeholder="Create a strong password (min 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full"
@@ -72,7 +72,7 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
       </div>
 
       <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-        Create Password & Access System
+        Create Admin Account & Access System
       </Button>
 
       <Button 

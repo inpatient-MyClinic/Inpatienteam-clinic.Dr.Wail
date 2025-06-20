@@ -37,6 +37,16 @@ export const useAuthLogic = () => {
     }
 
     const userRole = getUserRole(email);
+    
+    if (!userRole) {
+      toast({
+        title: "Unauthorized Access",
+        description: "Only authorized administrators can access this system",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const userName = extractUserName(email);
 
     // Store user data
@@ -49,14 +59,13 @@ export const useAuthLogic = () => {
     localStorage.setItem(`password_${email}`, password);
     localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
 
-    console.log("User data stored, redirecting...");
+    console.log("Admin user data stored, redirecting...");
 
     toast({
       title: "Account Created Successfully",
-      description: `Welcome ${userName}! Redirecting to your dashboard...`,
+      description: `Welcome ${userName}! Redirecting to admin dashboard...`,
     });
 
-    // Navigate immediately, don't wait for toast
     setTimeout(() => {
       redirectToUserDashboard(userRole, navigate);
     }, 500);
@@ -80,8 +89,8 @@ export const useAuthLogic = () => {
     
     if (!validateEmail(normalizedEmail)) {
       toast({
-        title: "Invalid Email",
-        description: "Please use your company email (@myclinic.com.sa) or the authorized email (inpatienteam@gmail.com)",
+        title: "Unauthorized Access",
+        description: "Only authorized administrators can access this system. Please contact system administrator.",
         variant: "destructive",
       });
       return;
@@ -91,12 +100,12 @@ export const useAuthLogic = () => {
     console.log("User exists check:", !!userExists);
     
     if (!userExists) {
-      console.log("First time login detected");
+      console.log("First time admin login detected");
       setIsFirstTimeLogin(true);
-      setEmail(normalizedEmail); // Make sure the email is normalized
+      setEmail(normalizedEmail);
       toast({
         title: "First Time Login",
-        description: "Please create your password to access the system.",
+        description: "Please create your admin password to access the system.",
       });
       return;
     }
@@ -114,15 +123,22 @@ export const useAuthLogic = () => {
     }
 
     const userRole = getUserRole(normalizedEmail);
+    
+    if (!userRole) {
+      toast({
+        title: "Unauthorized Access",
+        description: "Access denied. Only administrators are allowed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const userName = extractUserName(normalizedEmail);
     
-    console.log("Login successful, role:", userRole, "name:", userName);
+    console.log("Admin login successful, role:", userRole, "name:", userName);
 
-    // Navigate immediately without waiting
-    console.log("About to redirect...");
     redirectToUserDashboard(userRole, navigate);
     
-    // Show toast after navigation starts
     toast({
       title: "Login Successful",
       description: `Welcome back, ${userName}!`,

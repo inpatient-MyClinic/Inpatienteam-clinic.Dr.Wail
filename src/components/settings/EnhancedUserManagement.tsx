@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,33 +14,8 @@ import UserTable from "./userManagement/UserTable";
 import UserExcelUpload from "./UserExcelUpload";
 
 const EnhancedUserManagement = () => {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      email: "dr.smith@hospital.com",
-      category: "Doctor",
-      specialty: "Cardiology",
-      status: "Active",
-      createdAt: "2024-01-15",
-      fieldPermissions: defaultFieldPermissions["Doctor"]
-    },
-    {
-      id: "2", 
-      email: "nurse.johnson@hospital.com",
-      category: "Nurse",
-      status: "Active",
-      createdAt: "2024-01-20",
-      fieldPermissions: defaultFieldPermissions["Nurse"]
-    },
-    {
-      id: "3",
-      email: "coordinator@hospital.com", 
-      category: "Case Coordinator",
-      status: "Active",
-      createdAt: "2024-01-25",
-      fieldPermissions: defaultFieldPermissions["Case Coordinator"]
-    }
-  ]);
+  // Start with empty users array - no demo data
+  const [users, setUsers] = useState<User[]>([]);
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserCategory, setNewUserCategory] = useState("Doctor");
@@ -67,6 +43,17 @@ const EnhancedUserManagement = () => {
       toast({
         title: "Error",
         description: "Please enter an email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUserEmail)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
         variant: "destructive"
       });
       return;
@@ -149,7 +136,7 @@ const EnhancedUserManagement = () => {
     const newUsers: User[] = uploadedUsers.map((userData, index) => ({
       id: (users.length + index + 1).toString(),
       email: userData.Email || userData.email,
-      category: userData.Category || "Doctor",
+      category: userData.Category || userData["Doctor Name"] ? "Doctor" : "Staff",
       specialty: userData.Specialty || userData.specialty,
       status: "Active" as const,
       createdAt: new Date().toISOString().split('T')[0],
@@ -160,11 +147,20 @@ const EnhancedUserManagement = () => {
     
     toast({
       title: "Success",
-      description: `${newUsers.length} users imported successfully`
+      description: `${newUsers.length} users imported successfully from Excel`
     });
   };
 
   const exportToExcel = () => {
+    if (filteredUsers.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No users to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const csvContent = [
       ["Email", "Category", "Specialty", "Status", "Created Date"].join(","),
       ...filteredUsers.map(user => [
@@ -186,7 +182,7 @@ const EnhancedUserManagement = () => {
 
     toast({
       title: "Success",
-      description: "Users exported to Excel successfully"
+      description: "Users exported successfully"
     });
   };
 

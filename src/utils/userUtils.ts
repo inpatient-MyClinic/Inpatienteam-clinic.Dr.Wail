@@ -1,9 +1,12 @@
 
 export const validateEmail = (email: string) => {
-  const companyEmailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com\.sa$/;
-  const allowedPersonalEmail = "inpatienteam@gmail.com";
+  const adminEmails = [
+    "wail.ahmed@myclinic.com.sa",
+    "inpatienteam@gmail.com",
+    "admin@myclinic.com.sa"
+  ];
   
-  return companyEmailRegex.test(email) || email === allowedPersonalEmail;
+  return adminEmails.includes(email.toLowerCase().trim());
 };
 
 export const extractUserName = (email: string) => {
@@ -11,6 +14,15 @@ export const extractUserName = (email: string) => {
     return "Inpatient Team";
   }
   
+  if (email === "wail.ahmed@myclinic.com.sa") {
+    return "Dr. Wail Ahmed";
+  }
+  
+  if (email === "admin@myclinic.com.sa") {
+    return "System Administrator";
+  }
+  
+  // Fallback for any other admin emails
   const emailParts = email.split('@')[0];
   const nameParts = emailParts.split('.');
   
@@ -37,52 +49,18 @@ export const getUserRole = (email: string) => {
     return "admin";
   }
   
-  if (email.includes("doctor")) {
-    return "doctor";
-  } else if (email.includes("hospital")) {
-    return "hospital";
-  } else if (email.includes("coordinator")) {
-    return "case-coordinator";
-  } else if (email.includes("finance")) {
-    return "finance";
-  } else if (email.includes("customer")) {
-    return "customer-care";
-  }
-  
-  console.log("User identified as nurse (default)");
-  return "nurse";
+  // Non-admin users are not allowed
+  console.log("User not authorized - not an admin");
+  return null;
 };
 
 export const redirectToUserDashboard = (userRole: string, navigate: (path: string) => void) => {
   console.log("Redirecting user with role:", userRole);
-  switch (userRole) {
-    case "admin":
-      console.log("Navigating to /admin");
-      navigate("/admin");
-      break;
-    case "doctor":
-      console.log("Navigating to /doctor-dashboard");
-      navigate("/doctor-dashboard");
-      break;
-    case "hospital":
-      console.log("Navigating to /hospital-dashboard");
-      navigate("/hospital-dashboard");
-      break;
-    case "case-coordinator":
-      console.log("Navigating to /case-coordinator-dashboard");
-      navigate("/case-coordinator-dashboard");
-      break;
-    case "finance":
-      console.log("Navigating to /finance-dashboard");
-      navigate("/finance-dashboard");
-      break;
-    case "customer-care":
-      console.log("Navigating to /customer-care-dashboard");
-      navigate("/customer-care-dashboard");
-      break;
-    default:
-      console.log("Navigating to /nurse-dashboard");
-      navigate("/nurse-dashboard");
-      break;
+  if (userRole === "admin") {
+    console.log("Navigating to /admin");
+    navigate("/admin");
+  } else {
+    console.log("Unauthorized access attempt");
+    navigate("/");
   }
 };
