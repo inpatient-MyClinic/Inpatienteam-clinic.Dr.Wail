@@ -225,7 +225,7 @@ export default function CustomerCareDashboard() {
     console.log("Exporting customer care data to Excel with current filters", { dateFilters, complaintFilter });
   };
 
-  // Calculate NPS and analytics based on filtered data
+  // Calculate NPS and analytics based on filtered data with proper NPS formula
   const calculateNPS = (requests: typeof filteredRequests) => {
     const respondedRequests = requests.filter(r => r.surveyResponded && r.npsScore !== undefined);
     if (respondedRequests.length === 0) return 0;
@@ -245,15 +245,15 @@ export default function CustomerCareDashboard() {
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
-      <aside className="w-[19rem] bg-purple-50 flex flex-col items-center p-6 border-r">
+      <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
         <div className="text-center mb-6">
           <img 
             src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
             alt="My Clinic Logo" 
             className="h-8 w-auto mx-auto mb-2"
           />
-          <h1 className="text-xl font-bold text-purple-900">Customer Care</h1>
-          <p className="text-sm text-purple-700">Dashboard</p>
+          <h1 className="text-xl font-bold text-blue-900">Customer Care</h1>
+          <p className="text-sm text-blue-700">Dashboard</p>
         </div>
         
         <div className="flex flex-col gap-4 w-full mb-6">

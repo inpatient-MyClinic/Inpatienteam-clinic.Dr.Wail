@@ -31,13 +31,13 @@ export default function CustomerCareAnalytics({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">NPS Score (Month)</CardTitle>
           {isMonthlyAboveTarget ? (
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-blue-600" />
           ) : (
             <TrendingDown className="h-4 w-4 text-red-600" />
           )}
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${isMonthlyAboveTarget ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-2xl font-bold ${isMonthlyAboveTarget ? 'text-blue-600' : 'text-red-600'}`}>
             {monthlyNPS}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -50,13 +50,13 @@ export default function CustomerCareAnalytics({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">NPS Score (YTD)</CardTitle>
           {isYTDAboveTarget ? (
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-blue-600" />
           ) : (
             <TrendingDown className="h-4 w-4 text-red-600" />
           )}
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${isYTDAboveTarget ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-2xl font-bold ${isYTDAboveTarget ? 'text-blue-600' : 'text-red-600'}`}>
             {ytdNPS}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -67,16 +67,16 @@ export default function CustomerCareAnalytics({
 
       <Card 
         className={`cursor-pointer transition-all ${
-          activeComplaintFilter === 'closed' ? 'ring-2 ring-green-500 bg-green-50' : 'hover:bg-gray-50'
+          activeComplaintFilter === 'closed' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
         }`}
         onClick={() => onComplaintFilter(activeComplaintFilter === 'closed' ? null : 'closed')}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Complaints Closed</CardTitle>
-          <MessageSquare className="h-4 w-4 text-green-600" />
+          <MessageSquare className="h-4 w-4 text-blue-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{complaintsClosed}</div>
+          <div className="text-2xl font-bold text-blue-600">{complaintsClosed}</div>
           <p className="text-xs text-muted-foreground">
             Successfully resolved
           </p>
