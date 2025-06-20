@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,16 +21,37 @@ export default function Index() {
 
   const validateEmail = (email: string) => {
     const companyEmailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com$/;
-    const allowedPersonalEmail = "Inpatienteam@gmail.com";
+    const allowedPersonalEmail = "inpatienteam@gmail.com";
     
     return companyEmailRegex.test(email) || email === allowedPersonalEmail;
+  };
+
+  const extractUserName = (email: string) => {
+    // Handle the special personal email case
+    if (email === "inpatienteam@gmail.com") {
+      return "Inpatient Team";
+    }
+    
+    // Extract name from company email format (firstname.lastname@myclinic.com)
+    const emailParts = email.split('@')[0]; // Get part before @
+    const nameParts = emailParts.split('.'); // Split by dots
+    
+    if (nameParts.length >= 2) {
+      // Capitalize first letter of each name part
+      const firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1).toLowerCase();
+      const lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1).toLowerCase();
+      return `${firstName} ${lastName}`;
+    }
+    
+    // Fallback if email doesn't follow expected format
+    return emailParts.charAt(0).toUpperCase() + emailParts.slice(1).toLowerCase();
   };
 
   const getUserRole = (email: string) => {
     // Admin emails (both company and the one allowed personal email)
     const adminEmails = [
-      "Wahmed@myclinic.com",
-      "Inpatienteam@gmail.com"
+      "wail.ahmed@myclinic.com",
+      "inpatienteam@gmail.com"
     ];
     
     // Doctor emails that should be admin
@@ -150,10 +172,12 @@ export default function Index() {
     }
 
     const userRole = getUserRole(email);
+    const userName = extractUserName(email);
 
-    // Save user and password update timestamp
+    // Save user with extracted name and password update timestamp
     localStorage.setItem(`user_${email}`, JSON.stringify({
       email,
+      name: userName,
       role: userRole,
       createdAt: new Date().toISOString()
     }));
@@ -162,7 +186,7 @@ export default function Index() {
 
     toast({
       title: "Password Created Successfully",
-      description: `You can now access the system as ${userRole}`,
+      description: `Welcome ${userName}! You can now access the system as ${userRole}`,
     });
 
     // Redirect based on role
@@ -218,11 +242,14 @@ export default function Index() {
     }
 
     const userRole = getUserRole(email);
+    const userName = extractUserName(email);
+    
     console.log("Final user role:", userRole);
+    console.log("User name:", userName);
 
     toast({
       title: "Login Successful",
-      description: `Welcome back, ${userRole}!`,
+      description: `Welcome back, ${userName}!`,
     });
     
     // Redirect based on role

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
@@ -15,6 +16,7 @@ import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOf
 
 export default function DoctorDashboard() {
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [currentDoctorName, setCurrentDoctorName] = useState("Doctor");
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
     selectedWeeks: { month: Date; weekNumbers: number[] }[];
@@ -27,7 +29,21 @@ export default function DoctorDashboard() {
   
   const navigate = useNavigate();
   
-  const currentDoctorName = "Dr. Ahmed Salem";
+  // Get current user's name from localStorage
+  useEffect(() => {
+    const currentUserEmail = Object.keys(localStorage)
+      .find(key => key.startsWith('user_'))
+      ?.replace('user_', '');
+    
+    if (currentUserEmail) {
+      const userData = localStorage.getItem(`user_${currentUserEmail}`);
+      if (userData) {
+        const user = JSON.parse(userData);
+        setCurrentDoctorName(user.name || "Doctor");
+      }
+    }
+  }, []);
+
   const { requests, filteredRequests, updateStatus, updatePaymentStatus } = useDoctorRequests(currentDoctorName);
 
   // Apply additional filters beyond the hook's filtering

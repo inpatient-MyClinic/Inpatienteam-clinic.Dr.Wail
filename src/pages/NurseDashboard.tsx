@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
@@ -19,6 +19,7 @@ export default function NurseDashboard() {
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [doctorFilter, setDoctorFilter] = useState("all");
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [currentNurseName, setCurrentNurseName] = useState("Nurse");
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
     selectedWeeks: { month: Date; weekNumbers: number[] }[];
@@ -31,7 +32,21 @@ export default function NurseDashboard() {
   
   const navigate = useNavigate();
   
-  const currentNurseName = "Nurse Sara";
+  // Get current user's name from localStorage
+  useEffect(() => {
+    const currentUserEmail = Object.keys(localStorage)
+      .find(key => key.startsWith('user_'))
+      ?.replace('user_', '');
+    
+    if (currentUserEmail) {
+      const userData = localStorage.getItem(`user_${currentUserEmail}`);
+      if (userData) {
+        const user = JSON.parse(userData);
+        setCurrentNurseName(user.name || "Nurse");
+      }
+    }
+  }, []);
+
   const { requests, filteredRequests, updateStatus } = useNurseRequests(currentNurseName);
 
   // Apply additional filters beyond the hook's filtering
