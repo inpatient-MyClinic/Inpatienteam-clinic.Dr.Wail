@@ -8,6 +8,7 @@ import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import RequestsTable from "@/components/RequestsTable";
 import HospitalPrivileges from "@/components/HospitalPrivileges";
 import DoctorAnalytics from "@/components/DoctorAnalytics";
+import MessagingIcons from "@/components/messaging/MessagingIcons";
 import { useDoctorRequests } from "@/hooks/useDoctorRequests";
 import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
 
@@ -116,12 +117,13 @@ export default function DoctorDashboard() {
       />
       
       <main className="flex-1 bg-white p-6">
-        {/* Header with Export, Print and Date Filters */}
+        {/* Header with Export, Print, Messaging and Date Filters */}
         <div className="mb-4 flex justify-between items-start">
           <div>
             <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
           </div>
           <div className="flex gap-2">
+            <MessagingIcons currentUserRole="doctor" />
             <Button 
               variant="outline" 
               onClick={handlePrint}
