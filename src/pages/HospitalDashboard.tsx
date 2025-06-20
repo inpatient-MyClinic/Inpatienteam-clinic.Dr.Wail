@@ -26,6 +26,10 @@ export default function HospitalDashboard() {
     selectedMonths: []
   });
   
+  // Add missing filter states for HospitalRequestsTable
+  const [surgeryDateFilter, setSurgeryDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  
   const navigate = useNavigate();
   
   const currentHospitalName = "Princess Nourah Hospital";
@@ -166,8 +170,16 @@ export default function HospitalDashboard() {
         />
         
         <HospitalRequestsTable 
-          requests={finalFilteredRequests}
-          onStatusChange={updateStatus}
+          filteredRequests={finalFilteredRequests}
+          totalRequests={requests.length}
+          surgeryDateFilter={surgeryDateFilter}
+          setSurgeryDateFilter={setSurgeryDateFilter}
+          specialtyFilter={specialtyFilter === "all" ? "" : specialtyFilter}
+          setSpecialtyFilter={(value) => setSpecialtyFilter(value || "all")}
+          doctorFilter={doctorFilter === "all" ? "" : doctorFilter}
+          setDoctorFilter={(value) => setDoctorFilter(value || "all")}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
         />
 
         {/* Analytics */}
