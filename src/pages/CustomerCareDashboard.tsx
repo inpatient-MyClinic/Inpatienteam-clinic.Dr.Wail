@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Download, ArrowLeft } from "lucide-react";
@@ -60,6 +59,9 @@ export default function CustomerCareDashboard() {
   const [requests, setRequests] = useState(doneRequests);
   const [selectedTimeFilter, setSelectedTimeFilter] = useState("All Time");
   const navigate = useNavigate();
+
+  // Calculate unread messages for customer-care role
+  const unreadCount = 2; // This would typically come from a hook or API
 
   const sendSurvey = (requestId: number) => {
     setRequests(prev =>
@@ -129,7 +131,7 @@ export default function CustomerCareDashboard() {
           </Select>
 
           <div className="flex gap-2">
-            <MessagingIcons currentUserRole="customer-care" />
+            <MessagingIcons currentUserRole="customer-care" unreadCount={unreadCount} />
             <Button onClick={exportToExcel} variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Export Excel

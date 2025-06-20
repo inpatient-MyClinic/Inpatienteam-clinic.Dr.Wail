@@ -30,6 +30,9 @@ export default function FinanceDashboard() {
     { patient: "Fatima Nour", amount: "₹1,850", status: "Processing", date: "2025-06-18" },
   ];
 
+  // Calculate unread messages for finance role
+  const unreadCount = 7; // This would typically come from a hook or API
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -47,7 +50,7 @@ export default function FinanceDashboard() {
             </div>
           </div>
           <div className="flex gap-2">
-            <MessagingIcons currentUserRole="finance" />
+            <MessagingIcons currentUserRole="finance" unreadCount={unreadCount} />
             <Button variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Export Report

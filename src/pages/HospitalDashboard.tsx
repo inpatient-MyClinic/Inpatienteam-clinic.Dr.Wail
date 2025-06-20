@@ -39,6 +39,9 @@ export default function HospitalDashboard() {
   const currentHospitalName = "Princess Nourah Hospital";
   const { requests, filteredRequests, updateStatus } = useNurseRequests(currentHospitalName);
 
+  // Calculate unread messages for hospital role
+  const unreadCount = 3; // This would typically come from a hook or API
+
   // Apply additional filters beyond the hook's filtering
   const applyFilters = (requests: typeof filteredRequests) => {
     return requests.filter(request => {
@@ -163,7 +166,7 @@ export default function HospitalDashboard() {
       <main className="flex-1 bg-white p-6">
         {/* Header with Export, Print and Messaging */}
         <div className="mb-4 flex justify-end items-center gap-2">
-          <MessagingIcons currentUserRole="hospital" />
+          <MessagingIcons currentUserRole="hospital" unreadCount={unreadCount} />
           <Button 
             variant="outline" 
             onClick={handlePrint}

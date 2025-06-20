@@ -22,6 +22,9 @@ export default function AdminDashboard() {
     { label: "Audit Logs", path: "/notifications-logs", icon: FileText },
   ];
 
+  // Calculate unread messages for admin role
+  const unreadCount = 12; // This would typically come from a hook or API
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -39,7 +42,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex gap-2">
-            <MessagingIcons currentUserRole="admin" />
+            <MessagingIcons currentUserRole="admin" unreadCount={unreadCount} />
             <Button 
               variant="outline"
               onClick={() => navigate("/role-selection")}

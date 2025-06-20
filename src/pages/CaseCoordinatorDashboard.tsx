@@ -31,6 +31,9 @@ export default function CaseCoordinatorDashboard() {
     { action: "Updated insurance status", patient: "Fatima Nour", time: "2 hours ago" },
   ];
 
+  // Calculate unread messages for case-coordinator role
+  const unreadCount = 5; // This would typically come from a hook or API
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -48,7 +51,7 @@ export default function CaseCoordinatorDashboard() {
             </div>
           </div>
           <div className="flex gap-2">
-            <MessagingIcons currentUserRole="case-coordinator" />
+            <MessagingIcons currentUserRole="case-coordinator" unreadCount={unreadCount} />
             <Button 
               onClick={() => navigate("/create-request")}
               className="flex items-center gap-2"
