@@ -19,9 +19,16 @@ export default function Index() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateCompanyEmail = (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com$/;
-    return emailRegex.test(email);
+  const validateEmail = (email: string) => {
+    const companyEmailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com$/;
+    const allowedPersonalEmail = "Inpatienteam@gmail.com";
+    
+    return companyEmailRegex.test(email) || email === allowedPersonalEmail;
+  };
+
+  const getUserRole = (email: string) => {
+    const adminEmails = ["Wahmed@myclinic.com", "Inpatienteam@gmail.com"];
+    return adminEmails.includes(email) ? "admin" : "nurse";
   };
 
   const checkPasswordExpiry = (email: string) => {
@@ -42,16 +49,16 @@ export default function Index() {
     if (!email) {
       toast({
         title: "Error",
-        description: "Please enter your company email address",
+        description: "Please enter your email address",
         variant: "destructive",
       });
       return;
     }
 
-    if (!validateCompanyEmail(email)) {
+    if (!validateEmail(email)) {
       toast({
         title: "Invalid Email",
-        description: "Please use your company email address ending with @myclinic.com",
+        description: "Please use your company email address ending with @myclinic.com or the authorized personal email",
         variant: "destructive",
       });
       return;
@@ -98,10 +105,12 @@ export default function Index() {
       return;
     }
 
+    const userRole = getUserRole(email);
+
     // Save user and password update timestamp
     localStorage.setItem(`user_${email}`, JSON.stringify({
       email,
-      role: "nurse",
+      role: userRole,
       createdAt: new Date().toISOString()
     }));
     localStorage.setItem(`password_${email}`, password);
@@ -109,11 +118,15 @@ export default function Index() {
 
     toast({
       title: "Password Created Successfully",
-      description: "You can now access the system",
+      description: `You can now access the system as ${userRole}`,
     });
 
-    // Redirect to nurse dashboard
-    navigate("/nurse-dashboard");
+    // Redirect based on role
+    if (userRole === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/nurse-dashboard");
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -128,10 +141,10 @@ export default function Index() {
       return;
     }
 
-    if (!validateCompanyEmail(email)) {
+    if (!validateEmail(email)) {
       toast({
         title: "Invalid Email",
-        description: "Please use your company email address ending with @myclinic.com",
+        description: "Please use your company email address ending with @myclinic.com or the authorized personal email",
         variant: "destructive",
       });
       return;
@@ -160,13 +173,19 @@ export default function Index() {
       return;
     }
 
+    const userRole = getUserRole(email);
+
     toast({
       title: "Login Successful",
-      description: "Welcome back!",
+      description: `Welcome back, ${userRole}!`,
     });
     
-    // All users are identified as nurses
-    navigate("/nurse-dashboard");
+    // Redirect based on role
+    if (userRole === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/nurse-dashboard");
+    }
   };
 
   return (
@@ -191,7 +210,7 @@ export default function Index() {
             {!isFirstTimeLogin && !isPasswordExpired ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Company Email</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <Input
                     id="email"
                     type="email"
@@ -247,7 +266,7 @@ export default function Index() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Company Email</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <Input
                     id="email"
                     type="email"
