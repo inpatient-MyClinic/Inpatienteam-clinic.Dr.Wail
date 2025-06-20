@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DoctorManagement from "@/components/DoctorManagement";
@@ -28,11 +27,11 @@ const SettingsDirectory = () => {
           <MessagingIcons currentUserRole="admin" />
           <Button 
             variant="outline"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            Back to Dashboard
           </Button>
         </div>
       </div>
