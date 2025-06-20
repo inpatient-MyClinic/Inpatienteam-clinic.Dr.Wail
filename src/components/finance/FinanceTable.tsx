@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 
@@ -26,19 +25,6 @@ export default function FinanceTable({
   transactions,
   onUpdatePaymentStatus
 }: FinanceTableProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Paid":
-        return "bg-green-100 text-green-800";
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "Delay Payment":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="p-4 border-b">
@@ -56,7 +42,6 @@ export default function FinanceTable({
             <TableHead>Doctor</TableHead>
             <TableHead>Service</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -71,35 +56,31 @@ export default function FinanceTable({
               <TableCell className="text-gray-600">{transaction.doctor}</TableCell>
               <TableCell className="text-gray-600">{transaction.service}</TableCell>
               <TableCell className="font-semibold text-green-600">{transaction.amount}</TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(transaction.status)}>
-                  {transaction.status}
-                </Badge>
-              </TableCell>
               <TableCell className="text-gray-600">{transaction.date}</TableCell>
               <TableCell>
-                <div className="flex gap-2">
+                {transaction.status === "Paid" ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onUpdatePaymentStatus(transaction.id, true)}
-                    className="text-green-600 hover:bg-green-50"
-                    disabled={transaction.status === "Paid"}
+                    className="text-green-600 bg-green-50 border-green-200"
+                    disabled
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4 mr-1" />
                     Paid
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onUpdatePaymentStatus(transaction.id, false)}
-                    className="text-red-600 hover:bg-red-50"
-                    disabled={transaction.status !== "Paid"}
-                  >
-                    <X className="w-4 h-4" />
-                    Not Paid
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onUpdatePaymentStatus(transaction.id, true)}
+                      className="text-green-600 hover:bg-green-50"
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Mark as Paid
+                    </Button>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}
