@@ -49,27 +49,48 @@ const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
         return [
           { value: "case-coordinators", label: "Case Coordinators" },
           { value: "finance", label: "Finance Team" },
+          { value: "customer-care", label: "Customer Care" },
         ];
       case "nurse":
         return [
           { value: "nurse-sara", label: "Nurse Sara" },
           { value: "nurse-ahmad", label: "Nurse Ahmad" },
           { value: "case-coordinators", label: "Case Coordinators" },
+          { value: "finance", label: "Finance Team" },
+          { value: "customer-care", label: "Customer Care" },
         ];
       case "finance":
         return [
           { value: "all", label: "All Users" },
           { value: "case-coordinators", label: "Case Coordinators" },
           { value: "hospitals", label: "Hospitals" },
+          { value: "doctors", label: "Doctors" },
+          { value: "nurses", label: "Nurses" },
+          { value: "customer-care", label: "Customer Care" },
         ];
       case "doctor":
         return [
           { value: "case-coordinators", label: "Case Coordinators" },
           { value: "nurses", label: "Nurses" },
           { value: "hospitals", label: "Hospitals" },
+          { value: "finance", label: "Finance Team" },
+          { value: "customer-care", label: "Customer Care" },
+        ];
+      case "customer-care":
+        return [
+          { value: "all", label: "All Users" },
+          { value: "case-coordinators", label: "Case Coordinators" },
+          { value: "hospitals", label: "Hospitals" },
+          { value: "doctors", label: "Doctors" },
+          { value: "nurses", label: "Nurses" },
+          { value: "finance", label: "Finance Team" },
         ];
       default:
-        return [{ value: "case-coordinators", label: "Case Coordinators" }];
+        return [
+          { value: "case-coordinators", label: "Case Coordinators" },
+          { value: "finance", label: "Finance Team" },
+          { value: "customer-care", label: "Customer Care" },
+        ];
     }
   };
 

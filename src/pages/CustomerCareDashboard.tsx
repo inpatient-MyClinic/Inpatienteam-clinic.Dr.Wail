@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Download, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import MessagingIcons from "@/components/messaging/MessagingIcons";
 import {
   Table,
   TableBody,
@@ -113,7 +114,7 @@ export default function CustomerCareDashboard() {
       {/* Main Content */}
       <main className="flex-1 bg-white">
         {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 p-6 border-b bg-white">
+        <div className="flex flex-wrap gap-3 p-6 border-b bg-white justify-between">
           <Select value={selectedTimeFilter} onValueChange={setSelectedTimeFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Select Time Period" />
@@ -127,10 +128,13 @@ export default function CustomerCareDashboard() {
             </SelectContent>
           </Select>
 
-          <Button onClick={exportToExcel} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
+          <div className="flex gap-2">
+            <MessagingIcons currentUserRole="customer-care" />
+            <Button onClick={exportToExcel} variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
+          </div>
         </div>
 
         {/* Requests Table */}

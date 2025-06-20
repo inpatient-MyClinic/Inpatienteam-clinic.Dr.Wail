@@ -10,9 +10,10 @@ import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import NurseRequestsTable from "@/components/nurse/NurseRequestsTable";
 import NurseHospitalPrivileges from "@/components/nurse/NurseHospitalPrivileges";
 import NurseAnalytics from "@/components/nurse/NurseAnalytics";
+import MessagingIcons from "@/components/messaging/MessagingIcons";
 import { useNurseRequests } from "@/hooks/useNurseRequests";
 import { doctorsBySpecialty } from "@/data/medicalData";
-import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
 
 export default function NurseDashboard() {
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
@@ -126,12 +127,13 @@ export default function NurseDashboard() {
       />
       
       <main className="flex-1 bg-white p-6">
-        {/* Header with Export, Print and Date Filters */}
+        {/* Header with Export, Print, Messaging and Date Filters */}
         <div className="mb-4 flex justify-between items-start">
           <div>
             <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
           </div>
           <div className="flex gap-2">
+            <MessagingIcons currentUserRole="nurse" />
             <Button 
               variant="outline" 
               onClick={handlePrint}
