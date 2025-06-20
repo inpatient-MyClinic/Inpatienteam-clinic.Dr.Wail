@@ -9,6 +9,8 @@ interface CustomerCareAnalyticsProps {
   targetNPS: number;
   complaintsOpen: number;
   complaintsClosed: number;
+  onComplaintFilter: (status: 'open' | 'closed' | null) => void;
+  activeComplaintFilter: 'open' | 'closed' | null;
 }
 
 export default function CustomerCareAnalytics({
@@ -16,7 +18,9 @@ export default function CustomerCareAnalytics({
   ytdNPS,
   targetNPS,
   complaintsOpen,
-  complaintsClosed
+  complaintsClosed,
+  onComplaintFilter,
+  activeComplaintFilter
 }: CustomerCareAnalyticsProps) {
   const isMonthlyAboveTarget = monthlyNPS >= targetNPS;
   const isYTDAboveTarget = ytdNPS >= targetNPS;
@@ -61,7 +65,12 @@ export default function CustomerCareAnalytics({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card 
+        className={`cursor-pointer transition-all ${
+          activeComplaintFilter === 'closed' ? 'ring-2 ring-green-500 bg-green-50' : 'hover:bg-gray-50'
+        }`}
+        onClick={() => onComplaintFilter(activeComplaintFilter === 'closed' ? null : 'closed')}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Complaints Closed</CardTitle>
           <MessageSquare className="h-4 w-4 text-green-600" />
@@ -74,7 +83,12 @@ export default function CustomerCareAnalytics({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card 
+        className={`cursor-pointer transition-all ${
+          activeComplaintFilter === 'open' ? 'ring-2 ring-orange-500 bg-orange-50' : 'hover:bg-gray-50'
+        }`}
+        onClick={() => onComplaintFilter(activeComplaintFilter === 'open' ? null : 'open')}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Complaints Open</CardTitle>
           <AlertCircle className="h-4 w-4 text-orange-600" />

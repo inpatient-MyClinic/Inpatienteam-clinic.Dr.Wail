@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Download, ArrowLeft } from "lucide-react";
@@ -7,6 +6,7 @@ import MessagingIcons from "@/components/messaging/MessagingIcons";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
 import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload";
+import ComplaintUpload from "@/components/customercare/ComplaintUpload";
 import {
   Table,
   TableBody,
@@ -71,8 +71,14 @@ const initialDoneRequests = [
   },
 ];
 
+// Add complaint status to the data
+const initialDoneRequestsWithComplaints = initialDoneRequests.map(request => ({
+  ...request,
+  complaintStatus: Math.random() > 0.7 ? (Math.random() > 0.5 ? 'open' : 'closed') : null
+}));
+
 export default function CustomerCareDashboard() {
-  const [requests, setRequests] = useState(initialDoneRequests);
+  const [requests, setRequests] = useState(initialDoneRequestsWithComplaints);
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
     selectedWeeks: { month: Date; weekNumbers: number[] }[];
@@ -82,6 +88,7 @@ export default function CustomerCareDashboard() {
     selectedWeeks: [],
     selectedMonths: []
   });
+  const [complaintFilter, setComplaintFilter] = useState<'open' | 'closed' | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -108,8 +115,8 @@ export default function CustomerCareDashboard() {
     });
   }, [requests, toast]);
 
-  // Apply date filters
-  const applyFilters = (requests: typeof initialDoneRequests) => {
+  // Apply date and complaint filters
+  const applyFilters = (requests: typeof initialDoneRequestsWithComplaints) => {
     return requests.filter(request => {
       const requestDate = new Date(request.completionDate);
       let matchesDateFilter = true;
@@ -154,7 +161,13 @@ export default function CustomerCareDashboard() {
         }
       }
       
-      return matchesDateFilter;
+      // Apply complaint filter
+      let matchesComplaintFilter = true;
+      if (complaintFilter) {
+        matchesComplaintFilter = request.complaintStatus === complaintFilter;
+      }
+      
+      return matchesDateFilter && matchesComplaintFilter;
     });
   };
 
@@ -162,6 +175,10 @@ export default function CustomerCareDashboard() {
 
   const handleDateFilterChange = (filters: typeof dateFilters) => {
     setDateFilters(filters);
+  };
+
+  const handleComplaintFilter = (status: 'open' | 'closed' | null) => {
+    setComplaintFilter(status);
   };
 
   const sendSurvey = (requestId: string) => {
@@ -189,8 +206,23 @@ export default function CustomerCareDashboard() {
     );
   };
 
+  const handleComplaintUpload = (complaints: { id: string; status: 'open' | 'closed' }[]) => {
+    setRequests(prev =>
+      prev.map(request => {
+        const complaint = complaints.find(c => c.id === request.id);
+        if (complaint) {
+          return {
+            ...request,
+            complaintStatus: complaint.status
+          };
+        }
+        return request;
+      })
+    );
+  };
+
   const exportToExcel = () => {
-    console.log("Exporting customer care data to Excel with current filters");
+    console.log("Exporting customer care data to Excel with current filters", { dateFilters, complaintFilter });
   };
 
   // Calculate NPS and analytics based on filtered data
@@ -207,8 +239,8 @@ export default function CustomerCareDashboard() {
   const monthlyNPS = calculateNPS(filteredRequests);
   const ytdNPS = calculateNPS(requests); // All requests for YTD
   const targetNPS = 75;
-  const complaintsOpen = 3;
-  const complaintsClosed = 12;
+  const complaintsOpen = requests.filter(r => r.complaintStatus === 'open').length;
+  const complaintsClosed = requests.filter(r => r.complaintStatus === 'closed').length;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -265,12 +297,20 @@ export default function CustomerCareDashboard() {
 
         <div className="p-6">
           {/* Upload Section */}
-          <div className="mb-4">
+          <div className="mb-4 flex gap-4">
             <SurveyResponseUpload onUpdateResponses={handleSurveyResponseUpload} />
+            <ComplaintUpload onUpdateComplaints={handleComplaintUpload} />
           </div>
 
           {/* Requests Table */}
-          <h2 className="text-lg font-semibold mb-4">Completed Requests - Survey Management</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            Completed Requests - Survey Management
+            {complaintFilter && (
+              <span className="ml-2 text-sm font-normal text-gray-600">
+                (Filtered by: {complaintFilter} complaints)
+              </span>
+            )}
+          </h2>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -286,6 +326,7 @@ export default function CustomerCareDashboard() {
                   <TableHead>Survey Status</TableHead>
                   <TableHead>Response Status</TableHead>
                   <TableHead>NPS Score</TableHead>
+                  <TableHead>Complaint Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -318,6 +359,17 @@ export default function CustomerCareDashboard() {
                       {req.npsScore !== undefined ? req.npsScore : "-"}
                     </TableCell>
                     <TableCell>
+                      {req.complaintStatus ? (
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          req.complaintStatus === 'open' ? "bg-orange-100 text-orange-800" : "bg-green-100 text-green-800"
+                        }`}>
+                          {req.complaintStatus === 'open' ? "Open" : "Closed"}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {!req.surveySent ? (
                         <Button 
                           size="sm" 
@@ -344,6 +396,8 @@ export default function CustomerCareDashboard() {
             targetNPS={targetNPS}
             complaintsOpen={complaintsOpen}
             complaintsClosed={complaintsClosed}
+            onComplaintFilter={handleComplaintFilter}
+            activeComplaintFilter={complaintFilter}
           />
         </div>
       </main>
