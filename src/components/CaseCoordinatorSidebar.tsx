@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
@@ -51,6 +51,10 @@ export default function CaseCoordinatorSidebar({
     navigate("/");
   };
 
+  const handleCreateRequest = () => {
+    navigate("/create-request");
+  };
+
   return (
     <aside className="w-[19rem] bg-purple-50 flex flex-col items-center p-6 border-r">
       <Logo size="sm" showText={false} className="mb-4" />
@@ -58,6 +62,17 @@ export default function CaseCoordinatorSidebar({
       <div className="text-center mb-4">
         <h1 className="text-lg font-bold text-purple-900">Case Coordinator</h1>
         <p className="text-xs text-purple-700">{currentCoordinatorName}</p>
+      </div>
+
+      {/* Create Request Button */}
+      <div className="w-full mb-6">
+        <Button 
+          onClick={handleCreateRequest}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Create Request
+        </Button>
       </div>
 
       {/* All Requests Stats */}
