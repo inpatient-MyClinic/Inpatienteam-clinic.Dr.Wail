@@ -81,6 +81,10 @@ export default function ViewRequestDialog({
           <div class="field-group"><span class="field-label">Hospital:</span><span class="field-value">${request.hospital || ""}</span></div>
           <div class="field-group"><span class="field-label">Doctor:</span><span class="field-value">${request.doctorName || ""}</span></div>
           <div class="field-group"><span class="field-label">Expected Surgery Date:</span><span class="field-value">${request.expectedSurgeryDate || ""}</span></div>
+          <div class="field-group"><span class="field-label">Specialty:</span><span class="field-value">${request.specialty || ""}</span></div>
+          ${request.requiredImplant ? `<div class="field-group"><span class="field-label">Required Implant:</span><span class="field-value">${request.requiredImplant}</span></div>` : ''}
+          ${request.lastMenstrualPeriod ? `<div class="field-group"><span class="field-label">LMP:</span><span class="field-value">${request.lastMenstrualPeriod}</span></div>` : ''}
+          ${request.estimatedDueDate ? `<div class="field-group"><span class="field-label">EDD:</span><span class="field-value">${request.estimatedDueDate}</span></div>` : ''}
         </div>
       `;
     }
@@ -90,9 +94,15 @@ export default function ViewRequestDialog({
         <div class="section">
           <div class="section-title">Case Coordinator Information</div>
           <div class="field-group"><span class="field-label">Case Manager:</span><span class="field-value">${request.caseManagerName || ""}</span></div>
+          <div class="field-group"><span class="field-label">Assigned Date:</span><span class="field-value">${request.assignedDate || ""}</span></div>
           <div class="field-group"><span class="field-label">Patient Contacted:</span><span class="field-value">${request.patientContacted || ""}</span></div>
           <div class="field-group"><span class="field-label">Contact Method:</span><span class="field-value">${request.contactMethod || ""}</span></div>
+          <div class="field-group"><span class="field-label">Contact Date:</span><span class="field-value">${request.contactDate || ""}</span></div>
+          <div class="field-group"><span class="field-label">Insurance Company:</span><span class="field-value">${request.insuranceCompany || ""}</span></div>
+          <div class="field-group"><span class="field-label">Policy Number:</span><span class="field-value">${request.policyNumber || ""}</span></div>
           <div class="field-group"><span class="field-label">Coverage Type:</span><span class="field-value">${request.coverageType || ""}</span></div>
+          <div class="field-group"><span class="field-label">Coverage Status:</span><span class="field-value">${request.coverageStatus || ""}</span></div>
+          <div class="field-group"><span class="field-label">Next OPD Visit:</span><span class="field-value">${request.nextOPDVisit || ""}</span></div>
         </div>
       `;
     }
@@ -107,9 +117,15 @@ export default function ViewRequestDialog({
           <div class="field-group"><span class="field-label">Approval Number:</span><span class="field-value">${request.approvalNumber || ""}</span></div>
           <div class="field-group"><span class="field-label">Approval Status:</span><span class="field-value">${request.approvalStatus || ""}</span></div>
           <div class="field-group"><span class="field-label">Anesthesia Date:</span><span class="field-value">${request.anesthesiaDate || ""}</span></div>
+          <div class="field-group"><span class="field-label">Agreed Surgery Date:</span><span class="field-value">${request.agreedSurgeryDate || ""}</span></div>
           <div class="field-group"><span class="field-label">Operation Status:</span><span class="field-value">${request.operationStatus || ""}</span></div>
+          <div class="field-group"><span class="field-label">Operation Duration:</span><span class="field-value">${request.operationDuration || ""} hours</span></div>
           <div class="field-group"><span class="field-label">Reason:</span><span class="field-value">${request.reason || ""}</span></div>
           <div class="field-group"><span class="field-label">Category of Failure:</span><span class="field-value">${request.categoryOfFailure || ""}</span></div>
+          <div class="field-group"><span class="field-label">Room Number:</span><span class="field-value">${request.roomNumber || ""}</span></div>
+          <div class="field-group"><span class="field-label">Bed Number:</span><span class="field-value">${request.bedNumber || ""}</span></div>
+          <div class="field-group"><span class="field-label">Admission Date:</span><span class="field-value">${request.admissionDate || ""}</span></div>
+          <div class="field-group"><span class="field-label">Discharge Date:</span><span class="field-value">${request.dischargeDate || ""}</span></div>
         </div>
       `;
     }
