@@ -30,6 +30,11 @@ export default function HospitalDashboard() {
   const [surgeryDateFilter, setSurgeryDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   
+  // Add missing filter states for HospitalFilters
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  
   const navigate = useNavigate();
   
   const currentHospitalName = "Princess Nourah Hospital";
@@ -103,6 +108,16 @@ export default function HospitalDashboard() {
     needJustification: finalFilteredRequests.filter(req => req.status === "Need Justification").length
   };
 
+  // Calculate analytics data
+  const totalRequests = finalFilteredRequests.length;
+  const doneRequests = finalFilteredRequests.filter(req => req.status === "Done").length;
+  const approvedRequests = finalFilteredRequests.filter(req => req.status === "Approved").length;
+  const rejectedRequests = finalFilteredRequests.filter(req => req.status === "Rejected").length;
+  
+  const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : "0";
+  const approvalRate = totalRequests > 0 ? ((approvedRequests / totalRequests) * 100).toFixed(1) : "0";
+  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
+
   // Check if there are active filters
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
@@ -130,6 +145,10 @@ export default function HospitalDashboard() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportToExcel = () => {
+    console.log('Export to Excel');
   };
 
   return (
@@ -162,11 +181,14 @@ export default function HospitalDashboard() {
         </div>
 
         <HospitalFilters 
-          requests={finalFilteredRequests}
-          onFiltersChange={(filters) => {
-            // Handle filter changes if needed
-            console.log('Filters changed:', filters);
-          }}
+          selectedDates={selectedDates}
+          setSelectedDates={setSelectedDates}
+          selectedMonth={selectedMonth}
+          setSelectedMonth={setSelectedMonth}
+          selectedMonths={selectedMonths}
+          setSelectedMonths={setSelectedMonths}
+          onExportToExcel={handleExportToExcel}
+          onPrint={handlePrint}
         />
         
         <HospitalRequestsTable 
@@ -183,7 +205,15 @@ export default function HospitalDashboard() {
         />
 
         {/* Analytics */}
-        <HospitalAnalytics requests={filteredRequests} hospitalName={currentHospitalName} />
+        <HospitalAnalytics 
+          conversionRate={conversionRate}
+          approvalRate={approvalRate}
+          rejectionRate={rejectionRate}
+          doneRequests={doneRequests}
+          totalRequests={totalRequests}
+          approvedRequests={approvedRequests}
+          rejectedRequests={rejectedRequests}
+        />
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
