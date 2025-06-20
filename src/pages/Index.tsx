@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,11 +26,53 @@ export default function Index() {
   };
 
   const getUserRole = (email: string) => {
-    const adminEmails = ["Wahmed@myclinic.com", "Inpatienteam@gmail.com"];
+    // Admin emails (both company and the one allowed personal email)
+    const adminEmails = [
+      "Wahmed@myclinic.com",
+      "Inpatienteam@gmail.com"
+    ];
+    
+    // Doctor emails that should be admin
+    const doctorAdminEmails = [
+      // Add doctor emails here that should be admin
+    ];
+    
+    // Case coordinator emails that should be admin
+    const caseCoordinatorAdminEmails = [
+      // Add case coordinator emails here that should be admin
+    ];
+    
+    // Finance emails that should be admin
+    const financeAdminEmails = [
+      // Add finance emails here that should be admin
+    ];
+    
+    // Hospital emails that should be admin
+    const hospitalAdminEmails = [
+      // Add hospital emails here that should be admin
+    ];
+    
+    // Customer care emails that should be admin
+    const customerCareAdminEmails = [
+      // Add customer care emails here that should be admin
+    ];
+    
     console.log("Checking role for email:", email);
-    console.log("Admin emails:", adminEmails);
-    console.log("Is admin:", adminEmails.includes(email));
-    return adminEmails.includes(email) ? "admin" : "nurse";
+    
+    // Check if email is in any admin category
+    if (adminEmails.includes(email) ||
+        doctorAdminEmails.includes(email) ||
+        caseCoordinatorAdminEmails.includes(email) ||
+        financeAdminEmails.includes(email) ||
+        hospitalAdminEmails.includes(email) ||
+        customerCareAdminEmails.includes(email)) {
+      console.log("User identified as admin");
+      return "admin";
+    }
+    
+    // Default to nurse for all other users
+    console.log("User identified as nurse (default)");
+    return "nurse";
   };
 
   const checkPasswordExpiry = (email: string) => {
