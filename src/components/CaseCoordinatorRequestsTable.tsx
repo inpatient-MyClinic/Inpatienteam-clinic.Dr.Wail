@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, Send, Filter, X, MoreVertical, User, Building, FileCheck } from "lucide-react";
@@ -13,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from "@/hooks/use-toast";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { CaseCoordinatorRequest, COORDINATOR_REQUEST_STATUSES } from "@/hooks/useCaseCoordinatorRequests";
+import ViewRequestDialog from "@/components/ViewRequestDialog/ViewRequestDialog";
 
 interface CaseCoordinatorRequestsTableProps {
   filteredRequests: CaseCoordinatorRequest[];
@@ -132,115 +132,6 @@ export default function CaseCoordinatorRequestsTable({
       title: "Submitted",
       description: "Request has been submitted to hospital",
     });
-  };
-
-  const ViewRequestDialog = ({ request }: { request: CaseCoordinatorRequest }) => {
-    const [localSurgeryDate, setLocalSurgeryDate] = useState(request.expectedSurgeryDate || "");
-    const [localHospital, setLocalHospital] = useState(request.hospital || "");
-    const [localHasModifications, setLocalHasModifications] = useState(false);
-
-    const handleLocalFieldChange = (field: 'surgeryDate' | 'hospital', value: string) => {
-      if (field === 'surgeryDate') {
-        setLocalSurgeryDate(value);
-        setLocalHasModifications(value !== request.expectedSurgeryDate || localHospital !== request.hospital);
-      } else {
-        setLocalHospital(value);
-        setLocalHasModifications(value !== request.hospital || localSurgeryDate !== request.expectedSurgeryDate);
-      }
-    };
-
-    const handleLocalSubmit = () => {
-      if (!localSurgeryDate || !localHospital) {
-        toast({
-          title: "Error",
-          description: "Please fill in all required fields",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setLocalHasModifications(false);
-      
-      toast({
-        title: "Case Updated",
-        description: "Case has been updated and notifications sent to doctor and hospital",
-      });
-    };
-
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <Eye className="w-4 h-4 mr-2" />
-            View
-          </DropdownMenuItem>
-        </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Case Details - {request.patientName}</DialogTitle>
-            <DialogDescription>
-              Complete case information and coordination details
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* Patient & Hospital Information */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="font-semibold">Patient Information</Label>
-                <div className="mt-2 space-y-1">
-                  <p><span className="font-medium">Name:</span> {request.patientName}</p>
-                  <p><span className="font-medium">MRN:</span> {request.mrn}</p>
-                  <p><span className="font-medium">Doctor:</span> {request.doctorName}</p>
-                </div>
-              </div>
-              <div>
-                <Label className="font-semibold">Hospital</Label>
-                <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
-                  {request.hospital}
-                </div>
-              </div>
-            </div>
-
-            {/* Service Description */}
-            <div>
-              <Label className="font-semibold">Service Description</Label>
-              <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
-                {request.serviceDescription}
-              </div>
-            </div>
-
-            {/* Attachments */}
-            {request.attachments && request.attachments.length > 0 && (
-              <div>
-                <Label className="font-semibold">Attachments</Label>
-                <div className="mt-2 space-y-2">
-                  {request.attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
-                      <div className="flex items-center">
-                        <FileText className="w-4 h-4 mr-2 text-gray-500" />
-                        <span className="text-sm">{attachment}</span>
-                      </div>
-                      <Button size="sm" variant="ghost">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Status Information */}
-            <div className="pt-4 border-t">
-              <Label className="font-semibold">Current Status</Label>
-              <div className="mt-1">
-                {getStatusBadge(request.status)}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
   };
 
   return (
@@ -478,7 +369,13 @@ export default function CaseCoordinatorRequestsTable({
                         <Building className="w-4 h-4 mr-2" />
                         Submit to Hospital
                       </DropdownMenuItem>
-                      <ViewRequestDialog request={req} />
+                      <DropdownMenuItem asChild>
+                        <ViewRequestDialog 
+                          request={req} 
+                          onStatusUpdate={updateStatus}
+                          currentUserRole="case-coordinator"
+                        />
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
