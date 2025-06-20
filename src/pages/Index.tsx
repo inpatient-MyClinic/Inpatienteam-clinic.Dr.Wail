@@ -12,9 +12,109 @@ import Footer from "@/components/Footer";
 export default function Index() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isFirstTimeLogin, setIsFirstTimeLogin] = useState(false);
+  const [isPasswordExpired, setIsPasswordExpired] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const validateCompanyEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com$/;
+    return emailRegex.test(email);
+  };
+
+  const checkPasswordExpiry = (email: string) => {
+    // Simulate checking if password needs update (every 3 months)
+    const lastPasswordUpdate = localStorage.getItem(`lastPasswordUpdate_${email}`);
+    if (!lastPasswordUpdate) {
+      return true; // First time login
+    }
+    
+    const lastUpdate = new Date(lastPasswordUpdate);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    return lastUpdate < threeMonthsAgo;
+  };
+
+  const handleEmailCheck = () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your company email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateCompanyEmail(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please use your company email address ending with @myclinic.com",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user exists and password status
+    const userExists = localStorage.getItem(`user_${email}`);
+    const passwordExpired = checkPasswordExpiry(email);
+
+    if (!userExists) {
+      setIsFirstTimeLogin(true);
+      toast({
+        title: "Welcome!",
+        description: "First time login detected. Please create your password.",
+      });
+    } else if (passwordExpired) {
+      setIsPasswordExpired(true);
+      toast({
+        title: "Password Update Required",
+        description: "Your password has expired. Please create a new password.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePasswordCreation = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password.length < 8) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Save user and password update timestamp
+    localStorage.setItem(`user_${email}`, JSON.stringify({
+      email,
+      role: "nurse",
+      createdAt: new Date().toISOString()
+    }));
+    localStorage.setItem(`password_${email}`, password);
+    localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
+
+    toast({
+      title: "Password Created Successfully",
+      description: "You can now access the system",
+    });
+
+    // Redirect to nurse dashboard
+    navigate("/nurse-dashboard");
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,20 +128,45 @@ export default function Index() {
       return;
     }
 
-    // Simple validation - in real app, this would be proper authentication
-    if (email === "admin@myclinic.com" && password === "admin123") {
+    if (!validateCompanyEmail(email)) {
       toast({
-        title: "Login Successful",
-        description: "Welcome back!",
+        title: "Invalid Email",
+        description: "Please use your company email address ending with @myclinic.com",
+        variant: "destructive",
       });
-      navigate("/role-selection");
-    } else {
+      return;
+    }
+
+    const savedPassword = localStorage.getItem(`password_${email}`);
+    const userExists = localStorage.getItem(`user_${email}`);
+
+    if (!userExists || savedPassword !== password) {
       toast({
         title: "Login Failed",
         description: "Invalid email or password",
         variant: "destructive",
       });
+      return;
     }
+
+    // Check if password needs update
+    if (checkPasswordExpiry(email)) {
+      setIsPasswordExpired(true);
+      toast({
+        title: "Password Update Required",
+        description: "Your password has expired. Please create a new password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Login Successful",
+      description: "Welcome back!",
+    });
+    
+    // All users are identified as nurses
+    navigate("/nurse-dashboard");
   };
 
   return (
@@ -56,63 +181,137 @@ export default function Index() {
                 className="h-12 w-auto mx-auto"
               />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900">My Clinic In-Patient</CardTitle>
             <CardDescription className="text-gray-600">
-              Sign in to your My Clinic account
+              Referral System - Staff Access
             </CardDescription>
           </CardHeader>
           
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full"
-                />
-              </div>
+            {!isFirstTimeLogin && !isPasswordExpired ? (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Company Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="yourname@myclinic.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onBlur={handleEmailCheck}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Use your company email ending with @myclinic.com
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <Label htmlFor="remember" className="text-sm text-gray-600">
-                  Remember me
-                </Label>
-              </div>
-              
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Sign In
-              </Button>
-            </form>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <Label htmlFor="remember" className="text-sm text-gray-600">
+                    Remember me
+                  </Label>
+                </div>
+                
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+                  Sign In
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handlePasswordCreation} className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold text-blue-900 mb-2">
+                    {isFirstTimeLogin ? "Welcome to My Clinic!" : "Password Update Required"}
+                  </h3>
+                  <p className="text-sm text-blue-700">
+                    {isFirstTimeLogin 
+                      ? "Please create your password to access the system." 
+                      : "Your password has expired. Please create a new password for security."}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Company Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    disabled
+                    className="w-full bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    placeholder="Create a new password (min 8 characters)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+
+                <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+                  {isFirstTimeLogin ? "Create Password & Access System" : "Update Password"}
+                </Button>
+
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    setIsFirstTimeLogin(false);
+                    setIsPasswordExpired(false);
+                    setPassword("");
+                    setConfirmPassword("");
+                  }}
+                >
+                  Back to Login
+                </Button>
+              </form>
+            )}
             
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
-                Demo credentials: admin@myclinic.com / admin123
+                Company email required • Password updates every 3 months
               </p>
             </div>
           </CardContent>
         </Card>
         
-        <Footer />
+        <div className="text-center mt-8 py-4">
+          <p className="text-gray-500 text-sm">Created by Dr. Wail Ahmed @ My Clinic</p>
+        </div>
       </div>
     </div>
   );
