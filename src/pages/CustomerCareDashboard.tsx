@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Download, ArrowLeft } from "lucide-react";
@@ -7,6 +8,7 @@ import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
 import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload";
 import ComplaintUpload from "@/components/customercare/ComplaintUpload";
+import Footer from "@/components/Footer";
 import {
   Table,
   TableBody,
@@ -399,6 +401,9 @@ export default function CustomerCareDashboard() {
             onComplaintFilter={handleComplaintFilter}
             activeComplaintFilter={complaintFilter}
           />
+
+          {/* Footer */}
+          <Footer />
         </div>
       </main>
     </div>
