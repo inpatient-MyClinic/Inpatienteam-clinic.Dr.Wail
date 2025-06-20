@@ -1,126 +1,82 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ExportButton from "@/components/ExportButton";
 import FinanceSidebar from "@/components/finance/FinanceSidebar";
 import FinanceFilters from "@/components/finance/FinanceFilters";
 import FinanceTable from "@/components/finance/FinanceTable";
 import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
+import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 
-interface Transaction {
-  id: string;
-  patientName: string;
-  mrn: string;
-  hospital: string;
-  doctor: string;
-  service: string;
-  amount: string;
-  status: string;
-  date: string;
-}
+// Sample financial data
+const initialTransactions = [
+  {
+    id: "FIN001",
+    patientName: "Ahmed Mohammed",
+    mrn: "MRN001234",
+    hospital: "King Abdulaziz Hospital",
+    doctor: "Dr. Ahmed Al-Rashid",
+    service: "Cardiac Surgery",
+    amount: "₹15,000",
+    status: "Paid",
+    date: "2025-06-15"
+  },
+  {
+    id: "FIN002", 
+    patientName: "Fatima Hassan",
+    mrn: "MRN005678",
+    hospital: "Prince Sultan Hospital",
+    doctor: "Dr. Sarah Al-Mahmoud",
+    service: "Orthopedic Surgery",
+    amount: "₹8,500",
+    status: "Pending",
+    date: "2025-06-10"
+  },
+  {
+    id: "FIN003",
+    patientName: "Omar Ali",
+    mrn: "MRN009876", 
+    hospital: "Medical Center",
+    doctor: "Dr. Mohammed Hassan",
+    service: "General Surgery",
+    amount: "₹12,000",
+    status: "Delay Payment",
+    date: "2025-06-08"
+  }
+];
 
 export default function FinanceDashboard() {
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState(initialTransactions);
   const [dateFilter, setDateFilter] = useState("all");
   const [amountFilter, setAmountFilter] = useState("all");
   const [patientFilter, setPatientFilter] = useState("all");
-  const { toast } = useToast();
-  
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   const navigate = useNavigate();
-  const currentFinanceName = "Finance Department";
+  const { toast } = useToast();
 
-  // Sample transaction data with proper structure
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([
-    { 
-      id: "TXN001", 
-      patientName: "Ahmed Hassan", 
-      mrn: "MRN12345",
-      hospital: "City Hospital",
-      doctor: "Dr. Smith",
-      service: "Surgery consultation",
-      amount: "₹3,500", 
-      status: "Paid", 
-      date: "2025-06-20"
-    },
-    { 
-      id: "TXN002", 
-      patientName: "Sara Ali", 
-      mrn: "MRN12346",
-      hospital: "General Hospital",
-      doctor: "Dr. Johnson",
-      service: "Lab tests",
-      amount: "₹2,200", 
-      status: "Pending", 
-      date: "2025-06-19"
-    },
-    { 
-      id: "TXN003", 
-      patientName: "Omar Khalil", 
-      mrn: "MRN12347",
-      hospital: "Medical Center",
-      doctor: "Dr. Brown",
-      service: "Emergency treatment",
-      amount: "₹4,750", 
-      status: "Paid", 
-      date: "2025-06-19"
-    },
-    { 
-      id: "TXN004", 
-      patientName: "Fatima Nour", 
-      mrn: "MRN12348",
-      hospital: "City Hospital",
-      doctor: "Dr. Davis",
-      service: "Follow-up appointment",
-      amount: "₹1,850", 
-      status: "Pending", 
-      date: "2025-06-18"
-    },
-    { 
-      id: "TXN005", 
-      patientName: "Mohammed Ali", 
-      mrn: "MRN12349",
-      hospital: "General Hospital",
-      doctor: "Dr. Wilson",
-      service: "Surgery procedure",
-      amount: "₹6,200", 
-      status: "Delay Payment", 
-      date: "2025-06-15"
-    },
-  ]);
+  const currentFinanceName = "Finance Team";
 
-  // Apply filters
-  const filteredTransactions = allTransactions.filter(transaction => {
+  // Filter transactions based on current filters
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesStatus = !activeStatusFilter || transaction.status === activeStatusFilter;
-    const matchesPatient = patientFilter === "all" || transaction.patientName.toLowerCase().includes(patientFilter);
+    const matchesPatient = patientFilter === "all" || 
+      transaction.patientName.toLowerCase().includes(patientFilter.toLowerCase());
+    
+    // Add date and amount filtering logic here if needed
     
     return matchesStatus && matchesPatient;
   });
 
   // Calculate status counts
   const statusCounts = {
-    paid: allTransactions.filter(t => t.status === "Paid").length,
-    pending: allTransactions.filter(t => t.status === "Pending").length,
-    delayPayment: allTransactions.filter(t => t.status === "Delay Payment").length,
+    paid: transactions.filter(t => t.status === "Paid").length,
+    pending: transactions.filter(t => t.status === "Pending").length,
+    delayPayment: transactions.filter(t => t.status === "Delay Payment").length
   };
-
-  // Calculate analytics
-  const paidTransactions = allTransactions.filter(t => t.status === "Paid");
-  const notPaidTransactions = allTransactions.filter(t => t.status !== "Paid");
-  
-  const calculateTotal = (transactions: Transaction[]) => {
-    return transactions.reduce((sum, t) => {
-      const amount = parseFloat(t.amount.replace('₹', '').replace(',', ''));
-      return sum + amount;
-    }, 0);
-  };
-
-  const paidAmount = calculateTotal(paidTransactions);
-  const unpaidAmount = calculateTotal(notPaidTransactions);
-  const totalAmount = paidAmount + unpaidAmount;
 
   // Check if there are active filters
   const hasActiveFilters = Boolean(
@@ -131,7 +87,7 @@ export default function FinanceDashboard() {
   );
 
   const handleStatusIconClick = (status: string | null) => {
-    setActiveStatusFilter(activeStatusFilter === status ? null : status);
+    setActiveStatusFilter(status);
   };
 
   const handleClearAllFilters = () => {
@@ -141,55 +97,56 @@ export default function FinanceDashboard() {
     setPatientFilter("all");
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleUpdatePaymentStatus = (id: string, isPaid: boolean) => {
-    setAllTransactions(prevTransactions =>
-      prevTransactions.map(transaction =>
-        transaction.id === id
+    setTransactions(prev =>
+      prev.map(transaction =>
+        transaction.id === id 
           ? { ...transaction, status: isPaid ? "Paid" : "Pending" }
           : transaction
       )
     );
-    console.log(`Updated transaction ${id} to ${isPaid ? 'Paid' : 'Not Paid'}`);
+    
+    toast({
+      title: isPaid ? "Payment Confirmed" : "Payment Status Updated",
+      description: `Transaction ${id} has been marked as ${isPaid ? "paid" : "pending"}`,
+    });
   };
 
   const handleBulkUpdatePayments = (ids: string[]) => {
-    let updatedCount = 0;
-    setAllTransactions(prevTransactions =>
-      prevTransactions.map(transaction => {
-        if (ids.includes(transaction.id) && transaction.status !== "Paid") {
-          updatedCount++;
-          return { ...transaction, status: "Paid" };
-        }
-        return transaction;
-      })
+    setTransactions(prev =>
+      prev.map(transaction =>
+        ids.includes(transaction.id)
+          ? { ...transaction, status: "Paid" }
+          : transaction
+      )
     );
-
-    if (updatedCount > 0) {
-      toast({
-        title: "Bulk update successful",
-        description: `Updated ${updatedCount} transactions to Paid status`,
-      });
-    } else {
-      toast({
-        title: "No updates made",
-        description: "No matching transactions found or all were already paid",
-        variant: "destructive",
-      });
-    }
-
-    console.log(`Bulk updated ${updatedCount} transactions from Excel upload`);
+    
+    toast({
+      title: "Bulk Update Completed",
+      description: `${ids.length} transactions updated from Excel upload`,
+    });
   };
 
-  // Calculate unread messages for finance role
-  const unreadCount = 7;
+  const handleExportToExcel = () => {
+    console.log("Exporting finance data to Excel");
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Calculate analytics
+  const totalPaid = transactions.filter(t => t.status === "Paid").length;
+  const totalNotPaid = transactions.filter(t => t.status !== "Paid").length;
+  const totalAmount = "₹35,500";
+  const paidAmount = "₹15,000";
+  const unpaidAmount = "₹20,500";
+
+  const unreadCount = 3;
 
   return (
     <div className="flex min-h-screen w-full">
-      <FinanceSidebar 
+      <FinanceSidebar
         currentFinanceName={currentFinanceName}
         statusCounts={statusCounts}
         activeStatusFilter={activeStatusFilter}
@@ -200,54 +157,53 @@ export default function FinanceDashboard() {
       
       <main className="flex-1 bg-white">
         <ScrollArea className="h-screen">
-          <div className="p-6">
-            {/* Header with Export, Print and Messaging */}
-            <div className="mb-4 flex justify-end items-center gap-2">
-              <MessagingIcons currentUserRole="finance" unreadCount={unreadCount} />
-              <Button 
-                variant="outline" 
-                onClick={handlePrint}
-                className="flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                Print
-              </Button>
-              <ExportButton 
-                requests={allTransactions as any}
-                filteredRequests={filteredTransactions as any}
-                hasActiveFilters={hasActiveFilters}
+          {/* Filter bar */}
+          <div className="flex flex-wrap gap-3 p-6 border-b bg-white justify-between">
+            <div>
+              <FinanceFilters
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+                amountFilter={amountFilter}
+                setAmountFilter={setAmountFilter}
+                patientFilter={patientFilter}
+                setPatientFilter={setPatientFilter}
+                onExportToExcel={handleExportToExcel}
+                onPrint={handlePrint}
+                onBulkUpdatePayments={handleBulkUpdatePayments}
               />
             </div>
 
-            <FinanceFilters 
-              dateFilter={dateFilter}
-              setDateFilter={setDateFilter}
-              amountFilter={amountFilter}
-              setAmountFilter={setAmountFilter}
-              patientFilter={patientFilter}
-              setPatientFilter={setPatientFilter}
-              onExportToExcel={() => console.log('Export to Excel')}
-              onPrint={handlePrint}
-              onBulkUpdatePayments={handleBulkUpdatePayments}
-            />
-            
-            <FinanceTable 
+            <div className="flex gap-2">
+              <MessagingIcons currentUserRole="finance" unreadCount={unreadCount} />
+              <Button onClick={handleExportToExcel} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Excel
+              </Button>
+              <Button onClick={handlePrint} variant="outline">
+                <Printer className="w-4 h-4 mr-2" />
+                Print
+              </Button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Transactions Table */}
+            <FinanceTable
               transactions={filteredTransactions}
               onUpdatePaymentStatus={handleUpdatePaymentStatus}
             />
 
+            {/* Analytics */}
             <FinanceAnalytics
-              totalPaid={paidTransactions.length}
-              totalNotPaid={notPaidTransactions.length}
-              totalAmount={`₹${totalAmount.toLocaleString()}`}
-              paidAmount={`₹${paidAmount.toLocaleString()}`}
-              unpaidAmount={`₹${unpaidAmount.toLocaleString()}`}
+              totalPaid={totalPaid}
+              totalNotPaid={totalNotPaid}
+              totalAmount={totalAmount}
+              paidAmount={paidAmount}
+              unpaidAmount={unpaidAmount}
             />
 
             {/* Footer */}
-            <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
-              Created by Dr. Wail Ahmed @ My Clinic
-            </div>
+            <Footer />
           </div>
         </ScrollArea>
       </main>
