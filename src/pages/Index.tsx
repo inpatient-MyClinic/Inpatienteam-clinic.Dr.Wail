@@ -193,15 +193,15 @@ export default function Index() {
       <div className="w-full max-w-md">
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-4">
+            <div className="mx-auto mb-4 bg-blue-600 rounded-lg p-4">
               <img 
                 src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
                 alt="My Clinic Logo" 
-                className="h-12 w-auto mx-auto"
+                className="h-12 w-auto mx-auto filter brightness-0 invert"
               />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">My Clinic In-Patient</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-2xl font-bold text-white bg-blue-600 py-2 px-4 rounded-lg mx-auto inline-block">My Clinic In-Patient</CardTitle>
+            <CardDescription className="text-gray-600 mt-2">
               Referral System - Staff Access
             </CardDescription>
           </CardHeader>
