@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -462,7 +461,7 @@ Extension: 4500`,
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh]">
+      <DialogContent className="max-w-6xl h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {selectedMessage ? (
@@ -519,9 +518,9 @@ Extension: 4500`,
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
           {!selectedMessage && showFilters && (
-            <div className="border rounded-lg p-4 mb-4 space-y-4 bg-gray-50">
+            <div className="border rounded-lg p-4 mb-4 space-y-4 bg-gray-50 flex-shrink-0">
               <div className="flex flex-wrap gap-4">
                 {/* Date Filter */}
                 <Popover>
@@ -620,9 +619,9 @@ Extension: 4500`,
 
           {!selectedMessage ? (
             // Messages list view
-            <div className="flex-1">
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-3">
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="space-y-3 p-1">
                   {filteredMessages.map((message) => (
                     <div
                       key={message.id}
@@ -682,155 +681,159 @@ Extension: 4500`,
               </ScrollArea>
             </div>
           ) : (
-            // Single message view
-            <div className="w-full flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto">
-                {/* Message Header */}
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h2 className="font-bold text-xl text-gray-900 mb-2">{selectedMessage.subject}</h2>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div><strong>From:</strong> {selectedMessage.from}</div>
-                        <div><strong>To:</strong> {selectedMessage.to}</div>
-                        <div><strong>Date:</strong> {selectedMessage.timestamp}</div>
+            // Single message view with proper scrolling
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-1">
+                  {/* Message Header */}
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h2 className="font-bold text-xl text-gray-900 mb-2">{selectedMessage.subject}</h2>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div><strong>From:</strong> {selectedMessage.from}</div>
+                          <div><strong>To:</strong> {selectedMessage.to}</div>
+                          <div><strong>Date:</strong> {selectedMessage.timestamp}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {getPriorityBadge(selectedMessage.priority || 'normal')}
+                        {selectedMessage.hasReply && (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Reply className="w-3 h-3" />
+                            Replied
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {getPriorityBadge(selectedMessage.priority || 'normal')}
-                      {selectedMessage.hasReply && (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Reply className="w-3 h-3" />
-                          Replied
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                    <div className="border-t pt-3">
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Attachments ({selectedMessage.attachments.length}):
-                      </Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {selectedMessage.attachments.map((attachment, index) => (
-                          <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
-                            <div className="flex items-center gap-2">
-                              <Paperclip className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-700 truncate">{attachment}</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => downloadAttachment(attachment)}
-                              className="flex items-center gap-1"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <Separator className="my-4" />
-                
-                {/* Message Content */}
-                <div className="bg-white p-6 rounded-lg border mb-6">
-                  <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">{selectedMessage.content}</div>
-                </div>
-                
-                {/* Reply Section */}
-                {!showReply ? (
-                  <Button onClick={() => setShowReply(true)} className="w-full mb-4" size="lg">
-                    <Reply className="w-4 h-4 mr-2" />
-                    Reply to this message
-                  </Button>
-                ) : (
-                  <div className="space-y-4 mb-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Message</Label>
-                      <Textarea
-                        value={replyMessage}
-                        onChange={(e) => setReplyMessage(e.target.value)}
-                        placeholder="Type your reply message here..."
-                        className="min-h-[120px] bg-white"
-                        rows={6}
-                      />
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Attachments</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
-                        <input
-                          type="file"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          id="reply-file-upload"
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xlsx,.xls"
-                        />
-                        <label
-                          htmlFor="reply-file-upload"
-                          className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
-                        >
-                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                          <span className="text-sm font-medium text-gray-700">Add attachments</span>
-                          <span className="text-xs text-gray-500 mt-1">Click to browse files</span>
-                        </label>
-                      </div>
-                      
-                      {replyAttachments.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <Label className="text-xs font-medium text-gray-600">Selected Files:</Label>
-                          {replyAttachments.map((file, index) => (
+                    
+                    {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
+                      <div className="border-t pt-3">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Attachments ({selectedMessage.attachments.length}):
+                        </Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {selectedMessage.attachments.map((attachment, index) => (
                             <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
                               <div className="flex items-center gap-2">
                                 <Paperclip className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                                <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                                <span className="text-sm font-medium text-gray-700 truncate">{attachment}</span>
                               </div>
                               <Button
-                                type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => removeAttachment(index)}
-                                className="text-red-600 hover:text-red-800"
+                                onClick={() => downloadAttachment(attachment)}
+                                className="flex items-center gap-1"
                               >
-                                <X className="w-4 h-4" />
+                                <Download className="w-4 h-4" />
+                                Download
                               </Button>
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setShowReply(false);
-                          setReplyMessage("");
-                          setReplyAttachments([]);
-                        }} 
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleSendReply} 
-                        className="flex-1"
-                        disabled={!replyMessage.trim()}
-                      >
-                        <Send className="w-4 h-4 mr-2" />
-                        Send Reply
-                      </Button>
-                    </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  {/* Message Content */}
+                  <div className="bg-white p-6 rounded-lg border mb-6">
+                    <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">{selectedMessage.content}</div>
+                  </div>
+                  
+                  {/* Reply Section */}
+                  {!showReply ? (
+                    <div className="sticky bottom-0 bg-white border-t pt-4">
+                      <Button onClick={() => setShowReply(true)} className="w-full" size="lg">
+                        <Reply className="w-4 h-4 mr-2" />
+                        Reply to this message
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 mb-4">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Message</Label>
+                        <Textarea
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          placeholder="Type your reply message here..."
+                          className="min-h-[120px] bg-white"
+                          rows={6}
+                        />
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Attachments</Label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
+                          <input
+                            type="file"
+                            multiple
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="reply-file-upload"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xlsx,.xls"
+                          />
+                          <label
+                            htmlFor="reply-file-upload"
+                            className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                          >
+                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                            <span className="text-sm font-medium text-gray-700">Add attachments</span>
+                            <span className="text-xs text-gray-500 mt-1">Click to browse files</span>
+                          </label>
+                        </div>
+                        
+                        {replyAttachments.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            <Label className="text-xs font-medium text-gray-600">Selected Files:</Label>
+                            {replyAttachments.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
+                                <div className="flex items-center gap-2">
+                                  <Paperclip className="w-4 h-4 text-gray-400" />
+                                  <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                                  <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeAttachment(index)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-3 sticky bottom-0 bg-white pt-4 border-t">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setShowReply(false);
+                            setReplyMessage("");
+                            setReplyAttachments([]);
+                          }} 
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSendReply} 
+                          className="flex-1"
+                          disabled={!replyMessage.trim()}
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          Send Reply
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
           )}
         </div>
