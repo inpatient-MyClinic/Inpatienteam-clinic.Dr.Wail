@@ -247,17 +247,17 @@ export default function CustomerCareDashboard() {
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
-      <aside className="w-[19rem] bg-blue-600 flex flex-col items-center p-6 border-r">
+      <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
         <div className="text-center mb-6">
-          <div className="bg-white rounded-lg p-3 mb-2">
+          <div className="bg-blue-600 rounded-lg p-3 mb-2">
             <img 
               src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
               alt="My Clinic Logo" 
-              className="h-8 w-auto mx-auto"
+              className="h-8 w-auto mx-auto filter brightness-0 invert"
             />
           </div>
-          <h1 className="text-xl font-bold text-white">Customer Care</h1>
-          <p className="text-sm text-blue-100">Dashboard</p>
+          <h1 className="text-xl font-bold text-blue-900">Customer Care</h1>
+          <p className="text-sm text-blue-700">Dashboard</p>
         </div>
         
         <div className="flex flex-col gap-4 w-full mb-6">
