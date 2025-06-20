@@ -165,7 +165,7 @@ function isOverdue(request: CaseCoordinatorRequest): boolean {
 }
 
 export function useCaseCoordinatorRequests(coordinatorName: string) {
-  const [requests] = useState<CaseCoordinatorRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<CaseCoordinatorRequest[]>(mockRequests);
 
   const allRequests = useMemo(() => requests, [requests]);
   
@@ -183,11 +183,23 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
     console.log(`Updating request ${requestId} status to ${newStatus}`);
   };
 
+  const assignToCoordinator = (requestId: number, coordinatorName: string) => {
+    setRequests(prevRequests => 
+      prevRequests.map(request => 
+        request.id === requestId 
+          ? { ...request, assignedCoordinator: coordinatorName, coordinatorActionTime: new Date().toISOString() }
+          : request
+      )
+    );
+    console.log(`Assigned request ${requestId} to ${coordinatorName}`);
+  };
+
   return {
     requests,
     allRequests,
     coordinatorRequests,
     overdueRequests,
-    updateStatus
+    updateStatus,
+    assignToCoordinator
   };
 }

@@ -22,6 +22,7 @@ import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDa
 export default function CaseCoordinatorDashboard() {
   const navigate = useNavigate();
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [assignedToMeFilter, setAssignedToMeFilter] = useState(false);
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
     selectedWeeks: { month: Date; weekNumbers: number[] }[];
@@ -33,13 +34,16 @@ export default function CaseCoordinatorDashboard() {
   });
 
   const currentCoordinatorName = "Sarah Johnson";
-  const { allRequests, coordinatorRequests, overdueRequests, updateStatus } = useCaseCoordinatorRequests(currentCoordinatorName);
+  const { allRequests, coordinatorRequests, overdueRequests, updateStatus, assignToCoordinator } = useCaseCoordinatorRequests(currentCoordinatorName);
 
   // Apply additional filters beyond the hook's filtering
   const applyFilters = (requests: typeof allRequests) => {
     return requests.filter(request => {
       // Status filter from sidebar
       const matchesStatus = !activeStatusFilter || request.status === activeStatusFilter;
+      
+      // Assigned to me filter
+      const matchesAssignment = !assignedToMeFilter || request.assignedCoordinator === currentCoordinatorName;
       
       // Date filters
       const requestDate = new Date(request.createdAt);
@@ -85,7 +89,7 @@ export default function CaseCoordinatorDashboard() {
         }
       }
       
-      return matchesStatus && matchesDateFilter;
+      return matchesStatus && matchesAssignment && matchesDateFilter;
     });
   };
 
@@ -115,6 +119,7 @@ export default function CaseCoordinatorDashboard() {
   // Check if there are active filters
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
+    assignedToMeFilter ||
     dateFilters.selectedDays.length > 0 ||
     dateFilters.selectedWeeks.length > 0 ||
     dateFilters.selectedMonths.length > 0
@@ -130,6 +135,10 @@ export default function CaseCoordinatorDashboard() {
 
   const handleDateFilterChange = (filters: typeof dateFilters) => {
     setDateFilters(filters);
+  };
+
+  const handleAssignToMe = (requestId: number) => {
+    assignToCoordinator(requestId, currentCoordinatorName);
   };
 
   // Calculate unread messages for case-coordinator role
@@ -152,7 +161,16 @@ export default function CaseCoordinatorDashboard() {
             <div className="mb-4 flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Case Management Dashboard</h2>
-                <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
+                <div className="flex items-center gap-4">
+                  <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
+                  <Button
+                    variant={assignedToMeFilter ? "default" : "outline"}
+                    onClick={() => setAssignedToMeFilter(!assignedToMeFilter)}
+                    className="flex items-center gap-2"
+                  >
+                    Assigned to Me
+                  </Button>
+                </div>
               </div>
               <div className="flex gap-2">
                 <MessagingIcons currentUserRole="case-coordinator" unreadCount={unreadCount} />
@@ -176,6 +194,7 @@ export default function CaseCoordinatorDashboard() {
             <CaseCoordinatorRequestsTable 
               filteredRequests={finalFilteredRequests}
               updateStatus={updateStatus}
+              onAssignToMe={handleAssignToMe}
             />
 
             {/* Analytics */}

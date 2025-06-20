@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, Send, Filter, X, MoreVertical, User, Building, FileCheck } from "lucide-react";
@@ -16,11 +17,13 @@ import { CaseCoordinatorRequest, COORDINATOR_REQUEST_STATUSES } from "@/hooks/us
 interface CaseCoordinatorRequestsTableProps {
   filteredRequests: CaseCoordinatorRequest[];
   updateStatus: (requestId: number, newStatus: string) => void;
+  onAssignToMe: (requestId: number) => void;
 }
 
 export default function CaseCoordinatorRequestsTable({
   filteredRequests,
-  updateStatus
+  updateStatus,
+  onAssignToMe
 }: CaseCoordinatorRequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
   
@@ -29,6 +32,7 @@ export default function CaseCoordinatorRequestsTable({
   const [hospitalFilter, setHospitalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [doctorFilter, setDoctorFilter] = useState("all");
+  const [coordinatorFilter, setCoordinatorFilter] = useState("all");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,6 +53,7 @@ export default function CaseCoordinatorRequestsTable({
   const uniqueStatuses = [...new Set(filteredRequests.map(req => req.status))];
   const uniqueHospitals = [...new Set(filteredRequests.map(req => req.hospital))];
   const uniqueDoctors = [...new Set(filteredRequests.map(req => req.doctorName))];
+  const uniqueCoordinators = [...new Set(filteredRequests.map(req => req.assignedCoordinator).filter(Boolean))];
 
   // Filter requests based on all filter criteria
   const tableFilteredRequests = filteredRequests.filter(request => {
@@ -57,8 +62,9 @@ export default function CaseCoordinatorRequestsTable({
     const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
     const matchesDoctor = doctorFilter === "all" || request.doctorName === doctorFilter;
+    const matchesCoordinator = coordinatorFilter === "all" || request.assignedCoordinator === coordinatorFilter;
     
-    return matchesService && matchesHospital && matchesStatus && matchesDoctor;
+    return matchesService && matchesHospital && matchesStatus && matchesDoctor && matchesCoordinator;
   });
 
   // Calculate pagination
@@ -70,20 +76,22 @@ export default function CaseCoordinatorRequestsTable({
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [serviceFilter, hospitalFilter, statusFilter, doctorFilter]);
+  }, [serviceFilter, hospitalFilter, statusFilter, doctorFilter, coordinatorFilter]);
 
   const clearAllFilters = () => {
     setServiceFilter("");
     setHospitalFilter("all");
     setStatusFilter("all");
     setDoctorFilter("all");
+    setCoordinatorFilter("all");
   };
 
   const hasActiveFilters = Boolean(
     serviceFilter || 
     hospitalFilter !== "all" || 
     statusFilter !== "all" || 
-    doctorFilter !== "all"
+    doctorFilter !== "all" ||
+    coordinatorFilter !== "all"
   );
 
   const getStatusBadge = (status: string) => {
@@ -112,6 +120,7 @@ export default function CaseCoordinatorRequestsTable({
   };
 
   const handleAssignToMe = (requestId: number) => {
+    onAssignToMe(requestId);
     toast({
       title: "Assigned",
       description: "Request has been assigned to you",
@@ -345,6 +354,46 @@ export default function CaseCoordinatorRequestsTable({
             <th className="p-2">Agreed Surgery Date</th>
             <th className="p-2 relative">
               <div className="flex items-center justify-between">
+                Case Coordinator
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Filter className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Filter by Coordinator</Label>
+                      <Select value={coordinatorFilter} onValueChange={setCoordinatorFilter}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select coordinator" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="all">All coordinators</SelectItem>
+                          {uniqueCoordinators.map((coordinator) => (
+                            <SelectItem key={coordinator} value={coordinator}>
+                              {coordinator}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {coordinatorFilter !== "all" && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setCoordinatorFilter("all")}
+                          className="w-full text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </th>
+            <th className="p-2 relative">
+              <div className="flex items-center justify-between">
                 Status
                 <Popover>
                   <PopoverTrigger asChild>
@@ -389,7 +438,7 @@ export default function CaseCoordinatorRequestsTable({
         <tbody>
           {currentPageRequests.length === 0 ? (
             <tr>
-              <td colSpan={8} className="text-center text-gray-400 py-6">
+              <td colSpan={9} className="text-center text-gray-400 py-6">
                 {hasActiveFilters ? "No cases match the current filters." : "No cases found."}
               </td>
             </tr>
@@ -406,6 +455,9 @@ export default function CaseCoordinatorRequestsTable({
                     new Date(req.agreedSurgeryDate).toLocaleDateString() : 
                     "Not set"
                   }
+                </td>
+                <td className="p-2">
+                  {req.assignedCoordinator || "Not assigned"}
                 </td>
                 <td className="p-2">
                   {getStatusBadge(req.status)}
