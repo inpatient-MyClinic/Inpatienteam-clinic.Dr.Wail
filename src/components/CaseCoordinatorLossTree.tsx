@@ -34,12 +34,14 @@ export default function CaseCoordinatorLossTree({
   const DelayBreakdown = ({ title, analysis }: { title: string; analysis: { total: number; causes: Record<string, number> } }) => (
     <div className="p-4 border rounded-lg">
       <h4 className="font-semibold text-gray-900 mb-2">{title}</h4>
-      <p className="text-2xl font-bold text-blue-600 mb-2">{analysis.total}</p>
-      <div className="space-y-1">
+      <p className="text-2xl font-bold text-blue-600 mb-3">{analysis.total}</p>
+      <div className="space-y-2">
         {Object.entries(analysis.causes).map(([cause, count]) => (
-          <div key={cause} className="flex justify-between text-sm">
-            <span className="capitalize">{cause}:</span>
-            <span className="font-medium">{count}</span>
+          <div key={cause} className="flex items-center text-sm">
+            <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium mr-2">
+              {count}
+            </span>
+            <span className="capitalize">{cause}</span>
           </div>
         ))}
       </div>
@@ -52,33 +54,12 @@ export default function CaseCoordinatorLossTree({
         <CardTitle>Loss Tree Analysis</CardTitle>
         <CardDescription>Breakdown of delay causes by status category</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <DelayBreakdown title="Pending" analysis={pendingAnalysis} />
         <DelayBreakdown title="Scheduled" analysis={scheduledAnalysis} />
         <DelayBreakdown title="Postponed" analysis={postponedAnalysis} />
         <DelayBreakdown title="Rejected" analysis={rejectedAnalysis} />
         <DelayBreakdown title="Cancelled" analysis={cancelledAnalysis} />
-        <div className="p-4 border rounded-lg">
-          <h4 className="font-semibold text-gray-900 mb-2">Delay Causes Legend</h4>
-          <div className="space-y-1 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded"></div>
-              <span>Doctor</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span>Hospital</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-              <span>Insurance</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
-              <span>Patient</span>
-            </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
