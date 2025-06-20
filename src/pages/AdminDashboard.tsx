@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Users, Settings, FileText, BarChart3, ArrowLeft, Download, Printer, Upload } from "lucide-react";
+import { Users, Settings, FileText, BarChart3, ArrowLeft, Download, Printer, Upload, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
@@ -152,6 +152,16 @@ export default function AdminDashboard() {
           <h1 className="text-lg font-bold text-blue-900">Admin Dashboard</h1>
           <p className="text-xs text-blue-700">System Administration</p>
         </div>
+
+        {/* Create Request Button */}
+        <Button 
+          className="w-full mb-6" 
+          variant="default" 
+          onClick={() => navigate("/create-request")}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create Request
+        </Button>
         
         <div className="flex flex-col gap-2 w-full mb-4">
           <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
