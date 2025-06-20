@@ -5,7 +5,7 @@ import DoctorManagement from "@/components/DoctorManagement";
 import ServicePricingTable from "@/components/ServicePricingTable";
 import CustomFieldsManager from "@/components/CustomFieldsManager";
 import PrivilegeManagement from "./PrivilegeManagement";
-import UserManagement from "@/components/settings/UserManagement";
+import EnhancedUserManagement from "@/components/settings/EnhancedUserManagement";
 import SystemSettings from "@/components/settings/SystemSettings";
 import Footer from "@/components/Footer";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
@@ -48,7 +48,7 @@ const SettingsDirectory = () => {
         </TabsList>
 
         <TabsContent value="users" className="space-y-6">
-          <UserManagement />
+          <EnhancedUserManagement />
         </TabsContent>
 
         <TabsContent value="doctors" className="space-y-6">

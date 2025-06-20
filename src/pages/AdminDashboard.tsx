@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Users, Settings, FileText, BarChart3, ArrowLeft, Download, Printer, Upload } from "lucide-react";
@@ -9,6 +10,8 @@ import Footer from "@/components/Footer";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminExcelUpload from "@/components/admin/AdminExcelUpload";
+import AIAssistant from "@/components/admin/AIAssistant";
+import PDFReportGenerator from "@/components/admin/PDFReportGenerator";
 import {
   Table,
   TableBody,
