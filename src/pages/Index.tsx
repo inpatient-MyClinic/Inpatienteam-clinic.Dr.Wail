@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +72,7 @@ export default function Index() {
   };
 
   const redirectToUserDashboard = (userRole: string) => {
+    console.log("Redirecting user with role:", userRole);
     switch (userRole) {
       case "admin":
         navigate("/admin");
@@ -101,6 +101,8 @@ export default function Index() {
   const handlePasswordCreation = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("Creating password for:", email);
+    
     if (password.length < 6) {
       toast({
         title: "Password Too Short",
@@ -122,6 +124,7 @@ export default function Index() {
     const userRole = getUserRole(email);
     const userName = extractUserName(email);
 
+    // Store user data
     localStorage.setItem(`user_${email}`, JSON.stringify({
       email,
       name: userName,
@@ -130,6 +133,8 @@ export default function Index() {
     }));
     localStorage.setItem(`password_${email}`, password);
     localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
+
+    console.log("User data stored, redirecting...");
 
     toast({
       title: "Account Created Successfully",
@@ -144,6 +149,8 @@ export default function Index() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("Login attempt with email:", email);
+    
     if (!email || !password) {
       toast({
         title: "Missing Information",
@@ -153,7 +160,9 @@ export default function Index() {
       return;
     }
 
-    if (!validateEmail(email)) {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    if (!validateEmail(normalizedEmail)) {
       toast({
         title: "Invalid Email",
         description: "Please use your company email (@myclinic.com.sa) or the authorized email (inpatienteam@gmail.com)",
@@ -162,10 +171,13 @@ export default function Index() {
       return;
     }
 
-    const userExists = localStorage.getItem(`user_${email}`);
+    const userExists = localStorage.getItem(`user_${normalizedEmail}`);
+    console.log("User exists check:", !!userExists);
     
     if (!userExists) {
+      console.log("First time login detected");
       setIsFirstTimeLogin(true);
+      setEmail(normalizedEmail); // Make sure the email is normalized
       toast({
         title: "First Time Login",
         description: "Please create your password to access the system.",
@@ -173,7 +185,8 @@ export default function Index() {
       return;
     }
 
-    const savedPassword = localStorage.getItem(`password_${email}`);
+    const savedPassword = localStorage.getItem(`password_${normalizedEmail}`);
+    console.log("Password check:", password === savedPassword);
     
     if (savedPassword !== password) {
       toast({
@@ -184,11 +197,10 @@ export default function Index() {
       return;
     }
 
-    const userRole = getUserRole(email);
-    const userName = extractUserName(email);
+    const userRole = getUserRole(normalizedEmail);
+    const userName = extractUserName(normalizedEmail);
     
-    console.log("Final user role:", userRole);
-    console.log("User name:", userName);
+    console.log("Login successful, role:", userRole, "name:", userName);
 
     toast({
       title: "Login Successful",
