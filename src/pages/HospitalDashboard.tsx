@@ -91,6 +91,14 @@ export default function HospitalDashboard() {
 
   const finalFilteredRequests = applyFilters(filteredRequests);
 
+  // Calculate status counts for the sidebar
+  const statusCounts = {
+    pending: finalFilteredRequests.filter(req => req.status === "Pending").length,
+    approved: finalFilteredRequests.filter(req => req.status === "Approved").length,
+    rejected: finalFilteredRequests.filter(req => req.status === "Rejected").length,
+    needJustification: finalFilteredRequests.filter(req => req.status === "Need Justification").length
+  };
+
   // Check if there are active filters
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
@@ -101,8 +109,19 @@ export default function HospitalDashboard() {
     dateFilters.selectedMonths.length > 0
   );
 
-  const createNewRequest = () => {
-    navigate("/create-request");
+  const handleStatusIconClick = (status: string) => {
+    setActiveStatusFilter(activeStatusFilter === status ? null : status);
+  };
+
+  const handleClearAllFilters = () => {
+    setActiveStatusFilter(null);
+    setSpecialtyFilter("all");
+    setDoctorFilter("all");
+    setDateFilters({
+      selectedDays: [],
+      selectedWeeks: [],
+      selectedMonths: []
+    });
   };
 
   const handlePrint = () => {
@@ -112,11 +131,11 @@ export default function HospitalDashboard() {
   return (
     <div className="flex min-h-screen w-full">
       <HospitalSidebar 
-        currentHospitalName={currentHospitalName}
-        filteredRequests={finalFilteredRequests}
-        onCreateNewRequest={createNewRequest}
+        statusCounts={statusCounts}
         activeStatusFilter={activeStatusFilter}
-        onStatusFilterClick={setActiveStatusFilter}
+        onStatusIconClick={handleStatusIconClick}
+        onClearAllFilters={handleClearAllFilters}
+        hasActiveFilters={hasActiveFilters}
       />
       
       <main className="flex-1 bg-white p-6">
@@ -139,19 +158,20 @@ export default function HospitalDashboard() {
         </div>
 
         <HospitalFilters 
-          specialtyFilter={specialtyFilter}
-          setSpecialtyFilter={setSpecialtyFilter}
-          doctorFilter={doctorFilter}
-          setDoctorFilter={setDoctorFilter}
+          requests={finalFilteredRequests}
+          onFiltersChange={(filters) => {
+            // Handle filter changes if needed
+            console.log('Filters changed:', filters);
+          }}
         />
         
         <HospitalRequestsTable 
-          filteredRequests={finalFilteredRequests}
-          updateStatus={updateStatus}
+          requests={finalFilteredRequests}
+          onStatusChange={updateStatus}
         />
 
         {/* Analytics */}
-        <HospitalAnalytics filteredRequests={filteredRequests} currentHospitalName={currentHospitalName} />
+        <HospitalAnalytics requests={filteredRequests} hospitalName={currentHospitalName} />
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
