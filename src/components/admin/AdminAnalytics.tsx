@@ -48,12 +48,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
       const value = item[field];
       acc[value] = (acc[value] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
     
     return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => (b[1] as number) - (a[1] as number))
       .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
+      .map(([name, count]) => ({ name, count: count as number }));
   };
 
   const top5Specialties = getTop5('specialty');
@@ -61,19 +61,15 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const top5Doctors = getTop5('user');
 
   // Loss Tree Analysis Data
+  const pendingCount = data.filter(item => item.status === "Pending").length;
+  const inProgressCount = data.filter(item => item.status === "In Progress").length;
+  
   const lossTreeData = [
     { stage: "Received", count: totalRequests, percentage: 100 },
-    { stage: "In Progress", count: data.filter(item => item.status === "In Progress").length, percentage: 0 },
-    { stage: "Completed", count: completedRequests, percentage: 0 },
-    { stage: "Pending", count: data.filter(item => item.status === "Pending").length, percentage: 0 }
+    { stage: "In Progress", count: inProgressCount, percentage: totalRequests > 0 ? Number((inProgressCount / totalRequests * 100).toFixed(1)) : 0 },
+    { stage: "Completed", count: completedRequests, percentage: totalRequests > 0 ? Number((completedRequests / totalRequests * 100).toFixed(1)) : 0 },
+    { stage: "Pending", count: pendingCount, percentage: totalRequests > 0 ? Number((pendingCount / totalRequests * 100).toFixed(1)) : 0 }
   ];
-
-  // Calculate percentages for loss tree
-  lossTreeData.forEach((item, index) => {
-    if (index > 0) {
-      item.percentage = totalRequests > 0 ? (item.count / totalRequests * 100) : 0;
-    }
-  });
 
   // NPS Score calculation (simulated)
   const npsScore = 72; // This would come from actual survey data
@@ -296,9 +292,9 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
             <PieChart>
               <Pie
                 data={[
-                  { name: "Completed", value: data.filter(item => item.status === "Completed").length },
-                  { name: "In Progress", value: data.filter(item => item.status === "In Progress").length },
-                  { name: "Pending", value: data.filter(item => item.status === "Pending").length }
+                  { name: "Completed", value: completedRequests },
+                  { name: "In Progress", value: inProgressCount },
+                  { name: "Pending", value: pendingCount }
                 ]}
                 cx="50%"
                 cy="50%"
