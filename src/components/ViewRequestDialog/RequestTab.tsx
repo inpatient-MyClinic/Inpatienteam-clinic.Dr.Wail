@@ -12,8 +12,39 @@ interface RequestTabProps {
   onFieldChange: (field: string, value: any) => void;
 }
 
+const specialties = [
+  { value: "cardiology", label: "Cardiology" },
+  { value: "orthopedics", label: "Orthopedics" },
+  { value: "neurology", label: "Neurology" },
+  { value: "oncology", label: "Oncology" },
+  { value: "gastroenterology", label: "Gastroenterology" },
+  { value: "dermatology", label: "Dermatology" },
+  { value: "endocrinology", label: "Endocrinology" },
+];
+
+const servicesBySpecialty: Record<string, string[]> = {
+  cardiology: ["Angioplasty", "Bypass Surgery", "Valve Replacement", "Pacemaker Insertion"],
+  orthopedics: ["Joint Replacement", "Arthroscopy", "Fracture Repair", "Spinal Surgery"],
+  neurology: ["Brain Surgery", "Epilepsy Treatment", "Stroke Care", "Movement Disorders"],
+  oncology: ["Chemotherapy", "Radiation Therapy", "Surgical Oncology", "Immunotherapy"],
+  gastroenterology: ["Endoscopy", "Colonoscopy", "Liver Biopsy", "ERCP"],
+  dermatology: ["Skin Biopsy", "Mole Removal", "Laser Treatment", "Cosmetic Surgery"],
+  endocrinology: ["Diabetes Management", "Thyroid Surgery", "Hormone Therapy", "Metabolic Disorders"],
+};
+
+const diagnosisBySpecialty: Record<string, string[]> = {
+  cardiology: ["Coronary Artery Disease", "Heart Failure", "Arrhythmia", "Valvular Disease"],
+  orthopedics: ["Osteoarthritis", "Fractures", "Sports Injuries", "Spinal Disorders"],
+  neurology: ["Stroke", "Epilepsy", "Multiple Sclerosis", "Parkinson's Disease"],
+  oncology: ["Breast Cancer", "Lung Cancer", "Colon Cancer", "Lymphoma"],
+  gastroenterology: ["GERD", "Inflammatory Bowel Disease", "Liver Disease", "Gallstones"],
+  dermatology: ["Skin Cancer", "Eczema", "Psoriasis", "Acne"],
+  endocrinology: ["Diabetes", "Thyroid Disorders", "Adrenal Disorders", "PCOS"],
+};
+
 export default function RequestTab({ request, onFieldChange }: RequestTabProps) {
   const [attachments, setAttachments] = useState(request.attachments || []);
+  const [selectedSpecialty, setSelectedSpecialty] = useState(request.specialty || "");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -28,6 +59,17 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
     setAttachments(updatedAttachments);
     onFieldChange("attachments", updatedAttachments);
   };
+
+  const handleSpecialtyChange = (value: string) => {
+    setSelectedSpecialty(value);
+    onFieldChange("specialty", value);
+    // Reset dependent fields when specialty changes
+    onFieldChange("serviceDescription", "");
+    onFieldChange("diagnosis", "");
+  };
+
+  const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
+  const availableDiagnoses = selectedSpecialty ? diagnosisBySpecialty[selectedSpecialty] || [] : [];
 
   return (
     <div className="space-y-6">
@@ -95,15 +137,6 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
               </Select>
             </div>
           </div>
-          
-          <div>
-            <Label htmlFor="nationality">Nationality</Label>
-            <Input
-              id="nationality"
-              defaultValue={request.nationality || ""}
-              onChange={(e) => onFieldChange("nationality", e.target.value)}
-            />
-          </div>
         </div>
 
         {/* Medical Information */}
@@ -111,24 +144,56 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
           <h3 className="text-lg font-semibold">Medical Information</h3>
           
           <div>
-            <Label htmlFor="serviceDescription">Service Description</Label>
-            <Textarea
-              id="serviceDescription"
-              defaultValue={request.serviceDescription || ""}
-              onChange={(e) => onFieldChange("serviceDescription", e.target.value)}
-              rows={3}
-            />
+            <Label htmlFor="specialty">Specialty</Label>
+            <Select value={selectedSpecialty} onValueChange={handleSpecialtyChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select specialty" />
+              </SelectTrigger>
+              <SelectContent>
+                {specialties.map((specialty) => (
+                  <SelectItem key={specialty.value} value={specialty.value}>
+                    {specialty.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
-          <div>
-            <Label htmlFor="diagnosis">Diagnosis</Label>
-            <Textarea
-              id="diagnosis"
-              defaultValue={request.diagnosis || ""}
-              onChange={(e) => onFieldChange("diagnosis", e.target.value)}
-              rows={2}
-            />
-          </div>
+          {selectedSpecialty && (
+            <div>
+              <Label htmlFor="serviceDescription">Service Description</Label>
+              <Select defaultValue={request.serviceDescription || ""} onValueChange={(value) => onFieldChange("serviceDescription", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableServices.map((service) => (
+                    <SelectItem key={service} value={service}>
+                      {service}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {selectedSpecialty && (
+            <div>
+              <Label htmlFor="diagnosis">Diagnosis</Label>
+              <Select defaultValue={request.diagnosis || ""} onValueChange={(value) => onFieldChange("diagnosis", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select diagnosis" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDiagnoses.map((diagnosis) => (
+                    <SelectItem key={diagnosis} value={diagnosis}>
+                      {diagnosis}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div>
             <Label htmlFor="urgency">Urgency</Label>
@@ -180,15 +245,6 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
               onChange={(e) => onFieldChange("doctorName", e.target.value)}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="specialty">Specialty</Label>
-            <Input
-              id="specialty"
-              defaultValue={request.specialty || ""}
-              onChange={(e) => onFieldChange("specialty", e.target.value)}
-            />
-          </div>
         </div>
       </div>
 
@@ -205,78 +261,23 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
             rows={3}
           />
         </div>
-        
-        <div>
-          <Label htmlFor="currentMedications">Current Medications</Label>
-          <Textarea
-            id="currentMedications"
-            defaultValue={request.currentMedications || ""}
-            onChange={(e) => onFieldChange("currentMedications", e.target.value)}
-            rows={2}
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="allergies">Allergies</Label>
-          <Textarea
-            id="allergies"
-            defaultValue={request.allergies || ""}
-            onChange={(e) => onFieldChange("allergies", e.target.value)}
-            rows={2}
-          />
-        </div>
       </div>
 
-      {/* Insurance Information */}
+      {/* Coverage Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Insurance Information</h3>
+        <h3 className="text-lg font-semibold">Coverage Information</h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="insuranceCompany">Insurance Company</Label>
-            <Input
-              id="insuranceCompany"
-              defaultValue={request.insuranceCompany || ""}
-              onChange={(e) => onFieldChange("insuranceCompany", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="policyNumber">Policy Number</Label>
-            <Input
-              id="policyNumber"
-              defaultValue={request.policyNumber || ""}
-              onChange={(e) => onFieldChange("policyNumber", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="contactPerson">Contact Person</Label>
-            <Input
-              id="contactPerson"
-              defaultValue={request.contactPerson || ""}
-              onChange={(e) => onFieldChange("contactPerson", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="contactPhone">Contact Phone</Label>
-            <Input
-              id="contactPhone"
-              defaultValue={request.contactPhone || ""}
-              onChange={(e) => onFieldChange("contactPhone", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="contactEmail">Contact Email</Label>
-            <Input
-              id="contactEmail"
-              type="email"
-              defaultValue={request.contactEmail || ""}
-              onChange={(e) => onFieldChange("contactEmail", e.target.value)}
-            />
-          </div>
+        <div>
+          <Label htmlFor="coverageType">Coverage Type</Label>
+          <Select defaultValue={request.coverageType || ""} onValueChange={(value) => onFieldChange("coverageType", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select coverage type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Insurance">Insurance</SelectItem>
+              <SelectItem value="Cash">Cash</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

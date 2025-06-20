@@ -127,6 +127,59 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
         </div>
       </div>
 
+      {/* Insurance Information */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Insurance Information</h3>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="insuranceCompany">Insurance Company</Label>
+            <Input
+              id="insuranceCompany"
+              defaultValue={request.insuranceCompany || ""}
+              onChange={(e) => onFieldChange("insuranceCompany", e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="policyNumber">Policy Number</Label>
+            <Input
+              id="policyNumber"
+              defaultValue={request.policyNumber || ""}
+              onChange={(e) => onFieldChange("policyNumber", e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="contactPerson">Contact Person</Label>
+            <Input
+              id="contactPerson"
+              defaultValue={request.contactPerson || ""}
+              onChange={(e) => onFieldChange("contactPerson", e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="contactPhone">Contact Phone</Label>
+            <Input
+              id="contactPhone"
+              defaultValue={request.contactPhone || ""}
+              onChange={(e) => onFieldChange("contactPhone", e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="contactEmail">Contact Email</Label>
+            <Input
+              id="contactEmail"
+              type="email"
+              defaultValue={request.contactEmail || ""}
+              onChange={(e) => onFieldChange("contactEmail", e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Coverage Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Coverage Information</h3>
