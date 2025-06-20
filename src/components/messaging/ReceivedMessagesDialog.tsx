@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Mail } from "lucide-react";
@@ -30,148 +31,93 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   
   const { toast } = useToast();
 
-  // Generate role-specific messages
+  // Generate role-specific messages with more variety
   const generateMessagesForRole = (role: string): Message[] => {
-    const baseMessages = [
+    const roleSpecificMessages = {
+      nurse: [
+        {
+          id: "1",
+          from: "Case Coordinator Sarah",
+          to: role,
+          subject: "Urgent: Patient Authorization Required - Ahmed Hassan",
+          content: `Dear ${role},\n\nI hope this message finds you well. I am writing to request your urgent attention regarding patient Ahmed Hassan's cardiac surgery authorization.\n\nPatient Details:\n- Name: Ahmed Hassan\n- MRN: MRN-2025-001234\n- ID: 1234567890\n- Surgery Type: Cardiac Bypass Surgery\n- Scheduled Date: June 25, 2025\n- Hospital: King Abdulaziz Medical City\n\nThe authorization documents have been prepared and are attached to this message for your review. Please note that the insurance company requires your approval within 24 hours to proceed with the surgery.\n\nKey points for your consideration:\n1. Patient's medical history indicates previous cardiac events\n2. Current medications list is included in attachment 2\n3. Pre-operative tests show clearance for surgery\n4. Expected duration: 4-6 hours\n5. Post-operative care plan is outlined in attachment 3\n\nPlease review the attached documents and provide your authorization at your earliest convenience. If you have any questions or need additional information, please don't hesitate to contact me.\n\nThank you for your prompt attention to this matter.\n\nBest regards,\nSarah Johnson, Case Coordinator\nMy Clinic - Cardiac Department\nPhone: +966-11-234567\nEmail: sarah.johnson@myclinic.sa`,
+          timestamp: "2025-06-20 10:30 AM",
+          date: new Date("2025-06-20"),
+          attachments: ["patient_authorization_form.pdf", "medical_history_report.pdf", "pre_operative_tests.pdf", "post_care_plan.pdf"],
+          isRead: false,
+          hasReply: false,
+          isNew: true,
+          priority: 'urgent' as const,
+        },
+        {
+          id: "2",
+          from: "Dr. Mohammed Al-Saud",
+          to: role,
+          subject: "Patient Care Instructions - Room 205",
+          content: `Dear Nurse Team,\n\nPlease note the following care instructions for the patient in Room 205:\n\n- Monitor vital signs every 2 hours\n- Administer medication as prescribed\n- Ensure patient comfort and hydration\n\nThank you for your excellent care.\n\nDr. Mohammed Al-Saud`,
+          timestamp: "2025-06-19 2:15 PM",
+          date: new Date("2025-06-19"),
+          attachments: ["care_instructions.pdf"],
+          isRead: true,
+          hasReply: false,
+          isNew: false,
+          priority: 'high' as const,
+        }
+      ],
+      doctor: [
+        {
+          id: "1",
+          from: "Hospital Administration",
+          to: role,
+          subject: "Surgery Schedule Update - Tomorrow",
+          content: `Dear Doctor,\n\nPlease note that your surgery scheduled for tomorrow has been moved from 8:00 AM to 10:30 AM due to emergency case prioritization.\n\nNew Schedule:\n- Time: 10:30 AM\n- Room: 205\n- Patient: Sara Al-Mahmoud\n- Procedure: Knee Replacement\n\nPlease confirm your availability.\n\nBest regards,\nHospital Administration`,
+          timestamp: "2025-06-19 11:20 AM",
+          date: new Date("2025-06-19"),
+          attachments: ["updated_schedule.pdf"],
+          isRead: false,
+          hasReply: false,
+          isNew: true,
+          priority: 'urgent' as const,
+        }
+      ],
+      admin: [
+        {
+          id: "1",
+          from: "System Administrator",
+          to: role,
+          subject: "System Maintenance Notice",
+          content: `Dear Admin,\n\nScheduled system maintenance will occur this weekend from 2:00 AM to 6:00 AM on Saturday.\n\nSystems affected:\n- Patient records database\n- Appointment scheduling\n- Billing system\n\nPlease inform all staff accordingly.\n\nIT Department`,
+          timestamp: "2025-06-19 9:00 AM",
+          date: new Date("2025-06-19"),
+          attachments: ["maintenance_schedule.pdf"],
+          isRead: false,
+          hasReply: false,
+          isNew: true,
+          priority: 'normal' as const,
+        }
+      ]
+    };
+
+    // Get role-specific messages or default messages
+    const messages = roleSpecificMessages[role.toLowerCase() as keyof typeof roleSpecificMessages] || [
       {
         id: "1",
-        from: "Case Coordinator Sarah",
+        from: "System Admin",
         to: role,
-        subject: "Urgent: Patient Authorization Required - Ahmed Hassan",
-        content: `Dear ${role},
-
-I hope this message finds you well. I am writing to request your urgent attention regarding patient Ahmed Hassan's cardiac surgery authorization.
-
-Patient Details:
-- Name: Ahmed Hassan
-- MRN: MRN-2025-001234
-- ID: 1234567890
-- Surgery Type: Cardiac Bypass Surgery
-- Scheduled Date: June 25, 2025
-- Hospital: King Abdulaziz Medical City
-
-The authorization documents have been prepared and are attached to this message for your review. Please note that the insurance company requires your approval within 24 hours to proceed with the surgery.
-
-Key points for your consideration:
-1. Patient's medical history indicates previous cardiac events
-2. Current medications list is included in attachment 2
-3. Pre-operative tests show clearance for surgery
-4. Expected duration: 4-6 hours
-5. Post-operative care plan is outlined in attachment 3
-
-Please review the attached documents and provide your authorization at your earliest convenience. If you have any questions or need additional information, please don't hesitate to contact me.
-
-Thank you for your prompt attention to this matter.
-
-Best regards,
-Sarah Johnson, Case Coordinator
-My Clinic - Cardiac Department
-Phone: +966-11-234567
-Email: sarah.johnson@myclinic.sa`,
-        timestamp: "2025-06-20 10:30 AM",
+        subject: "Welcome to the messaging system",
+        content: `Dear ${role},\n\nWelcome to our internal messaging system. You can use this to communicate with other team members and receive important updates.\n\nBest regards,\nSystem Administration`,
+        timestamp: "2025-06-20 9:00 AM",
         date: new Date("2025-06-20"),
-        attachments: ["patient_authorization_form.pdf", "medical_history_report.pdf", "pre_operative_tests.pdf", "post_care_plan.pdf"],
+        attachments: [],
         isRead: false,
         hasReply: false,
         isNew: true,
-        priority: 'urgent' as const,
-      },
-      {
-        id: "2",
-        from: "Finance Team - Fatima Al-Zahra",
-        to: role,
-        subject: "Payment Confirmation - Request #REQ-2025-001",
-        content: `Dear ${role},
-
-I am pleased to inform you that the payment for request #REQ-2025-001 has been successfully processed.
-
-Payment Details:
-- Request ID: REQ-2025-001
-- Patient: Omar Al-Rashid
-- Amount: SAR 15,750.00
-- Payment Method: Insurance Coverage (80%) + Patient Copay (20%)
-- Transaction ID: TXN-20250619-001
-- Processing Date: June 19, 2025
-- Status: Completed
-
-Insurance Information:
-- Insurance Company: Bupa Arabia
-- Policy Number: BP-789456123
-- Coverage: 80% of approved amount
-- Copay: SAR 3,150.00 (paid by patient)
-
-The payment receipt and insurance claim documentation are attached for your records. Please update the patient's status to "Payment Confirmed" in the system.
-
-If you need any clarification or additional documentation, please contact the finance department.
-
-Best regards,
-Fatima Al-Zahra
-Finance Manager
-My Clinic Finance Department
-Extension: 2156`,
-        timestamp: "2025-06-19 3:45 PM",
-        date: new Date("2025-06-19"),
-        attachments: ["payment_receipt.pdf", "insurance_claim.pdf"],
-        isRead: true,
-        hasReply: true,
-        isNew: false,
         priority: 'normal' as const,
-      },
-      {
-        id: "3",
-        from: "Hospital Administration - Dr. Mohammed Al-Saud",
-        to: role,
-        subject: "Schedule Update - Surgery Calendar Changes",
-        content: `Dear Colleague,
-
-I hope you are doing well. I am writing to inform you about important changes to tomorrow's surgery schedule that require your immediate attention.
-
-Schedule Changes:
-- Original Time: 08:00 AM - Room 203
-- New Time: 10:30 AM - Room 205
-- Reason: Emergency case prioritization
-- Patient: Sara Al-Mahmoud
-- Procedure: Orthopedic Surgery (Knee Replacement)
-
-Updated Schedule Details:
-1. Pre-operative preparation: 09:30 AM
-2. Patient arrival: 10:00 AM
-3. Surgery start: 10:30 AM
-4. Expected duration: 2-3 hours
-5. Post-operative monitoring: Recovery Room B
-
-Required Actions:
-- Please confirm your availability for the new time slot
-- Review updated patient notes (attached)
-- Coordinate with nursing staff for room preparation
-- Update your personal schedule accordingly
-
-Additional Notes:
-- Anesthesia team has been notified
-- OR equipment has been reserved for new time
-- Patient and family have been informed
-- Insurance pre-authorization remains valid
-
-Please reply to confirm your availability. If you have any concerns or conflicts, please contact me immediately.
-
-Thank you for your flexibility and understanding.
-
-Best regards,
-Dr. Mohammed Al-Saud
-Chief of Surgery
-King Faisal Hospital
-Direct Line: +966-11-987654`,
-        timestamp: "2025-06-19 11:20 AM",
-        date: new Date("2025-06-19"),
-        attachments: ["updated_schedule.pdf", "patient_notes.pdf"],
-        isRead: true,
-        hasReply: false,
-        isNew: false,
-        priority: 'high' as const,
-      },
+      }
     ];
 
-    return baseMessages;
+    console.log(`Generated ${messages.length} messages for role: ${role}`);
+    return messages;
   };
 
   const allMessages = generateMessagesForRole(currentUserRole);
@@ -326,6 +272,12 @@ Direct Line: +966-11-987654`,
               </div>
             )}
           </DialogTitle>
+          <DialogDescription>
+            {selectedMessage ? 
+              "View message details and send replies" : 
+              "View and manage your received messages"
+            }
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex-1 overflow-hidden">

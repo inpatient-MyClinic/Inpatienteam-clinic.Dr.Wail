@@ -11,7 +11,9 @@ interface MessagingIconsProps {
   unreadCount?: number;
 }
 
-const MessagingIcons = ({ currentUserRole, unreadCount = 3 }: MessagingIconsProps) => {
+const MessagingIcons = ({ currentUserRole, unreadCount = 0 }: MessagingIconsProps) => {
+  console.log(`MessagingIcons rendered for role: ${currentUserRole}`);
+  
   return (
     <div className="flex gap-2">
       <MessageDialog
@@ -35,7 +37,7 @@ const MessagingIcons = ({ currentUserRole, unreadCount = 3 }: MessagingIconsProp
                 variant="destructive" 
                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
               >
-                {unreadCount}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </Badge>
             )}
           </Button>
