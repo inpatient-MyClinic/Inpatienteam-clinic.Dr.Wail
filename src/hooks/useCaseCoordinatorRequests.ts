@@ -11,6 +11,7 @@ export interface CaseCoordinatorRequest {
   status: string;
   createdAt: string;
   expectedSurgeryDate: string;
+  agreedSurgeryDate?: string;
   isDelayed: boolean;
   doctorName: string;
   assignedDoctor: string;
@@ -48,6 +49,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     status: COORDINATOR_REQUEST_STATUSES.APPROVED,
     createdAt: "2024-01-15T10:30:00Z",
     expectedSurgeryDate: "2024-02-01",
+    agreedSurgeryDate: "2024-02-03",
     isDelayed: false,
     doctorName: "Dr. Ahmed Salem",
     assignedDoctor: "Dr. Ahmed Salem",
@@ -65,6 +67,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     status: COORDINATOR_REQUEST_STATUSES.PENDING,
     createdAt: "2024-01-16T14:20:00Z",
     expectedSurgeryDate: "2024-02-10",
+    agreedSurgeryDate: "2024-02-12",
     isDelayed: false,
     doctorName: "Dr. Mohammed Khalil",
     assignedDoctor: "Dr. Mohammed Khalil",
@@ -98,6 +101,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     status: COORDINATOR_REQUEST_STATUSES.DONE,
     createdAt: "2024-01-18T11:45:00Z",
     expectedSurgeryDate: "2024-01-25",
+    agreedSurgeryDate: "2024-01-25",
     isDelayed: false,
     doctorName: "Dr. Ali Hassan",
     assignedDoctor: "Dr. Ali Hassan",
@@ -130,6 +134,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     status: COORDINATOR_REQUEST_STATUSES.SCHEDULED,
     createdAt: "2024-01-20T08:00:00Z",
     expectedSurgeryDate: "2024-01-30",
+    agreedSurgeryDate: "2024-02-02",
     isDelayed: true,
     doctorName: "Dr. Omar Khalil",
     assignedDoctor: "Dr. Omar Khalil",

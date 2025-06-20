@@ -342,6 +342,7 @@ export default function CaseCoordinatorRequestsTable({
                 </Popover>
               </div>
             </th>
+            <th className="p-2">Agreed Surgery Date</th>
             <th className="p-2 relative">
               <div className="flex items-center justify-between">
                 Status
@@ -388,7 +389,7 @@ export default function CaseCoordinatorRequestsTable({
         <tbody>
           {currentPageRequests.length === 0 ? (
             <tr>
-              <td colSpan={7} className="text-center text-gray-400 py-6">
+              <td colSpan={8} className="text-center text-gray-400 py-6">
                 {hasActiveFilters ? "No cases match the current filters." : "No cases found."}
               </td>
             </tr>
@@ -400,6 +401,12 @@ export default function CaseCoordinatorRequestsTable({
                 <td className="p-2">{req.doctorName}</td>
                 <td className="p-2">{req.serviceDescription}</td>
                 <td className="p-2">{req.hospital}</td>
+                <td className="p-2">
+                  {req.agreedSurgeryDate ? 
+                    new Date(req.agreedSurgeryDate).toLocaleDateString() : 
+                    "Not set"
+                  }
+                </td>
                 <td className="p-2">
                   {getStatusBadge(req.status)}
                 </td>
