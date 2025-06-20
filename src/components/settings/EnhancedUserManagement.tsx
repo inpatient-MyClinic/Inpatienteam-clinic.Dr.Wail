@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Edit, Save, X, Plus, Settings } from "lucide-react";
+import { Trash2, Settings, Plus, Download, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import UserExcelUpload from "./UserExcelUpload";
+import * as XLSX from 'xlsx';
 
 const userCategories = [
   "Admin",
@@ -20,6 +21,19 @@ const userCategories = [
   "Hospital",
   "Finance",
   "Customer Service"
+];
+
+const specialties = [
+  "Cardiology",
+  "Neurology", 
+  "Orthopedics",
+  "Pediatrics",
+  "Surgery",
+  "Radiology",
+  "Emergency Medicine",
+  "Internal Medicine",
+  "Dermatology",
+  "Psychiatry"
 ];
 
 const systemFields = [
@@ -49,6 +63,7 @@ type User = {
   id: string;
   email: string;
   category: string;
+  specialty?: string;
   status: "Active" | "Inactive";
   createdAt: string;
   fieldPermissions: Record<string, "none" | "view" | "edit">;
@@ -69,6 +84,7 @@ const EnhancedUserManagement = () => {
       id: "2", 
       email: "dr.ahmed@hospital.com",
       category: "Doctor",
+      specialty: "Cardiology",
       status: "Active",
       createdAt: "2025-01-02",
       fieldPermissions: defaultFieldPermissions["Doctor"]
@@ -85,8 +101,10 @@ const EnhancedUserManagement = () => {
   
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserCategory, setNewUserCategory] = useState("Nurse");
+  const [newUserSpecialty, setNewUserSpecialty] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editPermissions, setEditPermissions] = useState<Record<string, "none" | "view" | "edit">>({});
+  const [specialtyFilter, setSpecialtyFilter] = useState<string>("");
 
   const handleAddUser = () => {
     if (!newUserEmail) {
@@ -111,6 +129,7 @@ const EnhancedUserManagement = () => {
       id: Date.now().toString(),
       email: newUserEmail,
       category: newUserCategory,
+      specialty: newUserCategory === "Doctor" ? newUserSpecialty : undefined,
       status: "Active",
       createdAt: new Date().toISOString().split('T')[0],
       fieldPermissions: defaultFieldPermissions[newUserCategory] || {}
@@ -119,11 +138,26 @@ const EnhancedUserManagement = () => {
     setUsers([...users, newUser]);
     setNewUserEmail("");
     setNewUserCategory("Nurse");
+    setNewUserSpecialty("");
     
     toast({
       title: "Success",
       description: `User ${newUserEmail} added successfully as ${newUserCategory}`
     });
+  };
+
+  const handleExcelUpload = (uploadedUsers: any[]) => {
+    const newUsers: User[] = uploadedUsers.map((row, index) => ({
+      id: (Date.now() + index).toString(),
+      email: row["Email"],
+      category: row["Category"] || "Doctor",
+      specialty: row["Specialty"],
+      status: "Active" as const,
+      createdAt: new Date().toISOString().split('T')[0],
+      fieldPermissions: defaultFieldPermissions[row["Category"] || "Doctor"] || {}
+    }));
+
+    setUsers(prev => [...prev, ...newUsers]);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -176,6 +210,38 @@ const EnhancedUserManagement = () => {
     }
   };
 
+  const filteredUsers = specialtyFilter 
+    ? users.filter(user => user.specialty === specialtyFilter)
+    : users;
+
+  const exportToExcel = () => {
+    const exportData = filteredUsers.map(user => ({
+      "Email": user.email,
+      "Category": user.category,
+      "Specialty": user.specialty || "",
+      "Status": user.status,
+      "Created Date": user.createdAt,
+      "Field Permissions": Object.entries(user.fieldPermissions)
+        .map(([field, permission]) => `${field}:${permission}`)
+        .join("; ")
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    
+    const filename = specialtyFilter 
+      ? `users_${specialtyFilter}_${new Date().toISOString().split('T')[0]}.xlsx`
+      : `all_users_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    XLSX.writeFile(wb, filename);
+    
+    toast({
+      title: "Export Successful",
+      description: `${filteredUsers.length} users exported to Excel`
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -210,18 +276,59 @@ const EnhancedUserManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            {newUserCategory === "Doctor" && (
+              <div className="w-48">
+                <Label htmlFor="specialty">Specialty</Label>
+                <Select value={newUserSpecialty} onValueChange={setNewUserSpecialty}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select specialty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {specialties.map(specialty => (
+                      <SelectItem key={specialty} value={specialty}>
+                        {specialty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button onClick={handleAddUser}>
               <Plus className="w-4 h-4 mr-2" />
               Add User
             </Button>
+            <UserExcelUpload onUpload={handleExcelUpload} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Users ({users.length})</CardTitle>
-          <CardDescription>Manage users and their field-level permissions</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Users ({filteredUsers.length})</CardTitle>
+              <CardDescription>Manage users and their field-level permissions</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Specialties</SelectItem>
+                  {specialties.map(specialty => (
+                    <SelectItem key={specialty} value={specialty}>
+                      {specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={exportToExcel} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Excel
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -229,6 +336,7 @@ const EnhancedUserManagement = () => {
               <TableRow>
                 <TableHead>Email</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Specialty</TableHead>
                 <TableHead>Field Permissions</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -236,11 +344,18 @@ const EnhancedUserManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{user.category}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.specialty ? (
+                      <Badge variant="secondary">{user.specialty}</Badge>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {editingUser === user.id ? (
@@ -316,10 +431,10 @@ const EnhancedUserManagement = () => {
                     {editingUser === user.id ? (
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => handleSaveUser(user.id)}>
-                          <Save className="w-4 h-4" />
+                          Save
                         </Button>
                         <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                          <X className="w-4 h-4" />
+                          Cancel
                         </Button>
                       </div>
                     ) : (
