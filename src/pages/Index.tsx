@@ -75,24 +75,31 @@ export default function Index() {
     console.log("Redirecting user with role:", userRole);
     switch (userRole) {
       case "admin":
+        console.log("Navigating to /admin");
         navigate("/admin");
         break;
       case "doctor":
+        console.log("Navigating to /doctor-dashboard");
         navigate("/doctor-dashboard");
         break;
       case "hospital":
+        console.log("Navigating to /hospital-dashboard");
         navigate("/hospital-dashboard");
         break;
       case "case-coordinator":
+        console.log("Navigating to /case-coordinator-dashboard");
         navigate("/case-coordinator-dashboard");
         break;
       case "finance":
+        console.log("Navigating to /finance-dashboard");
         navigate("/finance-dashboard");
         break;
       case "customer-care":
+        console.log("Navigating to /customer-care-dashboard");
         navigate("/customer-care-dashboard");
         break;
       default:
+        console.log("Navigating to /nurse-dashboard");
         navigate("/nurse-dashboard");
         break;
     }
@@ -141,9 +148,10 @@ export default function Index() {
       description: `Welcome ${userName}! Redirecting to your dashboard...`,
     });
 
+    // Navigate immediately, don't wait for toast
     setTimeout(() => {
       redirectToUserDashboard(userRole);
-    }, 1000);
+    }, 500);
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -202,14 +210,15 @@ export default function Index() {
     
     console.log("Login successful, role:", userRole, "name:", userName);
 
+    // Navigate immediately without waiting
+    console.log("About to redirect...");
+    redirectToUserDashboard(userRole);
+    
+    // Show toast after navigation starts
     toast({
       title: "Login Successful",
       description: `Welcome back, ${userName}!`,
     });
-    
-    setTimeout(() => {
-      redirectToUserDashboard(userRole);
-    }, 500);
   };
 
   return (
