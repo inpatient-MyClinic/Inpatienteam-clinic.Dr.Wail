@@ -1,5 +1,6 @@
 
 import { useState, useMemo } from 'react';
+import { isWithinInterval, parseISO, differenceInHours, isAfter, isBefore, setHours } from 'date-fns';
 
 export interface CaseCoordinatorRequest {
   id: number;
@@ -8,26 +9,32 @@ export interface CaseCoordinatorRequest {
   serviceDescription: string;
   hospital: string;
   status: string;
-  paymentStatus: "Paid" | "Not Paid";
   createdAt: string;
   expectedSurgeryDate: string;
   isDelayed: boolean;
   doctorName: string;
-  assignedDoctor: string; // Added to match Request interface
+  assignedDoctor: string;
   attachments?: string[];
+  assignedCoordinator?: string;
+  coordinatorActionTime?: string;
+  delayCause?: "doctor" | "hospital" | "insurance" | "patient";
 }
 
 export const COORDINATOR_REQUEST_STATUSES = {
+  NEW_REQUEST: "New Request",
   PENDING: "Pending",
   UNDER_PROCESS: "Under Process", 
   PATIENT_CONTACTED: "Patient Contacted",
   SUBMITTED_TO_INSURANCE: "Submitted to Insurance",
-  APPROVED_BY_HOSPITAL: "Approved by Hospital",
+  APPROVED: "Approved",
   REJECTED: "Rejected",
   DONE: "Done",
   NEED_JUSTIFICATION: "Need Justification",
   NOT_COMPLETED: "Not Completed",
-  DELAYED: "Delayed"
+  DELAYED: "Delayed",
+  SCHEDULED: "Scheduled",
+  POSTPONED: "Postponed",
+  CANCELLED: "Cancelled"
 } as const;
 
 // Mock data for case coordinator requests
@@ -38,14 +45,16 @@ const mockRequests: CaseCoordinatorRequest[] = [
     mrn: "MRN-001",
     serviceDescription: "Cardiac Surgery - Valve Replacement",
     hospital: "King Khaled Hospital",
-    status: COORDINATOR_REQUEST_STATUSES.APPROVED_BY_HOSPITAL,
-    paymentStatus: "Paid",
+    status: COORDINATOR_REQUEST_STATUSES.APPROVED,
     createdAt: "2024-01-15T10:30:00Z",
     expectedSurgeryDate: "2024-02-01",
     isDelayed: false,
     doctorName: "Dr. Ahmed Salem",
     assignedDoctor: "Dr. Ahmed Salem",
-    attachments: ["cardiac_report.pdf", "echo_results.pdf"]
+    assignedCoordinator: "Sarah Johnson",
+    coordinatorActionTime: "2024-01-15T11:00:00Z",
+    attachments: ["cardiac_report.pdf", "echo_results.pdf"],
+    delayCause: "hospital"
   },
   {
     id: 2,
@@ -54,13 +63,14 @@ const mockRequests: CaseCoordinatorRequest[] = [
     serviceDescription: "Orthopedic Surgery - Knee Replacement",
     hospital: "King Abdulaziz Hospital",
     status: COORDINATOR_REQUEST_STATUSES.PENDING,
-    paymentStatus: "Not Paid",
     createdAt: "2024-01-16T14:20:00Z",
     expectedSurgeryDate: "2024-02-10",
     isDelayed: false,
     doctorName: "Dr. Mohammed Khalil",
     assignedDoctor: "Dr. Mohammed Khalil",
-    attachments: ["xray_knee.pdf"]
+    assignedCoordinator: "Sarah Johnson",
+    attachments: ["xray_knee.pdf"],
+    delayCause: "doctor"
   },
   {
     id: 3,
@@ -69,13 +79,15 @@ const mockRequests: CaseCoordinatorRequest[] = [
     serviceDescription: "Neurosurgery - Brain Tumor Removal",
     hospital: "King Faisal Hospital", 
     status: COORDINATOR_REQUEST_STATUSES.UNDER_PROCESS,
-    paymentStatus: "Paid",
     createdAt: "2024-01-17T09:15:00Z",
     expectedSurgeryDate: "2024-02-15",
     isDelayed: false,
     doctorName: "Dr. Fatima Nour",
     assignedDoctor: "Dr. Fatima Nour",
-    attachments: ["mri_brain.pdf", "ct_scan.pdf"]
+    assignedCoordinator: "Sarah Johnson",
+    coordinatorActionTime: "2024-01-17T10:00:00Z",
+    attachments: ["mri_brain.pdf", "ct_scan.pdf"],
+    delayCause: "insurance"
   },
   {
     id: 4,
@@ -84,13 +96,15 @@ const mockRequests: CaseCoordinatorRequest[] = [
     serviceDescription: "General Surgery - Appendectomy",
     hospital: "Prince Sultan Hospital",
     status: COORDINATOR_REQUEST_STATUSES.DONE,
-    paymentStatus: "Paid",
     createdAt: "2024-01-18T11:45:00Z",
     expectedSurgeryDate: "2024-01-25",
     isDelayed: false,
     doctorName: "Dr. Ali Hassan",
     assignedDoctor: "Dr. Ali Hassan",
-    attachments: ["lab_results.pdf"]
+    assignedCoordinator: "Sarah Johnson",
+    coordinatorActionTime: "2024-01-18T12:15:00Z",
+    attachments: ["lab_results.pdf"],
+    delayCause: "patient"
   },
   {
     id: 5,
@@ -99,13 +113,13 @@ const mockRequests: CaseCoordinatorRequest[] = [
     serviceDescription: "Plastic Surgery - Reconstruction",
     hospital: "King Fahd Hospital",
     status: COORDINATOR_REQUEST_STATUSES.REJECTED,
-    paymentStatus: "Not Paid",
     createdAt: "2024-01-19T16:30:00Z",
     expectedSurgeryDate: "2024-02-20",
     isDelayed: false,
     doctorName: "Dr. Layla Hassan",
     assignedDoctor: "Dr. Layla Hassan",
-    attachments: []
+    attachments: [],
+    delayCause: "insurance"
   },
   {
     id: 6,
@@ -113,40 +127,62 @@ const mockRequests: CaseCoordinatorRequest[] = [
     mrn: "MRN-006",
     serviceDescription: "Emergency Surgery - Trauma",
     hospital: "National Guard Hospital",
-    status: COORDINATOR_REQUEST_STATUSES.DELAYED,
-    paymentStatus: "Paid",
+    status: COORDINATOR_REQUEST_STATUSES.SCHEDULED,
     createdAt: "2024-01-20T08:00:00Z",
     expectedSurgeryDate: "2024-01-30",
     isDelayed: true,
     doctorName: "Dr. Omar Khalil",
     assignedDoctor: "Dr. Omar Khalil",
-    attachments: ["trauma_report.pdf", "emergency_notes.pdf"]
+    assignedCoordinator: "John Doe",
+    coordinatorActionTime: "2024-01-20T15:00:00Z",
+    attachments: ["trauma_report.pdf", "emergency_notes.pdf"],
+    delayCause: "hospital"
   }
 ];
+
+function isOverdue(request: CaseCoordinatorRequest): boolean {
+  const createdAt = parseISO(request.createdAt);
+  const workStart = setHours(createdAt, 10); // 10 AM
+  const workEnd = setHours(createdAt, 20); // 8 PM
+  
+  // Check if request was created during work hours
+  if (isAfter(createdAt, workStart) && isBefore(createdAt, workEnd)) {
+    const actionTime = request.coordinatorActionTime ? parseISO(request.coordinatorActionTime) : null;
+    if (!actionTime) {
+      // No action taken, check if 4 hours have passed
+      return differenceInHours(new Date(), createdAt) > 4;
+    } else {
+      // Action taken, check if it was within 4 hours
+      return differenceInHours(actionTime, createdAt) > 4;
+    }
+  }
+  return false;
+}
 
 export function useCaseCoordinatorRequests(coordinatorName: string) {
   const [requests] = useState<CaseCoordinatorRequest[]>(mockRequests);
 
-  const filteredRequests = useMemo(() => {
+  const allRequests = useMemo(() => requests, [requests]);
+  
+  const coordinatorRequests = useMemo(() => {
     return requests.filter(request => 
-      request.status !== COORDINATOR_REQUEST_STATUSES.REJECTED
+      request.assignedCoordinator === coordinatorName
     );
-  }, [requests]);
+  }, [requests, coordinatorName]);
+
+  const overdueRequests = useMemo(() => {
+    return coordinatorRequests.filter(request => isOverdue(request));
+  }, [coordinatorRequests]);
 
   const updateStatus = (requestId: number, newStatus: string) => {
     console.log(`Updating request ${requestId} status to ${newStatus}`);
-    // This would typically update the request status in the backend
-  };
-
-  const updatePaymentStatus = (requestId: number, paymentStatus: "Paid" | "Not Paid") => {
-    console.log(`Updating request ${requestId} payment status to ${paymentStatus}`);
-    // This would typically update the payment status in the backend
   };
 
   return {
     requests,
-    filteredRequests,
-    updateStatus,
-    updatePaymentStatus
+    allRequests,
+    coordinatorRequests,
+    overdueRequests,
+    updateStatus
   };
 }

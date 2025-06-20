@@ -7,7 +7,13 @@ import Logo from "@/components/Logo";
 
 interface CaseCoordinatorSidebarProps {
   currentCoordinatorName: string;
-  stats: {
+  allStats: {
+    label: string;
+    value: number;
+    color: string;
+    key: string;
+  }[];
+  coordinatorStats: {
     label: string;
     value: number;
     color: string;
@@ -19,7 +25,8 @@ interface CaseCoordinatorSidebarProps {
 
 export default function CaseCoordinatorSidebar({
   currentCoordinatorName,
-  stats,
+  allStats,
+  coordinatorStats,
   activeStatusFilter,
   onStatusFilterClick
 }: CaseCoordinatorSidebarProps) {
@@ -39,11 +46,31 @@ export default function CaseCoordinatorSidebar({
         Create New Case
       </Button>
       
+      {/* All Requests Stats */}
       <div className="flex flex-col gap-2 w-full mb-4">
-        <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
-        {stats.map((stat) => (
+        <p className="text-sm font-semibold text-blue-900 mb-2">All Requests:</p>
+        {allStats.map((stat) => (
           <div
             key={stat.key}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
+              !activeStatusFilter || activeStatusFilter === stat.label 
+                ? stat.color 
+                : stat.color + ' opacity-50'
+            } text-white`}
+            onClick={() => onStatusFilterClick(activeStatusFilter === stat.label ? null : stat.label)}
+          >
+            <span className="text-xs">{stat.label}:</span>
+            <span className="font-bold text-lg">{stat.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Coordinator Specific Stats */}
+      <div className="flex flex-col gap-2 w-full mb-4">
+        <p className="text-sm font-semibold text-blue-900 mb-2">My Cases:</p>
+        {coordinatorStats.map((stat) => (
+          <div
+            key={stat.key + '_coordinator'}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
               !activeStatusFilter || activeStatusFilter === stat.label 
                 ? stat.color 

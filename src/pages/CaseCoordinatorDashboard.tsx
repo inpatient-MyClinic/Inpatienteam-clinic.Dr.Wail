@@ -13,6 +13,7 @@ import MessagingIcons from "@/components/messaging/MessagingIcons";
 import CaseCoordinatorSidebar from "@/components/CaseCoordinatorSidebar";
 import CaseCoordinatorRequestsTable from "@/components/CaseCoordinatorRequestsTable";
 import CaseCoordinatorAnalytics from "@/components/CaseCoordinatorAnalytics";
+import CaseCoordinatorLossTree from "@/components/CaseCoordinatorLossTree";
 import ExportButton from "@/components/ExportButton";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import { useCaseCoordinatorRequests } from "@/hooks/useCaseCoordinatorRequests";
@@ -32,14 +33,13 @@ export default function CaseCoordinatorDashboard() {
   });
 
   const currentCoordinatorName = "Sarah Johnson";
-  const { requests, filteredRequests, updateStatus, updatePaymentStatus } = useCaseCoordinatorRequests(currentCoordinatorName);
+  const { allRequests, coordinatorRequests, overdueRequests, updateStatus } = useCaseCoordinatorRequests(currentCoordinatorName);
 
   // Apply additional filters beyond the hook's filtering
-  const applyFilters = (requests: typeof filteredRequests) => {
+  const applyFilters = (requests: typeof allRequests) => {
     return requests.filter(request => {
       // Status filter from sidebar
-      const matchesStatus = !activeStatusFilter || 
-        (activeStatusFilter === 'Delayed' ? request.isDelayed : request.status === activeStatusFilter);
+      const matchesStatus = !activeStatusFilter || request.status === activeStatusFilter;
       
       // Date filters
       const requestDate = new Date(request.createdAt);
@@ -89,15 +89,27 @@ export default function CaseCoordinatorDashboard() {
     });
   };
 
-  const finalFilteredRequests = applyFilters(filteredRequests);
+  const finalFilteredRequests = applyFilters(allRequests);
+  const finalFilteredCoordinatorRequests = applyFilters(coordinatorRequests);
 
-  // Calculate stats for sidebar
-  const coordinatorStats = [
+  // Calculate stats for sidebar - All Requests
+  const allStats = [
+    { label: "New Request", value: finalFilteredRequests.filter(req => req.status === "New Request").length, color: "bg-purple-600", key: "new_request" },
     { label: "Pending", value: finalFilteredRequests.filter(req => req.status === "Pending").length, color: "bg-yellow-600", key: "pending" },
     { label: "Under Process", value: finalFilteredRequests.filter(req => req.status === "Under Process").length, color: "bg-blue-600", key: "under_process" },
+    { label: "Need Justification", value: finalFilteredRequests.filter(req => req.status === "Need Justification").length, color: "bg-orange-600", key: "need_justification" },
+    { label: "Rejected", value: finalFilteredRequests.filter(req => req.status === "Rejected").length, color: "bg-red-600", key: "rejected" },
     { label: "Done", value: finalFilteredRequests.filter(req => req.status === "Done").length, color: "bg-green-600", key: "done" },
-    { label: "Delayed", value: finalFilteredRequests.filter(req => req.isDelayed).length, color: "bg-red-600", key: "delayed" },
-    { label: "Rejected", value: finalFilteredRequests.filter(req => req.status === "Rejected").length, color: "bg-gray-600", key: "rejected" },
+  ];
+
+  // Calculate stats for sidebar - Coordinator Specific
+  const coordinatorStats = [
+    { label: "New Request", value: finalFilteredCoordinatorRequests.filter(req => req.status === "New Request").length, color: "bg-purple-600", key: "new_request_coord" },
+    { label: "Pending", value: finalFilteredCoordinatorRequests.filter(req => req.status === "Pending").length, color: "bg-yellow-600", key: "pending_coord" },
+    { label: "Under Process", value: finalFilteredCoordinatorRequests.filter(req => req.status === "Under Process").length, color: "bg-blue-600", key: "under_process_coord" },
+    { label: "Need Justification", value: finalFilteredCoordinatorRequests.filter(req => req.status === "Need Justification").length, color: "bg-orange-600", key: "need_justification_coord" },
+    { label: "Rejected", value: finalFilteredCoordinatorRequests.filter(req => req.status === "Rejected").length, color: "bg-red-600", key: "rejected_coord" },
+    { label: "Done", value: finalFilteredCoordinatorRequests.filter(req => req.status === "Done").length, color: "bg-green-600", key: "done_coord" },
   ];
 
   // Check if there are active filters
@@ -127,7 +139,8 @@ export default function CaseCoordinatorDashboard() {
     <div className="flex min-h-screen w-full">
       <CaseCoordinatorSidebar 
         currentCoordinatorName={currentCoordinatorName}
-        stats={coordinatorStats}
+        allStats={allStats}
+        coordinatorStats={coordinatorStats}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterClick={setActiveStatusFilter}
       />
@@ -152,7 +165,7 @@ export default function CaseCoordinatorDashboard() {
                   Print
                 </Button>
                 <ExportButton 
-                  requests={requests}
+                  requests={allRequests}
                   filteredRequests={finalFilteredRequests}
                   hasActiveFilters={hasActiveFilters}
                 />
@@ -163,42 +176,18 @@ export default function CaseCoordinatorDashboard() {
             <CaseCoordinatorRequestsTable 
               filteredRequests={finalFilteredRequests}
               updateStatus={updateStatus}
-              updatePaymentStatus={updatePaymentStatus}
             />
 
             {/* Analytics */}
-            <CaseCoordinatorAnalytics filteredRequests={filteredRequests} currentCoordinatorName={currentCoordinatorName} />
+            <CaseCoordinatorAnalytics 
+              coordinatorRequests={finalFilteredCoordinatorRequests}
+              allRequests={finalFilteredRequests}
+              overdueRequests={overdueRequests}
+              currentCoordinatorName={currentCoordinatorName} 
+            />
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow border p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button
-                  variant="outline"
-                  onClick={createNewRequest}
-                  className="flex flex-col items-center gap-2 h-20 hover:bg-blue-50"
-                >
-                  <Plus className="w-6 h-6" />
-                  <span className="text-sm">New Case</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/my-requests")}
-                  className="flex flex-col items-center gap-2 h-20 hover:bg-green-50"
-                >
-                  <FileText className="w-6 h-6" />
-                  <span className="text-sm">View All Cases</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/notifications-logs")}
-                  className="flex flex-col items-center gap-2 h-20 hover:bg-orange-50"
-                >
-                  <AlertCircle className="w-6 h-6" />
-                  <span className="text-sm">Reports</span>
-                </Button>
-              </div>
-            </div>
+            {/* Loss Tree */}
+            <CaseCoordinatorLossTree filteredRequests={finalFilteredRequests} />
 
             {/* Footer */}
             <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">

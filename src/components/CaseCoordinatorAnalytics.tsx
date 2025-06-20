@@ -4,21 +4,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CaseCoordinatorRequest } from "@/hooks/useCaseCoordinatorRequests";
 
 interface CaseCoordinatorAnalyticsProps {
-  filteredRequests: CaseCoordinatorRequest[];
+  coordinatorRequests: CaseCoordinatorRequest[];
+  allRequests: CaseCoordinatorRequest[];
+  overdueRequests: CaseCoordinatorRequest[];
   currentCoordinatorName: string;
 }
 
 export default function CaseCoordinatorAnalytics({
-  filteredRequests,
+  coordinatorRequests,
+  allRequests,
+  overdueRequests,
   currentCoordinatorName
 }: CaseCoordinatorAnalyticsProps) {
-  const totalRequests = filteredRequests.length;
-  const completedRequests = filteredRequests.filter(req => req.status === "Done").length;
-  const rejectedRequests = filteredRequests.filter(req => req.status === "Rejected").length;
+  const totalCoordinatorRequests = coordinatorRequests.length;
+  const completedRequests = coordinatorRequests.filter(req => req.status === "Done").length;
+  const totalAllRequests = allRequests.length;
+  const totalCoordinatorHandledRequests = allRequests.filter(req => req.assignedCoordinator).length;
   
-  const completionRate = totalRequests > 0 ? ((completedRequests / totalRequests) * 100).toFixed(1) : "0";
-  const approvalRate = totalRequests > 0 ? (((totalRequests - rejectedRequests) / totalRequests) * 100).toFixed(1) : "0";
-  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
+  const conversionRate = totalCoordinatorRequests > 0 ? ((completedRequests / totalCoordinatorRequests) * 100).toFixed(1) : "0";
+  const utilizationRate = totalCoordinatorHandledRequests > 0 ? ((totalCoordinatorRequests / totalCoordinatorHandledRequests) * 100).toFixed(1) : "0";
+  const overdueCount = overdueRequests.length;
 
   return (
     <Card className="mb-6">
@@ -28,24 +33,24 @@ export default function CaseCoordinatorAnalytics({
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Completion Rate</h3>
-          <p className="text-4xl font-bold text-green-600">{completionRate}%</p>
+          <h3 className="text-lg font-semibold mb-2">Conversion Rate</h3>
+          <p className="text-4xl font-bold text-green-600">{conversionRate}%</p>
           <p className="text-sm text-gray-500">
-            ({completedRequests} completed / {totalRequests} total cases)
+            ({completedRequests} done / {totalCoordinatorRequests} coordinator cases)
           </p>
         </div>
         <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Approval Rate</h3>
-          <p className="text-4xl font-bold text-blue-600">{approvalRate}%</p>
+          <h3 className="text-lg font-semibold mb-2">Utilization Rate</h3>
+          <p className="text-4xl font-bold text-blue-600">{utilizationRate}%</p>
           <p className="text-sm text-gray-500">
-            ({totalRequests - rejectedRequests} approved / {totalRequests} total cases)
+            ({totalCoordinatorRequests} handled / {totalCoordinatorHandledRequests} total assigned)
           </p>
         </div>
         <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Rejection Rate</h3>
-          <p className="text-4xl font-bold text-red-600">{rejectionRate}%</p>
+          <h3 className="text-lg font-semibold mb-2">Overdue Requests</h3>
+          <p className="text-4xl font-bold text-red-600">{overdueCount}</p>
           <p className="text-sm text-gray-500">
-            ({rejectedRequests} rejected / {totalRequests} total cases)
+            Requests not acted upon within 4 hours
           </p>
         </div>
       </CardContent>

@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, FileText, Send, Filter, X } from "lucide-react";
+import { Eye, Download, FileText, Send, Filter, X, MoreVertical, User, Building, FileCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { CaseCoordinatorRequest, COORDINATOR_REQUEST_STATUSES } from "@/hooks/useCaseCoordinatorRequests";
@@ -16,13 +16,11 @@ import { CaseCoordinatorRequest, COORDINATOR_REQUEST_STATUSES } from "@/hooks/us
 interface CaseCoordinatorRequestsTableProps {
   filteredRequests: CaseCoordinatorRequest[];
   updateStatus: (requestId: number, newStatus: string) => void;
-  updatePaymentStatus?: (requestId: number, paymentStatus: "Paid" | "Not Paid") => void;
 }
 
 export default function CaseCoordinatorRequestsTable({
   filteredRequests,
-  updateStatus,
-  updatePaymentStatus
+  updateStatus
 }: CaseCoordinatorRequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
   
@@ -31,7 +29,6 @@ export default function CaseCoordinatorRequestsTable({
   const [hospitalFilter, setHospitalFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [doctorFilter, setDoctorFilter] = useState("all");
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,9 +57,8 @@ export default function CaseCoordinatorRequestsTable({
     const matchesHospital = hospitalFilter === "all" || request.hospital === hospitalFilter;
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
     const matchesDoctor = doctorFilter === "all" || request.doctorName === doctorFilter;
-    const matchesPaymentStatus = paymentStatusFilter === "all" || request.paymentStatus === paymentStatusFilter;
     
-    return matchesService && matchesHospital && matchesStatus && matchesDoctor && matchesPaymentStatus;
+    return matchesService && matchesHospital && matchesStatus && matchesDoctor;
   });
 
   // Calculate pagination
@@ -74,36 +70,38 @@ export default function CaseCoordinatorRequestsTable({
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [serviceFilter, hospitalFilter, statusFilter, doctorFilter, paymentStatusFilter]);
+  }, [serviceFilter, hospitalFilter, statusFilter, doctorFilter]);
 
   const clearAllFilters = () => {
     setServiceFilter("");
     setHospitalFilter("all");
     setStatusFilter("all");
     setDoctorFilter("all");
-    setPaymentStatusFilter("all");
   };
 
   const hasActiveFilters = Boolean(
     serviceFilter || 
     hospitalFilter !== "all" || 
     statusFilter !== "all" || 
-    doctorFilter !== "all" ||
-    paymentStatusFilter !== "all"
+    doctorFilter !== "all"
   );
 
   const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
+      [COORDINATOR_REQUEST_STATUSES.NEW_REQUEST]: "bg-purple-100 text-purple-800",
       [COORDINATOR_REQUEST_STATUSES.PENDING]: "bg-yellow-100 text-yellow-800",
       [COORDINATOR_REQUEST_STATUSES.UNDER_PROCESS]: "bg-blue-100 text-blue-800",
       [COORDINATOR_REQUEST_STATUSES.PATIENT_CONTACTED]: "bg-purple-100 text-purple-800",
       [COORDINATOR_REQUEST_STATUSES.SUBMITTED_TO_INSURANCE]: "bg-indigo-100 text-indigo-800",
-      [COORDINATOR_REQUEST_STATUSES.APPROVED_BY_HOSPITAL]: "bg-green-100 text-green-800",
+      [COORDINATOR_REQUEST_STATUSES.APPROVED]: "bg-green-100 text-green-800",
       [COORDINATOR_REQUEST_STATUSES.REJECTED]: "bg-red-100 text-red-800",
       [COORDINATOR_REQUEST_STATUSES.DONE]: "bg-green-100 text-green-800",
       [COORDINATOR_REQUEST_STATUSES.NEED_JUSTIFICATION]: "bg-orange-100 text-orange-800",
       [COORDINATOR_REQUEST_STATUSES.NOT_COMPLETED]: "bg-gray-100 text-gray-800",
-      [COORDINATOR_REQUEST_STATUSES.DELAYED]: "bg-red-100 text-red-800"
+      [COORDINATOR_REQUEST_STATUSES.DELAYED]: "bg-red-100 text-red-800",
+      [COORDINATOR_REQUEST_STATUSES.SCHEDULED]: "bg-cyan-100 text-cyan-800",
+      [COORDINATOR_REQUEST_STATUSES.POSTPONED]: "bg-orange-100 text-orange-800",
+      [COORDINATOR_REQUEST_STATUSES.CANCELLED]: "bg-gray-100 text-gray-800"
     };
 
     return (
@@ -113,12 +111,18 @@ export default function CaseCoordinatorRequestsTable({
     );
   };
 
-  const getPaymentStatusBadge = (paymentStatus: string) => {
-    return (
-      <Badge className={paymentStatus === "Paid" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-        {paymentStatus}
-      </Badge>
-    );
+  const handleAssignToMe = (requestId: number) => {
+    toast({
+      title: "Assigned",
+      description: "Request has been assigned to you",
+    });
+  };
+
+  const handleSubmitToHospital = (requestId: number) => {
+    toast({
+      title: "Submitted",
+      description: "Request has been submitted to hospital",
+    });
   };
 
   const ViewRequestDialog = ({ request }: { request: CaseCoordinatorRequest }) => {
@@ -157,10 +161,10 @@ export default function CaseCoordinatorRequestsTable({
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Eye className="w-4 h-4 mr-1" />
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <Eye className="w-4 h-4 mr-2" />
             View
-          </Button>
+          </DropdownMenuItem>
         </DialogTrigger>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -183,32 +187,9 @@ export default function CaseCoordinatorRequestsTable({
               </div>
               <div>
                 <Label className="font-semibold">Hospital</Label>
-                <div className="mt-2">
-                  <Select value={localHospital} onValueChange={(value) => handleLocalFieldChange('hospital', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select hospital" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableHospitals.map((hospital) => (
-                        <SelectItem key={hospital} value={hospital}>
-                          {hospital}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
+                  {request.hospital}
                 </div>
-              </div>
-            </div>
-
-            {/* Expected Surgery Date */}
-            <div>
-              <Label className="font-semibold">Expected Surgery Date</Label>
-              <div className="mt-2">
-                <Input
-                  type="date"
-                  value={localSurgeryDate}
-                  onChange={(e) => handleLocalFieldChange('surgeryDate', e.target.value)}
-                />
               </div>
             </div>
 
@@ -247,19 +228,6 @@ export default function CaseCoordinatorRequestsTable({
                 {getStatusBadge(request.status)}
               </div>
             </div>
-
-            {/* Submit Modifications Button */}
-            {localHasModifications && (
-              <div className="pt-4 border-t">
-                <Button 
-                  onClick={handleLocalSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4 mr-2 text-white" />
-                  Submit Updates
-                </Button>
-              </div>
-            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -414,50 +382,13 @@ export default function CaseCoordinatorRequestsTable({
                 </Popover>
               </div>
             </th>
-            <th className="p-2 relative">
-              <div className="flex items-center justify-between">
-                Payment Status
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                      <Filter className="h-3 w-3" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-3 bg-white border shadow-lg z-50">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Filter by Payment Status</Label>
-                      <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select payment status" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="all">All payment statuses</SelectItem>
-                          <SelectItem value="Paid">Paid</SelectItem>
-                          <SelectItem value="Not Paid">Not Paid</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {paymentStatusFilter !== "all" && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setPaymentStatusFilter("all")}
-                          className="w-full text-xs"
-                        >
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </th>
             <th className="p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {currentPageRequests.length === 0 ? (
             <tr>
-              <td colSpan={8} className="text-center text-gray-400 py-6">
+              <td colSpan={7} className="text-center text-gray-400 py-6">
                 {hasActiveFilters ? "No cases match the current filters." : "No cases found."}
               </td>
             </tr>
@@ -473,10 +404,24 @@ export default function CaseCoordinatorRequestsTable({
                   {getStatusBadge(req.status)}
                 </td>
                 <td className="p-2">
-                  {getPaymentStatusBadge(req.paymentStatus)}
-                </td>
-                <td className="p-2">
-                  <ViewRequestDialog request={req} />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleAssignToMe(req.id)}>
+                        <User className="w-4 h-4 mr-2" />
+                        Assign to Me
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSubmitToHospital(req.id)}>
+                        <Building className="w-4 h-4 mr-2" />
+                        Submit to Hospital
+                      </DropdownMenuItem>
+                      <ViewRequestDialog request={req} />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </td>
               </tr>
             ))
