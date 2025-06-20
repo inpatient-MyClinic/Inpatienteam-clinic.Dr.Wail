@@ -27,11 +27,11 @@ const SettingsDirectory = () => {
           <MessagingIcons currentUserRole="admin" />
           <Button 
             variant="outline"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/admin")}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            Back to Admin Dashboard
           </Button>
         </div>
       </div>
