@@ -1,452 +1,163 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Printer, Calendar, Clock, CheckCircle, XCircle, AlertCircle, FileText, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
+import ExportButton from "@/components/ExportButton";
+import HospitalSidebar from "@/components/hospital/HospitalSidebar";
+import HospitalFilters from "@/components/hospital/HospitalFilters";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
 import HospitalAnalytics from "@/components/hospital/HospitalAnalytics";
-import Footer from "@/components/Footer";
-import Logo from "@/components/Logo";
-import * as XLSX from 'xlsx';
-
-// Sample data - in a real app, this would come from your backend
-const sampleRequests = [
-  {
-    id: 1,
-    patientName: "Ahmed Al-Rashid",
-    mrn: "MRN-001",
-    phone: "+966-12-345-6789",
-    nationalId: "1234567890",
-    age: 45,
-    gender: "Male",
-    serviceDescription: "Cardiac Surgery - CABG",
-    specialty: "Cardiology",
-    doctor: "Dr. Sarah Johnson",
-    expectedSurgeryDate: "2024-01-15",
-    status: "Pending",
-    submissionDate: "2024-01-10",
-    leadTime: 5,
-    medicalHistory: "Patient has history of hypertension and diabetes. Previous cardiac catheterization in 2020.",
-    currentMedications: "Metoprolol 50mg twice daily, Lisinopril 10mg daily, Metformin 1000mg twice daily",
-    allergies: "Penicillin, Shellfish",
-    insuranceProvider: "BUPA Arabia",
-    insuranceNumber: "INS-123456789",
-    emergencyContact: "Fatima Al-Rashid (Wife) - +966-12-987-6543",
-    referringDoctor: "Dr. Mohammad Hassan",
-    diagnosisCode: "I25.9",
-    procedureCode: "CPT-33533",
-    priority: "High",
-    additionalNotes: "Patient requires pre-operative cardiac assessment",
-    attachments: ["ECG_Report_2024.pdf", "Blood_Tests_Results.pdf", "Chest_Xray.jpg"]
-  },
-  {
-    id: 2,
-    patientName: "Fatima Al-Zahra",
-    mrn: "MRN-002",
-    phone: "+966-11-234-5678",
-    nationalId: "9876543210",
-    age: 62,
-    gender: "Female",
-    serviceDescription: "Orthopedic Surgery - Knee Replacement",
-    specialty: "Orthopedics",
-    doctor: "Dr. Michael Chen",
-    expectedSurgeryDate: "2024-01-20",
-    status: "Approved",
-    submissionDate: "2024-01-08",
-    leadTime: 12,
-    medicalHistory: "Osteoarthritis for 10 years, previous hip replacement in 2018",
-    currentMedications: "Ibuprofen 400mg as needed, Calcium supplements",
-    allergies: "None known",
-    insuranceProvider: "Tawuniya",
-    insuranceNumber: "INS-987654321",
-    emergencyContact: "Omar Al-Zahra (Son) - +966-11-876-5432",
-    referringDoctor: "Dr. Aisha Abdullah",
-    diagnosisCode: "M17.9",
-    procedureCode: "CPT-27447",
-    priority: "Medium",
-    additionalNotes: "Patient prefers general anesthesia",
-    attachments: ["MRI_Knee_2024.pdf", "X-ray_Both_Knees.jpg"]
-  },
-  {
-    id: 3,
-    patientName: "Omar Hassan",
-    mrn: "MRN-003",
-    serviceDescription: "Neurosurgery - Brain Tumor Removal",
-    specialty: "Neurosurgery",
-    doctor: "Dr. Emily Davis",
-    expectedSurgeryDate: "2024-01-25",
-    status: "Rejected",
-    submissionDate: "2024-01-12",
-    leadTime: 13
-  },
-  {
-    id: 4,
-    patientName: "Aisha Mohammad",
-    mrn: "MRN-004",
-    serviceDescription: "General Surgery - Appendectomy",
-    specialty: "General Surgery",
-    doctor: "Dr. James Wilson",
-    expectedSurgeryDate: "2024-01-18",
-    status: "Need Justification",
-    submissionDate: "2024-01-11",
-    leadTime: 7
-  }
-];
+import MessagingIcons from "@/components/messaging/MessagingIcons";
+import { useNurseRequests } from "@/hooks/useNurseRequests";
+import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
 
 export default function HospitalDashboard() {
-  const { toast } = useToast();
+  const [specialtyFilter, setSpecialtyFilter] = useState("all");
+  const [doctorFilter, setDoctorFilter] = useState("all");
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [dateFilters, setDateFilters] = useState<{
+    selectedDays: Date[];
+    selectedWeeks: { month: Date; weekNumbers: number[] }[];
+    selectedMonths: Date[];
+  }>({
+    selectedDays: [],
+    selectedWeeks: [],
+    selectedMonths: []
+  });
+  
   const navigate = useNavigate();
   
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<string>("01");
-  const [filteredRequests, setFilteredRequests] = useState(sampleRequests);
-  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
-  
-  // Column filters
-  const [surgeryDateFilter, setSurgeryDateFilter] = useState("");
-  const [specialtyFilter, setSpecialtyFilter] = useState("");
-  const [doctorFilter, setDoctorFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const currentHospitalName = "Princess Nourah Hospital";
+  const { requests, filteredRequests, updateStatus } = useNurseRequests(currentHospitalName);
 
-  // Apply all filters whenever any filter changes
-  useEffect(() => {
-    let filtered = [...sampleRequests];
-
-    // Apply status filter from sidebar
-    if (activeStatusFilter) {
-      filtered = filtered.filter(req => req.status === activeStatusFilter);
-    }
-
-    // Apply column filters
-    if (surgeryDateFilter) {
-      filtered = filtered.filter(req => req.expectedSurgeryDate === surgeryDateFilter);
-    }
-    if (specialtyFilter) {
-      filtered = filtered.filter(req => 
-        req.specialty.toLowerCase().includes(specialtyFilter.toLowerCase())
-      );
-    }
-    if (doctorFilter) {
-      filtered = filtered.filter(req => 
-        req.doctor.toLowerCase().includes(doctorFilter.toLowerCase())
-      );
-    }
-    if (statusFilter) {
-      filtered = filtered.filter(req => req.status === statusFilter);
-    }
-
-    // Apply date filters
-    if (selectedDates.length > 0) {
-      filtered = filtered.filter(req => {
-        const reqDate = new Date(req.expectedSurgeryDate);
-        return selectedDates.some(selectedDate => 
-          reqDate.toDateString() === selectedDate.toDateString()
-        );
-      });
-    }
-
-    setFilteredRequests(filtered);
-  }, [activeStatusFilter, surgeryDateFilter, specialtyFilter, doctorFilter, statusFilter, selectedDates]);
-
-  const totalRequests = sampleRequests.length;
-  const doneRequests = sampleRequests.filter(req => req.status === "Approved").length;
-  const approvedRequests = sampleRequests.filter(req => req.status === "Approved").length;
-  const rejectedRequests = sampleRequests.filter(req => req.status === "Rejected").length;
-
-  const conversionRate = totalRequests > 0 ? ((doneRequests / totalRequests) * 100).toFixed(1) : "0";
-  const approvalRate = totalRequests > 0 ? ((approvedRequests / totalRequests) * 100).toFixed(1) : "0";
-  const rejectionRate = totalRequests > 0 ? ((rejectedRequests / totalRequests) * 100).toFixed(1) : "0";
-
-  const statusCounts = {
-    new: sampleRequests.filter(req => req.status === "New").length,
-    pending: sampleRequests.filter(req => req.status === "Pending").length,
-    approved: sampleRequests.filter(req => req.status === "Approved").length,
-    rejected: sampleRequests.filter(req => req.status === "Rejected").length,
-    needJustification: sampleRequests.filter(req => req.status === "Need Justification").length,
+  // Apply additional filters beyond the hook's filtering
+  const applyFilters = (requests: typeof filteredRequests) => {
+    return requests.filter(request => {
+      const matchesSpecialty = specialtyFilter === "all" || request.specialty === specialtyFilter;
+      const matchesDoctor = doctorFilter === "all" || request.assignedDoctorValue === doctorFilter;
+      
+      // Status filter from sidebar
+      const matchesStatus = !activeStatusFilter || 
+        (activeStatusFilter === 'delayed' ? request.isDelayed : request.status === activeStatusFilter);
+      
+      // Date filters
+      const requestDate = new Date(request.createdAt);
+      let matchesDateFilter = true;
+      
+      if (dateFilters.selectedDays.length > 0 || dateFilters.selectedWeeks.length > 0 || dateFilters.selectedMonths.length > 0) {
+        matchesDateFilter = false;
+        
+        // Check selected days
+        if (dateFilters.selectedDays.length > 0) {
+          matchesDateFilter = dateFilters.selectedDays.some(day => 
+            isWithinInterval(requestDate, {
+              start: startOfDay(day),
+              end: endOfDay(day)
+            })
+          );
+        }
+        
+        // Check selected weeks
+        if (!matchesDateFilter && dateFilters.selectedWeeks.length > 0) {
+          matchesDateFilter = dateFilters.selectedWeeks.some(monthWeeks => 
+            monthWeeks.weekNumbers.some(weekNumber => {
+              const firstDayOfMonth = startOfMonth(monthWeeks.month);
+              const weekStart = addDays(firstDayOfMonth, (weekNumber - 1) * 7);
+              const weekEnd = addDays(weekStart, 6);
+              
+              return isWithinInterval(requestDate, {
+                start: startOfDay(weekStart),
+                end: endOfDay(weekEnd)
+              });
+            })
+          );
+        }
+        
+        // Check selected months
+        if (!matchesDateFilter && dateFilters.selectedMonths.length > 0) {
+          matchesDateFilter = dateFilters.selectedMonths.some(month => 
+            isWithinInterval(requestDate, {
+              start: startOfMonth(month),
+              end: endOfMonth(month)
+            })
+          );
+        }
+      }
+      
+      return matchesSpecialty && matchesDoctor && matchesStatus && matchesDateFilter;
+    });
   };
 
-  const handleStatusIconClick = (status: string) => {
-    setActiveStatusFilter(activeStatusFilter === status ? null : status);
-  };
+  const finalFilteredRequests = applyFilters(filteredRequests);
 
-  const handleExportToExcel = () => {
-    // Use filtered data if filters are active, otherwise use all data
-    const dataToExport = hasActiveFilters ? filteredRequests : sampleRequests;
-    
-    // Prepare data for Excel export
-    const excelData = dataToExport.map(req => ({
-      'Patient Name': req.patientName,
-      'MRN': req.mrn,
-      'Phone': req.phone || 'Not provided',
-      'National ID': req.nationalId || 'Not provided',
-      'Age': req.age || 'Not provided',
-      'Gender': req.gender || 'Not provided',
-      'Service Description': req.serviceDescription,
-      'Specialty': req.specialty,
-      'Doctor': req.doctor,
-      'Expected Surgery Date': new Date(req.expectedSurgeryDate).toLocaleDateString(),
-      'Status': req.status,
-      'Submission Date': new Date(req.submissionDate).toLocaleDateString(),
-      'Lead Time': req.leadTime,
-      'Medical History': req.medicalHistory || 'Not provided',
-      'Current Medications': req.currentMedications || 'Not provided',
-      'Allergies': req.allergies || 'Not provided',
-      'Insurance Provider': req.insuranceProvider || 'Not provided',
-      'Insurance Number': req.insuranceNumber || 'Not provided',
-      'Emergency Contact': req.emergencyContact || 'Not provided',
-      'Referring Doctor': req.referringDoctor || 'Not provided',
-      'Priority': req.priority || 'Not provided',
-      'Additional Notes': req.additionalNotes || 'Not provided'
-    }));
+  // Check if there are active filters
+  const hasActiveFilters = Boolean(
+    activeStatusFilter ||
+    specialtyFilter !== "all" || 
+    doctorFilter !== "all" ||
+    dateFilters.selectedDays.length > 0 ||
+    dateFilters.selectedWeeks.length > 0 ||
+    dateFilters.selectedMonths.length > 0
+  );
 
-    // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-    // Auto-size columns
-    const columnWidths = [];
-    const headers = Object.keys(excelData[0] || {});
-    headers.forEach((header, index) => {
-      const maxLength = Math.max(
-        header.length,
-        ...excelData.map(row => String(row[header] || '').length)
-      );
-      columnWidths[index] = { wch: Math.min(maxLength + 2, 50) };
-    });
-    worksheet['!cols'] = columnWidths;
-
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Hospital Requests');
-
-    // Generate filename with timestamp and filter status
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filterStatus = hasActiveFilters ? '_filtered' : '_all';
-    const filename = `hospital_requests${filterStatus}_${timestamp}.xlsx`;
-
-    // Export file
-    XLSX.writeFile(workbook, filename);
-
-    toast({
-      title: "Export Completed",
-      description: `Exported ${dataToExport.length} requests to ${filename}`,
-    });
+  const createNewRequest = () => {
+    navigate("/create-request");
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const clearAllFilters = () => {
-    setActiveStatusFilter(null);
-    setSurgeryDateFilter("");
-    setSpecialtyFilter("");
-    setDoctorFilter("");
-    setStatusFilter("");
-    setSelectedDates([]);
-    setSelectedMonths([]);
-  };
-
-  const hasActiveFilters = Boolean(activeStatusFilter || surgeryDateFilter || specialtyFilter || doctorFilter || statusFilter || selectedDates.length > 0 || selectedMonths.length > 0);
-
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Left Sidebar for Status Filters */}
-      <div className="flex flex-1">
-        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col">
-          {/* Logo */}
-          <Logo size="lg" showText={false} className="mb-4" />
-          
-          <div className="text-center mb-6">
-            <h1 className="text-xl font-bold text-gray-800 mb-2">Hospital Dashboard</h1>
-            <p className="text-sm text-gray-600">Nurse Sarah Johnson</p>
-          </div>
-          
-          <div className="space-y-3 flex-1">
-            <div 
-              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-yellow-500 text-white hover:bg-yellow-600 ${
-                activeStatusFilter === "Pending" ? "ring-2 ring-yellow-300" : ""
-              }`}
-              onClick={() => handleStatusIconClick("Pending")}
-            >
-              <div className="flex items-center">
-                <Clock className="w-5 h-5 mr-3" />
-                <span className="text-sm font-medium">Pending</span>
-              </div>
-              <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.pending}</span>
-            </div>
-
-            <div 
-              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-orange-500 text-white hover:bg-orange-600 ${
-                activeStatusFilter === "Need Justification" ? "ring-2 ring-orange-300" : ""
-              }`}
-              onClick={() => handleStatusIconClick("Need Justification")}
-            >
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 mr-3" />
-                <span className="text-sm font-medium">Need Justification</span>
-              </div>
-              <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.needJustification}</span>
-            </div>
-
-            <div 
-              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-red-500 text-white hover:bg-red-600 ${
-                activeStatusFilter === "Rejected" ? "ring-2 ring-red-300" : ""
-              }`}
-              onClick={() => handleStatusIconClick("Rejected")}
-            >
-              <div className="flex items-center">
-                <XCircle className="w-5 h-5 mr-3" />
-                <span className="text-sm font-medium">Rejected</span>
-              </div>
-              <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.rejected}</span>
-            </div>
-
-            <div 
-              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors bg-green-500 text-white hover:bg-green-600 ${
-                activeStatusFilter === "Approved" ? "ring-2 ring-green-300" : ""
-              }`}
-              onClick={() => handleStatusIconClick("Approved")}
-            >
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-3" />
-                <span className="text-sm font-medium">Done</span>
-              </div>
-              <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded-full">{statusCounts.approved}</span>
-            </div>
-
-            {hasActiveFilters && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={clearAllFilters}
-                className="w-full mt-4"
-              >
-                Clear All Filters
-              </Button>
-            )}
-          </div>
-
-          {/* Back to Role button at the bottom */}
-          <Button 
-            variant="outline"
-            onClick={() => navigate("/role-selection")}
-            className="w-full flex items-center gap-2 mt-4 border-gray-300 text-gray-700 hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Role
-          </Button>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-6 space-y-6">
-          {/* Header with Date Filters and Export Buttons */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              {/* Day Filter */}
-              <div>
-                <Label className="text-sm font-medium">Day</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-auto">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {selectedDates.length > 0 ? `${selectedDates.length} days` : "Select Days"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-white" align="end">
-                    <CalendarComponent
-                      mode="multiple"
-                      selected={selectedDates}
-                      onSelect={(dates) => setSelectedDates(dates || [])}
-                      className="rounded-md border"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Week Filter */}
-              <div>
-                <Label className="text-sm font-medium">Week</Label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Month" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="01">January</SelectItem>
-                    <SelectItem value="02">February</SelectItem>
-                    <SelectItem value="03">March</SelectItem>
-                    <SelectItem value="04">April</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Month Filter */}
-              <div>
-                <Label className="text-sm font-medium">Months</Label>
-                <Select value={selectedMonths.join(',')} onValueChange={(value) => setSelectedMonths(value ? value.split(',') : [])}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="01">January</SelectItem>
-                    <SelectItem value="02">February</SelectItem>
-                    <SelectItem value="03">March</SelectItem>
-                    <SelectItem value="04">April</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            {/* Export Buttons */}
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportToExcel}>
-                <Download className="w-4 h-4 mr-2" />
-                Excel
-              </Button>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="space-y-6">
-            {/* Requests Table */}
-            <HospitalRequestsTable
-              filteredRequests={filteredRequests}
-              totalRequests={totalRequests}
-              surgeryDateFilter={surgeryDateFilter}
-              setSurgeryDateFilter={setSurgeryDateFilter}
-              specialtyFilter={specialtyFilter}
-              setSpecialtyFilter={setSpecialtyFilter}
-              doctorFilter={doctorFilter}
-              setDoctorFilter={setDoctorFilter}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-            />
-
-            {/* Analytics Cards */}
-            <HospitalAnalytics
-              conversionRate={conversionRate}
-              approvalRate={approvalRate}
-              rejectionRate={rejectionRate}
-              doneRequests={doneRequests}
-              totalRequests={totalRequests}
-              approvedRequests={approvedRequests}
-              rejectedRequests={rejectedRequests}
-            />
-          </div>
-        </div>
-      </div>
+    <div className="flex min-h-screen w-full">
+      <HospitalSidebar 
+        currentHospitalName={currentHospitalName}
+        filteredRequests={finalFilteredRequests}
+        onCreateNewRequest={createNewRequest}
+        activeStatusFilter={activeStatusFilter}
+        onStatusFilterClick={setActiveStatusFilter}
+      />
       
-      {/* Footer */}
-      <Footer />
+      <main className="flex-1 bg-white p-6">
+        {/* Header with Export, Print and Messaging */}
+        <div className="mb-4 flex justify-end items-center gap-2">
+          <MessagingIcons currentUserRole="hospital" />
+          <Button 
+            variant="outline" 
+            onClick={handlePrint}
+            className="flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
+          <ExportButton 
+            requests={requests}
+            filteredRequests={finalFilteredRequests}
+            hasActiveFilters={hasActiveFilters}
+          />
+        </div>
+
+        <HospitalFilters 
+          specialtyFilter={specialtyFilter}
+          setSpecialtyFilter={setSpecialtyFilter}
+          doctorFilter={doctorFilter}
+          setDoctorFilter={setDoctorFilter}
+        />
+        
+        <HospitalRequestsTable 
+          filteredRequests={finalFilteredRequests}
+          updateStatus={updateStatus}
+        />
+
+        {/* Analytics */}
+        <HospitalAnalytics filteredRequests={filteredRequests} currentHospitalName={currentHospitalName} />
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
+          Created by Dr. Wail Ahmed @ My Clinic
+        </div>
+      </main>
     </div>
   );
 }

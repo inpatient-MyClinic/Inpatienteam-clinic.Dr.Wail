@@ -8,13 +8,33 @@ import PrivilegeManagement from "./PrivilegeManagement";
 import UserManagement from "@/components/settings/UserManagement";
 import SystemSettings from "@/components/settings/SystemSettings";
 import Footer from "@/components/Footer";
+import MessagingIcons from "@/components/messaging/MessagingIcons";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const SettingsDirectory = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-blue-900">Settings & Directory</h1>
-        <p className="text-gray-600">Manage users, roles, doctors, pricing, privileges, and system settings</p>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 text-blue-900">Settings & Directory</h1>
+          <p className="text-gray-600">Manage users, roles, doctors, pricing, privileges, and system settings</p>
+        </div>
+        <div className="flex gap-2">
+          <MessagingIcons currentUserRole="admin" />
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">

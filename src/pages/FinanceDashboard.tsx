@@ -1,222 +1,123 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Download } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const stats = [
-  { label: "Total Done", key: "total", color: "bg-blue-600", count: 45 },
-  { label: "Paid", key: "paid", color: "bg-green-600", count: 30 },
-  { label: "Unpaid", key: "unpaid", color: "bg-red-500", count: 15 },
-];
-
-// Sample done requests data
-const doneRequests = [
-  {
-    id: 1,
-    patientName: "Nora Mohammed",
-    idNumber: "2012345678",
-    phone: "0551234567",
-    hospitalMRN: "MRN001234",
-    hospitalName: "King Abdulaziz Hospital",
-    procedure: "Cardiac Surgery",
-    treatingDoctor: "Dr. Ahmed Al-Rashid",
-    isPaid: false,
-    completionDate: "2025-06-15",
-  },
-  {
-    id: 2,
-    patientName: "Omar Hassan",
-    idNumber: "2018765432",
-    phone: "0567890123",
-    hospitalMRN: "MRN005678",
-    hospitalName: "Prince Sultan Hospital",
-    procedure: "Orthopedic Surgery",
-    treatingDoctor: "Dr. Sarah Al-Mahmoud",
-    isPaid: true,
-    completionDate: "2025-06-10",
-  },
-  {
-    id: 3,
-    patientName: "Fatima Ali",
-    idNumber: "2014567890",
-    phone: "0512345678",
-    hospitalMRN: "MRN009876",
-    hospitalName: "King Faisal Hospital",
-    procedure: "General Surgery",
-    treatingDoctor: "Dr. Mohammed Al-Zahra",
-    isPaid: false,
-    completionDate: "2025-06-08",
-  },
-];
-
-const hospitals = ["All Hospitals", "King Abdulaziz Hospital", "Prince Sultan Hospital", "King Faisal Hospital"];
-const months = ["All Months", "January", "February", "March", "April", "May", "June"];
-const years = ["2025", "2024", "2023"];
+import { 
+  DollarSign, 
+  TrendingUp, 
+  Clock, 
+  CheckCircle, 
+  AlertCircle,
+  ArrowLeft,
+  Download
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import MessagingIcons from "@/components/messaging/MessagingIcons";
 
 export default function FinanceDashboard() {
-  const [requests, setRequests] = useState(doneRequests);
-  const [selectedHospital, setSelectedHospital] = useState("All Hospitals");
-  const [selectedMonth, setSelectedMonth] = useState("All Months");
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const navigate = useNavigate();
 
-  const markAsPaid = (requestId: number) => {
-    setRequests(prev =>
-      prev.map(req =>
-        req.id === requestId ? { ...req, isPaid: true } : req
-      )
-    );
-  };
+  const financeStats = [
+    { label: "Total Revenue", value: "₹45,230", icon: DollarSign, color: "bg-green-600" },
+    { label: "Pending Payments", value: "₹12,450", icon: Clock, color: "bg-yellow-600" },
+    { label: "Processed Today", value: "₹8,750", icon: CheckCircle, color: "bg-blue-600" },
+    { label: "Overdue", value: "₹2,100", icon: AlertCircle, color: "bg-red-600" },
+  ];
 
-  const exportToExcel = () => {
-    // This would export the filtered data to Excel
-    console.log("Exporting to Excel with filters:", {
-      hospital: selectedHospital,
-      month: selectedMonth,
-      year: selectedYear
-    });
-  };
+  const recentTransactions = [
+    { patient: "Ahmed Hassan", amount: "₹3,500", status: "Paid", date: "2025-06-20" },
+    { patient: "Sara Ali", amount: "₹2,200", status: "Pending", date: "2025-06-19" },
+    { patient: "Omar Khalil", amount: "₹4,750", status: "Paid", date: "2025-06-19" },
+    { patient: "Fatima Nour", amount: "₹1,850", status: "Processing", date: "2025-06-18" },
+  ];
 
   return (
-    <div className="flex min-h-screen w-full">
-      {/* Sidebar */}
-      <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-        <h1 className="text-xl font-bold mb-6 text-center">Finance Dashboard</h1>
-        
-        <div className="flex flex-col gap-4 w-full mb-6">
-          {stats.map((stat) => (
-            <div
-              key={stat.key}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 ${stat.color} text-white`}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <img 
+              src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+              alt="My Clinic Logo" 
+              className="h-8 w-auto"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Finance Dashboard</h1>
+              <p className="text-gray-600">Financial Management & Payments</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <MessagingIcons currentUserRole="finance" />
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate("/role-selection")}
+              className="flex items-center gap-2"
             >
-              <span className="text-xs">{stat.label}:</span>
-              <span className="font-bold text-lg">{stat.count}</span>
+              <ArrowLeft className="w-4 h-4" />
+              Back to Roles
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="p-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {financeStats.map((stat, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.color}`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+              </div>
             </div>
           ))}
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 bg-white">
-        {/* Filter bar */}
-        <div className="flex flex-wrap gap-3 p-6 border-b">
-          <Select value={selectedHospital} onValueChange={setSelectedHospital}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select Hospital" />
-            </SelectTrigger>
-            <SelectContent>
-              {hospitals.map((hospital) => (
-                <SelectItem key={hospital} value={hospital}>
-                  {hospital}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Month" />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month} value={month}>
-                  {month}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-24">
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button onClick={exportToExcel} variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
-        </div>
-
-        {/* Requests Table */}
-        <div className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Completed Requests</h2>
+        {/* Recent Transactions */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Patient Name</TableHead>
-                  <TableHead>ID Number</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Hospital MRN</TableHead>
-                  <TableHead>Hospital Name</TableHead>
-                  <TableHead>Procedure</TableHead>
-                  <TableHead>Treating Doctor</TableHead>
-                  <TableHead>Completion Date</TableHead>
-                  <TableHead>Payment Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((req) => (
-                  <TableRow key={req.id}>
-                    <TableCell>{req.patientName}</TableCell>
-                    <TableCell>{req.idNumber}</TableCell>
-                    <TableCell>{req.phone}</TableCell>
-                    <TableCell>{req.hospitalMRN}</TableCell>
-                    <TableCell>{req.hospitalName}</TableCell>
-                    <TableCell>{req.procedure}</TableCell>
-                    <TableCell>{req.treatingDoctor}</TableCell>
-                    <TableCell>{req.completionDate}</TableCell>
-                    <TableCell>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4">Patient</th>
+                  <th className="text-left py-3 px-4">Amount</th>
+                  <th className="text-left py-3 px-4">Status</th>
+                  <th className="text-left py-3 px-4">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentTransactions.map((transaction, index) => (
+                  <tr key={index} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4">{transaction.patient}</td>
+                    <td className="py-3 px-4 font-medium">{transaction.amount}</td>
+                    <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.isPaid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        transaction.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                        transaction.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
                       }`}>
-                        {req.isPaid ? "Paid" : "Unpaid"}
+                        {transaction.status}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      {!req.isPaid ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => markAsPaid(req.id)}
-                        >
-                          <Check className="w-4 h-4 mr-1" />
-                          Mark Paid
-                        </Button>
-                      ) : (
-                        <span className="text-green-600 text-sm">✓ Paid</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">{transaction.date}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
