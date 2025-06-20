@@ -6,38 +6,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Upload, X, Send, Download, ArrowLeft, Calendar as CalendarIcon, Filter, Mail, Reply, Paperclip } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth } from "date-fns";
-
-interface Message {
-  id: string;
-  from: string;
-  to: string;
-  subject: string;
-  content: string;
-  timestamp: string;
-  date: Date;
-  attachments?: string[];
-  isRead: boolean;
-  hasReply?: boolean;
-  isNew?: boolean;
-  priority?: 'normal' | 'high' | 'urgent';
-}
-
-interface ReceivedMessagesDialogProps {
-  trigger: React.ReactNode;
-  currentUserRole: string;
-}
+import { Message, ReceivedMessagesDialogProps } from "./types";
+import MessageList from "./MessageList";
+import MessageDetails from "./MessageDetails";
+import MessageFilters from "./MessageFilters";
 
 const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -348,24 +324,6 @@ Extension: 4500`,
     return matchesDateFilter;
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setReplyAttachments(prev => [...prev, ...files]);
-    toast({
-      title: "Files Added",
-      description: `${files.length} file(s) added to reply`,
-    });
-  };
-
-  const removeAttachment = (index: number) => {
-    const removedFile = replyAttachments[index];
-    setReplyAttachments(prev => prev.filter((_, i) => i !== index));
-    toast({
-      title: "File Removed",
-      description: `${removedFile.name} removed from reply`,
-    });
-  };
-
   const handleSendReply = () => {
     if (!replyMessage.trim()) {
       toast({
@@ -400,30 +358,12 @@ Extension: 4500`,
     }
   };
 
-  const downloadAttachment = (filename: string) => {
-    // Simulate download
-    console.log("Downloading attachment:", filename);
-    toast({
-      title: "Download Started",
-      description: `Downloading ${filename}`,
-    });
-  };
-
   const markAsRead = (messageId: string) => {
     console.log("Marking message as read:", messageId);
-    // Find and update message read status
     const message = allMessages.find(msg => msg.id === messageId);
     if (message) {
       message.isRead = true;
       message.isNew = false;
-    }
-  };
-
-  const handleMonthSelect = (month: string) => {
-    if (selectedMonths.includes(month)) {
-      setSelectedMonths(prev => prev.filter(m => m !== month));
-    } else {
-      setSelectedMonths(prev => [...prev, month]);
     }
   };
 
@@ -436,20 +376,11 @@ Extension: 4500`,
     });
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-100 border-red-300 text-red-800';
-      case 'high': return 'bg-orange-100 border-orange-300 text-orange-800';
-      default: return 'bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return <Badge variant="destructive" className="text-xs">Urgent</Badge>;
-      case 'high': return <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">High</Badge>;
-      default: return null;
-    }
+  const handleBackToList = () => {
+    setSelectedMessage(null);
+    setShowReply(false);
+    setReplyMessage("");
+    setReplyAttachments([]);
   };
 
   const hasActiveFilters = selectedDates.length > 0 || selectedMonths.length > 0;
@@ -466,18 +397,6 @@ Extension: 4500`,
           <DialogTitle>
             {selectedMessage ? (
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedMessage(null);
-                    setShowReply(false);
-                    setReplyMessage("");
-                    setReplyAttachments([]);
-                  }}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
                 <Mail className="w-5 h-5" />
                 Message Details
               </div>
@@ -499,20 +418,16 @@ Extension: 4500`,
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm" 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2"
-                >
-                  <Filter className="w-4 h-4" />
-                  Filters
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-1">
-                      {selectedDates.length + selectedMonths.length}
-                    </Badge>
-                  )}
-                </Button>
+                <MessageFilters
+                  showFilters={showFilters}
+                  setShowFilters={setShowFilters}
+                  selectedDates={selectedDates}
+                  setSelectedDates={setSelectedDates}
+                  selectedMonths={selectedMonths}
+                  setSelectedMonths={setSelectedMonths}
+                  hasActiveFilters={hasActiveFilters}
+                  clearFilters={clearFilters}
+                />
               </div>
             )}
           </DialogTitle>
@@ -520,321 +435,36 @@ Extension: 4500`,
         
         <div className="flex flex-col h-full overflow-hidden">
           {!selectedMessage && showFilters && (
-            <div className="border rounded-lg p-4 mb-4 space-y-4 bg-gray-50 flex-shrink-0">
-              <div className="flex flex-wrap gap-4">
-                {/* Date Filter */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <CalendarIcon className="w-4 h-4" />
-                      Select Days
-                      {selectedDates.length > 0 && (
-                        <Badge variant="secondary" className="ml-1">
-                          {selectedDates.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="multiple"
-                      selected={selectedDates}
-                      onSelect={(dates) => setSelectedDates(dates || [])}
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                {/* Month Filter */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <CalendarIcon className="w-4 h-4" />
-                      Select Months
-                      {selectedMonths.length > 0 && (
-                        <Badge variant="secondary" className="ml-1">
-                          {selectedMonths.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-4" align="start">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Select Months</Label>
-                      <div className="grid gap-1 max-h-60 overflow-y-auto">
-                        {months.map((month) => {
-                          const isSelected = selectedMonths.includes(month.value);
-                          return (
-                            <Button
-                              key={month.value}
-                              variant={isSelected ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => handleMonthSelect(month.value)}
-                              className="justify-start"
-                            >
-                              {month.label}
-                              {isSelected && <span className="ml-2">✓</span>}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Clear Filters */}
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters}>
-                    <X className="w-4 h-4 mr-1" />
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
-
-              {/* Active Filters Display */}
-              {hasActiveFilters && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedDates.map((date, index) => (
-                    <Badge key={index} variant="outline" className="flex items-center gap-1">
-                      {format(date, "MMM dd")}
-                      <X 
-                        className="w-3 h-3 cursor-pointer" 
-                        onClick={() => setSelectedDates(prev => prev.filter((_, i) => i !== index))}
-                      />
-                    </Badge>
-                  ))}
-                  {selectedMonths.map((month) => (
-                    <Badge key={month} variant="outline" className="flex items-center gap-1">
-                      {month}
-                      <X 
-                        className="w-3 h-3 cursor-pointer" 
-                        onClick={() => setSelectedMonths(prev => prev.filter(m => m !== month))}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
+            <MessageFilters
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              selectedDates={selectedDates}
+              setSelectedDates={setSelectedDates}
+              selectedMonths={selectedMonths}
+              setSelectedMonths={setSelectedMonths}
+              hasActiveFilters={hasActiveFilters}
+              clearFilters={clearFilters}
+            />
           )}
 
           {!selectedMessage ? (
-            // Messages list view
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="space-y-3 p-1">
-                  {filteredMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`p-4 border rounded-lg cursor-pointer hover:shadow-md transition-all ${
-                        !message.isRead ? getPriorityColor(message.priority || 'normal') : "hover:bg-gray-50"
-                      }`}
-                      onClick={() => {
-                        setSelectedMessage(message);
-                        markAsRead(message.id);
-                      }}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-gray-900">{message.from}</span>
-                          <div className="flex gap-1 flex-wrap">
-                            {message.isNew && (
-                              <Badge variant="destructive" className="text-xs px-2 py-1">
-                                New
-                              </Badge>
-                            )}
-                            {!message.isRead && (
-                              <Badge variant="secondary" className="text-xs px-2 py-1 bg-blue-100 text-blue-800">
-                                Unread
-                              </Badge>
-                            )}
-                            {message.hasReply && (
-                              <Badge variant="outline" className="text-xs px-2 py-1 flex items-center gap-1">
-                                <Reply className="w-3 h-3" />
-                                Replied
-                              </Badge>
-                            )}
-                            {getPriorityBadge(message.priority || 'normal')}
-                          </div>
-                        </div>
-                        <span className="text-sm text-gray-500 whitespace-nowrap ml-2">{message.timestamp}</span>
-                      </div>
-                      <div className="font-semibold mb-2 text-gray-900">{message.subject}</div>
-                      <div className="text-sm text-gray-600 line-clamp-2 mb-2">
-                        {message.content}
-                      </div>
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                          <Paperclip className="w-3 h-3" />
-                          {message.attachments.length} attachment{message.attachments.length !== 1 ? 's' : ''}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {filteredMessages.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
-                      <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                      <p className="text-lg font-medium mb-2">No messages found</p>
-                      <p className="text-sm">No messages match the selected filters.</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+            <MessageList
+              messages={filteredMessages}
+              onSelectMessage={setSelectedMessage}
+              onMarkAsRead={markAsRead}
+            />
           ) : (
-            // Single message view with proper scrolling
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-1">
-                  {/* Message Header */}
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h2 className="font-bold text-xl text-gray-900 mb-2">{selectedMessage.subject}</h2>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <div><strong>From:</strong> {selectedMessage.from}</div>
-                          <div><strong>To:</strong> {selectedMessage.to}</div>
-                          <div><strong>Date:</strong> {selectedMessage.timestamp}</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {getPriorityBadge(selectedMessage.priority || 'normal')}
-                        {selectedMessage.hasReply && (
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <Reply className="w-3 h-3" />
-                            Replied
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                      <div className="border-t pt-3">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Attachments ({selectedMessage.attachments.length}):
-                        </Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {selectedMessage.attachments.map((attachment, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
-                              <div className="flex items-center gap-2">
-                                <Paperclip className="w-4 h-4 text-gray-400" />
-                                <span className="text-sm font-medium text-gray-700 truncate">{attachment}</span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => downloadAttachment(attachment)}
-                                className="flex items-center gap-1"
-                              >
-                                <Download className="w-4 h-4" />
-                                Download
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  {/* Message Content */}
-                  <div className="bg-white p-6 rounded-lg border mb-6">
-                    <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">{selectedMessage.content}</div>
-                  </div>
-                  
-                  {/* Reply Section */}
-                  {!showReply ? (
-                    <div className="sticky bottom-0 bg-white border-t pt-4">
-                      <Button onClick={() => setShowReply(true)} className="w-full" size="lg">
-                        <Reply className="w-4 h-4 mr-2" />
-                        Reply to this message
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4 mb-4">
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Message</Label>
-                        <Textarea
-                          value={replyMessage}
-                          onChange={(e) => setReplyMessage(e.target.value)}
-                          placeholder="Type your reply message here..."
-                          className="min-h-[120px] bg-white"
-                          rows={6}
-                        />
-                      </div>
-
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Attachments</Label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
-                          <input
-                            type="file"
-                            multiple
-                            onChange={handleFileUpload}
-                            className="hidden"
-                            id="reply-file-upload"
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xlsx,.xls"
-                          />
-                          <label
-                            htmlFor="reply-file-upload"
-                            className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
-                          >
-                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                            <span className="text-sm font-medium text-gray-700">Add attachments</span>
-                            <span className="text-xs text-gray-500 mt-1">Click to browse files</span>
-                          </label>
-                        </div>
-                        
-                        {replyAttachments.length > 0 && (
-                          <div className="mt-4 space-y-2">
-                            <Label className="text-xs font-medium text-gray-600">Selected Files:</Label>
-                            {replyAttachments.map((file, index) => (
-                              <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
-                                <div className="flex items-center gap-2">
-                                  <Paperclip className="w-4 h-4 text-gray-400" />
-                                  <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                                  <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeAttachment(index)}
-                                  className="text-red-600 hover:text-red-800"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex gap-3 sticky bottom-0 bg-white pt-4 border-t">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => {
-                            setShowReply(false);
-                            setReplyMessage("");
-                            setReplyAttachments([]);
-                          }} 
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleSendReply} 
-                          className="flex-1"
-                          disabled={!replyMessage.trim()}
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Send Reply
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+            <MessageDetails
+              message={selectedMessage}
+              onBack={handleBackToList}
+              showReply={showReply}
+              setShowReply={setShowReply}
+              replyMessage={replyMessage}
+              setReplyMessage={setReplyMessage}
+              replyAttachments={replyAttachments}
+              setReplyAttachments={setReplyAttachments}
+              onSendReply={handleSendReply}
+            />
           )}
         </div>
       </DialogContent>
