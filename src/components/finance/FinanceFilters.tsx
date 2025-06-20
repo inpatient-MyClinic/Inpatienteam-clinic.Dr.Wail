@@ -2,7 +2,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Printer, FileDown } from "lucide-react";
+import ExcelUpload from "./ExcelUpload";
 
 interface FinanceFiltersProps {
   dateFilter: string;
@@ -13,6 +16,7 @@ interface FinanceFiltersProps {
   setPatientFilter: (value: string) => void;
   onExportToExcel: () => void;
   onPrint: () => void;
+  onBulkUpdatePayments: (ids: string[]) => void;
 }
 
 export default function FinanceFilters({
@@ -23,50 +27,80 @@ export default function FinanceFilters({
   patientFilter,
   setPatientFilter,
   onExportToExcel,
-  onPrint
+  onPrint,
+  onBulkUpdatePayments
 }: FinanceFiltersProps) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-      <div className="flex flex-wrap gap-4 items-center">
+    <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+      <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-600" />
+          <Label htmlFor="date-filter" className="text-sm font-medium">Date:</Label>
           <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by date" />
+            <SelectTrigger className="w-[150px]" id="date-filter">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Dates</SelectItem>
               <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="yesterday">Yesterday</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="last-month">Last Month</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <Select value={amountFilter} onValueChange={setAmountFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by amount" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Amounts</SelectItem>
-            <SelectItem value="low">₹0 - ₹2,000</SelectItem>
-            <SelectItem value="medium">₹2,000 - ₹5,000</SelectItem>
-            <SelectItem value="high">₹5,000+</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="amount-filter" className="text-sm font-medium">Amount:</Label>
+          <Select value={amountFilter} onValueChange={setAmountFilter}>
+            <SelectTrigger className="w-[150px]" id="amount-filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Amounts</SelectItem>
+              <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
+              <SelectItem value="1000-5000">₹1,000 - ₹5,000</SelectItem>
+              <SelectItem value="5000-10000">₹5,000 - ₹10,000</SelectItem>
+              <SelectItem value="10000+">₹10,000+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select value={patientFilter} onValueChange={setPatientFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by patient" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Patients</SelectItem>
-            <SelectItem value="ahmed">Ahmed Hassan</SelectItem>
-            <SelectItem value="sara">Sara Ali</SelectItem>
-            <SelectItem value="omar">Omar Khalil</SelectItem>
-            <SelectItem value="fatima">Fatima Nour</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="patient-filter" className="text-sm font-medium">Patient:</Label>
+          <Input
+            id="patient-filter"
+            placeholder="Search by patient name"
+            value={patientFilter === "all" ? "" : patientFilter}
+            onChange={(e) => setPatientFilter(e.target.value || "all")}
+            className="w-[200px]"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <ExcelUpload onUpdatePayments={onBulkUpdatePayments} />
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onPrint}
+            className="flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onExportToExcel}
+            className="flex items-center gap-2"
+          >
+            <FileDown className="w-4 h-4" />
+            Export Excel
+          </Button>
+        </div>
       </div>
     </div>
   );

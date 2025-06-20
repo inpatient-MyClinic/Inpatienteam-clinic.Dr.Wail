@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import FinanceFilters from "@/components/finance/FinanceFilters";
 import FinanceTable from "@/components/finance/FinanceTable";
 import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
+import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
   id: string;
@@ -28,6 +28,7 @@ export default function FinanceDashboard() {
   const [dateFilter, setDateFilter] = useState("all");
   const [amountFilter, setAmountFilter] = useState("all");
   const [patientFilter, setPatientFilter] = useState("all");
+  const { toast } = useToast();
   
   const navigate = useNavigate();
   const currentFinanceName = "Finance Department";
@@ -155,6 +156,34 @@ export default function FinanceDashboard() {
     console.log(`Updated transaction ${id} to ${isPaid ? 'Paid' : 'Not Paid'}`);
   };
 
+  const handleBulkUpdatePayments = (ids: string[]) => {
+    let updatedCount = 0;
+    setAllTransactions(prevTransactions =>
+      prevTransactions.map(transaction => {
+        if (ids.includes(transaction.id) && transaction.status !== "Paid") {
+          updatedCount++;
+          return { ...transaction, status: "Paid" };
+        }
+        return transaction;
+      })
+    );
+
+    if (updatedCount > 0) {
+      toast({
+        title: "Bulk update successful",
+        description: `Updated ${updatedCount} transactions to Paid status`,
+      });
+    } else {
+      toast({
+        title: "No updates made",
+        description: "No matching transactions found or all were already paid",
+        variant: "destructive",
+      });
+    }
+
+    console.log(`Bulk updated ${updatedCount} transactions from Excel upload`);
+  };
+
   // Calculate unread messages for finance role
   const unreadCount = 7;
 
@@ -199,6 +228,7 @@ export default function FinanceDashboard() {
               setPatientFilter={setPatientFilter}
               onExportToExcel={() => console.log('Export to Excel')}
               onPrint={handlePrint}
+              onBulkUpdatePayments={handleBulkUpdatePayments}
             />
             
             <FinanceTable 
