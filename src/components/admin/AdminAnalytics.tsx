@@ -6,6 +6,7 @@ import AdminMetricsCards from "./analytics/AdminMetricsCards";
 import AdminTopCharts from "./analytics/AdminTopCharts";
 import AdminLossTreeChart from "./analytics/AdminLossTreeChart";
 import AdminStatusDistribution from "./analytics/AdminStatusDistribution";
+import AdminOverdueAnalytics from "./analytics/AdminOverdueAnalytics";
 
 interface AdminAnalyticsProps {
   data: any[];
@@ -134,6 +135,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
         filteredDataLength={filteredData.length}
         npsScore={npsScore}
       />
+
+      {/* Overdue Requests Analytics */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4 text-red-600">Overdue Request Analysis</h3>
+        <AdminOverdueAnalytics data={filteredData} />
+      </div>
 
       {/* Top 5 Charts - now as vertical lists */}
       <AdminTopCharts
