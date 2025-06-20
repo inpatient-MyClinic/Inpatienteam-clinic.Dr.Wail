@@ -13,6 +13,7 @@ export interface CaseCoordinatorRequest {
   expectedSurgeryDate: string;
   isDelayed: boolean;
   doctorName: string;
+  assignedDoctor: string; // Added to match Request interface
   attachments?: string[];
 }
 
@@ -43,6 +44,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     expectedSurgeryDate: "2024-02-01",
     isDelayed: false,
     doctorName: "Dr. Ahmed Salem",
+    assignedDoctor: "Dr. Ahmed Salem",
     attachments: ["cardiac_report.pdf", "echo_results.pdf"]
   },
   {
@@ -57,6 +59,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     expectedSurgeryDate: "2024-02-10",
     isDelayed: false,
     doctorName: "Dr. Mohammed Khalil",
+    assignedDoctor: "Dr. Mohammed Khalil",
     attachments: ["xray_knee.pdf"]
   },
   {
@@ -71,6 +74,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     expectedSurgeryDate: "2024-02-15",
     isDelayed: false,
     doctorName: "Dr. Fatima Nour",
+    assignedDoctor: "Dr. Fatima Nour",
     attachments: ["mri_brain.pdf", "ct_scan.pdf"]
   },
   {
@@ -85,6 +89,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     expectedSurgeryDate: "2024-01-25",
     isDelayed: false,
     doctorName: "Dr. Ali Hassan",
+    assignedDoctor: "Dr. Ali Hassan",
     attachments: ["lab_results.pdf"]
   },
   {
@@ -99,6 +104,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     expectedSurgeryDate: "2024-02-20",
     isDelayed: false,
     doctorName: "Dr. Layla Hassan",
+    assignedDoctor: "Dr. Layla Hassan",
     attachments: []
   },
   {
@@ -113,6 +119,7 @@ const mockRequests: CaseCoordinatorRequest[] = [
     expectedSurgeryDate: "2024-01-30",
     isDelayed: true,
     doctorName: "Dr. Omar Khalil",
+    assignedDoctor: "Dr. Omar Khalil",
     attachments: ["trauma_report.pdf", "emergency_notes.pdf"]
   }
 ];
