@@ -52,7 +52,7 @@ const UserForm = ({
             <Label htmlFor="category">Category</Label>
             <Select value={newUserCategory} onValueChange={setNewUserCategory}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 {userCategories.map(category => (
@@ -71,6 +71,7 @@ const UserForm = ({
                   <SelectValue placeholder="Select specialty" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No Specialty</SelectItem>
                   {specialties.map(specialty => (
                     <SelectItem key={specialty} value={specialty}>
                       {specialty}

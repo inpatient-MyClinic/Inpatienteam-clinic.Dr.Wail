@@ -1,54 +1,69 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from 'xlsx';
-import { User, defaultFieldPermissions, specialties } from "./userManagement/types";
+import { FileDown, Filter, X } from "lucide-react";
+import { User, userCategories, specialties, defaultFieldPermissions } from "./userManagement/types";
 import UserForm from "./userManagement/UserForm";
 import UserTable from "./userManagement/UserTable";
+import UserExcelUpload from "./UserExcelUpload";
 
 const EnhancedUserManagement = () => {
-  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([
     {
       id: "1",
-      email: "admin@hospital.com",
-      category: "Admin",
-      status: "Active",
-      createdAt: "2025-01-01",
-      fieldPermissions: defaultFieldPermissions["Admin"]
-    },
-    {
-      id: "2", 
-      email: "dr.ahmed@hospital.com",
+      email: "dr.smith@hospital.com",
       category: "Doctor",
       specialty: "Cardiology",
       status: "Active",
-      createdAt: "2025-01-02",
+      createdAt: "2024-01-15",
       fieldPermissions: defaultFieldPermissions["Doctor"]
     },
     {
-      id: "3",
-      email: "nurse.sara@hospital.com", 
+      id: "2", 
+      email: "nurse.johnson@hospital.com",
       category: "Nurse",
       status: "Active",
-      createdAt: "2025-01-03",
+      createdAt: "2024-01-20",
       fieldPermissions: defaultFieldPermissions["Nurse"]
+    },
+    {
+      id: "3",
+      email: "coordinator@hospital.com", 
+      category: "Case Coordinator",
+      status: "Active",
+      createdAt: "2024-01-25",
+      fieldPermissions: defaultFieldPermissions["Case Coordinator"]
     }
   ]);
-  
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserCategory, setNewUserCategory] = useState("Nurse");
-  const [newUserSpecialty, setNewUserSpecialty] = useState("");
-  const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editPermissions, setEditPermissions] = useState<Record<string, "none" | "view" | "edit">>({});
-  const [specialtyFilter, setSpecialtyFilter] = useState<string>("");
 
-  const handleAddUser = () => {
-    if (!newUserEmail) {
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserCategory, setNewUserCategory] = useState("Doctor");
+  const [newUserSpecialty, setNewUserSpecialty] = useState("none");
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editingPermissions, setEditingPermissions] = useState<Record<string, "none" | "view" | "edit">>({});
+  
+  // Filter states
+  const [specialtyFilter, setSpecialtyFilter] = useState("all");
+  const [searchFilter, setSearchFilter] = useState("");
+
+  const { toast } = useToast();
+
+  const filteredUsers = users.filter(user => {
+    const matchesSpecialty = specialtyFilter === "all" || user.specialty === specialtyFilter;
+    const matchesSearch = searchFilter === "" || 
+      user.email.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      user.category.toLowerCase().includes(searchFilter.toLowerCase());
+    
+    return matchesSpecialty && matchesSearch;
+  });
+
+  const addUser = () => {
+    if (!newUserEmail.trim()) {
       toast({
         title: "Error",
         description: "Please enter an email address",
@@ -56,7 +71,7 @@ const EnhancedUserManagement = () => {
       });
       return;
     }
-    
+
     if (users.some(user => user.email === newUserEmail)) {
       toast({
         title: "Error", 
@@ -67,41 +82,27 @@ const EnhancedUserManagement = () => {
     }
 
     const newUser: User = {
-      id: Date.now().toString(),
+      id: (users.length + 1).toString(),
       email: newUserEmail,
       category: newUserCategory,
       specialty: newUserCategory === "Doctor" ? newUserSpecialty : undefined,
       status: "Active",
       createdAt: new Date().toISOString().split('T')[0],
-      fieldPermissions: defaultFieldPermissions[newUserCategory] || {}
+      fieldPermissions: defaultFieldPermissions[newUserCategory as keyof typeof defaultFieldPermissions]
     };
 
     setUsers([...users, newUser]);
     setNewUserEmail("");
-    setNewUserCategory("Nurse");
-    setNewUserSpecialty("");
-    
+    setNewUserCategory("Doctor");
+    setNewUserSpecialty("none");
+
     toast({
       title: "Success",
-      description: `User ${newUserEmail} added successfully as ${newUserCategory}`
+      description: "User added successfully"
     });
   };
 
-  const handleExcelUpload = (uploadedUsers: any[]) => {
-    const newUsers: User[] = uploadedUsers.map((row, index) => ({
-      id: (Date.now() + index).toString(),
-      email: row["Email"],
-      category: row["Category"] || "Doctor",
-      specialty: row["Specialty"],
-      status: "Active" as const,
-      createdAt: new Date().toISOString().split('T')[0],
-      fieldPermissions: defaultFieldPermissions[row["Category"] || "Doctor"] || {}
-    }));
-
-    setUsers(prev => [...prev, ...newUsers]);
-  };
-
-  const handleDeleteUser = (userId: string) => {
+  const deleteUser = (userId: string) => {
     setUsers(users.filter(user => user.id !== userId));
     toast({
       title: "Success",
@@ -109,70 +110,92 @@ const EnhancedUserManagement = () => {
     });
   };
 
-  const handleEditUser = (userId: string) => {
+  const startEditing = (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (user) {
       setEditingUser(userId);
-      setEditPermissions(user.fieldPermissions);
+      setEditingPermissions(user.fieldPermissions);
     }
   };
 
-  const handleSaveUser = (userId: string) => {
+  const savePermissions = (userId: string) => {
     setUsers(users.map(user => 
       user.id === userId 
-        ? { ...user, fieldPermissions: editPermissions }
+        ? { ...user, fieldPermissions: editingPermissions }
         : user
     ));
     setEditingUser(null);
+    setEditingPermissions({});
+    
     toast({
       title: "Success",
-      description: "User field permissions updated successfully"
+      description: "Permissions updated successfully"
     });
   };
 
-  const handleCancelEdit = () => {
+  const cancelEditing = () => {
     setEditingUser(null);
-    setEditPermissions({});
+    setEditingPermissions({});
   };
 
-  const updateFieldPermission = (fieldId: string, permission: "none" | "view" | "edit") => {
-    setEditPermissions(prev => ({
+  const updatePermission = (fieldId: string, permission: "none" | "view" | "edit") => {
+    setEditingPermissions(prev => ({
       ...prev,
       [fieldId]: permission
     }));
   };
 
-  const filteredUsers = specialtyFilter 
-    ? users.filter(user => user.specialty === specialtyFilter)
-    : users;
-
-  const exportToExcel = () => {
-    const exportData = filteredUsers.map(user => ({
-      "Email": user.email,
-      "Category": user.category,
-      "Specialty": user.specialty || "",
-      "Status": user.status,
-      "Created Date": user.createdAt,
-      "Field Permissions": Object.entries(user.fieldPermissions)
-        .map(([field, permission]) => `${field}:${permission}`)
-        .join("; ")
+  const handleExcelUpload = (uploadedUsers: any[]) => {
+    const newUsers: User[] = uploadedUsers.map((userData, index) => ({
+      id: (users.length + index + 1).toString(),
+      email: userData.Email || userData.email,
+      category: userData.Category || "Doctor",
+      specialty: userData.Specialty || userData.specialty,
+      status: "Active" as const,
+      createdAt: new Date().toISOString().split('T')[0],
+      fieldPermissions: defaultFieldPermissions[userData.Category as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Users");
-    
-    const filename = specialtyFilter 
-      ? `users_${specialtyFilter}_${new Date().toISOString().split('T')[0]}.xlsx`
-      : `all_users_${new Date().toISOString().split('T')[0]}.xlsx`;
-    
-    XLSX.writeFile(wb, filename);
+    setUsers([...users, ...newUsers]);
     
     toast({
-      title: "Export Successful",
-      description: `${filteredUsers.length} users exported to Excel`
+      title: "Success",
+      description: `${newUsers.length} users imported successfully`
     });
   };
+
+  const exportToExcel = () => {
+    const csvContent = [
+      ["Email", "Category", "Specialty", "Status", "Created Date"].join(","),
+      ...filteredUsers.map(user => [
+        user.email,
+        user.category,
+        user.specialty || "",
+        user.status,
+        user.createdAt
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users_export.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Success",
+      description: "Users exported to Excel successfully"
+    });
+  };
+
+  const clearFilters = () => {
+    setSpecialtyFilter("all");
+    setSearchFilter("");
+  };
+
+  const hasActiveFilters = specialtyFilter !== "all" || searchFilter !== "";
 
   return (
     <div className="space-y-6">
@@ -183,24 +206,36 @@ const EnhancedUserManagement = () => {
         setNewUserCategory={setNewUserCategory}
         newUserSpecialty={newUserSpecialty}
         setNewUserSpecialty={setNewUserSpecialty}
-        onAddUser={handleAddUser}
+        onAddUser={addUser}
         onExcelUpload={handleExcelUpload}
       />
 
+      {/* Filters and Export */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Users ({filteredUsers.length})</CardTitle>
-              <CardDescription>Manage users and their field-level permissions</CardDescription>
+          <CardTitle>User Filters & Export</CardTitle>
+          <CardDescription>Filter users and export data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 items-end mb-4">
+            <div className="flex-1">
+              <Label htmlFor="search">Search Users</Label>
+              <Input
+                id="search"
+                placeholder="Search by email or category..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+              />
             </div>
-            <div className="flex gap-2">
+            <div className="w-48">
+              <Label htmlFor="specialty-filter">Filter by Specialty</Label>
               <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by specialty" />
+                <SelectTrigger>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Specialties</SelectItem>
+                  <SelectItem value="all">All Specialties</SelectItem>
+                  <SelectItem value="none">No Specialty</SelectItem>
                   {specialties.map(specialty => (
                     <SelectItem key={specialty} value={specialty}>
                       {specialty}
@@ -208,26 +243,41 @@ const EnhancedUserManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={exportToExcel} variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export Excel
+            </div>
+            <Button onClick={exportToExcel} variant="outline">
+              <FileDown className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                Showing {filteredUsers.length} of {users.length} users
+              </div>
+              <Button 
+                variant="ghost" 
+                onClick={clearFilters}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+                Clear Filters
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <UserTable
-            users={filteredUsers}
-            editingUser={editingUser}
-            editPermissions={editPermissions}
-            onEditUser={handleEditUser}
-            onSaveUser={handleSaveUser}
-            onCancelEdit={handleCancelEdit}
-            onDeleteUser={handleDeleteUser}
-            onUpdateFieldPermission={updateFieldPermission}
-          />
+          )}
         </CardContent>
       </Card>
+
+      <UserTable
+        users={filteredUsers}
+        editingUser={editingUser}
+        editingPermissions={editingPermissions}
+        onEdit={startEditing}
+        onSave={savePermissions}
+        onCancel={cancelEditing}
+        onDelete={deleteUser}
+        onUpdatePermission={updatePermission}
+      />
     </div>
   );
 };
