@@ -136,16 +136,6 @@ export default function HospitalTab({ request, onFieldChange }: HospitalTabProps
           </div>
           
           <div>
-            <Label htmlFor="operationDate">Operation Date</Label>
-            <Input
-              id="operationDate"
-              type="date"
-              defaultValue={request.operationDate || ""}
-              onChange={(e) => onFieldChange("operationDate", e.target.value)}
-            />
-          </div>
-          
-          <div>
             <Label htmlFor="operationDuration">Operation Duration (hours)</Label>
             <Input
               id="operationDuration"
@@ -186,53 +176,8 @@ export default function HospitalTab({ request, onFieldChange }: HospitalTabProps
               <SelectItem value="Hospital Related">Hospital Related</SelectItem>
               <SelectItem value="Insurance Related">Insurance Related</SelectItem>
               <SelectItem value="Patient Related">Patient Related</SelectItem>
-              <SelectItem value="System Related">System Related</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
-
-      {/* Hospital Staff Information */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Hospital Staff Information</h3>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="hospitalCoordinator">Hospital Coordinator</Label>
-            <Input
-              id="hospitalCoordinator"
-              defaultValue={request.hospitalCoordinator || ""}
-              onChange={(e) => onFieldChange("hospitalCoordinator", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="surgeonName">Surgeon Name</Label>
-            <Input
-              id="surgeonName"
-              defaultValue={request.surgeonName || ""}
-              onChange={(e) => onFieldChange("surgeonName", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="anesthesiologist">Anesthesiologist</Label>
-            <Input
-              id="anesthesiologist"
-              defaultValue={request.anesthesiologist || ""}
-              onChange={(e) => onFieldChange("anesthesiologist", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="nurseInCharge">Nurse in Charge</Label>
-            <Input
-              id="nurseInCharge"
-              defaultValue={request.nurseInCharge || ""}
-              onChange={(e) => onFieldChange("nurseInCharge", e.target.value)}
-            />
-          </div>
         </div>
       </div>
 
