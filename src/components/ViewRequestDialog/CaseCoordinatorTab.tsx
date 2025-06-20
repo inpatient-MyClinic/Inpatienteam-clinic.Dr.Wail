@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,28 @@ interface CaseCoordinatorTabProps {
   request: any;
   onFieldChange: (field: string, value: any) => void;
 }
+
+const caseManagers = [
+  "Sarah Ahmed",
+  "Mohammed Ali",
+  "Fatima Hassan",
+  "Omar Ibrahim",
+  "Nour Abdullah",
+  "Hassan Mohammed",
+  "Layla Omar",
+  "Youssef Ahmed"
+];
+
+const insuranceCompanies = [
+  "Bupa Arabia",
+  "Tawuniya",
+  "Malath Insurance",
+  "Walaa Insurance",
+  "Al Rajhi Takaful",
+  "Sanad Insurance",
+  "SABB Takaful",
+  "AXA Cooperative Insurance"
+];
 
 export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoordinatorTabProps) {
   const [attachments, setAttachments] = useState(request.coordinatorAttachments || []);
@@ -29,6 +51,13 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
     onFieldChange("coordinatorAttachments", updatedAttachments);
   };
 
+  const handleCaseManagerChange = (value: string) => {
+    onFieldChange("caseManagerName", value);
+    // Auto-capture assigned date when case manager is selected
+    const today = new Date().toISOString().split('T')[0];
+    onFieldChange("assignedDate", today);
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -38,11 +67,21 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
           
           <div>
             <Label htmlFor="caseManagerName">Case Manager Name</Label>
-            <Input
-              id="caseManagerName"
-              defaultValue={request.caseManagerName || ""}
-              onChange={(e) => onFieldChange("caseManagerName", e.target.value)}
-            />
+            <Select 
+              defaultValue={request.caseManagerName || ""} 
+              onValueChange={handleCaseManagerChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select case manager" />
+              </SelectTrigger>
+              <SelectContent>
+                {caseManagers.map((manager) => (
+                  <SelectItem key={manager} value={manager}>
+                    {manager}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
@@ -52,6 +91,8 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
               type="date"
               defaultValue={request.assignedDate || ""}
               onChange={(e) => onFieldChange("assignedDate", e.target.value)}
+              readOnly
+              className="bg-gray-100"
             />
           </div>
           
@@ -114,16 +155,6 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
               onChange={(e) => onFieldChange("contactDate", e.target.value)}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="contactNotes">Contact Notes</Label>
-            <Textarea
-              id="contactNotes"
-              defaultValue={request.contactNotes || ""}
-              onChange={(e) => onFieldChange("contactNotes", e.target.value)}
-              rows={3}
-            />
-          </div>
         </div>
       </div>
 
@@ -134,11 +165,21 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="insuranceCompany">Insurance Company</Label>
-            <Input
-              id="insuranceCompany"
-              defaultValue={request.insuranceCompany || ""}
-              onChange={(e) => onFieldChange("insuranceCompany", e.target.value)}
-            />
+            <Select 
+              defaultValue={request.insuranceCompany || ""} 
+              onValueChange={(value) => onFieldChange("insuranceCompany", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select insurance company" />
+              </SelectTrigger>
+              <SelectContent>
+                {insuranceCompanies.map((company) => (
+                  <SelectItem key={company} value={company}>
+                    {company}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
@@ -147,34 +188,6 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
               id="policyNumber"
               defaultValue={request.policyNumber || ""}
               onChange={(e) => onFieldChange("policyNumber", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="contactPerson">Contact Person</Label>
-            <Input
-              id="contactPerson"
-              defaultValue={request.contactPerson || ""}
-              onChange={(e) => onFieldChange("contactPerson", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="contactPhone">Contact Phone</Label>
-            <Input
-              id="contactPhone"
-              defaultValue={request.contactPhone || ""}
-              onChange={(e) => onFieldChange("contactPhone", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="contactEmail">Contact Email</Label>
-            <Input
-              id="contactEmail"
-              type="email"
-              defaultValue={request.contactEmail || ""}
-              onChange={(e) => onFieldChange("contactEmail", e.target.value)}
             />
           </div>
         </div>
@@ -220,26 +233,6 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
               </SelectContent>
             </Select>
           </div>
-          
-          <div>
-            <Label htmlFor="estimatedCost">Estimated Cost</Label>
-            <Input
-              id="estimatedCost"
-              type="number"
-              defaultValue={request.estimatedCost || ""}
-              onChange={(e) => onFieldChange("estimatedCost", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="approvedAmount">Approved Amount</Label>
-            <Input
-              id="approvedAmount"
-              type="number"
-              defaultValue={request.approvedAmount || ""}
-              onChange={(e) => onFieldChange("approvedAmount", e.target.value)}
-            />
-          </div>
         </div>
       </div>
 
@@ -247,34 +240,13 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Follow-up Information</h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="nextFollowupDate">Next Follow-up Date</Label>
-            <Input
-              id="nextFollowupDate"
-              type="date"
-              defaultValue={request.nextFollowupDate || ""}
-              onChange={(e) => onFieldChange("nextFollowupDate", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="followupReason">Follow-up Reason</Label>
-            <Input
-              id="followupReason"
-              defaultValue={request.followupReason || ""}
-              onChange={(e) => onFieldChange("followupReason", e.target.value)}
-            />
-          </div>
-        </div>
-        
         <div>
-          <Label htmlFor="followupNotes">Follow-up Notes</Label>
-          <Textarea
-            id="followupNotes"
-            defaultValue={request.followupNotes || ""}
-            onChange={(e) => onFieldChange("followupNotes", e.target.value)}
-            rows={3}
+          <Label htmlFor="nextOPDVisit">Next OPD Visit</Label>
+          <Input
+            id="nextOPDVisit"
+            type="date"
+            defaultValue={request.nextOPDVisit || ""}
+            onChange={(e) => onFieldChange("nextOPDVisit", e.target.value)}
           />
         </div>
       </div>
