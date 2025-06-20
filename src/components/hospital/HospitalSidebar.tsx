@@ -1,11 +1,12 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import Logo from "@/components/Logo";
 
 interface HospitalSidebarProps {
+  currentHospitalName: string;
   statusCounts: {
     pending: number;
     approved: number;
@@ -19,96 +20,100 @@ interface HospitalSidebarProps {
 }
 
 export default function HospitalSidebar({
+  currentHospitalName,
   statusCounts,
   activeStatusFilter,
   onStatusIconClick,
   onClearAllFilters,
   hasActiveFilters
 }: HospitalSidebarProps) {
+  const navigate = useNavigate();
+
+  // Calculate stats from status counts
+  const stats = [
+    {
+      label: "New",
+      key: "new",
+      color: "bg-blue-500",
+      count: statusCounts.pending
+    },
+    {
+      label: "Pending", 
+      key: "pending",
+      color: "bg-yellow-500",
+      count: statusCounts.pending
+    },
+    {
+      label: "Approved",
+      key: "approved", 
+      color: "bg-green-500",
+      count: statusCounts.approved
+    },
+    {
+      label: "Rejected",
+      key: "rejected",
+      color: "bg-red-500", 
+      count: statusCounts.rejected
+    },
+    {
+      label: "Need Justification",
+      key: "need_justification",
+      color: "bg-orange-500",
+      count: statusCounts.needJustification
+    }
+  ];
+
   return (
-    <div className="w-64 space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filter by Status</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "New" ? "bg-blue-100 border-2 border-blue-300" : "hover:bg-gray-50 border"
-            }`}
-            onClick={() => onStatusIconClick("New")}
-          >
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-blue-600 mr-3" />
-              <span>New</span>
-            </div>
-            <Badge variant="secondary">{statusCounts.pending}</Badge>
-          </div>
+    <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
+      <Logo size="sm" showText={false} className="mb-4" />
+      
+      <div className="text-center mb-4">
+        <h1 className="text-lg font-bold text-blue-900">Hospital Dashboard</h1>
+        <p className="text-xs text-blue-700">{currentHospitalName}</p>
+      </div>
 
-          <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Pending" ? "bg-yellow-100 border-2 border-yellow-300" : "hover:bg-gray-50 border"
-            }`}
-            onClick={() => onStatusIconClick("Pending")}
+      <Button className="w-full mb-8" variant="default" onClick={() => navigate("/create-request")}>
+        <Plus className="w-4 h-4 mr-2" />
+        Create New Request
+      </Button>
+      
+      <div className="flex flex-col gap-2 w-full mb-4">
+        <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
+        {stats.map((stat) => (
+          <div
+            key={stat.key}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
+              !activeStatusFilter || activeStatusFilter === stat.label 
+                ? stat.color 
+                : stat.color + ' opacity-50'
+            } text-white`}
+            onClick={() => onStatusIconClick(activeStatusFilter === stat.label ? null : stat.label)}
           >
-            <div className="flex items-center">
-              <Clock className="w-5 h-5 text-yellow-600 mr-3" />
-              <span>Pending</span>
-            </div>
-            <Badge variant="secondary">{statusCounts.pending}</Badge>
+            <span className="text-xs">{stat.label}:</span>
+            <span className="font-bold text-lg">{stat.count}</span>
           </div>
-
-          <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Approved" ? "bg-green-100 border-2 border-green-300" : "hover:bg-gray-50 border"
-            }`}
-            onClick={() => onStatusIconClick("Approved")}
+        ))}
+        
+        {hasActiveFilters && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onClearAllFilters}
+            className="mt-2"
           >
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
-              <span>Approved</span>
-            </div>
-            <Badge variant="secondary">{statusCounts.approved}</Badge>
-          </div>
+            Clear All Filters
+          </Button>
+        )}
+      </div>
 
-          <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Rejected" ? "bg-red-100 border-2 border-red-300" : "hover:bg-gray-50 border"
-            }`}
-            onClick={() => onStatusIconClick("Rejected")}
-          >
-            <div className="flex items-center">
-              <XCircle className="w-5 h-5 text-red-600 mr-3" />
-              <span>Rejected</span>
-            </div>
-            <Badge variant="secondary">{statusCounts.rejected}</Badge>
-          </div>
-
-          <div 
-            className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-              activeStatusFilter === "Need Justification" ? "bg-orange-100 border-2 border-orange-300" : "hover:bg-gray-50 border"
-            }`}
-            onClick={() => onStatusIconClick("Need Justification")}
-          >
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-orange-600 mr-3" />
-              <span>Need Justification</span>
-            </div>
-            <Badge variant="secondary">{statusCounts.needJustification}</Badge>
-          </div>
-
-          {hasActiveFilters && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onClearAllFilters}
-              className="w-full mt-4"
-            >
-              Clear All Filters
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+      <Button 
+        variant="outline"
+        onClick={() => navigate("/role-selection")}
+        className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Roles
+      </Button>
+    </aside>
   );
 }

@@ -1,7 +1,9 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import ExportButton from "@/components/ExportButton";
 import HospitalSidebar from "@/components/hospital/HospitalSidebar";
 import HospitalFilters from "@/components/hospital/HospitalFilters";
@@ -156,6 +158,7 @@ export default function HospitalDashboard() {
   return (
     <div className="flex min-h-screen w-full">
       <HospitalSidebar 
+        currentHospitalName={currentHospitalName}
         statusCounts={statusCounts}
         activeStatusFilter={activeStatusFilter}
         onStatusIconClick={handleStatusIconClick}
@@ -163,64 +166,68 @@ export default function HospitalDashboard() {
         hasActiveFilters={hasActiveFilters}
       />
       
-      <main className="flex-1 bg-white p-6">
-        {/* Header with Export, Print and Messaging */}
-        <div className="mb-4 flex justify-end items-center gap-2">
-          <MessagingIcons currentUserRole="hospital" unreadCount={unreadCount} />
-          <Button 
-            variant="outline" 
-            onClick={handlePrint}
-            className="flex items-center gap-2"
-          >
-            <Printer className="w-4 h-4" />
-            Print
-          </Button>
-          <ExportButton 
-            requests={requests}
-            filteredRequests={finalFilteredRequests}
-            hasActiveFilters={hasActiveFilters}
-          />
-        </div>
+      <main className="flex-1 bg-white">
+        <ScrollArea className="h-screen">
+          <div className="p-6">
+            {/* Header with Export, Print and Messaging */}
+            <div className="mb-4 flex justify-end items-center gap-2">
+              <MessagingIcons currentUserRole="hospital" unreadCount={unreadCount} />
+              <Button 
+                variant="outline" 
+                onClick={handlePrint}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                Print
+              </Button>
+              <ExportButton 
+                requests={requests}
+                filteredRequests={finalFilteredRequests}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
 
-        <HospitalFilters 
-          selectedDates={selectedDates}
-          setSelectedDates={setSelectedDates}
-          selectedMonth={selectedMonth}
-          setSelectedMonth={setSelectedMonth}
-          selectedMonths={selectedMonths}
-          setSelectedMonths={setSelectedMonths}
-          onExportToExcel={handleExportToExcel}
-          onPrint={handlePrint}
-        />
-        
-        <HospitalRequestsTable 
-          filteredRequests={finalFilteredRequests}
-          totalRequests={requests.length}
-          surgeryDateFilter={surgeryDateFilter}
-          setSurgeryDateFilter={setSurgeryDateFilter}
-          specialtyFilter={specialtyFilter === "all" ? "" : specialtyFilter}
-          setSpecialtyFilter={(value) => setSpecialtyFilter(value || "all")}
-          doctorFilter={doctorFilter === "all" ? "" : doctorFilter}
-          setDoctorFilter={(value) => setDoctorFilter(value || "all")}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-        />
+            <HospitalFilters 
+              selectedDates={selectedDates}
+              setSelectedDates={setSelectedDates}
+              selectedMonth={selectedMonth}
+              setSelectedMonth={setSelectedMonth}
+              selectedMonths={selectedMonths}
+              setSelectedMonths={setSelectedMonths}
+              onExportToExcel={handleExportToExcel}
+              onPrint={handlePrint}
+            />
+            
+            <HospitalRequestsTable 
+              filteredRequests={finalFilteredRequests}
+              totalRequests={requests.length}
+              surgeryDateFilter={surgeryDateFilter}
+              setSurgeryDateFilter={setSurgeryDateFilter}
+              specialtyFilter={specialtyFilter === "all" ? "" : specialtyFilter}
+              setSpecialtyFilter={(value) => setSpecialtyFilter(value || "all")}
+              doctorFilter={doctorFilter === "all" ? "" : doctorFilter}
+              setDoctorFilter={(value) => setDoctorFilter(value || "all")}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+            />
 
-        {/* Analytics */}
-        <HospitalAnalytics 
-          conversionRate={conversionRate}
-          approvalRate={approvalRate}
-          rejectionRate={rejectionRate}
-          doneRequests={doneRequests}
-          totalRequests={totalRequests}
-          approvedRequests={approvedRequests}
-          rejectedRequests={rejectedRequests}
-        />
+            {/* Analytics */}
+            <HospitalAnalytics 
+              conversionRate={conversionRate}
+              approvalRate={approvalRate}
+              rejectionRate={rejectionRate}
+              doneRequests={doneRequests}
+              totalRequests={totalRequests}
+              approvedRequests={approvedRequests}
+              rejectedRequests={rejectedRequests}
+            />
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
-          Created by Dr. Wail Ahmed @ My Clinic
-        </div>
+            {/* Footer */}
+            <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
+              Created by Dr. Wail Ahmed @ My Clinic
+            </div>
+          </div>
+        </ScrollArea>
       </main>
     </div>
   );
