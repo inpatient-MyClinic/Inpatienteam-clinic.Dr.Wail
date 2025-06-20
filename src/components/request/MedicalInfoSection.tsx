@@ -2,23 +2,31 @@
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestFormData } from "@/types/request";
-import { specialties, doctorsBySpecialty, servicesBySpecialty } from "@/data/medicalData";
+import { specialties, doctorsBySpecialty, servicesBySpecialty, referralSources } from "@/data/medicalData";
 
 interface MedicalInfoSectionProps {
   form: Partial<RequestFormData>;
   selectedSpecialty: string;
+  selectedDoctor: string;
   onFieldChange: (key: string, value: string) => void;
   onSpecialtyChange: (specialty: string) => void;
+  onDoctorChange: (doctor: string) => void;
 }
 
 const MedicalInfoSection = ({ 
   form, 
-  selectedSpecialty, 
+  selectedSpecialty,
+  selectedDoctor,
   onFieldChange, 
-  onSpecialtyChange 
+  onSpecialtyChange,
+  onDoctorChange
 }: MedicalInfoSectionProps) => {
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
+  
+  // Get hospitals where selected doctor has privileges
+  const selectedDoctorData = availableDoctors.find(doc => doc.label === selectedDoctor);
+  const availableHospitalsForDoctor = selectedDoctorData ? selectedDoctorData.privileges : [];
 
   return (
     <div className="space-y-5">
@@ -43,7 +51,7 @@ const MedicalInfoSection = ({
       {selectedSpecialty && (
         <div>
           <label className="block font-medium text-gray-600 mb-1">Treating Doctor Name</label>
-          <Select value={form.doctorName || ""} onValueChange={(value) => onFieldChange("doctorName", value)}>
+          <Select value={selectedDoctor} onValueChange={onDoctorChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select doctor" />
             </SelectTrigger>
@@ -51,6 +59,40 @@ const MedicalInfoSection = ({
               {availableDoctors.map((doctor) => (
                 <SelectItem key={doctor.value} value={doctor.label}>
                   {doctor.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div>
+        <label className="block font-medium text-gray-600 mb-1">Referred From</label>
+        <Select value={form.referredFrom || ""} onValueChange={(value) => onFieldChange("referredFrom", value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select referral source" />
+          </SelectTrigger>
+          <SelectContent>
+            {referralSources.map((source) => (
+              <SelectItem key={source} value={source}>
+                {source}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedDoctor && (
+        <div>
+          <label className="block font-medium text-gray-600 mb-1">Referred To Hospital</label>
+          <Select value={form.referredToHospital || ""} onValueChange={(value) => onFieldChange("referredToHospital", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select hospital" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableHospitalsForDoctor.map((hospital) => (
+                <SelectItem key={hospital} value={hospital}>
+                  {hospital}
                 </SelectItem>
               ))}
             </SelectContent>

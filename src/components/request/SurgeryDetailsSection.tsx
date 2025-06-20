@@ -37,26 +37,6 @@ const SurgeryDetailsSection = ({ form, onFieldChange }: SurgeryDetailsSectionPro
           </SelectContent>
         </Select>
       </div>
-
-      <div>
-        <label className="block font-medium text-gray-600 mb-1">Expected Revenue (SAR)</label>
-        <Input
-          type="number"
-          value={form.expectedRevenue || ""}
-          onChange={(e) => onFieldChange("expectedRevenue", e.target.value)}
-          placeholder="Enter expected revenue"
-        />
-      </div>
-
-      <div>
-        <label className="block font-medium text-gray-600 mb-1">Actual Revenue (SAR)</label>
-        <Input
-          type="number"
-          value={form.actualRevenue || ""}
-          onChange={(e) => onFieldChange("actualRevenue", e.target.value)}
-          placeholder="Enter actual revenue (if completed)"
-        />
-      </div>
     </div>
   );
 };
