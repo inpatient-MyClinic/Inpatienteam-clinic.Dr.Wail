@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ export default function Index() {
   const { toast } = useToast();
 
   const validateEmail = (email: string) => {
-    const companyEmailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com$/;
+    const companyEmailRegex = /^[a-zA-Z0-9._%+-]+@myclinic\.com\.sa$/;
     const allowedPersonalEmail = "inpatienteam@gmail.com";
     
     return companyEmailRegex.test(email) || email === allowedPersonalEmail;
@@ -32,7 +31,7 @@ export default function Index() {
       return "Inpatient Team";
     }
     
-    // Extract name from company email format (firstname.lastname@myclinic.com)
+    // Extract name from company email format (firstname.lastname@myclinic.com.sa)
     const emailParts = email.split('@')[0]; // Get part before @
     const nameParts = emailParts.split('.'); // Split by dots
     
@@ -48,48 +47,32 @@ export default function Index() {
   };
 
   const getUserRole = (email: string) => {
-    // Admin emails (both company and the one allowed personal email)
+    // Admin emails
     const adminEmails = [
-      "wail.ahmed@myclinic.com",
-      "inpatienteam@gmail.com"
-    ];
-    
-    // Doctor emails that should be admin
-    const doctorAdminEmails = [
-      // Add doctor emails here that should be admin
-    ];
-    
-    // Case coordinator emails that should be admin
-    const caseCoordinatorAdminEmails = [
-      // Add case coordinator emails here that should be admin
-    ];
-    
-    // Finance emails that should be admin
-    const financeAdminEmails = [
-      // Add finance emails here that should be admin
-    ];
-    
-    // Hospital emails that should be admin
-    const hospitalAdminEmails = [
-      // Add hospital emails here that should be admin
-    ];
-    
-    // Customer care emails that should be admin
-    const customerCareAdminEmails = [
-      // Add customer care emails here that should be admin
+      "wail.ahmed@myclinic.com.sa",
+      "inpatienteam@gmail.com",
+      "admin@myclinic.com.sa"
     ];
     
     console.log("Checking role for email:", email);
     
-    // Check if email is in any admin category
-    if (adminEmails.includes(email) ||
-        doctorAdminEmails.includes(email) ||
-        caseCoordinatorAdminEmails.includes(email) ||
-        financeAdminEmails.includes(email) ||
-        hospitalAdminEmails.includes(email) ||
-        customerCareAdminEmails.includes(email)) {
+    // Check if email is admin
+    if (adminEmails.includes(email)) {
       console.log("User identified as admin");
       return "admin";
+    }
+    
+    // Determine role based on email pattern or default assignment
+    if (email.includes("doctor")) {
+      return "doctor";
+    } else if (email.includes("hospital")) {
+      return "hospital";
+    } else if (email.includes("coordinator")) {
+      return "case-coordinator";
+    } else if (email.includes("finance")) {
+      return "finance";
+    } else if (email.includes("customer")) {
+      return "customer-care";
     }
     
     // Default to nurse for all other users
@@ -124,7 +107,7 @@ export default function Index() {
     if (!validateEmail(email)) {
       toast({
         title: "Invalid Email",
-        description: "Please use your company email address ending with @myclinic.com or the authorized personal email",
+        description: "Please use your company email address ending with @myclinic.com.sa or the authorized personal email",
         variant: "destructive",
       });
       return;
@@ -186,14 +169,36 @@ export default function Index() {
 
     toast({
       title: "Password Created Successfully",
-      description: `Welcome ${userName}! You can now access the system as ${userRole}`,
+      description: `Welcome ${userName}! Redirecting to your dashboard...`,
     });
 
-    // Redirect based on role
-    if (userRole === "admin") {
-      navigate("/admin");
-    } else {
-      navigate("/nurse-dashboard");
+    // Redirect based on role - users only see their own dashboard
+    redirectToUserDashboard(userRole);
+  };
+
+  const redirectToUserDashboard = (userRole: string) => {
+    switch (userRole) {
+      case "admin":
+        navigate("/admin");
+        break;
+      case "doctor":
+        navigate("/doctor-dashboard");
+        break;
+      case "hospital":
+        navigate("/hospital-dashboard");
+        break;
+      case "case-coordinator":
+        navigate("/case-coordinator-dashboard");
+        break;
+      case "finance":
+        navigate("/finance-dashboard");
+        break;
+      case "customer-care":
+        navigate("/customer-care-dashboard");
+        break;
+      default: // nurse
+        navigate("/nurse-dashboard");
+        break;
     }
   };
 
@@ -212,7 +217,7 @@ export default function Index() {
     if (!validateEmail(email)) {
       toast({
         title: "Invalid Email",
-        description: "Please use your company email address ending with @myclinic.com or the authorized personal email",
+        description: "Please use your company email address ending with @myclinic.com.sa or the authorized personal email",
         variant: "destructive",
       });
       return;
@@ -252,12 +257,8 @@ export default function Index() {
       description: `Welcome back, ${userName}!`,
     });
     
-    // Redirect based on role
-    if (userRole === "admin") {
-      navigate("/admin");
-    } else {
-      navigate("/nurse-dashboard");
-    }
+    // Redirect to user's specific dashboard
+    redirectToUserDashboard(userRole);
   };
 
   return (
@@ -286,14 +287,14 @@ export default function Index() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="yourname@myclinic.com"
+                    placeholder="yourname@myclinic.com.sa"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={handleEmailCheck}
                     className="w-full"
                   />
                   <p className="text-xs text-gray-500">
-                    Use your company email ending with @myclinic.com
+                    Use your company email ending with @myclinic.com.sa
                   </p>
                 </div>
                 

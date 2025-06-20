@@ -1,0 +1,45 @@
+
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles: string[];
+  currentUserRole: string | null;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  allowedRoles, 
+  currentUserRole 
+}) => {
+  if (!currentUserRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!allowedRoles.includes(currentUserRole)) {
+    // Redirect to user's appropriate dashboard based on their role
+    switch (currentUserRole) {
+      case 'admin':
+        return <Navigate to="/admin" replace />;
+      case 'doctor':
+        return <Navigate to="/doctor-dashboard" replace />;
+      case 'nurse':
+        return <Navigate to="/nurse-dashboard" replace />;
+      case 'hospital':
+        return <Navigate to="/hospital-dashboard" replace />;
+      case 'case-coordinator':
+        return <Navigate to="/case-coordinator-dashboard" replace />;
+      case 'finance':
+        return <Navigate to="/finance-dashboard" replace />;
+      case 'customer-care':
+        return <Navigate to="/customer-care-dashboard" replace />;
+      default:
+        return <Navigate to="/" replace />;
+    }
+  }
+
+  return <>{children}</>;
+};
+
+export default ProtectedRoute;
