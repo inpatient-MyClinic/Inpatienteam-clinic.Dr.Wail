@@ -15,9 +15,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Upload, X, Send, Download, ArrowLeft, Calendar as CalendarIcon, Filter, Mail, Reply } from "lucide-react";
+import { Upload, X, Send, Download, ArrowLeft, Calendar as CalendarIcon, Filter, Mail, Reply, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth } from "date-fns";
 
@@ -33,6 +32,7 @@ interface Message {
   isRead: boolean;
   hasReply?: boolean;
   isNew?: boolean;
+  priority?: 'normal' | 'high' | 'urgent';
 }
 
 interface ReceivedMessagesDialogProps {
@@ -54,59 +54,255 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   
   const { toast } = useToast();
 
-  // Mock messages data with enhanced properties
+  // Enhanced mock messages data with more realistic content
   const allMessages: Message[] = [
     {
       id: "1",
-      from: "Case Coordinator",
+      from: "Case Coordinator Sarah",
       to: currentUserRole,
-      subject: "Urgent: Patient Authorization Required",
-      content: "Please review and approve the authorization for patient Ahmed Hassan's cardiac surgery. The documents are attached for your review.",
+      subject: "Urgent: Patient Authorization Required - Ahmed Hassan",
+      content: `Dear ${currentUserRole},
+
+I hope this message finds you well. I am writing to request your urgent attention regarding patient Ahmed Hassan's cardiac surgery authorization.
+
+Patient Details:
+- Name: Ahmed Hassan
+- MRN: MRN-2025-001234
+- ID: 1234567890
+- Surgery Type: Cardiac Bypass Surgery
+- Scheduled Date: June 25, 2025
+- Hospital: King Abdulaziz Medical City
+
+The authorization documents have been prepared and are attached to this message for your review. Please note that the insurance company requires your approval within 24 hours to proceed with the surgery.
+
+Key points for your consideration:
+1. Patient's medical history indicates previous cardiac events
+2. Current medications list is included in attachment 2
+3. Pre-operative tests show clearance for surgery
+4. Expected duration: 4-6 hours
+5. Post-operative care plan is outlined in attachment 3
+
+Please review the attached documents and provide your authorization at your earliest convenience. If you have any questions or need additional information, please don't hesitate to contact me.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+Sarah Johnson, Case Coordinator
+My Clinic - Cardiac Department
+Phone: +966-11-234567
+Email: sarah.johnson@myclinic.sa`,
       timestamp: "2025-06-20 10:30 AM",
       date: new Date("2025-06-20"),
-      attachments: ["authorization_form.pdf", "medical_report.pdf"],
+      attachments: ["patient_authorization_form.pdf", "medical_history_report.pdf", "pre_operative_tests.pdf", "post_care_plan.pdf"],
       isRead: false,
       hasReply: false,
       isNew: true,
+      priority: 'urgent',
     },
     {
       id: "2",
-      from: "Finance Team",
+      from: "Finance Team - Fatima Al-Zahra",
       to: currentUserRole,
-      subject: "Payment Status Update",
-      content: "The payment for request #REQ-2025-001 has been processed successfully. Please update the status accordingly.",
+      subject: "Payment Confirmation - Request #REQ-2025-001",
+      content: `Dear ${currentUserRole},
+
+I am pleased to inform you that the payment for request #REQ-2025-001 has been successfully processed.
+
+Payment Details:
+- Request ID: REQ-2025-001
+- Patient: Omar Al-Rashid
+- Amount: SAR 15,750.00
+- Payment Method: Insurance Coverage (80%) + Patient Copay (20%)
+- Transaction ID: TXN-20250619-001
+- Processing Date: June 19, 2025
+- Status: Completed
+
+Insurance Information:
+- Insurance Company: Bupa Arabia
+- Policy Number: BP-789456123
+- Coverage: 80% of approved amount
+- Copay: SAR 3,150.00 (paid by patient)
+
+The payment receipt and insurance claim documentation are attached for your records. Please update the patient's status to "Payment Confirmed" in the system.
+
+If you need any clarification or additional documentation, please contact the finance department.
+
+Best regards,
+Fatima Al-Zahra
+Finance Manager
+My Clinic Finance Department
+Extension: 2156`,
       timestamp: "2025-06-19 3:45 PM",
       date: new Date("2025-06-19"),
-      attachments: ["payment_receipt.pdf"],
+      attachments: ["payment_receipt.pdf", "insurance_claim.pdf"],
       isRead: true,
       hasReply: true,
       isNew: false,
+      priority: 'normal',
     },
     {
       id: "3",
-      from: "Hospital Administration",
+      from: "Hospital Administration - Dr. Mohammed Al-Saud",
       to: currentUserRole,
-      subject: "Schedule Update",
-      content: "There has been a change in the surgery schedule for tomorrow. Please check the updated schedule and confirm your availability.",
+      subject: "Schedule Update - Surgery Calendar Changes",
+      content: `Dear Colleague,
+
+I hope you are doing well. I am writing to inform you about important changes to tomorrow's surgery schedule that require your immediate attention.
+
+Schedule Changes:
+- Original Time: 08:00 AM - Room 203
+- New Time: 10:30 AM - Room 205
+- Reason: Emergency case prioritization
+- Patient: Sara Al-Mahmoud
+- Procedure: Orthopedic Surgery (Knee Replacement)
+
+Updated Schedule Details:
+1. Pre-operative preparation: 09:30 AM
+2. Patient arrival: 10:00 AM
+3. Surgery start: 10:30 AM
+4. Expected duration: 2-3 hours
+5. Post-operative monitoring: Recovery Room B
+
+Required Actions:
+- Please confirm your availability for the new time slot
+- Review updated patient notes (attached)
+- Coordinate with nursing staff for room preparation
+- Update your personal schedule accordingly
+
+Additional Notes:
+- Anesthesia team has been notified
+- OR equipment has been reserved for new time
+- Patient and family have been informed
+- Insurance pre-authorization remains valid
+
+Please reply to confirm your availability. If you have any concerns or conflicts, please contact me immediately.
+
+Thank you for your flexibility and understanding.
+
+Best regards,
+Dr. Mohammed Al-Saud
+Chief of Surgery
+King Faisal Hospital
+Direct Line: +966-11-987654`,
       timestamp: "2025-06-19 11:20 AM",
       date: new Date("2025-06-19"),
-      attachments: [],
+      attachments: ["updated_schedule.pdf", "patient_notes.pdf"],
       isRead: true,
       hasReply: false,
       isNew: false,
+      priority: 'high',
     },
     {
       id: "4",
-      from: "Medical Records",
+      from: "Medical Records - Aisha Hassan",
       to: currentUserRole,
-      subject: "Patient History Update",
-      content: "Updated medical history for patient Sarah Johnson has been uploaded to the system.",
+      subject: "Patient History Update - Sarah Johnson",
+      content: `Dear ${currentUserRole},
+
+I am writing to notify you that the medical history for patient Sarah Johnson has been updated in our system with new information received from her previous healthcare provider.
+
+Patient Information:
+- Name: Sarah Johnson
+- MRN: MRN-2025-005678
+- ID: 9876543210
+- Date of Birth: March 15, 1985
+- Phone: +966-50-123456
+
+Updated Information Includes:
+1. Complete surgical history from 2020-2024
+2. Medication allergies and adverse reactions
+3. Family medical history updates
+4. Recent laboratory results
+5. Imaging studies from previous treatments
+6. Specialist consultation reports
+
+Key Medical Updates:
+- New allergy identified: Penicillin (mild reaction)
+- Previous surgery: Appendectomy (2022)
+- Current medications: Updated list with dosages
+- Chronic conditions: Diabetes Type 2 (controlled)
+- Recent test results: HbA1c 6.8%, Normal kidney function
+
+The updated medical history document is attached to this message. Please review this information before your next consultation with the patient scheduled for June 22, 2025.
+
+Important Notes:
+- Please update patient's allergy information in your records
+- Consider medication adjustments based on new history
+- Previous imaging available upon request
+- Patient has consented to information sharing
+
+If you need access to any additional records or have questions about the updates, please contact the medical records department.
+
+Best regards,
+Aisha Hassan
+Medical Records Supervisor
+My Clinic Medical Records Department
+Extension: 3001
+Email: records@myclinic.sa`,
       timestamp: "2025-06-18 2:15 PM",
       date: new Date("2025-06-18"),
-      attachments: ["medical_history.pdf"],
+      attachments: ["updated_medical_history.pdf", "lab_results.pdf", "allergy_report.pdf"],
       isRead: false,
       hasReply: false,
       isNew: true,
+      priority: 'normal',
+    },
+    {
+      id: "5",
+      from: "Pharmacy Department - Khalid Al-Otaibi",
+      to: currentUserRole,
+      subject: "Medication Stock Alert - Critical Shortage",
+      content: `Dear ${currentUserRole},
+
+I am writing to inform you about a critical shortage of essential medications that may affect your patients' treatment plans.
+
+Affected Medications:
+1. Insulin Glargine 100 units/ml - Out of Stock
+2. Metformin 500mg - Low Stock (3 days remaining)
+3. Atorvastatin 20mg - Critical Level
+4. Lisinopril 10mg - Backordered
+5. Warfarin 5mg - Limited Supply
+
+Expected Restocking:
+- Insulin Glargine: June 23, 2025
+- Metformin: June 21, 2025
+- Atorvastatin: June 24, 2025
+- Lisinopril: June 26, 2025
+- Warfarin: Available from alternative supplier
+
+Recommended Actions:
+- Review current patient prescriptions
+- Consider alternative medications where appropriate
+- Inform patients who may be affected
+- Coordinate with pharmacy for alternative sourcing
+- Monitor patient conditions closely during transition
+
+Alternative Options:
+- Insulin: Insulin Detemir available as substitute
+- Metformin: Extended-release formulation in stock
+- Atorvastatin: Simvastatin 40mg equivalent available
+- Lisinopril: Enalapril 10mg as alternative
+- Warfarin: Increased monitoring with current supply
+
+Patient Communication:
+We are proactively contacting affected patients to explain the situation and arrange for alternative medications. A patient notification letter template is attached.
+
+Please contact the pharmacy department if you need assistance with medication substitutions or patient counseling.
+
+Thank you for your understanding and cooperation.
+
+Best regards,
+Khalid Al-Otaibi, PharmD
+Chief Pharmacist
+My Clinic Pharmacy Department
+Extension: 4500`,
+      timestamp: "2025-06-17 9:00 AM",
+      date: new Date("2025-06-17"),
+      attachments: ["medication_shortage_list.pdf", "alternative_medications.pdf", "patient_notification_template.pdf"],
+      isRead: false,
+      hasReply: false,
+      isNew: true,
+      priority: 'high',
     },
   ];
 
@@ -156,10 +352,19 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setReplyAttachments(prev => [...prev, ...files]);
+    toast({
+      title: "Files Added",
+      description: `${files.length} file(s) added to reply`,
+    });
   };
 
   const removeAttachment = (index: number) => {
+    const removedFile = replyAttachments[index];
     setReplyAttachments(prev => prev.filter((_, i) => i !== index));
+    toast({
+      title: "File Removed",
+      description: `${removedFile.name} removed from reply`,
+    });
   };
 
   const handleSendReply = () => {
@@ -172,17 +377,33 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
       return;
     }
 
+    // Simulate sending reply
+    console.log("Sending reply:", {
+      originalMessageId: selectedMessage?.id,
+      replyContent: replyMessage,
+      attachments: replyAttachments.map(f => f.name),
+      timestamp: new Date().toISOString()
+    });
+
     toast({
-      title: "Reply Sent",
+      title: "Reply Sent Successfully",
       description: `Reply sent to ${selectedMessage?.from}`,
     });
 
+    // Reset reply form
     setReplyMessage("");
     setReplyAttachments([]);
     setShowReply(false);
+    
+    // Mark original message as replied
+    if (selectedMessage) {
+      selectedMessage.hasReply = true;
+    }
   };
 
   const downloadAttachment = (filename: string) => {
+    // Simulate download
+    console.log("Downloading attachment:", filename);
     toast({
       title: "Download Started",
       description: `Downloading ${filename}`,
@@ -191,6 +412,12 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
 
   const markAsRead = (messageId: string) => {
     console.log("Marking message as read:", messageId);
+    // Find and update message read status
+    const message = allMessages.find(msg => msg.id === messageId);
+    if (message) {
+      message.isRead = true;
+      message.isNew = false;
+    }
   };
 
   const handleMonthSelect = (month: string) => {
@@ -204,17 +431,38 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   const clearFilters = () => {
     setSelectedDates([]);
     setSelectedMonths([]);
+    toast({
+      title: "Filters Cleared",
+      description: "All date filters have been removed",
+    });
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 border-red-300 text-red-800';
+      case 'high': return 'bg-orange-100 border-orange-300 text-orange-800';
+      default: return 'bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return <Badge variant="destructive" className="text-xs">Urgent</Badge>;
+      case 'high': return <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">High</Badge>;
+      default: return null;
+    }
   };
 
   const hasActiveFilters = selectedDates.length > 0 || selectedMonths.length > 0;
   const newMessagesCount = filteredMessages.filter(msg => msg.isNew).length;
+  const unreadMessagesCount = filteredMessages.filter(msg => !msg.isRead).length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-5xl h-[85vh]">
+      <DialogContent className="max-w-6xl h-[90vh]">
         <DialogHeader>
           <DialogTitle>
             {selectedMessage ? (
@@ -222,10 +470,16 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSelectedMessage(null)}
+                  onClick={() => {
+                    setSelectedMessage(null);
+                    setShowReply(false);
+                    setReplyMessage("");
+                    setReplyAttachments([]);
+                  }}
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
+                <Mail className="w-5 h-5" />
                 Message Details
               </div>
             ) : (
@@ -233,15 +487,22 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
                 <div className="flex items-center gap-2">
                   <Mail className="w-5 h-5" />
                   Received Messages
-                  {newMessagesCount > 0 && (
-                    <Badge variant="destructive" className="ml-2">
-                      {newMessagesCount} New
-                    </Badge>
-                  )}
+                  <div className="flex gap-2">
+                    {newMessagesCount > 0 && (
+                      <Badge variant="destructive" className="ml-2">
+                        {newMessagesCount} New
+                      </Badge>
+                    )}
+                    {unreadMessagesCount > 0 && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        {unreadMessagesCount} Unread
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="sm" 
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-2"
                 >
@@ -260,7 +521,7 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
         
         <div className="flex flex-col h-full">
           {!selectedMessage && showFilters && (
-            <div className="border rounded-lg p-4 mb-4 space-y-4">
+            <div className="border rounded-lg p-4 mb-4 space-y-4 bg-gray-50">
               <div className="flex flex-wrap gap-4">
                 {/* Date Filter */}
                 <Popover>
@@ -361,12 +622,12 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
             // Messages list view
             <div className="flex-1">
               <ScrollArea className="h-[500px]">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {filteredMessages.map((message) => (
                     <div
                       key={message.id}
-                      className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                        !message.isRead ? "bg-blue-50 border-blue-200" : ""
+                      className={`p-4 border rounded-lg cursor-pointer hover:shadow-md transition-all ${
+                        !message.isRead ? getPriorityColor(message.priority || 'normal') : "hover:bg-gray-50"
                       }`}
                       onClick={() => {
                         setSelectedMessage(message);
@@ -374,43 +635,47 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
                       }}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{message.from}</span>
-                          <div className="flex gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-gray-900">{message.from}</span>
+                          <div className="flex gap-1 flex-wrap">
                             {message.isNew && (
-                              <Badge variant="destructive" className="text-xs px-1 py-0">
+                              <Badge variant="destructive" className="text-xs px-2 py-1">
                                 New
                               </Badge>
                             )}
                             {!message.isRead && (
-                              <Badge variant="secondary" className="text-xs px-1 py-0">
+                              <Badge variant="secondary" className="text-xs px-2 py-1 bg-blue-100 text-blue-800">
                                 Unread
                               </Badge>
                             )}
                             {message.hasReply && (
-                              <Badge variant="outline" className="text-xs px-1 py-0 flex items-center gap-1">
+                              <Badge variant="outline" className="text-xs px-2 py-1 flex items-center gap-1">
                                 <Reply className="w-3 h-3" />
                                 Replied
                               </Badge>
                             )}
+                            {getPriorityBadge(message.priority || 'normal')}
                           </div>
                         </div>
-                        <span className="text-sm text-gray-500">{message.timestamp}</span>
+                        <span className="text-sm text-gray-500 whitespace-nowrap ml-2">{message.timestamp}</span>
                       </div>
-                      <div className="font-medium mb-1">{message.subject}</div>
-                      <div className="text-sm text-gray-600 line-clamp-2">
+                      <div className="font-semibold mb-2 text-gray-900">{message.subject}</div>
+                      <div className="text-sm text-gray-600 line-clamp-2 mb-2">
                         {message.content}
                       </div>
                       {message.attachments && message.attachments.length > 0 && (
-                        <div className="mt-2 text-xs text-gray-500">
-                          📎 {message.attachments.length} attachment(s)
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Paperclip className="w-3 h-3" />
+                          {message.attachments.length} attachment{message.attachments.length !== 1 ? 's' : ''}
                         </div>
                       )}
                     </div>
                   ))}
                   {filteredMessages.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      No messages found matching the selected filters.
+                    <div className="text-center py-12 text-gray-500">
+                      <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium mb-2">No messages found</p>
+                      <p className="text-sm">No messages match the selected filters.</p>
                     </div>
                   )}
                 </div>
@@ -418,31 +683,50 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
             </div>
           ) : (
             // Single message view
-            <div className="w-full flex flex-col">
-              <div className="flex-1">
-                <div className="mb-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-medium text-lg">{selectedMessage.subject}</div>
-                      <div className="text-sm text-gray-600">
-                        From: {selectedMessage.from} • {selectedMessage.timestamp}
+            <div className="w-full flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto">
+                {/* Message Header */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h2 className="font-bold text-xl text-gray-900 mb-2">{selectedMessage.subject}</h2>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div><strong>From:</strong> {selectedMessage.from}</div>
+                        <div><strong>To:</strong> {selectedMessage.to}</div>
+                        <div><strong>Date:</strong> {selectedMessage.timestamp}</div>
                       </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {getPriorityBadge(selectedMessage.priority || 'normal')}
+                      {selectedMessage.hasReply && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Reply className="w-3 h-3" />
+                          Replied
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   
                   {selectedMessage.attachments && selectedMessage.attachments.length > 0 && (
-                    <div className="mb-4">
-                      <Label className="text-sm font-medium">Attachments:</Label>
-                      <div className="mt-1 space-y-1">
+                    <div className="border-t pt-3">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Attachments ({selectedMessage.attachments.length}):
+                      </Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {selectedMessage.attachments.map((attachment, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                            <span className="text-sm">{attachment}</span>
+                          <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
+                            <div className="flex items-center gap-2">
+                              <Paperclip className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-700 truncate">{attachment}</span>
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => downloadAttachment(attachment)}
+                              className="flex items-center gap-1"
                             >
                               <Download className="w-4 h-4" />
+                              Download
                             </Button>
                           </div>
                         ))}
@@ -453,58 +737,69 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
                 
                 <Separator className="my-4" />
                 
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <div className="whitespace-pre-wrap">{selectedMessage.content}</div>
+                {/* Message Content */}
+                <div className="bg-white p-6 rounded-lg border mb-6">
+                  <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">{selectedMessage.content}</div>
                 </div>
                 
+                {/* Reply Section */}
                 {!showReply ? (
-                  <Button onClick={() => setShowReply(true)} className="w-full">
-                    Reply
+                  <Button onClick={() => setShowReply(true)} className="w-full mb-4" size="lg">
+                    <Reply className="w-4 h-4 mr-2" />
+                    Reply to this message
                   </Button>
                 ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Reply Message</Label>
+                  <div className="space-y-4 mb-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Message</Label>
                       <Textarea
                         value={replyMessage}
                         onChange={(e) => setReplyMessage(e.target.value)}
-                        placeholder="Type your reply..."
-                        className="min-h-[100px]"
+                        placeholder="Type your reply message here..."
+                        className="min-h-[120px] bg-white"
+                        rows={6}
                       />
                     </div>
 
-                    <div>
-                      <Label>Attachments</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Reply Attachments</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white">
                         <input
                           type="file"
                           multiple
                           onChange={handleFileUpload}
                           className="hidden"
                           id="reply-file-upload"
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xlsx,.xls"
                         />
                         <label
                           htmlFor="reply-file-upload"
-                          className="flex flex-col items-center cursor-pointer"
+                          className="flex flex-col items-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
                         >
-                          <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                          <span className="text-sm text-gray-600">Add files</span>
+                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                          <span className="text-sm font-medium text-gray-700">Add attachments</span>
+                          <span className="text-xs text-gray-500 mt-1">Click to browse files</span>
                         </label>
                       </div>
                       
                       {replyAttachments.length > 0 && (
-                        <div className="mt-2 space-y-1">
+                        <div className="mt-4 space-y-2">
+                          <Label className="text-xs font-medium text-gray-600">Selected Files:</Label>
                           {replyAttachments.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                            <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
+                              <div className="flex items-center gap-2">
+                                <Paperclip className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                                <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                              </div>
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeAttachment(index)}
+                                className="text-red-600 hover:text-red-800"
                               >
-                                <X className="w-3 h-3" />
+                                <X className="w-4 h-4" />
                               </Button>
                             </div>
                           ))}
@@ -512,11 +807,23 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
                       )}
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button variant="outline" onClick={() => setShowReply(false)} className="flex-1">
+                    <div className="flex gap-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowReply(false);
+                          setReplyMessage("");
+                          setReplyAttachments([]);
+                        }} 
+                        className="flex-1"
+                      >
                         Cancel
                       </Button>
-                      <Button onClick={handleSendReply} className="flex-1">
+                      <Button 
+                        onClick={handleSendReply} 
+                        className="flex-1"
+                        disabled={!replyMessage.trim()}
+                      >
                         <Send className="w-4 h-4 mr-2" />
                         Send Reply
                       </Button>
