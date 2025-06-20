@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Upload, X, FileText, Download } from "lucide-react";
+import SpecialtySpecificFields from "@/components/request/SpecialtySpecificFields";
 
 interface RequestTabProps {
   request: any;
@@ -15,6 +16,7 @@ interface RequestTabProps {
 const specialties = [
   { value: "cardiology", label: "Cardiology" },
   { value: "orthopedics", label: "Orthopedics" },
+  { value: "obgyn", label: "OB/GYN" },
   { value: "neurology", label: "Neurology" },
   { value: "oncology", label: "Oncology" },
   { value: "gastroenterology", label: "Gastroenterology" },
@@ -25,6 +27,7 @@ const specialties = [
 const servicesBySpecialty: Record<string, string[]> = {
   cardiology: ["Angioplasty", "Bypass Surgery", "Valve Replacement", "Pacemaker Insertion"],
   orthopedics: ["Joint Replacement", "Arthroscopy", "Fracture Repair", "Spinal Surgery"],
+  obgyn: ["Cesarean Section", "Hysterectomy", "Laparoscopy", "Normal Delivery", "High Risk Pregnancy"],
   neurology: ["Brain Surgery", "Epilepsy Treatment", "Stroke Care", "Movement Disorders"],
   oncology: ["Chemotherapy", "Radiation Therapy", "Surgical Oncology", "Immunotherapy"],
   gastroenterology: ["Endoscopy", "Colonoscopy", "Liver Biopsy", "ERCP"],
@@ -35,6 +38,7 @@ const servicesBySpecialty: Record<string, string[]> = {
 const diagnosisBySpecialty: Record<string, string[]> = {
   cardiology: ["Coronary Artery Disease", "Heart Failure", "Arrhythmia", "Valvular Disease"],
   orthopedics: ["Osteoarthritis", "Fractures", "Sports Injuries", "Spinal Disorders"],
+  obgyn: ["Pregnancy", "Ovarian Cysts", "Uterine Fibroids", "Endometriosis", "Cervical Cancer"],
   neurology: ["Stroke", "Epilepsy", "Multiple Sclerosis", "Parkinson's Disease"],
   oncology: ["Breast Cancer", "Lung Cancer", "Colon Cancer", "Lymphoma"],
   gastroenterology: ["GERD", "Inflammatory Bowel Disease", "Liver Disease", "Gallstones"],
@@ -247,6 +251,15 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
           </div>
         </div>
       </div>
+
+      {/* Specialty Specific Fields */}
+      {selectedSpecialty && (
+        <SpecialtySpecificFields
+          form={request}
+          selectedSpecialty={selectedSpecialty}
+          onFieldChange={onFieldChange}
+        />
+      )}
 
       {/* Medical History */}
       <div className="space-y-4">
