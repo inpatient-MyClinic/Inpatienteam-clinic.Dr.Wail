@@ -8,12 +8,10 @@ import { Badge } from "@/components/ui/badge";
 
 interface MessagingIconsProps {
   currentUserRole: string;
+  unreadCount?: number;
 }
 
-const MessagingIcons = ({ currentUserRole }: MessagingIconsProps) => {
-  // Mock unread message count
-  const unreadCount = 3;
-
+const MessagingIcons = ({ currentUserRole, unreadCount = 3 }: MessagingIconsProps) => {
   return (
     <div className="flex gap-2">
       <MessageDialog
@@ -31,7 +29,7 @@ const MessagingIcons = ({ currentUserRole }: MessagingIconsProps) => {
         trigger={
           <Button variant="outline" size="sm" className="relative">
             <MessageCircle className="w-4 h-4 mr-2" />
-            Received Messages
+            Messages
             {unreadCount > 0 && (
               <Badge 
                 variant="destructive" 
