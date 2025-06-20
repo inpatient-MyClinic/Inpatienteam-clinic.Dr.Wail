@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 
@@ -10,8 +10,7 @@ interface FinanceSidebarProps {
   statusCounts: {
     paid: number;
     pending: number;
-    processing: number;
-    overdue: number;
+    delayPayment: number;
   };
   activeStatusFilter: string | null;
   onStatusIconClick: (status: string) => void;
@@ -43,16 +42,10 @@ export default function FinanceSidebar({
       count: statusCounts.pending
     },
     {
-      label: "Processing",
-      key: "processing",
-      color: "bg-blue-500",
-      count: statusCounts.processing
-    },
-    {
-      label: "Overdue",
-      key: "overdue",
+      label: "Delay Payment",
+      key: "delayPayment",
       color: "bg-red-500",
-      count: statusCounts.overdue
+      count: statusCounts.delayPayment
     }
   ];
 
@@ -60,15 +53,10 @@ export default function FinanceSidebar({
     <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
       <Logo size="sm" showText={false} className="mb-4" />
       
-      <div className="text-center mb-4">
+      <div className="text-center mb-8">
         <h1 className="text-lg font-bold text-blue-900">Finance Dashboard</h1>
         <p className="text-xs text-blue-700">{currentFinanceName}</p>
       </div>
-
-      <Button className="w-full mb-8" variant="default" onClick={() => navigate("/create-request")}>
-        <Plus className="w-4 h-4 mr-2" />
-        Create New Request
-      </Button>
       
       <div className="flex flex-col gap-2 w-full mb-4">
         <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>

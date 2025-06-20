@@ -8,7 +8,20 @@ import ExportButton from "@/components/ExportButton";
 import FinanceSidebar from "@/components/finance/FinanceSidebar";
 import FinanceFilters from "@/components/finance/FinanceFilters";
 import FinanceTable from "@/components/finance/FinanceTable";
+import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
+
+interface Transaction {
+  id: string;
+  patientName: string;
+  mrn: string;
+  hospital: string;
+  doctor: string;
+  service: string;
+  amount: string;
+  status: string;
+  date: string;
+}
 
 export default function FinanceDashboard() {
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
@@ -19,21 +32,70 @@ export default function FinanceDashboard() {
   const navigate = useNavigate();
   const currentFinanceName = "Finance Department";
 
-  // Sample transaction data
-  const allTransactions = [
-    { id: "1", patient: "Ahmed Hassan", amount: "₹3,500", status: "Paid", date: "2025-06-20", description: "Surgery consultation" },
-    { id: "2", patient: "Sara Ali", amount: "₹2,200", status: "Pending", date: "2025-06-19", description: "Lab tests" },
-    { id: "3", patient: "Omar Khalil", amount: "₹4,750", status: "Paid", date: "2025-06-19", description: "Emergency treatment" },
-    { id: "4", patient: "Fatima Nour", amount: "₹1,850", status: "Processing", date: "2025-06-18", description: "Follow-up appointment" },
-    { id: "5", patient: "Mohammed Ali", amount: "₹6,200", status: "Overdue", date: "2025-06-15", description: "Surgery procedure" },
-  ];
+  // Sample transaction data with proper structure
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([
+    { 
+      id: "TXN001", 
+      patientName: "Ahmed Hassan", 
+      mrn: "MRN12345",
+      hospital: "City Hospital",
+      doctor: "Dr. Smith",
+      service: "Surgery consultation",
+      amount: "₹3,500", 
+      status: "Paid", 
+      date: "2025-06-20"
+    },
+    { 
+      id: "TXN002", 
+      patientName: "Sara Ali", 
+      mrn: "MRN12346",
+      hospital: "General Hospital",
+      doctor: "Dr. Johnson",
+      service: "Lab tests",
+      amount: "₹2,200", 
+      status: "Pending", 
+      date: "2025-06-19"
+    },
+    { 
+      id: "TXN003", 
+      patientName: "Omar Khalil", 
+      mrn: "MRN12347",
+      hospital: "Medical Center",
+      doctor: "Dr. Brown",
+      service: "Emergency treatment",
+      amount: "₹4,750", 
+      status: "Paid", 
+      date: "2025-06-19"
+    },
+    { 
+      id: "TXN004", 
+      patientName: "Fatima Nour", 
+      mrn: "MRN12348",
+      hospital: "City Hospital",
+      doctor: "Dr. Davis",
+      service: "Follow-up appointment",
+      amount: "₹1,850", 
+      status: "Pending", 
+      date: "2025-06-18"
+    },
+    { 
+      id: "TXN005", 
+      patientName: "Mohammed Ali", 
+      mrn: "MRN12349",
+      hospital: "General Hospital",
+      doctor: "Dr. Wilson",
+      service: "Surgery procedure",
+      amount: "₹6,200", 
+      status: "Delay Payment", 
+      date: "2025-06-15"
+    },
+  ]);
 
   // Apply filters
   const filteredTransactions = allTransactions.filter(transaction => {
     const matchesStatus = !activeStatusFilter || transaction.status === activeStatusFilter;
-    const matchesPatient = patientFilter === "all" || transaction.patient.toLowerCase().includes(patientFilter);
+    const matchesPatient = patientFilter === "all" || transaction.patientName.toLowerCase().includes(patientFilter);
     
-    // Add more filter logic as needed
     return matchesStatus && matchesPatient;
   });
 
@@ -41,9 +103,23 @@ export default function FinanceDashboard() {
   const statusCounts = {
     paid: allTransactions.filter(t => t.status === "Paid").length,
     pending: allTransactions.filter(t => t.status === "Pending").length,
-    processing: allTransactions.filter(t => t.status === "Processing").length,
-    overdue: allTransactions.filter(t => t.status === "Overdue").length,
+    delayPayment: allTransactions.filter(t => t.status === "Delay Payment").length,
   };
+
+  // Calculate analytics
+  const paidTransactions = allTransactions.filter(t => t.status === "Paid");
+  const notPaidTransactions = allTransactions.filter(t => t.status !== "Paid");
+  
+  const calculateTotal = (transactions: Transaction[]) => {
+    return transactions.reduce((sum, t) => {
+      const amount = parseFloat(t.amount.replace('₹', '').replace(',', ''));
+      return sum + amount;
+    }, 0);
+  };
+
+  const paidAmount = calculateTotal(paidTransactions);
+  const unpaidAmount = calculateTotal(notPaidTransactions);
+  const totalAmount = paidAmount + unpaidAmount;
 
   // Check if there are active filters
   const hasActiveFilters = Boolean(
@@ -68,16 +144,15 @@ export default function FinanceDashboard() {
     window.print();
   };
 
-  const handleExportToExcel = () => {
-    console.log('Export to Excel');
-  };
-
-  const handleViewTransaction = (id: string) => {
-    console.log('View transaction:', id);
-  };
-
-  const handleEditTransaction = (id: string) => {
-    console.log('Edit transaction:', id);
+  const handleUpdatePaymentStatus = (id: string, isPaid: boolean) => {
+    setAllTransactions(prevTransactions =>
+      prevTransactions.map(transaction =>
+        transaction.id === id
+          ? { ...transaction, status: isPaid ? "Paid" : "Pending" }
+          : transaction
+      )
+    );
+    console.log(`Updated transaction ${id} to ${isPaid ? 'Paid' : 'Not Paid'}`);
   };
 
   // Calculate unread messages for finance role
@@ -109,8 +184,8 @@ export default function FinanceDashboard() {
                 Print
               </Button>
               <ExportButton 
-                requests={allTransactions}
-                filteredRequests={filteredTransactions}
+                requests={allTransactions as any}
+                filteredRequests={filteredTransactions as any}
                 hasActiveFilters={hasActiveFilters}
               />
             </div>
@@ -122,14 +197,21 @@ export default function FinanceDashboard() {
               setAmountFilter={setAmountFilter}
               patientFilter={patientFilter}
               setPatientFilter={setPatientFilter}
-              onExportToExcel={handleExportToExcel}
+              onExportToExcel={() => console.log('Export to Excel')}
               onPrint={handlePrint}
             />
             
             <FinanceTable 
               transactions={filteredTransactions}
-              onViewTransaction={handleViewTransaction}
-              onEditTransaction={handleEditTransaction}
+              onUpdatePaymentStatus={handleUpdatePaymentStatus}
+            />
+
+            <FinanceAnalytics
+              totalPaid={paidTransactions.length}
+              totalNotPaid={notPaidTransactions.length}
+              totalAmount={`₹${totalAmount.toLocaleString()}`}
+              paidAmount={`₹${paidAmount.toLocaleString()}`}
+              unpaidAmount={`₹${unpaidAmount.toLocaleString()}`}
             />
 
             {/* Footer */}

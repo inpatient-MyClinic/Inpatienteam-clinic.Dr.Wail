@@ -3,27 +3,28 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 interface Transaction {
   id: string;
-  patient: string;
+  patientName: string;
+  mrn: string;
+  hospital: string;
+  doctor: string;
+  service: string;
   amount: string;
   status: string;
   date: string;
-  description: string;
 }
 
 interface FinanceTableProps {
   transactions: Transaction[];
-  onViewTransaction: (id: string) => void;
-  onEditTransaction: (id: string) => void;
+  onUpdatePaymentStatus: (id: string, isPaid: boolean) => void;
 }
 
 export default function FinanceTable({
   transactions,
-  onViewTransaction,
-  onEditTransaction
+  onUpdatePaymentStatus
 }: FinanceTableProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -31,9 +32,7 @@ export default function FinanceTable({
         return "bg-green-100 text-green-800";
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
-      case "Processing":
-        return "bg-blue-100 text-blue-800";
-      case "Overdue":
+      case "Delay Payment":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -50,18 +49,27 @@ export default function FinanceTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Patient</TableHead>
+            <TableHead>Patient Name</TableHead>
+            <TableHead>MRN</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Hospital</TableHead>
+            <TableHead>Doctor</TableHead>
+            <TableHead>Service</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.map((transaction) => (
             <TableRow key={transaction.id} className="hover:bg-gray-50">
-              <TableCell className="font-medium">{transaction.patient}</TableCell>
+              <TableCell className="font-medium">{transaction.patientName}</TableCell>
+              <TableCell className="text-gray-600">{transaction.mrn}</TableCell>
+              <TableCell className="text-gray-600">{transaction.id}</TableCell>
+              <TableCell className="text-gray-600">{transaction.hospital}</TableCell>
+              <TableCell className="text-gray-600">{transaction.doctor}</TableCell>
+              <TableCell className="text-gray-600">{transaction.service}</TableCell>
               <TableCell className="font-semibold text-green-600">{transaction.amount}</TableCell>
               <TableCell>
                 <Badge className={getStatusColor(transaction.status)}>
@@ -69,22 +77,27 @@ export default function FinanceTable({
                 </Badge>
               </TableCell>
               <TableCell className="text-gray-600">{transaction.date}</TableCell>
-              <TableCell className="text-gray-600">{transaction.description}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onViewTransaction(transaction.id)}
+                    onClick={() => onUpdatePaymentStatus(transaction.id, true)}
+                    className="text-green-600 hover:bg-green-50"
+                    disabled={transaction.status === "Paid"}
                   >
-                    <Eye className="w-4 h-4" />
+                    <Check className="w-4 h-4" />
+                    Paid
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onEditTransaction(transaction.id)}
+                    onClick={() => onUpdatePaymentStatus(transaction.id, false)}
+                    className="text-red-600 hover:bg-red-50"
+                    disabled={transaction.status !== "Paid"}
                   >
-                    <Edit className="w-4 h-4" />
+                    <X className="w-4 h-4" />
+                    Not Paid
                   </Button>
                 </div>
               </TableCell>
