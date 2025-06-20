@@ -10,23 +10,23 @@ import PermissionsDisplay from "./PermissionsDisplay";
 interface UserTableProps {
   users: User[];
   editingUser: string | null;
-  editPermissions: Record<string, "none" | "view" | "edit">;
-  onEditUser: (userId: string) => void;
-  onSaveUser: (userId: string) => void;
-  onCancelEdit: () => void;
-  onDeleteUser: (userId: string) => void;
-  onUpdateFieldPermission: (fieldId: string, permission: "none" | "view" | "edit") => void;
+  editingPermissions: Record<string, "none" | "view" | "edit">;
+  onEdit: (userId: string) => void;
+  onSave: (userId: string) => void;
+  onCancel: () => void;
+  onDelete: (userId: string) => void;
+  onUpdatePermission: (fieldId: string, permission: "none" | "view" | "edit") => void;
 }
 
 const UserTable = ({
   users,
   editingUser,
-  editPermissions,
-  onEditUser,
-  onSaveUser,
-  onCancelEdit,
-  onDeleteUser,
-  onUpdateFieldPermission
+  editingPermissions,
+  onEdit,
+  onSave,
+  onCancel,
+  onDelete,
+  onUpdatePermission
 }: UserTableProps) => {
   return (
     <Table>
@@ -58,8 +58,8 @@ const UserTable = ({
             <TableCell>
               {editingUser === user.id ? (
                 <PermissionsEditor
-                  permissions={editPermissions}
-                  onUpdatePermission={onUpdateFieldPermission}
+                  permissions={editingPermissions}
+                  onUpdatePermission={onUpdatePermission}
                 />
               ) : (
                 <PermissionsDisplay
@@ -78,10 +78,10 @@ const UserTable = ({
               <UserTableActions
                 userId={user.id}
                 isEditing={editingUser === user.id}
-                onEdit={onEditUser}
-                onSave={onSaveUser}
-                onCancel={onCancelEdit}
-                onDelete={onDeleteUser}
+                onEdit={onEdit}
+                onSave={onSave}
+                onCancel={onCancel}
+                onDelete={onDelete}
               />
             </TableCell>
           </TableRow>
