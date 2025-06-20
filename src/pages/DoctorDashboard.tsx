@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import ExportButton from "@/components/ExportButton";
 import DoctorSidebar from "@/components/DoctorSidebar";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
@@ -116,46 +117,50 @@ export default function DoctorDashboard() {
         onStatusFilterClick={setActiveStatusFilter}
       />
       
-      <main className="flex-1 bg-white p-6">
-        {/* Header with Export, Print, Messaging and Date Filters */}
-        <div className="mb-4 flex justify-between items-start">
-          <div>
-            <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
-          </div>
-          <div className="flex gap-2">
-            <MessagingIcons currentUserRole="doctor" />
-            <Button 
-              variant="outline" 
-              onClick={handlePrint}
-              className="flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              Print
-            </Button>
-            <ExportButton 
-              requests={requests}
+      <main className="flex-1 bg-white">
+        <ScrollArea className="h-screen">
+          <div className="p-6">
+            {/* Header with Export, Print, Messaging and Date Filters */}
+            <div className="mb-4 flex justify-between items-start">
+              <div>
+                <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
+              </div>
+              <div className="flex gap-2">
+                <MessagingIcons currentUserRole="doctor" />
+                <Button 
+                  variant="outline" 
+                  onClick={handlePrint}
+                  className="flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print
+                </Button>
+                <ExportButton 
+                  requests={requests}
+                  filteredRequests={finalFilteredRequests}
+                  hasActiveFilters={hasActiveFilters}
+                />
+              </div>
+            </div>
+            
+            <RequestsTable 
               filteredRequests={finalFilteredRequests}
-              hasActiveFilters={hasActiveFilters}
+              updateStatus={updateStatus}
+              updatePaymentStatus={updatePaymentStatus}
             />
+
+            {/* Hospital Privileges */}
+            <HospitalPrivileges />
+
+            {/* Analytics */}
+            <DoctorAnalytics filteredRequests={filteredRequests} currentDoctorName={currentDoctorName} />
+
+            {/* Footer */}
+            <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
+              Created by Dr. Wail Ahmed @ My Clinic
+            </div>
           </div>
-        </div>
-        
-        <RequestsTable 
-          filteredRequests={finalFilteredRequests}
-          updateStatus={updateStatus}
-          updatePaymentStatus={updatePaymentStatus}
-        />
-
-        {/* Hospital Privileges */}
-        <HospitalPrivileges />
-
-        {/* Analytics */}
-        <DoctorAnalytics filteredRequests={filteredRequests} currentDoctorName={currentDoctorName} />
-
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
-          Created by Dr. Wail Ahmed @ My Clinic
-        </div>
+        </ScrollArea>
       </main>
     </div>
   );
