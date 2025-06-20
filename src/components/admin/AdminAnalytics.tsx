@@ -13,6 +13,8 @@ interface AdminAnalyticsProps {
 }
 
 export default function AdminAnalytics({ data, selectedDates, selectedWeeks, selectedMonths }: AdminAnalyticsProps) {
+  console.log("AdminAnalytics rendering with data:", data.length, "items");
+  
   const [filterBy, setFilterBy] = useState<string>("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [selectedHospital, setSelectedHospital] = useState<string>("all");
@@ -76,6 +78,19 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
 
   // Chart colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="space-y-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Data Available</CardTitle>
+            <CardDescription>No admin data found for analytics</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 mb-6">

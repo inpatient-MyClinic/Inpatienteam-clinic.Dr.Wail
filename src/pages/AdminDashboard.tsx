@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Users, Settings, FileText, BarChart3, ArrowLeft, Download, Printer, Upload } from "lucide-react";
@@ -74,6 +73,9 @@ export default function AdminDashboard() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
+  console.log("Admin data length:", adminData.length);
 
   const adminStats = [
     { label: "Pending", value: 12, color: "bg-yellow-500", key: "pending" },
@@ -180,7 +182,10 @@ export default function AdminDashboard() {
         <div className="flex flex-col gap-2 w-full mb-4">
           <Button 
             variant={showAnalytics ? "default" : "outline"}
-            onClick={() => setShowAnalytics(!showAnalytics)}
+            onClick={() => {
+              console.log("Analytics button clicked, current state:", showAnalytics);
+              setShowAnalytics(!showAnalytics);
+            }}
             className="w-full"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
@@ -234,12 +239,15 @@ export default function AdminDashboard() {
           <div className="p-6">
             {/* Analytics Section */}
             {showAnalytics && (
-              <AdminAnalytics 
-                data={filteredData}
-                selectedDates={selectedDates}
-                selectedWeeks={selectedWeeks}
-                selectedMonths={selectedMonths}
-              />
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
+                <AdminAnalytics 
+                  data={adminData}
+                  selectedDates={selectedDates}
+                  selectedWeeks={selectedWeeks}
+                  selectedMonths={selectedMonths}
+                />
+              </div>
             )}
 
             {/* Quick Actions */}
