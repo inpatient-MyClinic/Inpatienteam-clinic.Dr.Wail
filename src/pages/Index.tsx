@@ -28,6 +28,9 @@ export default function Index() {
 
   const getUserRole = (email: string) => {
     const adminEmails = ["Wahmed@myclinic.com", "Inpatienteam@gmail.com"];
+    console.log("Checking role for email:", email);
+    console.log("Admin emails:", adminEmails);
+    console.log("Is admin:", adminEmails.includes(email));
     return adminEmails.includes(email) ? "admin" : "nurse";
   };
 
@@ -174,6 +177,7 @@ export default function Index() {
     }
 
     const userRole = getUserRole(email);
+    console.log("Final user role:", userRole);
 
     toast({
       title: "Login Successful",
