@@ -60,7 +60,7 @@ export default function FinanceDashboard() {
 
   const currentFinanceName = "Finance Team";
 
-  // Filter transactions based on current filters
+  // Filter transactions based on current filters including status
   const filteredTransactions = transactions.filter(transaction => {
     const matchesStatus = !activeStatusFilter || transaction.status === activeStatusFilter;
     const matchesPatient = patientFilter === "all" || 

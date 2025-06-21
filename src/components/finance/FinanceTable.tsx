@@ -2,6 +2,7 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
 
 interface Transaction {
@@ -25,6 +26,20 @@ export default function FinanceTable({
   transactions,
   onUpdatePaymentStatus
 }: FinanceTableProps) {
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, string> = {
+      "Paid": "bg-green-100 text-green-800",
+      "Pending": "bg-yellow-100 text-yellow-800", 
+      "Delay Payment": "bg-red-100 text-red-800"
+    };
+
+    return (
+      <Badge className={statusColors[status] || "bg-gray-100 text-gray-800"}>
+        {status}
+      </Badge>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="p-4 border-b">
@@ -41,7 +56,7 @@ export default function FinanceTable({
             <TableHead>Hospital</TableHead>
             <TableHead>Doctor</TableHead>
             <TableHead>Service</TableHead>
-            <TableHead>Amount</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -55,7 +70,9 @@ export default function FinanceTable({
               <TableCell className="text-gray-600">{transaction.hospital}</TableCell>
               <TableCell className="text-gray-600">{transaction.doctor}</TableCell>
               <TableCell className="text-gray-600">{transaction.service}</TableCell>
-              <TableCell className="font-semibold text-green-600">{transaction.amount}</TableCell>
+              <TableCell>
+                {getStatusBadge(transaction.status)}
+              </TableCell>
               <TableCell className="text-gray-600">{transaction.date}</TableCell>
               <TableCell>
                 {transaction.status === "Paid" ? (
