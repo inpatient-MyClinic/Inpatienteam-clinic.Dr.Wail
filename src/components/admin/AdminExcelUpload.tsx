@@ -1,9 +1,11 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 
@@ -22,6 +24,7 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const [uploadResult, setUploadResult] = React.useState<UploadResult | null>(null);
+  const [previewData, setPreviewData] = React.useState<any[]>([]);
   const { toast } = useToast();
 
   const expectedFields = [
@@ -63,14 +66,7 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
       // Validate and process data
       const result = await processUploadData(jsonData);
       setUploadResult(result);
-      
-      if (result.success > 0) {
-        onUpload(jsonData);
-        toast({
-          title: "Upload Successful",
-          description: `${result.success} records processed successfully.`,
-        });
-      }
+      setPreviewData(jsonData);
       
     } catch (error) {
       toast({
@@ -151,6 +147,23 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
     XLSX.writeFile(wb, "admin_upload_template.xlsx");
   };
 
+  const handleSave = () => {
+    if (uploadResult && uploadResult.success > 0) {
+      onUpload(previewData);
+      toast({
+        title: "Upload Successful",
+        description: `${uploadResult.success} records processed successfully.`,
+      });
+      handleCancel();
+    }
+  };
+
+  const handleCancel = () => {
+    setIsOpen(false);
+    setUploadResult(null);
+    setPreviewData([]);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -159,7 +172,7 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
           Bulk Upload
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Bulk Data Upload via Excel</DialogTitle>
           <DialogDescription>
@@ -167,134 +180,150 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Template Download */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Download Template</CardTitle>
-              <CardDescription>
-                Download the Excel template with the correct format and field mappings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={downloadTemplate} variant="outline" size="sm">
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Download Template
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Expected Fields */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Expected Fields</CardTitle>
-              <CardDescription>
-                Your Excel file should contain these exact column headers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-1">
-                {expectedFields.map((field, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {field}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* File Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Upload Excel File</CardTitle>
-              <CardDescription>
-                Select your Excel file to upload and process the data
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                {isUploading && (
-                  <div className="text-sm text-blue-600">
-                    Processing file... Please wait.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Upload Results */}
-          {uploadResult && (
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-6">
+            {/* Template Download */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  Upload Results
-                </CardTitle>
+                <CardTitle className="text-sm">Download Template</CardTitle>
+                <CardDescription>
+                  Download the Excel template with the correct format and field mappings
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex gap-4">
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      Success: {uploadResult.success}
+                <Button onClick={downloadTemplate} variant="outline" size="sm">
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Download Template
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Expected Fields */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Expected Fields</CardTitle>
+                <CardDescription>
+                  Your Excel file should contain these exact column headers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1">
+                  {expectedFields.map((field, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {field}
                     </Badge>
-                    {uploadResult.warnings > 0 && (
-                      <Badge variant="default" className="bg-yellow-100 text-yellow-800">
-                        Warnings: {uploadResult.warnings}
-                      </Badge>
-                    )}
-                    {uploadResult.errors > 0 && (
-                      <Badge variant="destructive">
-                        Errors: {uploadResult.errors}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="max-h-32 overflow-y-auto">
-                    {uploadResult.details.slice(0, 5).map((detail, index) => (
-                      <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
-                        {detail.includes("Error") ? (
-                          <AlertCircle className="w-3 h-3 text-red-500" />
-                        ) : detail.includes("Updated") ? (
-                          <AlertCircle className="w-3 h-3 text-yellow-500" />
-                        ) : (
-                          <CheckCircle className="w-3 h-3 text-green-500" />
-                        )}
-                        {detail}
-                      </div>
-                    ))}
-                    {uploadResult.details.length > 5 && (
-                      <div className="text-xs text-gray-500">
-                        ... and {uploadResult.details.length - 5} more
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Key Features */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Key Features</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="text-sm space-y-1 text-gray-600">
-                <li>• Unified ID recognition for automatic updates</li>
-                <li>• Field mapping matches request creation format</li>
-                <li>• Supports case coordinator and hospital data</li>
-                <li>• Prevents data duplication</li>
-                <li>• Maintains data consistency across all inputs</li>
-              </ul>
-            </CardContent>
-          </Card>
+            {/* File Upload */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Upload Excel File</CardTitle>
+                <CardDescription>
+                  Select your Excel file to upload and process the data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {isUploading && (
+                    <div className="text-sm text-blue-600">
+                      Processing file... Please wait.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upload Results */}
+            {uploadResult && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    Upload Results
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex gap-4">
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        Success: {uploadResult.success}
+                      </Badge>
+                      {uploadResult.warnings > 0 && (
+                        <Badge variant="default" className="bg-yellow-100 text-yellow-800">
+                          Warnings: {uploadResult.warnings}
+                        </Badge>
+                      )}
+                      {uploadResult.errors > 0 && (
+                        <Badge variant="destructive">
+                          Errors: {uploadResult.errors}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="max-h-32 overflow-y-auto">
+                      {uploadResult.details.slice(0, 5).map((detail, index) => (
+                        <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
+                          {detail.includes("Error") ? (
+                            <AlertCircle className="w-3 h-3 text-red-500" />
+                          ) : detail.includes("Updated") ? (
+                            <AlertCircle className="w-3 h-3 text-yellow-500" />
+                          ) : (
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                          )}
+                          {detail}
+                        </div>
+                      ))}
+                      {uploadResult.details.length > 5 && (
+                        <div className="text-xs text-gray-500">
+                          ... and {uploadResult.details.length - 5} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Key Features */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Key Features</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="text-sm space-y-1 text-gray-600">
+                  <li>• Unified ID recognition for automatic updates</li>
+                  <li>• Field mapping matches request creation format</li>
+                  <li>• Supports case coordinator and hospital data</li>
+                  <li>• Prevents data duplication</li>
+                  <li>• Maintains data consistency across all inputs</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </ScrollArea>
+
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={handleCancel}>
+            <X className="w-4 h-4 mr-1" />
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={!uploadResult || uploadResult.success === 0}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Save Records ({uploadResult?.success || 0})
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
