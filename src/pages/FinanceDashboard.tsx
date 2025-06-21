@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -52,23 +51,29 @@ const initialTransactions = [
 export default function FinanceDashboard() {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [dateFilter, setDateFilter] = useState("all");
-  const [amountFilter, setAmountFilter] = useState("all");
-  const [patientFilter, setPatientFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
+  const [hospitalFilter, setHospitalFilter] = useState("all");
+  const [doctorFilter, setDoctorFilter] = useState("all");
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const currentFinanceName = "Finance Team";
 
-  // Filter transactions based on current filters including status
+  // Enhanced filtering logic
   const filteredTransactions = transactions.filter(transaction => {
     const matchesStatus = !activeStatusFilter || transaction.status === activeStatusFilter;
-    const matchesPatient = patientFilter === "all" || 
-      transaction.patientName.toLowerCase().includes(patientFilter.toLowerCase());
+    const matchesStatusFilter = statusFilter === "all" || transaction.status === statusFilter;
+    const matchesPaymentStatus = paymentStatusFilter === "all" || 
+      (paymentStatusFilter === "paid" && transaction.status === "Paid") ||
+      (paymentStatusFilter === "not-paid" && transaction.status !== "Paid");
+    const matchesHospital = hospitalFilter === "all" || 
+      transaction.hospital.toLowerCase().includes(hospitalFilter.toLowerCase());
+    const matchesDoctor = doctorFilter === "all" || 
+      transaction.doctor.toLowerCase().includes(doctorFilter.toLowerCase());
     
-    // Add date and amount filtering logic here if needed
-    
-    return matchesStatus && matchesPatient;
+    return matchesStatus && matchesStatusFilter && matchesPaymentStatus && matchesHospital && matchesDoctor;
   });
 
   // Calculate status counts
@@ -82,8 +87,10 @@ export default function FinanceDashboard() {
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
     dateFilter !== "all" ||
-    amountFilter !== "all" ||
-    patientFilter !== "all"
+    statusFilter !== "all" ||
+    paymentStatusFilter !== "all" ||
+    hospitalFilter !== "all" ||
+    doctorFilter !== "all"
   );
 
   const handleStatusIconClick = (status: string | null) => {
@@ -93,8 +100,10 @@ export default function FinanceDashboard() {
   const handleClearAllFilters = () => {
     setActiveStatusFilter(null);
     setDateFilter("all");
-    setAmountFilter("all");
-    setPatientFilter("all");
+    setStatusFilter("all");
+    setPaymentStatusFilter("all");
+    setHospitalFilter("all");
+    setDoctorFilter("all");
   };
 
   const handleUpdatePaymentStatus = (id: string, isPaid: boolean) => {
@@ -163,10 +172,14 @@ export default function FinanceDashboard() {
               <FinanceFilters
                 dateFilter={dateFilter}
                 setDateFilter={setDateFilter}
-                amountFilter={amountFilter}
-                setAmountFilter={setAmountFilter}
-                patientFilter={patientFilter}
-                setPatientFilter={setPatientFilter}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                paymentStatusFilter={paymentStatusFilter}
+                setPaymentStatusFilter={setPaymentStatusFilter}
+                hospitalFilter={hospitalFilter}
+                setHospitalFilter={setHospitalFilter}
+                doctorFilter={doctorFilter}
+                setDoctorFilter={setDoctorFilter}
                 onExportToExcel={handleExportToExcel}
                 onPrint={handlePrint}
                 onBulkUpdatePayments={handleBulkUpdatePayments}

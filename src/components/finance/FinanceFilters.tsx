@@ -10,10 +10,14 @@ import ExcelUpload from "./ExcelUpload";
 interface FinanceFiltersProps {
   dateFilter: string;
   setDateFilter: (value: string) => void;
-  amountFilter: string;
-  setAmountFilter: (value: string) => void;
-  patientFilter: string;
-  setPatientFilter: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
+  paymentStatusFilter: string;
+  setPaymentStatusFilter: (value: string) => void;
+  hospitalFilter: string;
+  setHospitalFilter: (value: string) => void;
+  doctorFilter: string;
+  setDoctorFilter: (value: string) => void;
   onExportToExcel: () => void;
   onPrint: () => void;
   onBulkUpdatePayments: (ids: string[]) => void;
@@ -22,10 +26,14 @@ interface FinanceFiltersProps {
 export default function FinanceFilters({
   dateFilter,
   setDateFilter,
-  amountFilter,
-  setAmountFilter,
-  patientFilter,
-  setPatientFilter,
+  statusFilter,
+  setStatusFilter,
+  paymentStatusFilter,
+  setPaymentStatusFilter,
+  hospitalFilter,
+  setHospitalFilter,
+  doctorFilter,
+  setDoctorFilter,
   onExportToExcel,
   onPrint,
   onBulkUpdatePayments
@@ -51,28 +59,54 @@ export default function FinanceFilters({
         </div>
 
         <div className="flex items-center gap-2">
-          <Label htmlFor="amount-filter" className="text-sm font-medium">Amount:</Label>
-          <Select value={amountFilter} onValueChange={setAmountFilter}>
-            <SelectTrigger className="w-[150px]" id="amount-filter">
+          <Label htmlFor="status-filter" className="text-sm font-medium">Status:</Label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[150px]" id="status-filter">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Amounts</SelectItem>
-              <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
-              <SelectItem value="1000-5000">₹1,000 - ₹5,000</SelectItem>
-              <SelectItem value="5000-10000">₹5,000 - ₹10,000</SelectItem>
-              <SelectItem value="10000+">₹10,000+</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Paid">Paid</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Delay Payment">Delay Payment</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex items-center gap-2">
-          <Label htmlFor="patient-filter" className="text-sm font-medium">Patient:</Label>
+          <Label htmlFor="payment-status-filter" className="text-sm font-medium">Payment:</Label>
+          <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+            <SelectTrigger className="w-[150px]" id="payment-status-filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="not-paid">Not Paid</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="hospital-filter" className="text-sm font-medium">Hospital:</Label>
           <Input
-            id="patient-filter"
-            placeholder="Search by patient name"
-            value={patientFilter === "all" ? "" : patientFilter}
-            onChange={(e) => setPatientFilter(e.target.value || "all")}
+            id="hospital-filter"
+            placeholder="Filter by hospital"
+            value={hospitalFilter === "all" ? "" : hospitalFilter}
+            onChange={(e) => setHospitalFilter(e.target.value || "all")}
+            className="w-[200px]"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label htmlFor="doctor-filter" className="text-sm font-medium">Doctor:</Label>
+          <Input
+            id="doctor-filter"
+            placeholder="Filter by doctor"
+            value={doctorFilter === "all" ? "" : doctorFilter}
+            onChange={(e) => setDoctorFilter(e.target.value || "all")}
             className="w-[200px]"
           />
         </div>
