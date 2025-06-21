@@ -1,9 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Printer, FileDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown, Printer, FileDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import ExcelUpload from "./ExcelUpload";
 
 interface FinanceFiltersProps {
@@ -22,6 +25,13 @@ interface FinanceFiltersProps {
   onBulkUpdatePayments: (ids: string[]) => void;
 }
 
+const doctors = [
+  { value: "all", label: "All Doctors" },
+  { value: "Dr. Ahmed Al-Rashid", label: "Dr. Ahmed Al-Rashid" },
+  { value: "Dr. Sarah Al-Mahmoud", label: "Dr. Sarah Al-Mahmoud" },
+  { value: "Dr. Mohammed Hassan", label: "Dr. Mohammed Hassan" },
+];
+
 export default function FinanceFilters({
   dateFilter,
   setDateFilter,
@@ -37,6 +47,8 @@ export default function FinanceFilters({
   onPrint,
   onBulkUpdatePayments
 }: FinanceFiltersProps) {
+  const [doctorOpen, setDoctorOpen] = useState(false);
+
   return (
     <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
       <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -105,17 +117,47 @@ export default function FinanceFilters({
 
         <div className="flex items-center gap-2">
           <Label htmlFor="doctor-filter" className="text-sm font-medium">Doctor:</Label>
-          <Select value={doctorFilter} onValueChange={setDoctorFilter}>
-            <SelectTrigger className="w-[200px]" id="doctor-filter">
-              <SelectValue placeholder="Select doctor" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              <SelectItem value="all">All Doctors</SelectItem>
-              <SelectItem value="Dr. Ahmed Al-Rashid">Dr. Ahmed Al-Rashid</SelectItem>
-              <SelectItem value="Dr. Sarah Al-Mahmoud">Dr. Sarah Al-Mahmoud</SelectItem>
-              <SelectItem value="Dr. Mohammed Hassan">Dr. Mohammed Hassan</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover open={doctorOpen} onOpenChange={setDoctorOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={doctorOpen}
+                className="w-[200px] justify-between"
+              >
+                {doctorFilter ? doctors.find((doctor) => doctor.value === doctorFilter)?.label : "Select doctor..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0 bg-white" align="start">
+              <Command className="bg-white">
+                <CommandInput placeholder="Search doctor..." />
+                <CommandList>
+                  <CommandEmpty>No doctor found.</CommandEmpty>
+                  <CommandGroup>
+                    {doctors.map((doctor) => (
+                      <CommandItem
+                        key={doctor.value}
+                        value={doctor.value}
+                        onSelect={(currentValue) => {
+                          setDoctorFilter(currentValue === doctorFilter ? "all" : currentValue);
+                          setDoctorOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            doctorFilter === doctor.value ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {doctor.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
