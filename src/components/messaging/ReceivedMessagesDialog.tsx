@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import * as React from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,16 +18,16 @@ import MessageDetails from "./MessageDetails";
 import MessageFilters from "./MessageFilters";
 
 const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [replyMessage, setReplyMessage] = useState("");
-  const [replyAttachments, setReplyAttachments] = useState<File[]>([]);
-  const [showReply, setShowReply] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
+  const [replyMessage, setReplyMessage] = React.useState("");
+  const [replyAttachments, setReplyAttachments] = React.useState<File[]>([]);
+  const [showReply, setShowReply] = React.useState(false);
   
   // Filter states
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [selectedDates, setSelectedDates] = React.useState<Date[]>([]);
+  const [selectedMonths, setSelectedMonths] = React.useState<string[]>([]);
+  const [showFilters, setShowFilters] = React.useState(false);
   
   const { toast } = useToast();
 

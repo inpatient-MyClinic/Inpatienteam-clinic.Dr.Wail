@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -19,7 +19,7 @@ type DoctorAccess = {
 
 const ServicePricingAccess = () => {
   const { toast } = useToast();
-  const [doctorAccess, setDoctorAccess] = useState<DoctorAccess[]>([
+  const [doctorAccess, setDoctorAccess] = React.useState<DoctorAccess[]>([
     {
       id: "1",
       name: "Dr. Ahmed Al-Rashid",
