@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { specialties } from "@/data/medicalData";
 import { loadUsersFromStorage, saveUsersToStorage } from "./settings/userManagement/UserStorage";
@@ -17,29 +17,42 @@ const DoctorManagement = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [newDoctorName, setNewDoctorName] = useState("");
   const [users, setUsers] = useState<User[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load users from storage on component mount
-  useEffect(() => {
+  const loadUsers = () => {
+    setIsRefreshing(true);
     const loadedUsers = loadUsersFromStorage();
+    console.log('Loaded users for Doctor Management:', loadedUsers);
     setUsers(loadedUsers);
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    loadUsers();
   }, []);
 
   // Get doctors only (users with category "Doctor")
   const doctors = users.filter(user => user.category === "Doctor");
+  console.log('Filtered doctors:', doctors);
 
-  // Group doctors by specialty
+  // Group doctors by specialty with proper handling
   const doctorsBySpecialty = doctors.reduce((acc, doctor) => {
     const specialty = doctor.specialty || "none";
+    console.log(`Doctor ${doctor.email} has specialty: ${specialty}`);
+    
     if (!acc[specialty]) {
       acc[specialty] = [];
     }
     acc[specialty].push({
       value: doctor.id,
-      label: doctor.email.split('@')[0], // Use email prefix as name
+      label: doctor.email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       email: doctor.email
     });
     return acc;
   }, {} as Record<string, Array<{ value: string; label: string; email: string }>>);
+
+  console.log('Doctors grouped by specialty:', doctorsBySpecialty);
 
   const handleAddDoctor = () => {
     if (!selectedSpecialty || !newDoctorName) {
@@ -80,7 +93,7 @@ const DoctorManagement = () => {
     setNewDoctorName("");
     toast({
       title: "Success",
-      description: `Dr. ${newDoctorName} added to ${selectedSpecialty === "none" ? "No Specialty" : selectedSpecialty}`
+      description: `Dr. ${newDoctorName} added to ${selectedSpecialty === "none" ? "No Specialty" : specialties.find(s => s.value === selectedSpecialty)?.label || selectedSpecialty}`
     });
   };
 
@@ -92,6 +105,14 @@ const DoctorManagement = () => {
     toast({
       title: "Success",
       description: "Doctor removed successfully"
+    });
+  };
+
+  const refreshData = () => {
+    loadUsers();
+    toast({
+      title: "Data Refreshed",
+      description: "Doctor data has been refreshed from User Management"
     });
   };
 
@@ -137,10 +158,23 @@ const DoctorManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Manage Doctors by Specialty</CardTitle>
-          <p className="text-sm text-gray-600">
-            Showing doctors from User Management data ({doctors.length} total doctors)
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Manage Doctors by Specialty</CardTitle>
+              <p className="text-sm text-gray-600">
+                Showing doctors from User Management data ({doctors.length} total doctors)
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={refreshData}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh Data
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {specialties.map(specialty => {
@@ -163,7 +197,7 @@ const DoctorManagement = () => {
                       specialtyDoctors.map(doctor => (
                         <TableRow key={doctor.value}>
                           <TableCell>{doctor.email}</TableCell>
-                          <TableCell>{doctor.label}</TableCell>
+                          <TableCell>Dr. {doctor.label}</TableCell>
                           <TableCell>
                             <Button
                               size="sm"
@@ -206,7 +240,7 @@ const DoctorManagement = () => {
                   {doctorsBySpecialty["none"].map(doctor => (
                     <TableRow key={doctor.value}>
                       <TableCell>{doctor.email}</TableCell>
-                      <TableCell>{doctor.label}</TableCell>
+                      <TableCell>Dr. {doctor.label}</TableCell>
                       <TableCell>
                         <Button
                           size="sm"
