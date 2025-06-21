@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -82,7 +81,7 @@ const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
           { value: "case-coordinators", label: "Case Coordinators" },
           { value: "hospitals", label: "Hospitals" },
           { value: "doctors", label: "Doctors" },
-          { value: "nurses", label: "Nurses" },
+          { value: "nurses", label: "Finance Team" },
           { value: "finance", label: "Finance Team" },
         ];
       default:
