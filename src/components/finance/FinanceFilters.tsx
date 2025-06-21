@@ -2,7 +2,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Printer, FileDown } from "lucide-react";
 import ExcelUpload from "./ExcelUpload";
@@ -47,7 +46,7 @@ export default function FinanceFilters({
             <SelectTrigger className="w-[150px]" id="date-filter">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="all">All Dates</SelectItem>
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="yesterday">Yesterday</SelectItem>
@@ -64,7 +63,7 @@ export default function FinanceFilters({
             <SelectTrigger className="w-[150px]" id="status-filter">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="Paid">Paid</SelectItem>
               <SelectItem value="Pending">Pending</SelectItem>
@@ -79,7 +78,7 @@ export default function FinanceFilters({
             <SelectTrigger className="w-[150px]" id="payment-status-filter">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="all">All Payments</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
               <SelectItem value="not-paid">Not Paid</SelectItem>
@@ -91,24 +90,32 @@ export default function FinanceFilters({
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
           <Label htmlFor="hospital-filter" className="text-sm font-medium">Hospital:</Label>
-          <Input
-            id="hospital-filter"
-            placeholder="Filter by hospital"
-            value={hospitalFilter === "all" ? "" : hospitalFilter}
-            onChange={(e) => setHospitalFilter(e.target.value || "all")}
-            className="w-[200px]"
-          />
+          <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
+            <SelectTrigger className="w-[200px]" id="hospital-filter">
+              <SelectValue placeholder="Select hospital" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="all">All Hospitals</SelectItem>
+              <SelectItem value="King Abdulaziz Hospital">King Abdulaziz Hospital</SelectItem>
+              <SelectItem value="Prince Sultan Hospital">Prince Sultan Hospital</SelectItem>
+              <SelectItem value="Medical Center">Medical Center</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
           <Label htmlFor="doctor-filter" className="text-sm font-medium">Doctor:</Label>
-          <Input
-            id="doctor-filter"
-            placeholder="Filter by doctor"
-            value={doctorFilter === "all" ? "" : doctorFilter}
-            onChange={(e) => setDoctorFilter(e.target.value || "all")}
-            className="w-[200px]"
-          />
+          <Select value={doctorFilter} onValueChange={setDoctorFilter}>
+            <SelectTrigger className="w-[200px]" id="doctor-filter">
+              <SelectValue placeholder="Select doctor" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="all">All Doctors</SelectItem>
+              <SelectItem value="Dr. Ahmed Al-Rashid">Dr. Ahmed Al-Rashid</SelectItem>
+              <SelectItem value="Dr. Sarah Al-Mahmoud">Dr. Sarah Al-Mahmoud</SelectItem>
+              <SelectItem value="Dr. Mohammed Hassan">Dr. Mohammed Hassan</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
