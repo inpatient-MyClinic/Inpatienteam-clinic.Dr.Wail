@@ -25,3 +25,6 @@ export const saveUsersToStorage = (users: User[]): void => {
     console.error('Failed to save users to localStorage:', error);
   }
 };
+
+// Re-export User type for convenience
+export type { User } from './types';

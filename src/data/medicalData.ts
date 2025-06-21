@@ -1,3 +1,6 @@
+
+import { loadUsersFromStorage, User } from "@/components/settings/userManagement/UserStorage";
+
 export const specialties = [
   { value: "gastroenterology", label: "Gastroenterology (GIT)" },
   { value: "orthopedics", label: "Orthopedics" },
@@ -25,63 +28,39 @@ export const hospitals = [
   "Prince Sultan Hospital"
 ];
 
-export const doctorsBySpecialty = {
-  gastroenterology: [
-    { value: "dr_ahmed_hassan_git", label: "Dr. Ahmed Hassan", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_fatima_ali_git", label: "Dr. Fatima Ali", privileges: ["King Abdulaziz Hospital", "Prince Sultan Hospital"] },
-    { value: "dr_omar_salem_git", label: "Dr. Omar Salem", privileges: ["King Fahad Hospital", "King Abdulaziz Hospital"] },
-    { value: "dr_sara_mahmoud_git", label: "Dr. Sara Mahmoud", privileges: ["King Faisal Hospital", "Prince Sultan Hospital"] },
-  ],
-  orthopedics: [
-    { value: "dr_omar_khalil", label: "Dr. Omar Khalil", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_sara_mahmoud", label: "Dr. Sara Mahmoud", privileges: ["King Abdulaziz Hospital"] },
-    { value: "dr_mohammed_ibrahim_ortho", label: "Dr. Mohammed Ibrahim", privileges: ["Prince Sultan Hospital", "King Fahad Hospital"] },
-    { value: "dr_layla_hassan_ortho", label: "Dr. Layla Hassan", privileges: ["King Faisal Hospital", "King Abdulaziz Hospital"] },
-    { value: "dr_khaled_ahmed_ortho", label: "Dr. Khaled Ahmed", privileges: ["King Fahad Hospital", "Prince Sultan Hospital"] },
-  ],
-  general_surgery: [
-    { value: "dr_khaled_ahmed", label: "Dr. Khaled Ahmed", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_layla_omar", label: "Dr. Layla Omar", privileges: ["King Abdulaziz Hospital", "Prince Sultan Hospital"] },
-    { value: "dr_ali_salem_surgery", label: "Dr. Ali Salem", privileges: ["King Fahad Hospital", "King Abdulaziz Hospital"] },
-    { value: "dr_nora_hassan_surgery", label: "Dr. Nora Hassan", privileges: ["King Faisal Hospital", "Prince Sultan Hospital"] },
-  ],
-  ent: [
-    { value: "dr_ahmed_farouk_ent", label: "Dr. Ahmed Farouk", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_maryam_ali_ent", label: "Dr. Maryam Ali", privileges: ["King Abdulaziz Hospital"] },
-    { value: "dr_omar_hassan_ent", label: "Dr. Omar Hassan", privileges: ["Prince Sultan Hospital", "King Fahad Hospital"] },
-    { value: "dr_fatima_salem_ent", label: "Dr. Fatima Salem", privileges: ["King Faisal Hospital", "King Abdulaziz Hospital"] },
-  ],
-  ophthalmology: [
-    { value: "dr_sara_ibrahim_eye", label: "Dr. Sara Ibrahim", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_mohammed_omar_eye", label: "Dr. Mohammed Omar", privileges: ["King Abdulaziz Hospital", "Prince Sultan Hospital"] },
-    { value: "dr_layla_ahmed_eye", label: "Dr. Layla Ahmed", privileges: ["King Fahad Hospital", "King Abdulaziz Hospital"] },
-    { value: "dr_khaled_hassan_eye", label: "Dr. Khaled Hassan", privileges: ["King Faisal Hospital", "Prince Sultan Hospital"] },
-  ],
-  obgyn: [
-    { value: "dr_fatima_mahmoud_obgyn", label: "Dr. Fatima Mahmoud", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_sara_ali_obgyn", label: "Dr. Sara Ali", privileges: ["King Abdulaziz Hospital"] },
-    { value: "dr_maryam_hassan_obgyn", label: "Dr. Maryam Hassan", privileges: ["Prince Sultan Hospital", "King Fahad Hospital"] },
-    { value: "dr_nora_salem_obgyn", label: "Dr. Nora Salem", privileges: ["King Faisal Hospital", "King Abdulaziz Hospital"] },
-  ],
-  urology: [
-    { value: "dr_omar_ibrahim_uro", label: "Dr. Omar Ibrahim", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_ahmed_salem_uro", label: "Dr. Ahmed Salem", privileges: ["King Abdulaziz Hospital", "Prince Sultan Hospital"] },
-    { value: "dr_khaled_ali_uro", label: "Dr. Khaled Ali", privileges: ["King Fahad Hospital", "King Abdulaziz Hospital"] },
-    { value: "dr_mohammed_hassan_uro", label: "Dr. Mohammed Hassan", privileges: ["King Faisal Hospital", "Prince Sultan Hospital"] },
-  ],
-  radiology: [
-    { value: "dr_sara_hassan_rad", label: "Dr. Sara Hassan", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_ahmed_omar_rad", label: "Dr. Ahmed Omar", privileges: ["King Abdulaziz Hospital"] },
-    { value: "dr_fatima_ibrahim_rad", label: "Dr. Fatima Ibrahim", privileges: ["Prince Sultan Hospital", "King Fahad Hospital"] },
-    { value: "dr_layla_salem_rad", label: "Dr. Layla Salem", privileges: ["King Faisal Hospital", "King Abdulaziz Hospital"] },
-  ],
-  neurology: [
-    { value: "dr_mohamed_ibrahim", label: "Dr. Mohamed Ibrahim", privileges: ["King Fahad Hospital", "King Faisal Hospital"] },
-    { value: "dr_nora_hassan", label: "Dr. Nora Hassan", privileges: ["King Abdulaziz Hospital", "Prince Sultan Hospital"] },
-    { value: "dr_omar_ali_neuro", label: "Dr. Omar Ali", privileges: ["King Fahad Hospital", "King Abdulaziz Hospital"] },
-    { value: "dr_sara_salem_neuro", label: "Dr. Sara Salem", privileges: ["King Faisal Hospital", "Prince Sultan Hospital"] },
-  ],
+// Dynamic function to get doctors by specialty from User Management
+export const getDoctorsBySpecialty = () => {
+  const users = loadUsersFromStorage();
+  const doctors = users.filter(user => user.category === "Doctor");
+  
+  const doctorsBySpecialty: Record<string, Array<{ value: string; label: string; privileges: string[] }>> = {};
+  
+  // Initialize all specialties with empty arrays
+  specialties.forEach(specialty => {
+    doctorsBySpecialty[specialty.value] = [];
+  });
+  
+  // Group doctors by their specialty
+  doctors.forEach(doctor => {
+    const specialty = doctor.specialty || "none";
+    const displayName = doctor.email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    if (!doctorsBySpecialty[specialty]) {
+      doctorsBySpecialty[specialty] = [];
+    }
+    
+    doctorsBySpecialty[specialty].push({
+      value: doctor.id,
+      label: `Dr. ${displayName}`,
+      privileges: hospitals // For now, give all doctors access to all hospitals
+    });
+  });
+  
+  return doctorsBySpecialty;
 };
+
+// Export the dynamic doctorsBySpecialty
+export const doctorsBySpecialty = getDoctorsBySpecialty();
 
 export const servicesBySpecialty = {
   gastroenterology: [

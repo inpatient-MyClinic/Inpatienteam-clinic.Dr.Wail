@@ -1,8 +1,8 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestFormData } from "@/types/request";
-import { specialties, doctorsBySpecialty, servicesBySpecialty, referralSources } from "@/data/medicalData";
+import { specialties, getDoctorsBySpecialty, servicesBySpecialty, referralSources } from "@/data/medicalData";
 
 interface MedicalInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -21,6 +21,14 @@ const MedicalInfoSection = ({
   onSpecialtyChange,
   onDoctorChange
 }: MedicalInfoSectionProps) => {
+  const [doctorsBySpecialty, setDoctorsBySpecialty] = useState<Record<string, Array<{ value: string; label: string; privileges: string[] }>>>({});
+
+  // Load fresh doctor data when component mounts
+  useEffect(() => {
+    const freshDoctorData = getDoctorsBySpecialty();
+    setDoctorsBySpecialty(freshDoctorData);
+  }, []);
+
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   
