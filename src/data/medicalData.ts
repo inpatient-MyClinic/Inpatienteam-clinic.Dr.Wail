@@ -1,9 +1,9 @@
-
 import { loadUsersFromStorage, User } from "@/components/settings/userManagement/UserStorage";
 
 export const specialties = [
   { value: "gastroenterology", label: "Gastroenterology (GIT)" },
   { value: "orthopedics", label: "Orthopedics" },
+  { value: "orthopedic", label: "Orthopedic" }, // Add variant
   { value: "general_surgery", label: "General Surgery" },
   { value: "ent", label: "ENT" },
   { value: "ophthalmology", label: "Ophthalmology" },
@@ -11,6 +11,8 @@ export const specialties = [
   { value: "urology", label: "Urology" },
   { value: "radiology", label: "Radiology" },
   { value: "neurology", label: "Neurology" },
+  { value: "neurosurgery", label: "Neurosurgery" }, // Add missing specialty
+  { value: "vascular_surgery", label: "Vascular Surgery" }, // Add missing specialty
 ];
 
 export const referralSources = [
@@ -33,6 +35,8 @@ export const getDoctorsBySpecialty = () => {
   const users = loadUsersFromStorage();
   const doctors = users.filter(user => user.category === "Doctor");
   
+  console.log('Processing doctors for specialty grouping:', doctors);
+  
   const doctorsBySpecialty: Record<string, Array<{ value: string; label: string; privileges: string[] }>> = {};
   
   // Initialize all specialties with empty arrays
@@ -42,8 +46,16 @@ export const getDoctorsBySpecialty = () => {
   
   // Group doctors by their specialty
   doctors.forEach(doctor => {
-    const specialty = doctor.specialty || "none";
+    let specialty = doctor.specialty?.toLowerCase().replace(/\s+/g, '_') || "none";
+    
+    // Handle specialty mapping variations
+    if (specialty === "orthopedic") specialty = "orthopedics";
+    if (specialty === "vascular_surgery") specialty = "vascular_surgery";
+    if (specialty.includes("obgyn") || specialty.includes("obstetrics")) specialty = "obgyn";
+    
     const displayName = doctor.email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    console.log(`Mapping doctor ${doctor.email} with specialty "${doctor.specialty}" to group "${specialty}"`);
     
     if (!doctorsBySpecialty[specialty]) {
       doctorsBySpecialty[specialty] = [];
@@ -56,6 +68,7 @@ export const getDoctorsBySpecialty = () => {
     });
   });
   
+  console.log('Final doctors by specialty:', doctorsBySpecialty);
   return doctorsBySpecialty;
 };
 

@@ -38,8 +38,14 @@ const DoctorManagement = () => {
 
   // Group doctors by specialty with proper handling
   const doctorsBySpecialty = doctors.reduce((acc, doctor) => {
-    const specialty = doctor.specialty || "none";
-    console.log(`Doctor ${doctor.email} has specialty: ${specialty}`);
+    let specialty = doctor.specialty?.toLowerCase().replace(/\s+/g, '_') || "none";
+    
+    // Handle specialty mapping variations to match our specialty values
+    if (specialty === "orthopedic") specialty = "orthopedics";
+    if (specialty === "vascular_surgery") specialty = "vascular_surgery";
+    if (specialty.includes("obgyn") || specialty.includes("obstetrics")) specialty = "obgyn";
+    
+    console.log(`Doctor ${doctor.email} has specialty: ${doctor.specialty}, mapped to: ${specialty}`);
     
     if (!acc[specialty]) {
       acc[specialty] = [];
