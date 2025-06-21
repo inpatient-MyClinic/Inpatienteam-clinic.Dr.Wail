@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +13,23 @@ import UserForm from "./userManagement/UserForm";
 import UserTable from "./userManagement/UserTable";
 import UserExcelUpload from "./userExcelUpload";
 
+const USERS_STORAGE_KEY = 'enhancedUserManagementUsers';
+
 const EnhancedUserManagement = () => {
-  // Start with empty users array - no demo data
-  const [users, setUsers] = useState<User[]>([]);
+  // Load users from localStorage on component mount
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+      if (savedUsers) {
+        const parsed = JSON.parse(savedUsers);
+        console.log(`Loaded ${parsed.length} users from localStorage`);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Failed to load users from localStorage:', error);
+    }
+    return [];
+  });
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserCategory, setNewUserCategory] = useState("Doctor");
@@ -29,6 +44,16 @@ const EnhancedUserManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { toast } = useToast();
+
+  // Save users to localStorage whenever users array changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+      console.log(`Saved ${users.length} users to localStorage`);
+    } catch (error) {
+      console.error('Failed to save users to localStorage:', error);
+    }
+  }, [users]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = searchFilter === "" || 
@@ -138,22 +163,41 @@ const EnhancedUserManagement = () => {
   };
 
   const handleExcelUpload = (uploadedUsers: any[]) => {
-    const newUsers: User[] = uploadedUsers.map((userData, index) => ({
-      id: (users.length + index + 1).toString(),
-      email: userData.Email || userData.email,
-      category: userData.Category || userData["Doctor Name"] ? "Doctor" : "Staff",
-      specialty: userData.Specialty || userData.specialty,
-      status: "Active" as const,
-      createdAt: new Date().toISOString().split('T')[0],
-      fieldPermissions: defaultFieldPermissions[userData.Category as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
-    }));
-
-    setUsers([...users, ...newUsers]);
-    
-    toast({
-      title: "Success",
-      description: `${newUsers.length} users imported successfully from Excel`
+    const newUsers: User[] = uploadedUsers.map((userData, index) => {
+      // Generate unique ID based on current users length and index
+      const newId = (users.length + index + 1).toString();
+      
+      return {
+        id: newId,
+        email: userData.Email || userData.email || '',
+        category: userData.Category || (userData["Doctor Name"] ? "Doctor" : "Staff"),
+        specialty: userData.Specialty || userData.specialty,
+        status: "Active" as const,
+        createdAt: new Date().toISOString().split('T')[0],
+        fieldPermissions: defaultFieldPermissions[userData.Category as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
+      };
     });
+
+    // Check for duplicates based on email
+    const existingEmails = users.map(u => u.email);
+    const uniqueNewUsers = newUsers.filter(newUser => !existingEmails.includes(newUser.email));
+    const duplicates = newUsers.filter(newUser => existingEmails.includes(newUser.email));
+
+    if (duplicates.length > 0) {
+      toast({
+        title: "Duplicates Found",
+        description: `${duplicates.length} users already exist and were skipped. ${uniqueNewUsers.length} new users added.`,
+        variant: "destructive"
+      });
+    }
+
+    if (uniqueNewUsers.length > 0) {
+      setUsers([...users, ...uniqueNewUsers]);
+      toast({
+        title: "Success",
+        description: `${uniqueNewUsers.length} users imported successfully from Excel`
+      });
+    }
   };
 
   const exportToExcel = () => {
