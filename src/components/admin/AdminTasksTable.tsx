@@ -8,6 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { EllipsisVertical } from "lucide-react";
 
 interface AdminTask {
   id: string;
@@ -40,22 +48,20 @@ export default function AdminTasksTable({ filteredData }: AdminTasksTableProps) 
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Type</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>User</TableHead>
+            <TableHead>Doctor</TableHead>
             <TableHead>Hospital</TableHead>
             <TableHead>Specialty</TableHead>
             <TableHead>Coordinator</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredData.map((item) => (
             <TableRow key={item.id} className="hover:bg-gray-50">
               <TableCell className="font-medium">{item.id}</TableCell>
-              <TableCell>{item.type}</TableCell>
               <TableCell>{item.description}</TableCell>
               <TableCell>{item.user}</TableCell>
               <TableCell>{item.hospital}</TableCell>
@@ -70,16 +76,30 @@ export default function AdminTasksTable({ filteredData }: AdminTasksTableProps) 
                   {item.status}
                 </span>
               </TableCell>
-              <TableCell>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  item.priority === "High" ? "bg-red-100 text-red-800" :
-                  item.priority === "Medium" ? "bg-yellow-100 text-yellow-800" :
-                  "bg-green-100 text-green-800"
-                }`}>
-                  {item.priority}
-                </span>
-              </TableCell>
               <TableCell>{item.date}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <EllipsisVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>
+                      View Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Edit Task
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Assign to User
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600">
+                      Delete Task
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
