@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { userCategories, specialties } from "./types";
-import UserExcelUpload from "../UserExcelUpload";
+import UserExcelUpload from "../userExcelUpload";
 
 interface UserFormProps {
   newUserEmail: string;

@@ -10,7 +10,7 @@ import { FileDown, Filter, X } from "lucide-react";
 import { User, userCategories, specialties, defaultFieldPermissions } from "./userManagement/types";
 import UserForm from "./userManagement/UserForm";
 import UserTable from "./userManagement/UserTable";
-import UserExcelUpload from "./UserExcelUpload";
+import UserExcelUpload from "./userExcelUpload";
 
 const EnhancedUserManagement = () => {
   // Start with empty users array - no demo data
