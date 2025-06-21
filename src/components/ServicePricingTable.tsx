@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { servicesBySpecialty } from "@/data/medicalData";
 import { useToast } from "@/hooks/use-toast";
+import ServicePricingAccess from "./settings/ServicePricingAccess";
 
 const hospitals = [
   "King Fahad Hospital",
@@ -46,67 +47,80 @@ const ServicePricingTable = () => {
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Service Pricing by Hospital</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Specialty</Label>
-            <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select specialty" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(servicesBySpecialty).map(specialty => (
-                  <SelectItem key={specialty} value={specialty}>
-                    {specialty.charAt(0).toUpperCase() + specialty.slice(1).replace('_', ' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+    <Tabs defaultValue="pricing" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
+        <TabsTrigger value="access">Doctor Access Control</TabsTrigger>
+      </TabsList>
 
-        {selectedSpecialty && (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service Description</TableHead>
-                  {hospitals.map(hospital => (
-                    <TableHead key={hospital}>{hospital}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {availableServices.map(service => (
-                  <TableRow key={service}>
-                    <TableCell className="font-medium">{service}</TableCell>
-                    {hospitals.map(hospital => (
-                      <TableCell key={hospital}>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={pricing[service]?.[hospital] || ""}
-                          onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
-                          className="w-24"
-                        />
-                      </TableCell>
+      <TabsContent value="pricing">
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Pricing by Hospital</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Specialty</Label>
+                <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select specialty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(servicesBySpecialty).map(specialty => (
+                      <SelectItem key={specialty} value={specialty}>
+                        {specialty.charAt(0).toUpperCase() + specialty.slice(1).replace('_', ' ')}
+                      </SelectItem>
                     ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <Button onClick={savePricing} className="mt-4">
-          Save Pricing
-        </Button>
-      </CardContent>
-    </Card>
+            {selectedSpecialty && (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Service Description</TableHead>
+                      {hospitals.map(hospital => (
+                        <TableHead key={hospital}>{hospital}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {availableServices.map(service => (
+                      <TableRow key={service}>
+                        <TableCell className="font-medium">{service}</TableCell>
+                        {hospitals.map(hospital => (
+                          <TableCell key={hospital}>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              value={pricing[service]?.[hospital] || ""}
+                              onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
+                              className="w-24"
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            <Button onClick={savePricing} className="mt-4">
+              Save Pricing
+            </Button>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="access">
+        <ServicePricingAccess />
+      </TabsContent>
+    </Tabs>
   );
 };
 
