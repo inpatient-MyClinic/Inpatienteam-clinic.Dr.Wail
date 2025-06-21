@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,13 +8,38 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { specialties, doctorsBySpecialty } from "@/data/medicalData";
+import { specialties } from "@/data/medicalData";
+import { loadUsersFromStorage, saveUsersToStorage } from "./settings/userManagement/UserStorage";
+import { User } from "./settings/userManagement/types";
 
 const DoctorManagement = () => {
   const { toast } = useToast();
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [newDoctorName, setNewDoctorName] = useState("");
-  const [doctors, setDoctors] = useState(doctorsBySpecialty);
+  const [users, setUsers] = useState<User[]>([]);
+
+  // Load users from storage on component mount
+  useEffect(() => {
+    const loadedUsers = loadUsersFromStorage();
+    setUsers(loadedUsers);
+  }, []);
+
+  // Get doctors only (users with category "Doctor")
+  const doctors = users.filter(user => user.category === "Doctor");
+
+  // Group doctors by specialty
+  const doctorsBySpecialty = doctors.reduce((acc, doctor) => {
+    const specialty = doctor.specialty || "none";
+    if (!acc[specialty]) {
+      acc[specialty] = [];
+    }
+    acc[specialty].push({
+      value: doctor.id,
+      label: doctor.email.split('@')[0], // Use email prefix as name
+      email: doctor.email
+    });
+    return acc;
+  }, {} as Record<string, Array<{ value: string; label: string; email: string }>>);
 
   const handleAddDoctor = () => {
     if (!selectedSpecialty || !newDoctorName) {
@@ -26,28 +51,43 @@ const DoctorManagement = () => {
       return;
     }
 
-    const newDoctor = {
-      value: `dr_${newDoctorName.toLowerCase().replace(/\s+/g, '_')}_${selectedSpecialty}`,
-      label: newDoctorName
+    // Create new doctor user
+    const newDoctor: User = {
+      id: Date.now().toString(),
+      email: `${newDoctorName.toLowerCase().replace(/\s+/g, '.')}@hospital.com`,
+      category: "Doctor",
+      specialty: selectedSpecialty === "none" ? undefined : selectedSpecialty,
+      status: "Active",
+      createdAt: new Date().toISOString().split('T')[0],
+      fieldPermissions: {
+        patientName: "edit",
+        mrn: "edit",
+        serviceDescription: "edit",
+        hospital: "edit",
+        status: "edit",
+        assignedDoctor: "edit",
+        phone: "edit",
+        expectedSurgeryDate: "edit",
+        paymentStatus: "view",
+        notes: "edit"
+      }
     };
 
-    setDoctors(prev => ({
-      ...prev,
-      [selectedSpecialty]: [...(prev[selectedSpecialty] || []), newDoctor]
-    }));
+    const updatedUsers = [...users, newDoctor];
+    setUsers(updatedUsers);
+    saveUsersToStorage(updatedUsers);
 
     setNewDoctorName("");
     toast({
       title: "Success",
-      description: `Dr. ${newDoctorName} added to ${selectedSpecialty}`
+      description: `Dr. ${newDoctorName} added to ${selectedSpecialty === "none" ? "No Specialty" : selectedSpecialty}`
     });
   };
 
-  const handleDeleteDoctor = (specialty: string, doctorValue: string) => {
-    setDoctors(prev => ({
-      ...prev,
-      [specialty]: prev[specialty].filter(doc => doc.value !== doctorValue)
-    }));
+  const handleDeleteDoctor = (doctorId: string) => {
+    const updatedUsers = users.filter(user => user.id !== doctorId);
+    setUsers(updatedUsers);
+    saveUsersToStorage(updatedUsers);
     
     toast({
       title: "Success",
@@ -70,6 +110,7 @@ const DoctorManagement = () => {
                   <SelectValue placeholder="Select specialty" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No Specialty</SelectItem>
                   {specialties.map(specialty => (
                     <SelectItem key={specialty.value} value={specialty.value}>
                       {specialty.label}
@@ -97,27 +138,80 @@ const DoctorManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle>Manage Doctors by Specialty</CardTitle>
+          <p className="text-sm text-gray-600">
+            Showing doctors from User Management data ({doctors.length} total doctors)
+          </p>
         </CardHeader>
         <CardContent>
-          {specialties.map(specialty => (
-            <div key={specialty.value} className="mb-6">
-              <h3 className="font-semibold mb-2">{specialty.label}</h3>
+          {specialties.map(specialty => {
+            const specialtyDoctors = doctorsBySpecialty[specialty.value] || [];
+            return (
+              <div key={specialty.value} className="mb-6">
+                <h3 className="font-semibold mb-2">
+                  {specialty.label} ({specialtyDoctors.length})
+                </h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Doctor Email</TableHead>
+                      <TableHead>Display Name</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {specialtyDoctors.length > 0 ? (
+                      specialtyDoctors.map(doctor => (
+                        <TableRow key={doctor.value}>
+                          <TableCell>{doctor.email}</TableCell>
+                          <TableCell>{doctor.label}</TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteDoctor(doctor.value)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-gray-500">
+                          No doctors found for this specialty
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })}
+
+          {/* Show doctors with no specialty */}
+          {doctorsBySpecialty["none"] && doctorsBySpecialty["none"].length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold mb-2">
+                No Specialty ({doctorsBySpecialty["none"].length})
+              </h3>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Doctor Name</TableHead>
+                    <TableHead>Doctor Email</TableHead>
+                    <TableHead>Display Name</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(doctors[specialty.value] || []).map(doctor => (
+                  {doctorsBySpecialty["none"].map(doctor => (
                     <TableRow key={doctor.value}>
+                      <TableCell>{doctor.email}</TableCell>
                       <TableCell>{doctor.label}</TableCell>
                       <TableCell>
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleDeleteDoctor(specialty.value, doctor.value)}
+                          onClick={() => handleDeleteDoctor(doctor.value)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -127,7 +221,7 @@ const DoctorManagement = () => {
                 </TableBody>
               </Table>
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
     </div>
