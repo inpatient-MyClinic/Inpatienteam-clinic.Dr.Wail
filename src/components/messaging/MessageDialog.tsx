@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import * as React from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,11 +26,11 @@ interface MessageDialogProps {
 }
 
 const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const [recipient, setRecipient] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [open, setOpen] = React.useState(false);
+  const [recipient, setRecipient] = React.useState("");
+  const [subject, setSubject] = React.useState("");
+  const [message, setMessage] = React.useState("");
+  const [attachments, setAttachments] = React.useState<File[]>([]);
   const { toast } = useToast();
 
   const getRecipientOptions = () => {
