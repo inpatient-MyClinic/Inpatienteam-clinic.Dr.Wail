@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react";
@@ -20,9 +19,9 @@ interface UploadResult {
 }
 
 export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadResult, setUploadResult] = React.useState<UploadResult | null>(null);
   const { toast } = useToast();
 
   const expectedFields = [
