@@ -11,6 +11,7 @@ import MessagingIcons from "@/components/messaging/MessagingIcons";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AdminFieldConfiguration from "@/components/settings/AdminFieldConfiguration";
 
 const SettingsDirectory = () => {
   const navigate = useNavigate();
@@ -37,12 +38,13 @@ const SettingsDirectory = () => {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
           <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
           <TabsTrigger value="privileges">Privilege Management</TabsTrigger>
           <TabsTrigger value="fields">Custom Fields</TabsTrigger>
+          <TabsTrigger value="admin-fields">Admin Fields</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
         </TabsList>
 
@@ -64,6 +66,10 @@ const SettingsDirectory = () => {
 
         <TabsContent value="fields" className="space-y-6">
           <CustomFieldsManager />
+        </TabsContent>
+
+        <TabsContent value="admin-fields" className="space-y-6">
+          <AdminFieldConfiguration />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">

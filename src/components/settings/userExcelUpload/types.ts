@@ -10,6 +10,13 @@ export interface UploadResult {
   details: string[];
 }
 
+export interface DuplicateHandlerProps {
+  isOpen: boolean;
+  duplicates: any[];
+  onResolve: (action: 'replace' | 'skip', selectedDuplicates: any[]) => void;
+  onClose: () => void;
+}
+
 export const expectedFields = [
   "Doctor Name",
   "Email", 
