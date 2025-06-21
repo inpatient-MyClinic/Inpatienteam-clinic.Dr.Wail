@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { EllipsisVertical } from "lucide-react";
+import ViewRequestDialog from "@/components/ViewRequestDialog/ViewRequestDialog";
 
 interface AdminTask {
   id: string;
@@ -37,6 +38,39 @@ interface AdminTasksTableProps {
 }
 
 export default function AdminTasksTable({ filteredData }: AdminTasksTableProps) {
+  // Convert AdminTask to request format for ViewRequestDialog
+  const convertToRequest = (task: AdminTask) => ({
+    id: parseInt(task.id),
+    patientName: `Patient for ${task.description}`,
+    mrn: `MRN-${task.id}`,
+    serviceDescription: task.description,
+    doctorName: task.user,
+    hospital: task.hospital,
+    specialty: task.specialty,
+    status: task.status,
+    createdAt: task.requestDate.toISOString(),
+    assignedCoordinator: task.caseCoordinator,
+    // Add other required fields with defaults
+    phone: "",
+    idNumber: "",
+    age: "",
+    gender: "",
+    nationality: "",
+    diagnosis: "",
+    urgency: "Normal",
+    expectedSurgeryDate: "",
+    medicalHistory: "",
+    currentMedications: "",
+    allergies: "",
+    insuranceCompany: "",
+    policyNumber: "",
+    contactPerson: "",
+    contactPhone: "",
+    contactEmail: "",
+    notes: "",
+    rejectionReason: ""
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-sm border">
       <div className="p-4 border-b">
@@ -85,8 +119,11 @@ export default function AdminTasksTable({ filteredData }: AdminTasksTableProps) 
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      View Details
+                    <DropdownMenuItem asChild>
+                      <ViewRequestDialog 
+                        request={convertToRequest(item)}
+                        currentUserRole="admin"
+                      />
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       Edit Task
