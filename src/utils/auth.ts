@@ -5,13 +5,21 @@ export const getCurrentUserRole = (): string | null => {
     ?.replace('user_', '');
   
   if (currentUserEmail) {
+    // CRITICAL FIX: Check if current user is admin first
+    if (isAdmin(currentUserEmail)) {
+      console.log("getCurrentUserRole: Admin user detected, forcing admin role");
+      return "admin";
+    }
+    
     const userData = localStorage.getItem(`user_${currentUserEmail}`);
     if (userData) {
       const user = JSON.parse(userData);
+      console.log("getCurrentUserRole: User role from storage:", user.role);
       return user.role;
     }
   }
   
+  console.log("getCurrentUserRole: No user found");
   return null;
 };
 
@@ -30,7 +38,9 @@ export const isAdmin = (email: string): boolean => {
     "admin@myclinic.com.sa"
   ];
   
-  return adminEmails.includes(email.toLowerCase().trim());
+  const isAdminUser = adminEmails.includes(email.toLowerCase().trim());
+  console.log("isAdmin check for", email, ":", isAdminUser);
+  return isAdminUser;
 };
 
 export const canAccessRole = (userRole: string, requiredRole: string): boolean => {
