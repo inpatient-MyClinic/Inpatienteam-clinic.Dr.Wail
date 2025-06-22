@@ -56,9 +56,9 @@ export const getUserRole = (email: string) => {
   
   console.log("Checking role for email:", email);
   
-  // First check if it's an admin email
+  // First check if it's an admin email - THIS IS THE FIX
   if (adminEmails.includes(email.toLowerCase().trim())) {
-    console.log("User identified as admin");
+    console.log("User identified as admin - FORCING ADMIN ROLE");
     return "admin";
   }
   
@@ -67,10 +67,14 @@ export const getUserRole = (email: string) => {
   if (userData) {
     const user = JSON.parse(userData);
     console.log("User found with role:", user.role);
+    // Even if stored role is different, admin emails should always be admin
+    if (adminEmails.includes(email.toLowerCase().trim())) {
+      console.log("Overriding stored role to admin for admin email");
+      return "admin";
+    }
     return user.role;
   }
   
-  // Default to nurse for any other authenticated users
   console.log("User defaulted to nurse role");
   return "nurse";
 };
@@ -78,11 +82,14 @@ export const getUserRole = (email: string) => {
 export const redirectToUserDashboard = (userRole: string, navigate: (path: string) => void) => {
   console.log("Redirecting user with role:", userRole);
   
+  // ENSURE ADMIN ALWAYS GOES TO ADMIN DASHBOARD
+  if (userRole === "admin") {
+    console.log("ADMIN DETECTED - Navigating to /admin");
+    navigate("/admin");
+    return;
+  }
+  
   switch (userRole) {
-    case "admin":
-      console.log("Navigating to /admin");
-      navigate("/admin");
-      break;
     case "doctor":
       console.log("Navigating to /doctor-dashboard");
       navigate("/doctor-dashboard");

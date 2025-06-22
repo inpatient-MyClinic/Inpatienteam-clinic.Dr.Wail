@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { validateEmail, extractUserName, getUserRole, redirectToUserDashboard } from "@/utils/userUtils";
+import { isAdmin } from "@/utils/auth";
 
 export const useAuthLogic = () => {
   const [email, setEmail] = useState("");
@@ -36,7 +37,8 @@ export const useAuthLogic = () => {
       return;
     }
 
-    const userRole = getUserRole(email);
+    // ENSURE ADMIN EMAILS GET ADMIN ROLE
+    const userRole = isAdmin(email) ? "admin" : getUserRole(email);
     
     if (!userRole) {
       toast({
@@ -49,21 +51,21 @@ export const useAuthLogic = () => {
 
     const userName = extractUserName(email);
 
-    // Store user data
+    // Store user data with ADMIN role for admin emails
     localStorage.setItem(`user_${email}`, JSON.stringify({
       email,
       name: userName,
-      role: userRole,
+      role: userRole, // This will be "admin" for admin emails
       createdAt: new Date().toISOString()
     }));
     localStorage.setItem(`password_${email}`, password);
     localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
 
-    console.log("Admin user data stored, redirecting...");
+    console.log("User data stored with role:", userRole);
 
     toast({
       title: "Account Created Successfully",
-      description: `Welcome ${userName}! Redirecting to admin dashboard...`,
+      description: `Welcome ${userName}! Redirecting to your dashboard...`,
     });
 
     setTimeout(() => {
@@ -100,12 +102,12 @@ export const useAuthLogic = () => {
     console.log("User exists check:", !!userExists);
     
     if (!userExists) {
-      console.log("First time admin login detected");
+      console.log("First time login detected");
       setIsFirstTimeLogin(true);
       setEmail(normalizedEmail);
       toast({
         title: "First Time Login",
-        description: "Please create your admin password to access the system.",
+        description: "Please create your password to access the system.",
       });
       return;
     }
@@ -122,7 +124,8 @@ export const useAuthLogic = () => {
       return;
     }
 
-    const userRole = getUserRole(normalizedEmail);
+    // CRITICAL FIX: Ensure admin emails always get admin role
+    const userRole = isAdmin(normalizedEmail) ? "admin" : getUserRole(normalizedEmail);
     
     if (!userRole) {
       toast({
@@ -133,9 +136,21 @@ export const useAuthLogic = () => {
       return;
     }
 
+    // Update stored user data to ensure admin role is correct
+    if (isAdmin(normalizedEmail)) {
+      const userName = extractUserName(normalizedEmail);
+      localStorage.setItem(`user_${normalizedEmail}`, JSON.stringify({
+        email: normalizedEmail,
+        name: userName,
+        role: "admin", // FORCE ADMIN ROLE
+        createdAt: new Date().toISOString()
+      }));
+      console.log("Updated admin user data in localStorage");
+    }
+
     const userName = extractUserName(normalizedEmail);
     
-    console.log("Admin login successful, role:", userRole, "name:", userName);
+    console.log("Login successful, role:", userRole, "name:", userName);
 
     redirectToUserDashboard(userRole, navigate);
     
