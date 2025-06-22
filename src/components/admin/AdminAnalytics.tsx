@@ -7,6 +7,7 @@ import AdminTopCharts from "./analytics/AdminTopCharts";
 import AdminLossTreeChart from "./analytics/AdminLossTreeChart";
 import AdminStatusDistribution from "./analytics/AdminStatusDistribution";
 import AdminOverdueAnalytics from "./analytics/AdminOverdueAnalytics";
+import AdminCoordinatorPerformanceTable from "./analytics/AdminCoordinatorPerformanceTable";
 
 interface AdminAnalyticsProps {
   data: any[];
@@ -135,6 +136,9 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
         filteredDataLength={filteredData.length}
         npsScore={npsScore}
       />
+
+      {/* Case Coordinator Performance Table */}
+      <AdminCoordinatorPerformanceTable data={filteredData} />
 
       {/* Overdue Requests Analytics */}
       <div>
