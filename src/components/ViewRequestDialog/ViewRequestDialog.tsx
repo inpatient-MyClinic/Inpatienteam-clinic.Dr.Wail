@@ -1,10 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Printer, Download, FileText, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditTrail } from "@/utils/userUtils";
+import { getCurrentUserRole } from "@/utils/auth";
 import RequestTab from "./RequestTab";
 import CaseCoordinatorTab from "./CaseCoordinatorTab";
 import HospitalTab from "./HospitalTab";
@@ -22,14 +24,40 @@ export default function ViewRequestDialog({
 }: ViewRequestDialogProps) {
   const [activeTab, setActiveTab] = useState("request");
   const [modifications, setModifications] = useState<Record<string, any>>({});
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+
+  // Log audit trail when dialog opens (view action)
+  useEffect(() => {
+    if (isOpen) {
+      const currentUserEmail = Object.keys(localStorage)
+        .find(key => key.startsWith('user_'))
+        ?.replace('user_', '') || 'unknown@user.com';
+      
+      logAuditTrail(
+        request.id?.toString() || request.mrn || 'unknown',
+        'View',
+        {
+          action: 'Request viewed',
+          tabOpened: activeTab,
+          patientName: request.patientName,
+          requestType: request.serviceDescription
+        },
+        currentUserEmail
+      );
+    }
+  }, [isOpen, request]);
 
   const handleFieldChange = (section: string, field: string, value: any) => {
     const key = `${section}.${field}`;
+    const oldValue = request[field] || "";
+    
     setModifications(prev => ({
       ...prev,
       [key]: {
-        oldValue: request[field] || "",
+        field: field,
+        section: section,
+        oldValue: oldValue,
         newValue: value,
         modifiedBy: currentUserRole,
         modifiedAt: new Date().toISOString()
@@ -151,19 +179,37 @@ export default function ViewRequestDialog({
       return;
     }
 
+    const currentUserEmail = Object.keys(localStorage)
+      .find(key => key.startsWith('user_'))
+      ?.replace('user_', '') || 'unknown@user.com';
+
+    // Log audit trail for modifications
+    logAuditTrail(
+      request.id?.toString() || request.mrn || 'unknown',
+      'Modify',
+      {
+        action: 'Request modified',
+        modificationsCount: Object.keys(modifications).length,
+        modifications: modifications,
+        patientName: request.patientName,
+        requestType: request.serviceDescription
+      },
+      currentUserEmail
+    );
+
     // Save modifications for audit trail
     console.log("Modifications to save:", modifications);
     
     toast({
       title: "Changes Saved",
-      description: "All modifications have been saved and will be tracked in audit trail",
+      description: "All modifications have been saved and logged in audit trail",
     });
     
     setModifications({});
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <Eye className="w-4 h-4 mr-1" />

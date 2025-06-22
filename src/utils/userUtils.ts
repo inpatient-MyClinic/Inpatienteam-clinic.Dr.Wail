@@ -6,7 +6,12 @@ export const validateEmail = (email: string) => {
     "admin@myclinic.com.sa"
   ];
   
-  return adminEmails.includes(email.toLowerCase().trim());
+  return adminEmails.includes(email.toLowerCase().trim()) || isRegisteredUser(email);
+};
+
+export const isRegisteredUser = (email: string) => {
+  const userData = localStorage.getItem(`user_${email.toLowerCase().trim()}`);
+  return !!userData;
 };
 
 export const extractUserName = (email: string) => {
@@ -22,7 +27,14 @@ export const extractUserName = (email: string) => {
     return "System Administrator";
   }
   
-  // Fallback for any other admin emails
+  // For other users, extract from email or use stored name
+  const userData = localStorage.getItem(`user_${email.toLowerCase().trim()}`);
+  if (userData) {
+    const user = JSON.parse(userData);
+    return user.name || email.split('@')[0];
+  }
+  
+  // Fallback for any other emails
   const emailParts = email.split('@')[0];
   const nameParts = emailParts.split('.');
   
@@ -49,18 +61,87 @@ export const getUserRole = (email: string) => {
     return "admin";
   }
   
-  // Non-admin users are not allowed
-  console.log("User not authorized - not an admin");
-  return null;
+  // Check if user exists in localStorage with a specific role
+  const userData = localStorage.getItem(`user_${email.toLowerCase().trim()}`);
+  if (userData) {
+    const user = JSON.parse(userData);
+    console.log("User found with role:", user.role);
+    return user.role;
+  }
+  
+  // Default to nurse for any other authenticated users
+  console.log("User defaulted to nurse role");
+  return "nurse";
 };
 
 export const redirectToUserDashboard = (userRole: string, navigate: (path: string) => void) => {
   console.log("Redirecting user with role:", userRole);
-  if (userRole === "admin") {
-    console.log("Navigating to /admin");
-    navigate("/admin");
-  } else {
-    console.log("Unauthorized access attempt");
-    navigate("/");
+  
+  switch (userRole) {
+    case "admin":
+      console.log("Navigating to /admin");
+      navigate("/admin");
+      break;
+    case "doctor":
+      console.log("Navigating to /doctor-dashboard");
+      navigate("/doctor-dashboard");
+      break;
+    case "case-coordinator":
+      console.log("Navigating to /case-coordinator-dashboard");
+      navigate("/case-coordinator-dashboard");
+      break;
+    case "hospital":
+      console.log("Navigating to /hospital-dashboard");
+      navigate("/hospital-dashboard");
+      break;
+    case "finance":
+      console.log("Navigating to /finance-dashboard");
+      navigate("/finance-dashboard");
+      break;
+    case "customer-care":
+      console.log("Navigating to /customer-care-dashboard");
+      navigate("/customer-care-dashboard");
+      break;
+    case "nurse":
+    default:
+      console.log("Navigating to /nurse-dashboard");
+      navigate("/nurse-dashboard");
+      break;
   }
+};
+
+// Audit Trail Functions
+export const logAuditTrail = (requestId: string, action: string, details: any, userEmail: string) => {
+  const auditEntry = {
+    id: Date.now().toString(),
+    requestId,
+    action,
+    details,
+    userEmail,
+    userName: extractUserName(userEmail),
+    timestamp: new Date().toISOString(),
+    date: new Date().toLocaleDateString(),
+    time: new Date().toLocaleTimeString()
+  };
+  
+  const existingAudit = localStorage.getItem('audit_trail') || '[]';
+  const auditTrail = JSON.parse(existingAudit);
+  auditTrail.push(auditEntry);
+  
+  localStorage.setItem('audit_trail', JSON.stringify(auditTrail));
+  console.log('Audit trail logged:', auditEntry);
+};
+
+export const getAuditTrail = (requestId?: string) => {
+  const auditTrail = JSON.parse(localStorage.getItem('audit_trail') || '[]');
+  
+  if (requestId) {
+    return auditTrail.filter((entry: any) => entry.requestId === requestId);
+  }
+  
+  return auditTrail;
+};
+
+export const getFullAuditReport = () => {
+  return JSON.parse(localStorage.getItem('audit_trail') || '[]');
 };

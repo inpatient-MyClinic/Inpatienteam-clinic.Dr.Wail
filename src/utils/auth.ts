@@ -15,6 +15,14 @@ export const getCurrentUserRole = (): string | null => {
   return null;
 };
 
+export const getCurrentUserEmail = (): string | null => {
+  const currentUserEmail = Object.keys(localStorage)
+    .find(key => key.startsWith('user_'))
+    ?.replace('user_', '');
+  
+  return currentUserEmail || null;
+};
+
 export const isAdmin = (email: string): boolean => {
   const adminEmails = [
     "wail.ahmed@myclinic.com.sa",
@@ -23,4 +31,14 @@ export const isAdmin = (email: string): boolean => {
   ];
   
   return adminEmails.includes(email);
+};
+
+export const canAccessRole = (userRole: string, requiredRole: string): boolean => {
+  // Admin can access everything
+  if (userRole === 'admin') {
+    return true;
+  }
+  
+  // Users can only access their own role
+  return userRole === requiredRole;
 };

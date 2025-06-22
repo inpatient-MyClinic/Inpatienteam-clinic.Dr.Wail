@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DoctorManagement from "@/components/DoctorManagement";
@@ -6,6 +7,7 @@ import CustomFieldsManager from "@/components/CustomFieldsManager";
 import PrivilegeManagement from "./PrivilegeManagement";
 import EnhancedUserManagement from "@/components/settings/EnhancedUserManagement";
 import SystemSettings from "@/components/settings/SystemSettings";
+import AuditTrail from "@/components/settings/AuditTrail";
 import Footer from "@/components/Footer";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import { Button } from "@/components/ui/button";
@@ -38,13 +40,14 @@ const SettingsDirectory = () => {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
           <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
           <TabsTrigger value="privileges">Privilege Management</TabsTrigger>
           <TabsTrigger value="fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="admin-fields">Admin Fields</TabsTrigger>
+          <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
         </TabsList>
 
@@ -70,6 +73,10 @@ const SettingsDirectory = () => {
 
         <TabsContent value="admin-fields" className="space-y-6">
           <AdminFieldConfiguration />
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-6">
+          <AuditTrail />
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
