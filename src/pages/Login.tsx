@@ -1,48 +1,26 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import LoginForm from "@/components/auth/LoginForm";
+import PasswordCreationForm from "@/components/auth/PasswordCreationForm";
 import Footer from "@/components/Footer";
+import { useAuthLogic } from "@/hooks/useAuthLogic";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    
-    // Simulate authentication
-    setTimeout(() => {
-      setSubmitting(false);
-      // Redirect based on email domain or default to admin
-      if (email.includes("admin")) {
-        navigate("/admin");
-      } else if (email.includes("doctor")) {
-        navigate("/doctor-dashboard");
-      } else if (email.includes("nurse")) {
-        navigate("/nurse-dashboard");
-      } else if (email.includes("hospital")) {
-        navigate("/hospital-dashboard");
-      } else if (email.includes("coordinator")) {
-        navigate("/case-coordinator-dashboard");
-      } else if (email.includes("finance")) {
-        navigate("/finance-dashboard");
-      } else if (email.includes("customer")) {
-        navigate("/customer-care-dashboard");
-      } else {
-        navigate("/role-selection");
-      }
-    }, 1000);
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    rememberMe,
+    setRememberMe,
+    isFirstTimeLogin,
+    handlePasswordCreation,
+    handleLogin,
+    handleBackToLogin
+  } = useAuthLogic();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
@@ -61,104 +39,60 @@ const Login = () => {
 
           <Card className="shadow-lg">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-blue-900">Welcome Back</CardTitle>
+              <CardTitle className="text-2xl text-blue-900">
+                {!isFirstTimeLogin ? "Administrator Login" : "Create Admin Password"}
+              </CardTitle>
               <CardDescription>
-                Sign in to access your dashboard
+                {!isFirstTimeLogin 
+                  ? "Sign in with your authorized administrator account" 
+                  : "Set up your password for first-time access"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm">
-                    {error}
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    autoFocus
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full pr-10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  {submitting ? "Signing In..." : "Sign In"}
-                </Button>
-              </form>
+              {!isFirstTimeLogin ? (
+                <LoginForm
+                  email={email}
+                  setEmail={setEmail}
+                  password={password}
+                  setPassword={setPassword}
+                  rememberMe={rememberMe}
+                  setRememberMe={setRememberMe}
+                  onSubmit={handleLogin}
+                />
+              ) : (
+                <PasswordCreationForm
+                  email={email}
+                  password={password}
+                  setPassword={setPassword}
+                  confirmPassword={confirmPassword}
+                  setConfirmPassword={setConfirmPassword}
+                  onSubmit={handlePasswordCreation}
+                  onBackToLogin={handleBackToLogin}
+                />
+              )}
 
               <div className="mt-6 pt-6 border-t">
-                <div className="text-center space-y-2">
-                  <p className="text-sm text-gray-600 mb-4">Demo Accounts:</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-4">Authorized Administrator Emails:</p>
+                  <div className="space-y-2 text-xs text-gray-500">
                     <div className="bg-gray-50 p-2 rounded">
-                      <p className="font-medium">Admin</p>
-                      <p className="text-gray-600">admin@clinic.com</p>
+                      <p>admin@myclinic.com.sa</p>
                     </div>
                     <div className="bg-gray-50 p-2 rounded">
-                      <p className="font-medium">Doctor</p>
-                      <p className="text-gray-600">doctor@clinic.com</p>
+                      <p>wail.ahmed@myclinic.com.sa</p>
                     </div>
                     <div className="bg-gray-50 p-2 rounded">
-                      <p className="font-medium">Nurse</p>
-                      <p className="text-gray-600">nurse@clinic.com</p>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p className="font-medium">Hospital</p>
-                      <p className="text-gray-600">hospital@clinic.com</p>
+                      <p>inpatienteam@gmail.com</p>
                     </div>
                   </div>
+                  <p className="text-xs text-gray-500 mt-4">
+                    Only authorized administrators can access this system
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          <div className="text-center mt-6">
-            <Button 
-              variant="ghost"
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 mx-auto text-blue-600 hover:text-blue-700"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
-            </Button>
-          </div>
         </div>
       </div>
       
