@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Users, FileText, Settings, BarChart3 } from "lucide-react";
 import AdminRequestsUpload from "./AdminRequestsUpload";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminQuickActions() {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleRequestsUpload = (data: any[]) => {
     console.log("Processing uploaded historical requests:", data);
@@ -26,27 +28,32 @@ export default function AdminQuickActions() {
   };
 
   const handleManageUsers = () => {
-    console.log("Manage Users clicked");
-    toast({
-      title: "User Management",
-      description: "User management panel will be opened soon.",
-    });
+    console.log("Manage Users clicked - navigating to settings");
+    navigate("/settings");
   };
 
   const handleGenerateReport = () => {
-    console.log("Generate Report clicked");
-    toast({
-      title: "Report Generation",
-      description: "Report generation functionality will be implemented soon.",
-    });
+    console.log("Generate Report clicked - navigating to audit trail");
+    navigate("/settings");
+    // We could add a query parameter to open the audit tab directly
+    setTimeout(() => {
+      const auditTab = document.querySelector('[value="audit"]');
+      if (auditTab) {
+        (auditTab as HTMLElement).click();
+      }
+    }, 100);
   };
 
   const handleSystemSettings = () => {
-    console.log("System Settings clicked");
-    toast({
-      title: "System Settings",
-      description: "System settings panel will be opened soon.",
-    });
+    console.log("System Settings clicked - navigating to settings");
+    navigate("/settings");
+    // We could add a query parameter to open the system tab directly
+    setTimeout(() => {
+      const systemTab = document.querySelector('[value="system"]');
+      if (systemTab) {
+        (systemTab as HTMLElement).click();
+      }
+    }, 100);
   };
 
   const handleAnalytics = () => {
