@@ -5,9 +5,9 @@ export const getCurrentUserRole = (): string | null => {
     ?.replace('user_', '');
   
   if (currentUserEmail) {
-    // CRITICAL FIX: Check if current user is admin first
+    // CRITICAL: Always check admin status FIRST before checking stored role
     if (isAdmin(currentUserEmail)) {
-      console.log("getCurrentUserRole: Admin user detected, forcing admin role");
+      console.log("getCurrentUserRole: Admin email detected, returning admin role");
       return "admin";
     }
     

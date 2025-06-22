@@ -9,7 +9,7 @@ export const useAuthLogic = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState("");
   const [isFirstTimeLogin, setIsFirstTimeLogin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -37,8 +37,9 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // ENSURE ADMIN EMAILS GET ADMIN ROLE
+    // FORCE ADMIN ROLE FOR ADMIN EMAILS
     const userRole = isAdmin(email) ? "admin" : getUserRole(email);
+    console.log("Password creation - determined role:", userRole, "for email:", email);
     
     if (!userRole) {
       toast({
@@ -51,11 +52,11 @@ export const useAuthLogic = () => {
 
     const userName = extractUserName(email);
 
-    // Store user data with ADMIN role for admin emails
+    // Store user data with correct role
     localStorage.setItem(`user_${email}`, JSON.stringify({
       email,
       name: userName,
-      role: userRole, // This will be "admin" for admin emails
+      role: userRole,
       createdAt: new Date().toISOString()
     }));
     localStorage.setItem(`password_${email}`, password);
@@ -68,9 +69,17 @@ export const useAuthLogic = () => {
       description: `Welcome ${userName}! Redirecting to your dashboard...`,
     });
 
-    setTimeout(() => {
-      redirectToUserDashboard(userRole, navigate);
-    }, 500);
+    // CRITICAL: Force immediate redirect for admin users
+    if (userRole === "admin") {
+      console.log("ADMIN USER - Redirecting to /admin immediately");
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 500);
+    } else {
+      setTimeout(() => {
+        redirectToUserDashboard(userRole, navigate);
+      }, 500);
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -124,8 +133,9 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // CRITICAL FIX: Ensure admin emails always get admin role
+    // CRITICAL: Always check if user is admin FIRST
     const userRole = isAdmin(normalizedEmail) ? "admin" : getUserRole(normalizedEmail);
+    console.log("Login successful - determined role:", userRole, "for email:", normalizedEmail);
     
     if (!userRole) {
       toast({
@@ -136,28 +146,33 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // Update stored user data to ensure admin role is correct
-    if (isAdmin(normalizedEmail)) {
-      const userName = extractUserName(normalizedEmail);
-      localStorage.setItem(`user_${normalizedEmail}`, JSON.stringify({
-        email: normalizedEmail,
-        name: userName,
-        role: "admin", // FORCE ADMIN ROLE
-        createdAt: new Date().toISOString()
-      }));
-      console.log("Updated admin user data in localStorage");
-    }
-
+    // FORCE UPDATE stored user data to ensure admin role is correct
     const userName = extractUserName(normalizedEmail);
-    
-    console.log("Login successful, role:", userRole, "name:", userName);
+    localStorage.setItem(`user_${normalizedEmail}`, JSON.stringify({
+      email: normalizedEmail,
+      name: userName,
+      role: userRole, // This will be "admin" for admin emails
+      createdAt: new Date().toISOString()
+    }));
+    console.log("Updated user data in localStorage with role:", userRole);
 
-    redirectToUserDashboard(userRole, navigate);
-    
     toast({
       title: "Login Successful",
       description: `Welcome back, ${userName}!`,
     });
+
+    // CRITICAL: Force immediate redirect for admin users using window.location
+    if (userRole === "admin") {
+      console.log("ADMIN USER DETECTED - Using window.location to force redirect to /admin");
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 500);
+    } else {
+      console.log("Non-admin user - using normal navigation");
+      setTimeout(() => {
+        redirectToUserDashboard(userRole, navigate);
+      }, 500);
+    }
   };
 
   const handleBackToLogin = () => {
