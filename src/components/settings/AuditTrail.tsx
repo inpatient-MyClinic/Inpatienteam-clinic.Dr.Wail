@@ -10,6 +10,18 @@ import { Download, Search, Filter, Calendar, User, FileText } from "lucide-react
 import { getFullAuditReport } from "@/utils/userUtils";
 import { useToast } from "@/hooks/use-toast";
 
+interface AuditEntry {
+  id: string;
+  requestId: string;
+  action: string;
+  details: any;
+  userEmail: string;
+  userName: string;
+  timestamp: string;
+  date: string;
+  time: string;
+}
+
 export default function AuditTrail() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAction, setFilterAction] = useState("all");
@@ -18,11 +30,11 @@ export default function AuditTrail() {
   const { toast } = useToast();
 
   const auditData = useMemo(() => {
-    return getFullAuditReport();
+    return getFullAuditReport() as AuditEntry[];
   }, []);
 
   const filteredData = useMemo(() => {
-    return auditData.filter((entry: any) => {
+    return auditData.filter((entry: AuditEntry) => {
       const matchesSearch = 
         entry.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         entry.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -37,12 +49,12 @@ export default function AuditTrail() {
     });
   }, [auditData, searchTerm, filterAction, filterUser, selectedRequestId]);
 
-  const uniqueActions = [...new Set(auditData.map((entry: any) => entry.action))];
-  const uniqueUsers = [...new Set(auditData.map((entry: any) => entry.userEmail))];
-  const uniqueRequests = [...new Set(auditData.map((entry: any) => entry.requestId))];
+  const uniqueActions = [...new Set(auditData.map((entry: AuditEntry) => entry.action))];
+  const uniqueUsers = [...new Set(auditData.map((entry: AuditEntry) => entry.userEmail))];
+  const uniqueRequests = [...new Set(auditData.map((entry: AuditEntry) => entry.requestId))];
 
   const handleExportReport = () => {
-    const reportData = filteredData.map((entry: any) => ({
+    const reportData = filteredData.map((entry: AuditEntry) => ({
       'Request ID': entry.requestId,
       'Action': entry.action,
       'User Name': entry.userName,
@@ -208,7 +220,7 @@ export default function AuditTrail() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredData.map((entry: any, index: number) => (
+                  filteredData.map((entry: AuditEntry, index: number) => (
                     <TableRow key={entry.id || index}>
                       <TableCell className="font-medium">{entry.requestId}</TableCell>
                       <TableCell>
