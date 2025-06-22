@@ -51,6 +51,14 @@ const App = () => {
               } 
             />
             <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
+                  <SettingsDirectory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/settings-directory" 
               element={
                 <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>

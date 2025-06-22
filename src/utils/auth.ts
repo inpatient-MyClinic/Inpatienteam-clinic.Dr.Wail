@@ -30,7 +30,7 @@ export const isAdmin = (email: string): boolean => {
     "admin@myclinic.com.sa"
   ];
   
-  return adminEmails.includes(email);
+  return adminEmails.includes(email.toLowerCase().trim());
 };
 
 export const canAccessRole = (userRole: string, requiredRole: string): boolean => {

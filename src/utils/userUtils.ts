@@ -56,7 +56,8 @@ export const getUserRole = (email: string) => {
   
   console.log("Checking role for email:", email);
   
-  if (adminEmails.includes(email)) {
+  // First check if it's an admin email
+  if (adminEmails.includes(email.toLowerCase().trim())) {
     console.log("User identified as admin");
     return "admin";
   }
