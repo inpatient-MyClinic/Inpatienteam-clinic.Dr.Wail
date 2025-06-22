@@ -1,35 +1,57 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Users, Settings, FileText, BarChart3 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
-const quickActions = [
-  { label: "User Management", path: "/settings-directory", icon: Users },
-  { label: "System Settings", path: "/settings-directory", icon: Settings },
-  { label: "Reports & Analytics", path: "/notifications-logs", icon: BarChart3 },
-  { label: "Audit Logs", path: "/notifications-logs", icon: FileText },
-];
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Users, FileText, Upload, Settings, BarChart3 } from "lucide-react";
+import AdminRequestsUpload from "./AdminRequestsUpload";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminQuickActions() {
-  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleRequestsUpload = (data: any[]) => {
+    console.log("Processing uploaded historical requests:", data);
+    toast({
+      title: "Historical Requests Imported",
+      description: `${data.length} requests have been successfully imported to the system.`,
+    });
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickActions.map((action, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            onClick={() => navigate(action.path)}
-            className="flex flex-col items-center gap-2 h-24 hover:bg-gray-50"
-          >
-            <action.icon className="w-6 h-6" />
-            <span className="text-sm">{action.label}</span>
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Button variant="outline" className="flex flex-col h-20 gap-2">
+            <Plus className="w-5 h-5" />
+            <span className="text-xs">Add Task</span>
           </Button>
-        ))}
-      </div>
-    </div>
+          
+          <Button variant="outline" className="flex flex-col h-20 gap-2">
+            <Users className="w-5 h-5" />
+            <span className="text-xs">Manage Users</span>
+          </Button>
+          
+          <AdminRequestsUpload onUpload={handleRequestsUpload} />
+          
+          <Button variant="outline" className="flex flex-col h-20 gap-2">
+            <FileText className="w-5 h-5" />
+            <span className="text-xs">Generate Report</span>
+          </Button>
+          
+          <Button variant="outline" className="flex flex-col h-20 gap-2">
+            <Settings className="w-5 h-5" />
+            <span className="text-xs">System Settings</span>
+          </Button>
+          
+          <Button variant="outline" className="flex flex-col h-20 gap-2">
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-xs">Analytics</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
