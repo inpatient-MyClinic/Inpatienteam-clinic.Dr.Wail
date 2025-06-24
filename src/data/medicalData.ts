@@ -1,18 +1,17 @@
+
 import { loadUsersFromStorage, User } from "@/components/settings/userManagement/UserStorage";
 
 export const specialties = [
-  { value: "gastroenterology", label: "Gastroenterology (GIT)" },
-  { value: "orthopedics", label: "Orthopedics" },
-  { value: "orthopedic", label: "Orthopedic" }, // Add variant
-  { value: "general_surgery", label: "General Surgery" },
+  { value: "cardiology", label: "Cardiology" },
   { value: "ent", label: "ENT" },
-  { value: "ophthalmology", label: "Ophthalmology" },
-  { value: "obgyn", label: "Obstetrics & Gynecology (OB/GYN)" },
-  { value: "urology", label: "Urology" },
-  { value: "radiology", label: "Radiology" },
+  { value: "gastroenterology", label: "GIT (Gastroenterology)" },
+  { value: "general_surgery", label: "General Surgery" },
   { value: "neurology", label: "Neurology" },
-  { value: "neurosurgery", label: "Neurosurgery" }, // Add missing specialty
-  { value: "vascular_surgery", label: "Vascular Surgery" }, // Add missing specialty
+  { value: "obgyn", label: "OBGYN" },
+  { value: "ophthalmology", label: "Ophthalmology" },
+  { value: "orthopedics", label: "Orthopaedic" },
+  { value: "urology", label: "Urology" },
+  { value: "vascular_surgery", label: "Vascular Surgery" },
 ];
 
 export const referralSources = [
@@ -23,7 +22,7 @@ export const referralSources = [
   "MCR"
 ];
 
-// Updated hospital list
+// Updated hospital list - eye centers removed from general list
 export const hospitals = [
   "DSAH",
   "DSFH (Basateen Branch)", 
@@ -31,9 +30,7 @@ export const hospitals = [
   "EMC/ European Medical Center",
   "King's College Hospital",
   "IMC",
-  "DSFH (main)",
-  "Al Batal Eye Centre",
-  "Bin Rushd Eye Center"
+  "DSFH (main)"
 ];
 
 // Hospitals filtered by specialty
@@ -42,7 +39,7 @@ export const hospitalsBySpecialty: Record<string, string[]> = {
     "Al Batal Eye Centre",
     "Bin Rushd Eye Center"
   ],
-  // For all other specialties, show all hospitals
+  // For all other specialties, show all hospitals (without eye centers)
   default: hospitals
 };
 
@@ -73,6 +70,7 @@ export const getDoctorsBySpecialty = () => {
     if (specialty === "orthopedic") specialty = "orthopedics";
     if (specialty === "vascular_surgery") specialty = "vascular_surgery";
     if (specialty.includes("obgyn") || specialty.includes("obstetrics")) specialty = "obgyn";
+    if (specialty.includes("git") || specialty.includes("gastroenterology")) specialty = "gastroenterology";
     
     const displayName = doctor.email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     
@@ -97,6 +95,15 @@ export const getDoctorsBySpecialty = () => {
 export const doctorsBySpecialty = getDoctorsBySpecialty();
 
 export const servicesBySpecialty = {
+  cardiology: [
+    "Cardiac Catheterization",
+    "Angioplasty",
+    "Pacemaker Implantation",
+    "Heart Valve Surgery",
+    "Coronary Artery Bypass",
+    "Echocardiogram",
+    "Stress Test",
+  ],
   gastroenterology: [
     "Upper Endoscopy",
     "Colonoscopy",
@@ -160,15 +167,6 @@ export const servicesBySpecialty = {
     "Male Fertility Surgery",
     "Urinary Incontinence Surgery",
   ],
-  radiology: [
-    "CT-Guided Biopsy",
-    "Interventional Radiology",
-    "Angiography",
-    "Embolization Procedures",
-    "Drainage Procedures",
-    "Stent Placement",
-    "Radiofrequency Ablation",
-  ],
   neurology: [
     "Brain Tumor Surgery",
     "Spinal Cord Surgery",
@@ -177,5 +175,14 @@ export const servicesBySpecialty = {
     "Aneurysm Surgery",
     "Stroke Intervention",
     "Peripheral Nerve Surgery",
+  ],
+  vascular_surgery: [
+    "Aortic Aneurysm Repair",
+    "Carotid Endarterectomy",
+    "Peripheral Bypass Surgery",
+    "Varicose Vein Treatment",
+    "Arteriovenous Fistula Creation",
+    "Thrombectomy",
+    "Stent Placement",
   ],
 };
