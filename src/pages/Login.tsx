@@ -40,7 +40,7 @@ const Login = () => {
           <Card className="shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-blue-900">
-                {!isFirstTimeLogin ? "Administrator Login" : "Create Admin Password"}
+                {!isFirstTimeLogin ? "Login" : "Create Admin Password"}
               </CardTitle>
               <CardDescription>
                 {!isFirstTimeLogin 
