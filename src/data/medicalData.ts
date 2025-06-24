@@ -23,12 +23,33 @@ export const referralSources = [
   "MCR"
 ];
 
+// Updated hospital list
 export const hospitals = [
-  "King Fahad Hospital",
-  "King Faisal Hospital", 
-  "King Abdulaziz Hospital",
-  "Prince Sultan Hospital"
+  "DSAH",
+  "DSFH (Basateen Branch)", 
+  "Al Salamah Hospital",
+  "EMC/ European Medical Center",
+  "King's College Hospital",
+  "IMC",
+  "DSFH (main)",
+  "Al Batal Eye Centre",
+  "Bin Rushd Eye Center"
 ];
+
+// Hospitals filtered by specialty
+export const hospitalsBySpecialty: Record<string, string[]> = {
+  ophthalmology: [
+    "Al Batal Eye Centre",
+    "Bin Rushd Eye Center"
+  ],
+  // For all other specialties, show all hospitals
+  default: hospitals
+};
+
+// Function to get hospitals by specialty
+export const getHospitalsBySpecialty = (specialty: string): string[] => {
+  return hospitalsBySpecialty[specialty] || hospitalsBySpecialty.default;
+};
 
 // Dynamic function to get doctors by specialty from User Management
 export const getDoctorsBySpecialty = () => {

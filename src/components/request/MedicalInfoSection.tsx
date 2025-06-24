@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RequestFormData } from "@/types/request";
-import { specialties, getDoctorsBySpecialty, servicesBySpecialty, referralSources } from "@/data/medicalData";
+import { specialties, getDoctorsBySpecialty, servicesBySpecialty, referralSources, getHospitalsBySpecialty } from "@/data/medicalData";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -40,19 +40,24 @@ const MedicalInfoSection = ({
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   
-  // Get hospitals where selected doctor has privileges
+  // Get hospitals based on specialty
+  const availableHospitals = getHospitalsBySpecialty(selectedSpecialty);
+  
+  // Get hospitals where selected doctor has privileges (if applicable)
   const selectedDoctorData = availableDoctors.find(doc => doc.label === selectedDoctor);
-  const availableHospitalsForDoctor = selectedDoctorData ? selectedDoctorData.privileges : [];
-
-  // Extended hospital list including DSFH
-  const allHospitals = selectedDoctorData ? [...selectedDoctorData.privileges, "DSFH"] : ["DSFH"];
+  const doctorHospitals = selectedDoctorData ? selectedDoctorData.privileges : [];
+  
+  // For ophthalmology, use specialty-specific hospitals, otherwise use doctor privileges or all hospitals
+  const hospitalOptions = selectedSpecialty === "ophthalmology" 
+    ? availableHospitals 
+    : (doctorHospitals.length > 0 ? [...doctorHospitals, "DSFH (main)", "DSFH (Basateen Branch)"] : availableHospitals);
 
   const handleHospitalChange = (hospital: string) => {
     setSelectedHospital(hospital);
     onFieldChange("referredToHospital", hospital);
     
     // Clear OPD date if not DSFH
-    if (hospital !== "DSFH") {
+    if (!hospital.includes("DSFH")) {
       setOpdDate(undefined);
       onFieldChange("opdBookingDate", "");
     }
@@ -66,6 +71,8 @@ const MedicalInfoSection = ({
       onFieldChange("opdBookingDate", "");
     }
   };
+
+  const isDSFHSelected = selectedHospital.includes("DSFH");
 
   return (
     <div className="space-y-5">
@@ -128,7 +135,7 @@ const MedicalInfoSection = ({
             <SelectValue placeholder="Select hospital" />
           </SelectTrigger>
           <SelectContent>
-            {allHospitals.map((hospital) => (
+            {hospitalOptions.map((hospital) => (
               <SelectItem key={hospital} value={hospital}>
                 {hospital}
               </SelectItem>
@@ -138,7 +145,7 @@ const MedicalInfoSection = ({
       </div>
 
       {/* DSFH OPD Booking Date - Mandatory */}
-      {selectedHospital === "DSFH" && (
+      {isDSFHSelected && (
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
           <label className="block font-medium text-gray-600 mb-2">
             OPD Booking Date <span className="text-red-500">*</span>
@@ -168,7 +175,7 @@ const MedicalInfoSection = ({
             </PopoverContent>
           </Popover>
           <p className="text-sm text-yellow-700 mt-1">
-            OPD booking date is mandatory when DSFH hospital is selected
+            When you need us to open visit so you can make the booking
           </p>
         </div>
       )}
