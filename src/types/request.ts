@@ -27,6 +27,9 @@ export interface RequestFormData {
   lastMenstrualPeriod?: string; // For OB/GYN
   estimatedDueDate?: string; // For OB/GYN
   
+  // DSFH specific field
+  opdBookingDate?: string; // For DSFH hospital
+  
   // Surgery Details (simplified)
   expectedSurgeryDate: string;
   admissionType: string;
