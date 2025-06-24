@@ -1,239 +1,49 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, X, RefreshCw } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from 'xlsx';
-import { UserExcelUploadProps, UploadResult } from './types';
-import { processUploadData } from './utils';
+import { UserExcelUploadProps } from './types';
+import { useExcelUpload } from './useExcelUpload';
 import TemplateDownload from './TemplateDownload';
 import ExpectedFields from './ExpectedFields';
 import FileUploadForm from './FileUploadForm';
 import UploadResults from './UploadResults';
 import DuplicateHandler from './DuplicateHandler';
-
-const STORAGE_KEY = 'userExcelUploadData';
+import UpdateModeSelector from './UpdateModeSelector';
+import SheetSelector from './SheetSelector';
+import DataSummary from './DataSummary';
 
 export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isUploading, setIsUploading] = React.useState(false);
-  const [uploadResult, setUploadResult] = React.useState<UploadResult | null>(null);
-  const [previewData, setPreviewData] = React.useState<any[]>([]);
-  const [duplicates, setDuplicates] = React.useState<any[]>([]);
-  const [showDuplicateHandler, setShowDuplicateHandler] = React.useState(false);
-  const [availableSheets, setAvailableSheets] = React.useState<string[]>([]);
-  const [selectedSheet, setSelectedSheet] = React.useState<string>("");
-  const [currentWorkbook, setCurrentWorkbook] = React.useState<XLSX.WorkBook | null>(null);
-  const [updateMode, setUpdateMode] = React.useState<'replace' | 'append'>('append');
   const { toast } = useToast();
+  
+  const {
+    previewData,
+    uploadResult,
+    duplicates,
+    showDuplicateHandler,
+    availableSheets,
+    selectedSheet,
+    updateMode,
+    isUploading,
+    setUpdateMode,
+    handleFileUpload,
+    handleSheetSelect,
+    handleDuplicateResolution,
+    clearAllData,
+    setShowDuplicateHandler,
+    loadSavedData
+  } = useExcelUpload();
 
-  // Load saved data on component mount and when dialog opens
-  useEffect(() => {
-    loadSavedData();
-  }, []);
-
-  useEffect(() => {
+  // Load data when dialog opens
+  React.useEffect(() => {
     if (isOpen) {
       loadSavedData();
     }
-  }, [isOpen]);
-
-  const loadSavedData = () => {
-    try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        if (parsed.previewData && Array.isArray(parsed.previewData)) {
-          setPreviewData(parsed.previewData);
-        }
-        if (parsed.uploadResult) {
-          setUploadResult(parsed.uploadResult);
-        }
-        console.log(`Loaded ${parsed.previewData?.length || 0} users from storage`);
-      }
-    } catch (error) {
-      console.error('Failed to load saved upload data:', error);
-      // Clear corrupted data
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  };
-
-  const saveToStorage = (data: any[], result: UploadResult | null) => {
-    try {
-      const dataToSave = {
-        previewData: data,
-        uploadResult: result,
-        timestamp: new Date().toISOString()
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-      console.log(`Saved ${data.length} users to storage`);
-    } catch (error) {
-      console.error('Failed to save upload data:', error);
-    }
-  };
-
-  // Save data whenever it changes
-  useEffect(() => {
-    if (previewData.length > 0 || uploadResult) {
-      saveToStorage(previewData, uploadResult);
-    }
-  }, [previewData, uploadResult]);
-
-  const checkForDuplicates = async (newData: any[]): Promise<{ duplicates: any[], unique: any[] }> => {
-    const duplicates: any[] = [];
-    const unique: any[] = [];
-    
-    newData.forEach(newUser => {
-      const isDuplicate = previewData.some(existingUser => 
-        existingUser.Email === newUser.Email || 
-        (existingUser["Doctor Name"] && newUser["Doctor Name"] && existingUser["Doctor Name"] === newUser["Doctor Name"])
-      );
-      
-      if (isDuplicate) {
-        duplicates.push(newUser);
-      } else {
-        unique.push(newUser);
-      }
-    });
-    
-    return { duplicates, unique };
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: 'array' });
-      setCurrentWorkbook(workbook);
-      setAvailableSheets(workbook.SheetNames);
-      
-      if (workbook.SheetNames.length > 1) {
-        // Multiple sheets - let user select
-        setSelectedSheet(workbook.SheetNames[0]);
-        toast({
-          title: "Multiple Sheets Detected",
-          description: `Found ${workbook.SheetNames.length} sheets. Please select which sheet to process.`,
-        });
-      } else {
-        // Single sheet - process immediately
-        setSelectedSheet(workbook.SheetNames[0]);
-        await processSheet(workbook, workbook.SheetNames[0]);
-      }
-
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: "Upload Failed",
-        description: "Failed to process the Excel file. Please check the format.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-      // Reset file input
-      if (event.target) {
-        event.target.value = '';
-      }
-    }
-  };
-
-  const processSheet = async (workbook: XLSX.WorkBook, sheetName: string) => {
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-    console.log(`Processing ${jsonData.length} rows from sheet: ${sheetName}`);
-
-    if (updateMode === 'replace') {
-      // Replace mode - clear existing data first
-      setPreviewData([]);
-      setPreviewData(jsonData);
-      const result = await processUploadData(jsonData);
-      setUploadResult(result);
-      
-      toast({
-        title: "Data Replaced",
-        description: `${jsonData.length} users loaded, previous data replaced.`,
-      });
-    } else {
-      // Append mode - check for duplicates
-      const { duplicates, unique } = await checkForDuplicates(jsonData);
-      
-      if (duplicates.length > 0) {
-        console.log(`Found ${duplicates.length} duplicates`);
-        setDuplicates(duplicates);
-        setShowDuplicateHandler(true);
-        // Add unique ones immediately
-        const updatedData = [...previewData, ...unique];
-        setPreviewData(updatedData);
-      } else {
-        console.log('No duplicates found, adding all data');
-        const updatedData = [...previewData, ...jsonData];
-        setPreviewData(updatedData);
-      }
-
-      // Process results for the new unique data
-      const result = await processUploadData([...previewData, ...unique]);
-      setUploadResult(result);
-      
-      toast({
-        title: "Sheet Processed",
-        description: `${unique.length} new users loaded${duplicates.length > 0 ? `, ${duplicates.length} duplicates found` : ''}.`,
-      });
-    }
-  };
-
-  const handleSheetSelect = async (sheetName: string) => {
-    if (!currentWorkbook) return;
-    
-    setSelectedSheet(sheetName);
-    setIsUploading(true);
-    
-    try {
-      await processSheet(currentWorkbook, sheetName);
-    } catch (error) {
-      console.error('Sheet processing error:', error);
-      toast({
-        title: "Processing Failed",
-        description: "Failed to process the selected sheet.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDuplicateResolution = (action: 'replace' | 'skip', selectedDuplicates: any[]) => {
-    let updatedData = [...previewData];
-    
-    if (action === 'replace') {
-      // Remove existing duplicates and add new ones
-      updatedData = previewData.filter(existingUser => 
-        !selectedDuplicates.some(duplicate => 
-          existingUser.Email === duplicate.Email || 
-          (existingUser["Doctor Name"] && duplicate["Doctor Name"] && existingUser["Doctor Name"] === duplicate["Doctor Name"])
-        )
-      );
-      updatedData = [...updatedData, ...selectedDuplicates];
-      console.log(`Replaced ${selectedDuplicates.length} duplicate entries`);
-    } else {
-      console.log(`Skipped ${selectedDuplicates.length} duplicate entries`);
-    }
-    
-    setPreviewData(updatedData);
-    setShowDuplicateHandler(false);
-    setDuplicates([]);
-    
-    toast({
-      title: "Duplicates Handled",
-      description: `${selectedDuplicates.length} duplicate entries ${action === 'replace' ? 'replaced' : 'skipped'}.`,
-    });
-  };
+  }, [isOpen, loadSavedData]);
 
   const handleSave = () => {
     if (previewData.length > 0) {
@@ -255,21 +65,6 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
 
   const handleCancel = () => {
     setIsOpen(false);
-    // Don't clear data - keep it persistent
-  };
-
-  const clearAllData = () => {
-    setUploadResult(null);
-    setPreviewData([]);
-    setAvailableSheets([]);
-    setSelectedSheet("");
-    setCurrentWorkbook(null);
-    localStorage.removeItem(STORAGE_KEY);
-    console.log('Cleared all upload data');
-    toast({
-      title: "Data Cleared",
-      description: "All upload data has been cleared.",
-    });
   };
 
   return (
@@ -299,89 +94,29 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
               <TemplateDownload />
               <ExpectedFields />
               
-              {/* Update Mode Selection */}
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <h4 className="font-medium text-yellow-900 mb-2">Data Update Mode</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="updateMode"
-                      value="append"
-                      checked={updateMode === 'append'}
-                      onChange={(e) => setUpdateMode(e.target.value as 'append')}
-                      className="rounded"
-                    />
-                    <span className="text-sm text-yellow-700">Append Mode - Add new data to existing</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="updateMode"
-                      value="replace"
-                      checked={updateMode === 'replace'}
-                      onChange={(e) => setUpdateMode(e.target.value as 'replace')}
-                      className="rounded"
-                    />
-                    <span className="text-sm text-yellow-700">Replace Mode - Replace all existing data</span>
-                  </label>
-                </div>
-              </div>
+              <UpdateModeSelector 
+                updateMode={updateMode}
+                onUpdateModeChange={setUpdateMode}
+              />
 
-              <FileUploadForm onFileUpload={handleFileUpload} isUploading={isUploading} />
+              <FileUploadForm 
+                onFileUpload={handleFileUpload} 
+                isUploading={isUploading} 
+              />
 
-              {/* Sheet Selection */}
-              {availableSheets.length > 1 && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 className="font-medium text-blue-900 mb-2">Select Sheet to Process</h4>
-                  <div className="space-y-2">
-                    <Select value={selectedSheet} onValueChange={handleSheetSelect}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a sheet" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableSheets.map(sheetName => (
-                          <SelectItem key={sheetName} value={sheetName}>
-                            {sheetName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-blue-700">
-                      Found {availableSheets.length} sheets: {availableSheets.join(', ')}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <SheetSelector
+                availableSheets={availableSheets}
+                selectedSheet={selectedSheet}
+                onSheetSelect={handleSheetSelect}
+              />
 
               {uploadResult && <UploadResults uploadResult={uploadResult} />}
               
-              {previewData.length > 0 && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 className="font-medium text-blue-900 mb-2">Loaded Data Summary</h4>
-                  <p className="text-sm text-blue-700 mb-3">
-                    {previewData.length} users ready to be saved. Data persists between navigation and page refreshes.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={clearAllData}
-                      className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
-                    >
-                      <RefreshCw className="w-4 h-4 mr-1" />
-                      Clear All Data
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={handleSave}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Save Now ({previewData.length})
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <DataSummary
+                dataLength={previewData.length}
+                onClearData={clearAllData}
+                onSaveNow={handleSave}
+              />
             </div>
           </ScrollArea>
 
