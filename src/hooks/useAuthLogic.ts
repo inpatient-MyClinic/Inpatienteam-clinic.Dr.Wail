@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -36,19 +37,10 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // FORCE ADMIN ROLE FOR ADMIN EMAILS
-    const userRole = isAdmin(email) ? "admin" : getUserRole(email);
+    // Get user role - admin emails get admin role, others get their assigned role or default to nurse
+    const userRole = getUserRole(email);
     console.log("Password creation - determined role:", userRole, "for email:", email);
     
-    if (!userRole) {
-      toast({
-        title: "Unauthorized Access",
-        description: "Only authorized administrators can access this system",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const userName = extractUserName(email);
 
     // Store user data with correct role
@@ -99,8 +91,8 @@ export const useAuthLogic = () => {
     
     if (!validateEmail(normalizedEmail)) {
       toast({
-        title: "Unauthorized Access",
-        description: "Only authorized administrators can access this system. Please contact system administrator.",
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
         variant: "destructive",
       });
       return;
@@ -132,25 +124,16 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // CRITICAL: Always check if user is admin FIRST
-    const userRole = isAdmin(normalizedEmail) ? "admin" : getUserRole(normalizedEmail);
+    // Get user role - admin emails get admin role, others get their assigned role or default to nurse
+    const userRole = getUserRole(normalizedEmail);
     console.log("Login successful - determined role:", userRole, "for email:", normalizedEmail);
     
-    if (!userRole) {
-      toast({
-        title: "Unauthorized Access",
-        description: "Access denied. Only administrators are allowed.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // FORCE UPDATE stored user data to ensure admin role is correct
+    // FORCE UPDATE stored user data to ensure role is correct
     const userName = extractUserName(normalizedEmail);
     localStorage.setItem(`user_${normalizedEmail}`, JSON.stringify({
       email: normalizedEmail,
       name: userName,
-      role: userRole, // This will be "admin" for admin emails
+      role: userRole,
       createdAt: new Date().toISOString()
     }));
     console.log("Updated user data in localStorage with role:", userRole);

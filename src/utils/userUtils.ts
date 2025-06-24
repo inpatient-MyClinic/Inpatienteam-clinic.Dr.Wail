@@ -1,12 +1,12 @@
-
 export const validateEmail = (email: string) => {
   const adminEmails = [
+    "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@gmail.com",
-    "admin@myclinic.com.sa"
+    "inpatienteam@gmail.com"
   ];
   
-  return adminEmails.includes(email.toLowerCase().trim()) || isRegisteredUser(email);
+  // Allow admin emails or any other email (they will default to nurse if not in user management)
+  return adminEmails.includes(email.toLowerCase().trim()) || true;
 };
 
 export const isRegisteredUser = (email: string) => {
@@ -49,33 +49,29 @@ export const extractUserName = (email: string) => {
 
 export const getUserRole = (email: string) => {
   const adminEmails = [
+    "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@gmail.com",
-    "admin@myclinic.com.sa"
+    "inpatienteam@gmail.com"
   ];
   
   console.log("Checking role for email:", email);
   
-  // First check if it's an admin email - THIS IS THE FIX
+  // First check if it's an admin email - FORCE ADMIN ROLE
   if (adminEmails.includes(email.toLowerCase().trim())) {
     console.log("User identified as admin - FORCING ADMIN ROLE");
     return "admin";
   }
   
-  // Check if user exists in localStorage with a specific role
+  // Check if user exists in localStorage with a specific role (user management)
   const userData = localStorage.getItem(`user_${email.toLowerCase().trim()}`);
   if (userData) {
     const user = JSON.parse(userData);
-    console.log("User found with role:", user.role);
-    // Even if stored role is different, admin emails should always be admin
-    if (adminEmails.includes(email.toLowerCase().trim())) {
-      console.log("Overriding stored role to admin for admin email");
-      return "admin";
-    }
+    console.log("User found in user management with role:", user.role);
     return user.role;
   }
   
-  console.log("User defaulted to nurse role");
+  // Default to nurse for any other user not in user management
+  console.log("User not found in user management, defaulting to nurse role");
   return "nurse";
 };
 
