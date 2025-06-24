@@ -84,6 +84,89 @@ export class NotificationService {
     this.storeNotifications([notification]);
     console.log(`Status update notification sent for request ${requestId}`);
   }
+
+  static sendRequestStatusChangeNotification(requestId: number, patientName: string, oldStatus: string, newStatus: string, updatedBy: string) {
+    let recipients: string[] = [];
+    let title = '';
+    let message = '';
+
+    switch (newStatus) {
+      case 'Rejected':
+        recipients = ['doctor', 'nurse', 'case-coordinator'];
+        title = 'Request Rejected';
+        message = `Request for ${patientName} has been rejected. Please review and resubmit with corrections.`;
+        break;
+
+      case 'Missing Document':
+        recipients = ['doctor', 'nurse'];
+        title = 'Missing Documents Required';
+        message = `Request for ${patientName} requires additional documentation. Please upload missing documents.`;
+        break;
+
+      case 'Submitted to Hospital':
+        recipients = ['hospital'];
+        title = 'New Request Received';
+        message = `Request for ${patientName} has been submitted to your hospital for review.`;
+        break;
+
+      case 'Under Review by Hospital':
+        recipients = ['case-coordinator', 'doctor', 'nurse'];
+        title = 'Request Under Hospital Review';
+        message = `Request for ${patientName} is now under review by the hospital.`;
+        break;
+
+      case 'Approved by Hospital':
+        recipients = ['case-coordinator', 'doctor', 'nurse'];
+        title = 'Request Approved by Hospital';
+        message = `Request for ${patientName} has been approved by the hospital.`;
+        break;
+
+      case 'Submitted to Insurance':
+        recipients = ['case-coordinator', 'doctor', 'nurse'];
+        title = 'Request Submitted to Insurance';
+        message = `Request for ${patientName} has been submitted to insurance for approval.`;
+        break;
+
+      case 'Surgery Scheduled':
+        recipients = ['case-coordinator', 'doctor', 'nurse'];
+        title = 'Surgery Scheduled';
+        message = `Surgery for ${patientName} has been scheduled.`;
+        break;
+
+      case 'Surgery Completed':
+        recipients = ['case-coordinator', 'doctor', 'nurse'];
+        title = 'Surgery Completed';
+        message = `Surgery for ${patientName} has been completed successfully.`;
+        break;
+
+      case 'Discharged':
+        recipients = ['case-coordinator', 'doctor', 'nurse'];
+        title = 'Patient Discharged';
+        message = `${patientName} has been discharged from the hospital.`;
+        break;
+
+      default:
+        recipients = ['case-coordinator'];
+        title = 'Request Status Updated';
+        message = `Request for ${patientName} status has been updated to ${newStatus}.`;
+    }
+
+    const notification: NotificationData = {
+      id: Date.now(),
+      type: 'status_change',
+      title,
+      message,
+      requestId,
+      timestamp: new Date().toISOString(),
+      recipients,
+      read: false,
+      senderRole: updatedBy,
+      metadata: { oldStatus, newStatus, patientName }
+    };
+
+    this.storeNotifications([notification]);
+    console.log(`Status change notification sent for request ${requestId}: ${oldStatus} -> ${newStatus}`);
+  }
   
   static sendHospitalSubmissionNotification(requestId: number, patientName: string, hospitalName: string) {
     const notification: NotificationData = {

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,9 +45,17 @@ const diagnosisBySpecialty: Record<string, string[]> = {
   endocrinology: ["Diabetes", "Thyroid Disorders", "Adrenal Disorders", "PCOS"],
 };
 
+const initialRequestStatuses = [
+  "Submitted",
+  "Rejected",
+  "Missing Document",
+  "Under Review"
+];
+
 export default function RequestTab({ request, onFieldChange }: RequestTabProps) {
   const [attachments, setAttachments] = useState(request.attachments || []);
   const [selectedSpecialty, setSelectedSpecialty] = useState(request.specialty || "");
+  const [selectedHospital, setSelectedHospital] = useState(request.hospital || "");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -72,11 +79,44 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
     onFieldChange("diagnosis", "");
   };
 
+  const handleHospitalChange = (value: string) => {
+    setSelectedHospital(value);
+    onFieldChange("hospital", value);
+    
+    // If DSFH is selected, mandate visit booking date
+    if (value === "DSFH") {
+      onFieldChange("requiresVisitBooking", true);
+    } else {
+      onFieldChange("requiresVisitBooking", false);
+      onFieldChange("visitBookingDate", "");
+    }
+  };
+
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   const availableDiagnoses = selectedSpecialty ? diagnosisBySpecialty[selectedSpecialty] || [] : [];
 
   return (
     <div className="space-y-6">
+      {/* Status Field */}
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Request Status</h3>
+        <div>
+          <Label htmlFor="requestStatus">Status</Label>
+          <Select defaultValue={request.requestStatus || "Submitted"} onValueChange={(value) => onFieldChange("requestStatus", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {initialRequestStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Patient Information */}
         <div className="space-y-4">
@@ -226,7 +266,7 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
           
           <div>
             <Label htmlFor="hospital">Hospital</Label>
-            <Select defaultValue={request.hospital || ""} onValueChange={(value) => onFieldChange("hospital", value)}>
+            <Select value={selectedHospital} onValueChange={handleHospitalChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select hospital" />
               </SelectTrigger>
@@ -237,9 +277,28 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
                 <SelectItem value="Prince Sultan Hospital">Prince Sultan Hospital</SelectItem>
                 <SelectItem value="King Fahd Hospital">King Fahd Hospital</SelectItem>
                 <SelectItem value="National Guard Hospital">National Guard Hospital</SelectItem>
+                <SelectItem value="DSFH">DSFH</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {/* DSFH Visit Booking Requirement */}
+          {selectedHospital === "DSFH" && (
+            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+              <Label htmlFor="visitBookingDate">Visit Booking Date (Required for DSFH)</Label>
+              <Input
+                id="visitBookingDate"
+                type="date"
+                defaultValue={request.visitBookingDate || ""}
+                onChange={(e) => onFieldChange("visitBookingDate", e.target.value)}
+                required
+                className="mt-2"
+              />
+              <p className="text-sm text-yellow-700 mt-1">
+                Visit booking date is mandatory when DSFH hospital is selected
+              </p>
+            </div>
+          )}
           
           <div>
             <Label htmlFor="doctorName">Doctor Name</Label>

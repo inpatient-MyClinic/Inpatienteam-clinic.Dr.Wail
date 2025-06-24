@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,18 @@ interface HospitalTabProps {
   request: any;
   onFieldChange: (field: string, value: any) => void;
 }
+
+const hospitalStatuses = [
+  "Received",
+  "Under Review by Hospital",
+  "Approved by Hospital",
+  "Submitted to Insurance",
+  "Rejected by Hospital",
+  "Need More Information",
+  "Surgery Scheduled",
+  "Surgery Completed",
+  "Discharged"
+];
 
 export default function HospitalTab({ request, onFieldChange }: HospitalTabProps) {
   const [attachments, setAttachments] = useState(request.hospitalAttachments || []);
@@ -29,8 +40,78 @@ export default function HospitalTab({ request, onFieldChange }: HospitalTabProps
     onFieldChange("hospitalAttachments", updatedAttachments);
   };
 
+  const handleStatusChange = (value: string) => {
+    onFieldChange("hospitalStatus", value);
+    
+    // Auto-set relevant dates based on status
+    const today = new Date().toISOString().split('T')[0];
+    
+    switch (value) {
+      case "Received":
+        onFieldChange("hospitalReceivedDate", today);
+        break;
+      case "Approved by Hospital":
+        onFieldChange("hospitalApprovalDate", today);
+        break;
+      case "Submitted to Insurance":
+        onFieldChange("submittedToInsuranceDate", today);
+        break;
+      case "Surgery Scheduled":
+        onFieldChange("surgeryScheduledDate", today);
+        break;
+      case "Surgery Completed":
+        onFieldChange("surgeryCompletedDate", today);
+        break;
+      case "Discharged":
+        onFieldChange("patientDischargedDate", today);
+        break;
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Status Field */}
+      <div className="bg-purple-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Hospital Status</h3>
+        <div>
+          <Label htmlFor="hospitalStatus">Status</Label>
+          <Select defaultValue={request.hospitalStatus || ""} onValueChange={handleStatusChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {hospitalStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Status Timeline Display */}
+        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          {request.hospitalReceivedDate && (
+            <div className="text-purple-700">Received: {request.hospitalReceivedDate}</div>
+          )}
+          {request.hospitalApprovalDate && (
+            <div className="text-purple-700">Approved: {request.hospitalApprovalDate}</div>
+          )}
+          {request.submittedToInsuranceDate && (
+            <div className="text-purple-700">Submitted to Insurance: {request.submittedToInsuranceDate}</div>
+          )}
+          {request.surgeryScheduledDate && (
+            <div className="text-purple-700">Surgery Scheduled: {request.surgeryScheduledDate}</div>
+          )}
+          {request.surgeryCompletedDate && (
+            <div className="text-purple-700">Surgery Completed: {request.surgeryCompletedDate}</div>
+          )}
+          {request.patientDischargedDate && (
+            <div className="text-purple-700">Discharged: {request.patientDischargedDate}</div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Insurance & Approval Information */}
         <div className="space-y-4">

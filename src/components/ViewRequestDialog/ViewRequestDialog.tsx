@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Eye, Printer, Download, FileText, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditTrail } from "@/utils/userUtils";
 import { getCurrentUserRole } from "@/utils/auth";
+import { NotificationService } from "@/services/notificationService";
 import RequestTab from "./RequestTab";
 import CaseCoordinatorTab from "./CaseCoordinatorTab";
 import HospitalTab from "./HospitalTab";
@@ -25,6 +25,11 @@ export default function ViewRequestDialog({
   const [activeTab, setActiveTab] = useState("request");
   const [modifications, setModifications] = useState<Record<string, any>>({});
   const [isOpen, setIsOpen] = useState(false);
+  const [previousStatuses, setPreviousStatuses] = useState({
+    requestStatus: request.requestStatus || '',
+    coordinatorStatus: request.coordinatorStatus || '',
+    hospitalStatus: request.hospitalStatus || ''
+  });
   const { toast } = useToast();
 
   // Log audit trail when dialog opens (view action)
@@ -63,6 +68,52 @@ export default function ViewRequestDialog({
         modifiedAt: new Date().toISOString()
       }
     }));
+
+    // Check for status changes and trigger notifications
+    if (field.includes('Status')) {
+      const oldStatus = previousStatuses[field as keyof typeof previousStatuses] || oldValue;
+      if (oldStatus !== value && value) {
+        NotificationService.sendRequestStatusChangeNotification(
+          request.id || 0,
+          request.patientName || 'Unknown Patient',
+          oldStatus,
+          value,
+          currentUserRole
+        );
+        
+        setPreviousStatuses(prev => ({
+          ...prev,
+          [field]: value
+        }));
+
+        toast({
+          title: "Status Updated",
+          description: `Status changed from "${oldStatus}" to "${value}". Notifications sent to relevant users.`,
+        });
+      }
+    }
+
+    // Handle special logic for "Submitted to Hospital"
+    if (field === 'coordinatorStatus' && value === 'Submitted to Hospital') {
+      // Auto-set hospital status to "Received"
+      setModifications(prev => ({
+        ...prev,
+        [`hospital.hospitalStatus`]: {
+          field: 'hospitalStatus',
+          section: 'hospital',
+          oldValue: request.hospitalStatus || '',
+          newValue: 'Received',
+          modifiedBy: currentUserRole,
+          modifiedAt: new Date().toISOString()
+        }
+      }));
+
+      NotificationService.sendHospitalSubmissionNotification(
+        request.id || 0,
+        request.patientName || 'Unknown Patient',
+        request.hospital || 'Unknown Hospital'
+      );
+    }
   };
 
   const handlePrint = (sections: string[] = ["request", "coordinator", "hospital"]) => {
@@ -103,6 +154,7 @@ export default function ViewRequestDialog({
       content += `
         <div class="section">
           <div class="section-title">Request Information</div>
+          <div class="field-group"><span class="field-label">Status:</span><span class="field-value">${request.requestStatus || ""}</span></div>
           <div class="field-group"><span class="field-label">Patient Name:</span><span class="field-value">${request.patientName || ""}</span></div>
           <div class="field-group"><span class="field-label">MRN:</span><span class="field-value">${request.mrn || ""}</span></div>
           <div class="field-group"><span class="field-label">Service:</span><span class="field-value">${request.serviceDescription || ""}</span></div>
@@ -110,6 +162,7 @@ export default function ViewRequestDialog({
           <div class="field-group"><span class="field-label">Doctor:</span><span class="field-value">${request.doctorName || ""}</span></div>
           <div class="field-group"><span class="field-label">Expected Surgery Date:</span><span class="field-value">${request.expectedSurgeryDate || ""}</span></div>
           <div class="field-group"><span class="field-label">Specialty:</span><span class="field-value">${request.specialty || ""}</span></div>
+          ${request.visitBookingDate ? `<div class="field-group"><span class="field-label">Visit Booking Date:</span><span class="field-value">${request.visitBookingDate}</span></div>` : ''}
           ${request.requiredImplant ? `<div class="field-group"><span class="field-label">Required Implant:</span><span class="field-value">${request.requiredImplant}</span></div>` : ''}
           ${request.lastMenstrualPeriod ? `<div class="field-group"><span class="field-label">LMP:</span><span class="field-value">${request.lastMenstrualPeriod}</span></div>` : ''}
           ${request.estimatedDueDate ? `<div class="field-group"><span class="field-label">EDD:</span><span class="field-value">${request.estimatedDueDate}</span></div>` : ''}
@@ -121,6 +174,7 @@ export default function ViewRequestDialog({
       content += `
         <div class="section">
           <div class="section-title">Case Coordinator Information</div>
+          <div class="field-group"><span class="field-label">Status:</span><span class="field-value">${request.coordinatorStatus || ""}</span></div>
           <div class="field-group"><span class="field-label">Case Manager:</span><span class="field-value">${request.caseManagerName || ""}</span></div>
           <div class="field-group"><span class="field-label">Assigned Date:</span><span class="field-value">${request.assignedDate || ""}</span></div>
           <div class="field-group"><span class="field-label">Patient Contacted:</span><span class="field-value">${request.patientContacted || ""}</span></div>
@@ -131,6 +185,7 @@ export default function ViewRequestDialog({
           <div class="field-group"><span class="field-label">Coverage Type:</span><span class="field-value">${request.coverageType || ""}</span></div>
           <div class="field-group"><span class="field-label">Coverage Status:</span><span class="field-value">${request.coverageStatus || ""}</span></div>
           <div class="field-group"><span class="field-label">Next OPD Visit:</span><span class="field-value">${request.nextOPDVisit || ""}</span></div>
+          ${request.submittedToHospitalDate ? `<div class="field-group"><span class="field-label">Submitted to Hospital:</span><span class="field-value">${request.submittedToHospitalDate}</span></div>` : ''}
         </div>
       `;
     }
@@ -139,6 +194,7 @@ export default function ViewRequestDialog({
       content += `
         <div class="section">
           <div class="section-title">Hospital Information</div>
+          <div class="field-group"><span class="field-label">Status:</span><span class="field-value">${request.hospitalStatus || ""}</span></div>
           <div class="field-group"><span class="field-label">Insurance Number:</span><span class="field-value">${request.insuranceNumber || ""}</span></div>
           <div class="field-group"><span class="field-label">Hospital File Number:</span><span class="field-value">${request.hospitalFileNumber || ""}</span></div>
           <div class="field-group"><span class="field-label">Approval Date:</span><span class="field-value">${request.approvalDate || ""}</span></div>

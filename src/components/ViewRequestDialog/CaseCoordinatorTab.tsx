@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +33,14 @@ const insuranceCompanies = [
   "AXA Cooperative Insurance"
 ];
 
+const coordinatorStatuses = [
+  "Under Review",
+  "Approved by Coordinator",
+  "Submitted to Hospital",
+  "Need More Information",
+  "Pending Patient Response"
+];
+
 export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoordinatorTabProps) {
   const [attachments, setAttachments] = useState(request.coordinatorAttachments || []);
 
@@ -58,8 +65,43 @@ export default function CaseCoordinatorTab({ request, onFieldChange }: CaseCoord
     onFieldChange("assignedDate", today);
   };
 
+  const handleStatusChange = (value: string) => {
+    onFieldChange("coordinatorStatus", value);
+    
+    // Auto-update to "Submitted to Hospital" when coordinator submits
+    if (value === "Submitted to Hospital") {
+      onFieldChange("submittedToHospitalDate", new Date().toISOString().split('T')[0]);
+      // This will trigger notification in the parent component
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Status Field */}
+      <div className="bg-green-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Case Coordinator Status</h3>
+        <div>
+          <Label htmlFor="coordinatorStatus">Status</Label>
+          <Select defaultValue={request.coordinatorStatus || ""} onValueChange={handleStatusChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {coordinatorStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {request.submittedToHospitalDate && (
+          <div className="mt-3 text-sm text-green-700">
+            Submitted to Hospital on: {request.submittedToHospitalDate}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Case Manager Information */}
         <div className="space-y-4">
