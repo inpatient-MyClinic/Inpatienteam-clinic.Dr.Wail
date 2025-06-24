@@ -1,33 +1,37 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { getCurrentUserRole } from "./utils/auth";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-import CreateRequest from "./pages/CreateRequest";
-import MyRequests from "./pages/MyRequests";
-import SettingsDirectory from "./pages/SettingsDirectory";
-import NotificationsLogs from "./pages/NotificationsLogs";
-import RequestWireframe from "./pages/RequestWireframe";
-import Login from "./pages/Login";
-import RoleSelection from "./pages/RoleSelection";
-import AdminDashboard from "./pages/AdminDashboard";
-import DoctorDashboard from "./pages/DoctorDashboard";
-import NurseDashboard from "./pages/NurseDashboard";
-import HospitalDashboard from "./pages/HospitalDashboard";
-import CaseCoordinatorDashboard from "./pages/CaseCoordinatorDashboard";
-import FinanceDashboard from "./pages/FinanceDashboard";
-import CustomerCareDashboard from "./pages/CustomerCareDashboard";
+import { useEffect } from "react";
+import { getCurrentUserRole } from "@/utils/auth";
+import { SystemInitializationService } from "@/services/systemInitializationService";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Login from "@/pages/Login";
+import AdminDashboard from "@/pages/AdminDashboard";
+import NurseDashboard from "@/pages/NurseDashboard";
+import DoctorDashboard from "@/pages/DoctorDashboard";
+import HospitalDashboard from "@/pages/HospitalDashboard";
+import CaseCoordinatorDashboard from "@/pages/CaseCoordinatorDashboard";
+import FinanceDashboard from "@/pages/FinanceDashboard";
+import CustomerCareDashboard from "@/pages/CustomerCareDashboard";
+import CreateRequest from "@/pages/CreateRequest";
+import AuditTrailPage from "@/pages/AuditTrailPage";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const currentUserRole = getCurrentUserRole();
+
+  useEffect(() => {
+    // Initialize the medical request system
+    SystemInitializationService.initialize();
+    
+    // Cleanup on unmount
+    return () => {
+      SystemInitializationService.cleanup();
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -36,12 +40,9 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/role-selection" element={<RoleSelection />} />
-            <Route path="/welcome" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Login />} />
             
-            {/* Admin-only routes */}
+            {/* Admin Routes */}
             <Route 
               path="/admin" 
               element={
@@ -50,40 +51,8 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
-                  <SettingsDirectory />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/settings-directory" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
-                  <SettingsDirectory />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/notifications-logs" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
-                  <NotificationsLogs />
-                </ProtectedRoute>
-              } 
-            />
             
-            {/* Role-specific dashboard routes */}
-            <Route 
-              path="/doctor-dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['doctor', 'admin']} currentUserRole={currentUserRole}>
-                  <DoctorDashboard />
-                </ProtectedRoute>
-              } 
-            />
+            {/* Nurse Routes */}
             <Route 
               path="/nurse-dashboard" 
               element={
@@ -92,6 +61,18 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Doctor Routes */}
+            <Route 
+              path="/doctor-dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['doctor', 'admin']} currentUserRole={currentUserRole}>
+                  <DoctorDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Hospital Routes */}
             <Route 
               path="/hospital-dashboard" 
               element={
@@ -100,6 +81,8 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Case Coordinator Routes */}
             <Route 
               path="/case-coordinator-dashboard" 
               element={
@@ -108,6 +91,8 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Finance Routes */}
             <Route 
               path="/finance-dashboard" 
               element={
@@ -116,6 +101,8 @@ const App = () => {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Customer Care Routes */}
             <Route 
               path="/customer-care-dashboard" 
               element={
@@ -125,41 +112,23 @@ const App = () => {
               } 
             />
             
-            {/* Shared routes accessible by multiple roles */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'doctor', 'nurse', 'hospital', 'case-coordinator', 'finance', 'customer-care']} currentUserRole={currentUserRole}>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
+            {/* Common Routes */}
             <Route 
               path="/create-request" 
               element={
-                <ProtectedRoute allowedRoles={['admin', 'doctor', 'nurse', 'hospital', 'case-coordinator']} currentUserRole={currentUserRole}>
+                <ProtectedRoute allowedRoles={['nurse', 'doctor', 'admin']} currentUserRole={currentUserRole}>
                   <CreateRequest />
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/my-requests" 
+              path="/audit-trail" 
               element={
-                <ProtectedRoute allowedRoles={['admin', 'doctor', 'nurse', 'hospital', 'case-coordinator']} currentUserRole={currentUserRole}>
-                  <MyRequests />
+                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
+                  <AuditTrailPage />
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/request-wireframe" 
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'doctor', 'nurse', 'hospital', 'case-coordinator']} currentUserRole={currentUserRole}>
-                  <RequestWireframe />
-                </ProtectedRoute>
-              } 
-            />
-            
-            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
