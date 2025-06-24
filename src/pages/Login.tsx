@@ -74,20 +74,14 @@ const Login = () => {
 
               <div className="mt-6 pt-6 border-t">
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-4">Authorized Administrator Emails:</p>
-                  <div className="space-y-2 text-xs text-gray-500">
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p>admin@myclinic.com.sa</p>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p>wail.ahmed@myclinic.com.sa</p>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <p>inpatienteam@gmail.com</p>
-                    </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900 mb-2">Access Restriction</p>
+                    <p className="text-sm text-blue-700">
+                      Only users with <span className="font-semibold">@myclinic.com.sa</span> email addresses are allowed to access the admin dashboard
+                    </p>
                   </div>
                   <p className="text-xs text-gray-500 mt-4">
-                    Only authorized administrators can access this system
+                    Unauthorized access attempts are logged and monitored
                   </p>
                 </div>
               </div>
