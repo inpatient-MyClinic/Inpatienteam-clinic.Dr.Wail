@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,7 +17,6 @@ import CaseCoordinatorDashboard from "@/pages/CaseCoordinatorDashboard";
 import FinanceDashboard from "@/pages/FinanceDashboard";
 import CustomerCareDashboard from "@/pages/CustomerCareDashboard";
 import CreateRequest from "@/pages/CreateRequest";
-import AuditTrailPage from "@/pages/AuditTrailPage";
 
 const queryClient = new QueryClient();
 
@@ -118,14 +118,6 @@ const App = () => {
               element={
                 <ProtectedRoute allowedRoles={['nurse', 'doctor', 'admin']} currentUserRole={currentUserRole}>
                   <CreateRequest />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/audit-trail" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
-                  <AuditTrailPage />
                 </ProtectedRoute>
               } 
             />
