@@ -7,7 +7,11 @@ import AdminRequestsUpload from "./AdminRequestsUpload";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
-export default function AdminQuickActions() {
+interface AdminQuickActionsProps {
+  onShowGeneralReport?: () => void;
+}
+
+export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -33,15 +37,15 @@ export default function AdminQuickActions() {
   };
 
   const handleGenerateReport = () => {
-    console.log("Generate Report clicked - navigating to audit trail");
-    navigate("/settings");
-    // We could add a query parameter to open the audit tab directly
-    setTimeout(() => {
-      const auditTab = document.querySelector('[value="audit"]');
-      if (auditTab) {
-        (auditTab as HTMLElement).click();
-      }
-    }, 100);
+    console.log("Generate Report clicked - showing general report");
+    if (onShowGeneralReport) {
+      onShowGeneralReport();
+    } else {
+      toast({
+        title: "General Reports",
+        description: "Opening general reports section.",
+      });
+    }
   };
 
   const handleSystemSettings = () => {

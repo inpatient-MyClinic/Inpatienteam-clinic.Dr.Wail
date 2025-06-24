@@ -124,6 +124,10 @@ export default function AdminDashboard() {
     setShowAnalytics(!showAnalytics);
   };
 
+  const handleShowGeneralReport = () => {
+    setShowGeneralReport(true);
+  };
+
   // Calculate unread messages for admin role
   const unreadCount = 12;
 
@@ -238,7 +242,7 @@ export default function AdminDashboard() {
             )}
 
             {/* Quick Actions */}
-            <AdminQuickActions />
+            <AdminQuickActions onShowGeneralReport={handleShowGeneralReport} />
 
             {/* Admin Tasks Table */}
             <AdminTasksTable filteredData={filteredData} />
