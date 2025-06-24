@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -14,6 +13,8 @@ import CaseCoordinatorSidebar from "@/components/CaseCoordinatorSidebar";
 import CaseCoordinatorRequestsTable from "@/components/CaseCoordinatorRequestsTable";
 import CaseCoordinatorAnalytics from "@/components/CaseCoordinatorAnalytics";
 import CaseCoordinatorLossTree from "@/components/CaseCoordinatorLossTree";
+import HospitalPrivilegesSearch from "@/components/admin/HospitalPrivilegesSearch";
+import LeadTeamMonitoring from "@/components/admin/LeadTeamMonitoring";
 import ExportButton from "@/components/ExportButton";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import { useCaseCoordinatorRequests } from "@/hooks/useCaseCoordinatorRequests";
@@ -23,6 +24,8 @@ export default function CaseCoordinatorDashboard() {
   const navigate = useNavigate();
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   const [assignedToMeFilter, setAssignedToMeFilter] = useState(false);
+  const [showPrivilegesSearch, setShowPrivilegesSearch] = useState(false);
+  const [showTeamMonitoring, setShowTeamMonitoring] = useState(false);
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
     selectedWeeks: { month: Date; weekNumbers: number[] }[];
@@ -170,6 +173,20 @@ export default function CaseCoordinatorDashboard() {
                   >
                     Assigned to Me
                   </Button>
+                  <Button
+                    variant={showPrivilegesSearch ? "default" : "outline"}
+                    onClick={() => setShowPrivilegesSearch(!showPrivilegesSearch)}
+                    className="flex items-center gap-2"
+                  >
+                    Hospital Privileges
+                  </Button>
+                  <Button
+                    variant={showTeamMonitoring ? "default" : "outline"}
+                    onClick={() => setShowTeamMonitoring(!showTeamMonitoring)}
+                    className="flex items-center gap-2"
+                  >
+                    Team Monitoring
+                  </Button>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -189,6 +206,19 @@ export default function CaseCoordinatorDashboard() {
                 />
               </div>
             </div>
+
+            {/* New Features */}
+            {showPrivilegesSearch && (
+              <div className="mb-6">
+                <HospitalPrivilegesSearch />
+              </div>
+            )}
+
+            {showTeamMonitoring && (
+              <div className="mb-6">
+                <LeadTeamMonitoring />
+              </div>
+            )}
             
             {/* Requests Table */}
             <CaseCoordinatorRequestsTable 

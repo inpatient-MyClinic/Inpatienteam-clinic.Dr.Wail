@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Upload, X, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { UserExcelUploadProps, UploadResult } from './types';
@@ -23,6 +24,10 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
   const [previewData, setPreviewData] = React.useState<any[]>([]);
   const [duplicates, setDuplicates] = React.useState<any[]>([]);
   const [showDuplicateHandler, setShowDuplicateHandler] = React.useState(false);
+  const [availableSheets, setAvailableSheets] = React.useState<string[]>([]);
+  const [selectedSheet, setSelectedSheet] = React.useState<string>("");
+  const [currentWorkbook, setCurrentWorkbook] = React.useState<XLSX.WorkBook | null>(null);
+  const [updateMode, setUpdateMode] = React.useState<'replace' | 'append'>('append');
   const { toast } = useToast();
 
   // Load saved data on component mount and when dialog opens
@@ -106,13 +111,57 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      setCurrentWorkbook(workbook);
+      setAvailableSheets(workbook.SheetNames);
+      
+      if (workbook.SheetNames.length > 1) {
+        // Multiple sheets - let user select
+        setSelectedSheet(workbook.SheetNames[0]);
+        toast({
+          title: "Multiple Sheets Detected",
+          description: `Found ${workbook.SheetNames.length} sheets. Please select which sheet to process.`,
+        });
+      } else {
+        // Single sheet - process immediately
+        setSelectedSheet(workbook.SheetNames[0]);
+        await processSheet(workbook, workbook.SheetNames[0]);
+      }
 
-      console.log(`Processing ${jsonData.length} rows from Excel file`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to process the Excel file. Please check the format.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
 
-      // Check for duplicates
+  const processSheet = async (workbook: XLSX.WorkBook, sheetName: string) => {
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+    console.log(`Processing ${jsonData.length} rows from sheet: ${sheetName}`);
+
+    if (updateMode === 'replace') {
+      // Replace mode - clear existing data first
+      setPreviewData([]);
+      setPreviewData(jsonData);
+      const result = await processUploadData(jsonData);
+      setUploadResult(result);
+      
+      toast({
+        title: "Data Replaced",
+        description: `${jsonData.length} users loaded, previous data replaced.`,
+      });
+    } else {
+      // Append mode - check for duplicates
       const { duplicates, unique } = await checkForDuplicates(jsonData);
       
       if (duplicates.length > 0) {
@@ -133,23 +182,29 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
       setUploadResult(result);
       
       toast({
-        title: "File Processed",
+        title: "Sheet Processed",
         description: `${unique.length} new users loaded${duplicates.length > 0 ? `, ${duplicates.length} duplicates found` : ''}.`,
       });
+    }
+  };
 
+  const handleSheetSelect = async (sheetName: string) => {
+    if (!currentWorkbook) return;
+    
+    setSelectedSheet(sheetName);
+    setIsUploading(true);
+    
+    try {
+      await processSheet(currentWorkbook, sheetName);
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Sheet processing error:', error);
       toast({
-        title: "Upload Failed",
-        description: "Failed to process the Excel file. Please check the format.",
+        title: "Processing Failed",
+        description: "Failed to process the selected sheet.",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-      // Reset file input
-      if (event.target) {
-        event.target.value = '';
-      }
     }
   };
 
@@ -206,6 +261,9 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
   const clearAllData = () => {
     setUploadResult(null);
     setPreviewData([]);
+    setAvailableSheets([]);
+    setSelectedSheet("");
+    setCurrentWorkbook(null);
     localStorage.removeItem(STORAGE_KEY);
     console.log('Cleared all upload data');
     toast({
@@ -230,9 +288,9 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
         </DialogTrigger>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Upload Users via Excel</DialogTitle>
+            <DialogTitle>Upload Users via Excel - Multi-Sheet Support</DialogTitle>
             <DialogDescription>
-              Upload an Excel file containing user data with names, emails, and specialties. Data persists across navigation.
+              Upload an Excel file with multiple sheets. Data can be updated (append) or replaced. Data persists across navigation.
             </DialogDescription>
           </DialogHeader>
 
@@ -240,7 +298,62 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
             <div className="space-y-6 p-1">
               <TemplateDownload />
               <ExpectedFields />
+              
+              {/* Update Mode Selection */}
+              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <h4 className="font-medium text-yellow-900 mb-2">Data Update Mode</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="updateMode"
+                      value="append"
+                      checked={updateMode === 'append'}
+                      onChange={(e) => setUpdateMode(e.target.value as 'append')}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-yellow-700">Append Mode - Add new data to existing</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="updateMode"
+                      value="replace"
+                      checked={updateMode === 'replace'}
+                      onChange={(e) => setUpdateMode(e.target.value as 'replace')}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-yellow-700">Replace Mode - Replace all existing data</span>
+                  </label>
+                </div>
+              </div>
+
               <FileUploadForm onFileUpload={handleFileUpload} isUploading={isUploading} />
+
+              {/* Sheet Selection */}
+              {availableSheets.length > 1 && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-900 mb-2">Select Sheet to Process</h4>
+                  <div className="space-y-2">
+                    <Select value={selectedSheet} onValueChange={handleSheetSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a sheet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSheets.map(sheetName => (
+                          <SelectItem key={sheetName} value={sheetName}>
+                            {sheetName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-blue-700">
+                      Found {availableSheets.length} sheets: {availableSheets.join(', ')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {uploadResult && <UploadResults uploadResult={uploadResult} />}
               
               {previewData.length > 0 && (
@@ -256,6 +369,7 @@ export default function UserExcelUpload({ onUpload }: UserExcelUploadProps) {
                       onClick={clearAllData}
                       className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
                     >
+                      <RefreshCw className="w-4 h-4 mr-1" />
                       Clear All Data
                     </Button>
                     <Button 

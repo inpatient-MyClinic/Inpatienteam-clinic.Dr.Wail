@@ -7,6 +7,10 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
 import AdminTasksTable from "@/components/admin/AdminTasksTable";
+import HospitalPrivilegesSearch from "@/components/admin/HospitalPrivilegesSearch";
+import LeadTeamMonitoring from "@/components/admin/LeadTeamMonitoring";
+import AdminGeneralReport from "@/components/admin/AdminGeneralReport";
+import AIAssistant from "@/components/admin/AIAssistant";
 import Footer from "@/components/Footer";
 
 // Sample admin data with additional fields for analytics
@@ -61,6 +65,10 @@ export default function AdminDashboard() {
   const [selectedWeeks, setSelectedWeeks] = useState<string[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showPrivilegesSearch, setShowPrivilegesSearch] = useState(false);
+  const [showTeamMonitoring, setShowTeamMonitoring] = useState(false);
+  const [showGeneralReport, setShowGeneralReport] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
   const { toast } = useToast();
 
   console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
@@ -147,6 +155,75 @@ export default function AdminDashboard() {
           />
 
           <div className="p-6">
+            {/* Feature Toggle Buttons */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowPrivilegesSearch(!showPrivilegesSearch)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showPrivilegesSearch 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Hospital Privileges Search
+              </button>
+              <button
+                onClick={() => setShowTeamMonitoring(!showTeamMonitoring)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showTeamMonitoring 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Team Monitoring
+              </button>
+              <button
+                onClick={() => setShowGeneralReport(!showGeneralReport)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showGeneralReport 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                General Reports
+              </button>
+              <button
+                onClick={() => setShowAIAssistant(!showAIAssistant)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  showAIAssistant 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                AI Analytics Assistant
+              </button>
+            </div>
+
+            {/* New Features */}
+            {showPrivilegesSearch && (
+              <div className="mb-6">
+                <HospitalPrivilegesSearch />
+              </div>
+            )}
+
+            {showTeamMonitoring && (
+              <div className="mb-6">
+                <LeadTeamMonitoring />
+              </div>
+            )}
+
+            {showGeneralReport && (
+              <div className="mb-6">
+                <AdminGeneralReport />
+              </div>
+            )}
+
+            {showAIAssistant && (
+              <div className="mb-6">
+                <AIAssistant />
+              </div>
+            )}
+
             {/* Analytics Section */}
             {showAnalytics && (
               <div>
