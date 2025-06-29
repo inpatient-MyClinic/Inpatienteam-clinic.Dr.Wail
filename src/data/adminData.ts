@@ -13,7 +13,8 @@ export const adminData = [
     hospital: "King Abdulaziz Hospital",
     caseCoordinator: "Sarah Al-Mahmoud",
     requestDate: new Date("2025-06-18"),
-    completionDate: null
+    completionDate: null,
+    serviceDescription: "Consultation"
   },
   {
     id: "ADM002",
@@ -27,7 +28,8 @@ export const adminData = [
     hospital: "Prince Sultan Hospital",
     caseCoordinator: "Ahmed Hassan",
     requestDate: new Date("2025-06-17"),
-    completionDate: new Date("2025-06-19")
+    completionDate: new Date("2025-06-19"),
+    serviceDescription: "Surgery"
   },
   {
     id: "ADM003",
@@ -41,6 +43,52 @@ export const adminData = [
     hospital: "Medical Center",
     caseCoordinator: "Fatima Ali",
     requestDate: new Date("2025-06-16"),
-    completionDate: null
+    completionDate: null,
+    serviceDescription: "Treatment"
+  },
+  {
+    id: "ADM004",
+    type: "User Management",
+    description: "Nurse certification renewal",
+    user: "Dr. Mohammed Khaled",
+    status: "Rejected",
+    date: "2025-06-15",
+    priority: "High",
+    specialty: "Cardiology",
+    hospital: "King Fahad Hospital",
+    caseCoordinator: "Sarah Al-Mahmoud",
+    requestDate: new Date("2025-06-13"),
+    completionDate: new Date("2025-06-15"),
+    serviceDescription: "Consultation"
+  },
+  {
+    id: "ADM005",
+    type: "Medical Request",
+    description: "Emergency surgery approval",
+    user: "Dr. Layla Rashid",
+    status: "Completed",
+    date: "2025-06-14",
+    priority: "Emergency",
+    specialty: "Neurology",
+    hospital: "King Abdulaziz Hospital",
+    caseCoordinator: "Ahmed Hassan",
+    requestDate: new Date("2025-06-14"),
+    completionDate: new Date("2025-06-14"),
+    serviceDescription: "Emergency Care"
+  },
+  {
+    id: "ADM006",
+    type: "Insurance Claim",
+    description: "Pre-authorization request",
+    user: "Dr. Omar Farid",
+    status: "Cancelled",
+    date: "2025-06-13",
+    priority: "Medium",
+    specialty: "Orthopedics",
+    hospital: "Prince Sultan Hospital",
+    caseCoordinator: "Fatima Ali",
+    requestDate: new Date("2025-06-11"),
+    completionDate: null,
+    serviceDescription: "Diagnostic Test"
   }
 ];

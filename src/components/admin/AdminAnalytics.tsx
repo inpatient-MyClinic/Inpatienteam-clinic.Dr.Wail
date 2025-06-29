@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminAnalyticsFilters from "./analytics/AdminAnalyticsFilters";
@@ -8,6 +7,10 @@ import AdminLossTreeChart from "./analytics/AdminLossTreeChart";
 import AdminStatusDistribution from "./analytics/AdminStatusDistribution";
 import AdminOverdueAnalytics from "./analytics/AdminOverdueAnalytics";
 import AdminCoordinatorPerformanceTable from "./analytics/AdminCoordinatorPerformanceTable";
+import AdminRejectionAnalytics from "./analytics/AdminRejectionAnalytics";
+import AdminCoordinatorLeadTime from "./analytics/AdminCoordinatorLeadTime";
+import FilterableTable from "./analytics/FilterableTable";
+import { Badge } from "@/components/ui/badge";
 
 interface AdminAnalyticsProps {
   data: any[];
@@ -94,6 +97,40 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   // Chart colors - updated for 4 categories
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
+  // Filterable table columns configuration
+  const tableColumns = [
+    { key: 'id', label: 'ID', filterable: true, sortable: true },
+    { key: 'type', label: 'Type', filterable: true, sortable: true },
+    { key: 'description', label: 'Description', filterable: true, sortable: false },
+    { key: 'user', label: 'Doctor', filterable: true, sortable: true },
+    { 
+      key: 'status', 
+      label: 'Status', 
+      filterable: true, 
+      sortable: true,
+      render: (value: string) => (
+        <Badge variant={value === 'Completed' ? 'default' : value === 'Pending' ? 'secondary' : 'destructive'}>
+          {value}
+        </Badge>
+      )
+    },
+    { key: 'specialty', label: 'Specialty', filterable: true, sortable: true },
+    { key: 'hospital', label: 'Hospital', filterable: true, sortable: true },
+    { key: 'caseCoordinator', label: 'Coordinator', filterable: true, sortable: true },
+    { key: 'date', label: 'Date', filterable: false, sortable: true },
+    { 
+      key: 'priority', 
+      label: 'Priority', 
+      filterable: true, 
+      sortable: true,
+      render: (value: string) => (
+        <Badge variant={value === 'High' ? 'destructive' : value === 'Medium' ? 'secondary' : 'outline'}>
+          {value}
+        </Badge>
+      )
+    }
+  ];
+
   if (!data || data.length === 0) {
     return (
       <div className="space-y-6 mb-6">
@@ -137,8 +174,29 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
         npsScore={npsScore}
       />
 
+      {/* New Analytics - Rejection Analysis */}
+      <AdminRejectionAnalytics data={filteredData} />
+
+      {/* New Analytics - Coordinator Lead Time */}
+      <AdminCoordinatorLeadTime data={filteredData} />
+
       {/* Case Coordinator Performance Table */}
       <AdminCoordinatorPerformanceTable data={filteredData} />
+
+      {/* Filterable Data Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Detailed Data Analysis</CardTitle>
+          <CardDescription>Interactive table with column filtering and sorting</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FilterableTable
+            data={filteredData}
+            columns={tableColumns}
+            title="Admin Requests Data"
+          />
+        </CardContent>
+      </Card>
 
       {/* Overdue Requests Analytics */}
       <div>
