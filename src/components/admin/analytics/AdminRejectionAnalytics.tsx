@@ -8,6 +8,43 @@ interface AdminRejectionAnalyticsProps {
   data: any[];
 }
 
+interface SpecialtyStats {
+  total: number;
+  rejected: number;
+  services: Record<string, ServiceStats>;
+}
+
+interface ServiceStats {
+  total: number;
+  rejected: number;
+}
+
+interface DoctorStats {
+  total: number;
+  rejected: number;
+}
+
+interface SpecialtyRejectionRate {
+  specialty: string;
+  total: number;
+  rejected: number;
+  rejectionRate: string;
+}
+
+interface ServiceRejectionRate {
+  service: string;
+  total: number;
+  rejected: number;
+  rejectionRate: string;
+}
+
+interface DoctorRejectionRate {
+  doctor: string;
+  total: number;
+  rejected: number;
+  rejectionRate: string;
+}
+
 export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalyticsProps) {
   // Calculate specialty rejection rates
   const specialtyStats = data.reduce((acc, item) => {
@@ -31,10 +68,10 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
     }
     
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, SpecialtyStats>);
 
   // Get specialty rejection rates
-  const specialtyRejectionRates = Object.entries(specialtyStats)
+  const specialtyRejectionRates: SpecialtyRejectionRate[] = Object.entries(specialtyStats)
     .map(([specialty, stats]) => ({
       specialty,
       total: stats.total,
@@ -44,7 +81,7 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
     .sort((a, b) => parseFloat(b.rejectionRate) - parseFloat(a.rejectionRate));
 
   // Get service rejection rates for high-rejection specialties
-  const getServiceRejectionRates = (specialty: string) => {
+  const getServiceRejectionRates = (specialty: string): ServiceRejectionRate[] => {
     const services = specialtyStats[specialty]?.services || {};
     return Object.entries(services)
       .map(([service, stats]) => ({
@@ -67,9 +104,9 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
       acc[doctor].rejected += 1;
     }
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, DoctorStats>);
 
-  const top3DoctorsRejection = Object.entries(doctorStats)
+  const top3DoctorsRejection: DoctorRejectionRate[] = Object.entries(doctorStats)
     .map(([doctor, stats]) => ({
       doctor,
       total: stats.total,

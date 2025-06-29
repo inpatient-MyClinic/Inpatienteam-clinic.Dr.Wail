@@ -8,6 +8,24 @@ interface AdminCoordinatorLeadTimeProps {
   data: any[];
 }
 
+interface CoordinatorStats {
+  totalCases: number;
+  totalLeadTimeHours: number;
+  completedCases: number;
+  pendingCases: number;
+  leadTimes: number[];
+}
+
+interface CoordinatorLeadTimeStats {
+  coordinator: string;
+  totalCases: number;
+  completedCases: number;
+  pendingCases: number;
+  avgLeadTimeDays: number;
+  medianLeadTimeDays: number;
+  completionRate: string;
+}
+
 export default function AdminCoordinatorLeadTime({ data }: AdminCoordinatorLeadTimeProps) {
   // Calculate lead time for each coordinator
   const coordinatorLeadTimes = data.reduce((acc, item) => {
@@ -40,10 +58,10 @@ export default function AdminCoordinatorLeadTime({ data }: AdminCoordinatorLeadT
     }
 
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, CoordinatorStats>);
 
   // Calculate statistics for each coordinator
-  const coordinatorStats = Object.entries(coordinatorLeadTimes)
+  const coordinatorStats: CoordinatorLeadTimeStats[] = Object.entries(coordinatorLeadTimes)
     .map(([coordinator, stats]) => {
       const avgLeadTimeHours = stats.totalLeadTimeHours / stats.totalCases;
       const avgLeadTimeDays = (avgLeadTimeHours / 24).toFixed(1);
