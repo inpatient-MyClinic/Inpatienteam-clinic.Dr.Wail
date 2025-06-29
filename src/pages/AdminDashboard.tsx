@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
@@ -180,16 +179,6 @@ export default function AdminDashboard() {
                 }`}
               >
                 Team Monitoring
-              </button>
-              <button
-                onClick={() => setShowGeneralReport(!showGeneralReport)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  showGeneralReport 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                General Reports
               </button>
               <button
                 onClick={() => setShowAIAssistant(!showAIAssistant)}
