@@ -1,11 +1,7 @@
 
 import React from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
-import AdminFeatureToggles from "@/components/admin/AdminFeatureToggles";
-import AdminMainContent from "@/components/admin/AdminMainContent";
-import { useAdminDashboardState } from "@/hooks/useAdminDashboardState";
+import AdminDashboardLayout from "@/components/admin/AdminDashboardLayout";
+import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
 
@@ -23,9 +19,6 @@ export default function AdminDashboard() {
     setSelectedDates,
     setSelectedWeeks,
     setSelectedMonths,
-    setShowPrivilegesSearch,
-    setShowTeamMonitoring,
-    setShowAIAssistant,
     handleStatusFilter,
     handleClearAllDateFilters,
     handleExcelUpload,
@@ -33,7 +26,10 @@ export default function AdminDashboard() {
     handlePrint,
     handleToggleAnalytics,
     handleShowGeneralReport,
-  } = useAdminDashboardState();
+    handleTogglePrivilegesSearch,
+    handleToggleTeamMonitoring,
+    handleToggleAIAssistant,
+  } = useAdminDashboard();
 
   console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
   console.log("Admin data length:", adminData.length);
@@ -51,60 +47,32 @@ export default function AdminDashboard() {
   const unreadCount = 12;
 
   return (
-    <div className="flex min-h-screen w-full">
-      {/* Sidebar */}
-      <AdminSidebar
-        activeFilter={activeFilter}
-        showAnalytics={showAnalytics}
-        onStatusFilter={handleStatusFilter}
-        onToggleAnalytics={handleToggleAnalytics}
-      />
-
-      <main className="flex-1 bg-white">
-        <ScrollArea className="h-screen">
-          {/* Header */}
-          <AdminHeader
-            selectedDates={selectedDates}
-            selectedWeeks={selectedWeeks}
-            selectedMonths={selectedMonths}
-            onDateSelect={setSelectedDates}
-            onWeekSelect={setSelectedWeeks}
-            onMonthSelect={setSelectedMonths}
-            onClearAllDateFilters={handleClearAllDateFilters}
-            onExcelUpload={handleExcelUpload}
-            onExport={handleExport}
-            onPrint={handlePrint}
-            unreadCount={unreadCount}
-          />
-
-          <div className="p-6">
-            {/* Feature Toggle Buttons */}
-            <AdminFeatureToggles
-              showPrivilegesSearch={showPrivilegesSearch}
-              showTeamMonitoring={showTeamMonitoring}
-              showAIAssistant={showAIAssistant}
-              onTogglePrivilegesSearch={() => setShowPrivilegesSearch(!showPrivilegesSearch)}
-              onToggleTeamMonitoring={() => setShowTeamMonitoring(!showTeamMonitoring)}
-              onToggleAIAssistant={() => setShowAIAssistant(!showAIAssistant)}
-            />
-
-            {/* Main Content */}
-            <AdminMainContent
-              showAnalytics={showAnalytics}
-              showPrivilegesSearch={showPrivilegesSearch}
-              showTeamMonitoring={showTeamMonitoring}
-              showGeneralReport={showGeneralReport}
-              showAIAssistant={showAIAssistant}
-              adminData={adminData}
-              filteredData={filteredData}
-              selectedDates={selectedDates}
-              selectedWeeks={selectedWeeks}
-              selectedMonths={selectedMonths}
-              onShowGeneralReport={handleShowGeneralReport}
-            />
-          </div>
-        </ScrollArea>
-      </main>
-    </div>
+    <AdminDashboardLayout
+      activeFilter={activeFilter}
+      selectedDates={selectedDates}
+      selectedWeeks={selectedWeeks}
+      selectedMonths={selectedMonths}
+      showAnalytics={showAnalytics}
+      showPrivilegesSearch={showPrivilegesSearch}
+      showTeamMonitoring={showTeamMonitoring}
+      showGeneralReport={showGeneralReport}
+      showAIAssistant={showAIAssistant}
+      adminData={adminData}
+      filteredData={filteredData}
+      unreadCount={unreadCount}
+      onStatusFilter={handleStatusFilter}
+      onToggleAnalytics={handleToggleAnalytics}
+      onDateSelect={setSelectedDates}
+      onWeekSelect={setSelectedWeeks}
+      onMonthSelect={setSelectedMonths}
+      onClearAllDateFilters={handleClearAllDateFilters}
+      onExcelUpload={handleExcelUpload}
+      onExport={handleExport}
+      onPrint={handlePrint}
+      onTogglePrivilegesSearch={handleTogglePrivilegesSearch}
+      onToggleTeamMonitoring={handleToggleTeamMonitoring}
+      onToggleAIAssistant={handleToggleAIAssistant}
+      onShowGeneralReport={handleShowGeneralReport}
+    />
   );
 }
