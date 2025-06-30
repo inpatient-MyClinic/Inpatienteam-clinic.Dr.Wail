@@ -62,7 +62,7 @@ export default function AdminCoordinatorLeadTime({ data }: AdminCoordinatorLeadT
 
   // Calculate statistics for each coordinator
   const coordinatorStats: CoordinatorLeadTimeStats[] = Object.entries(coordinatorLeadTimes)
-    .map(([coordinator, stats]) => {
+    .map(([coordinator, stats]: [string, CoordinatorStats]) => {
       const avgLeadTimeHours = stats.totalLeadTimeHours / stats.totalCases;
       const avgLeadTimeDays = (avgLeadTimeHours / 24).toFixed(1);
       

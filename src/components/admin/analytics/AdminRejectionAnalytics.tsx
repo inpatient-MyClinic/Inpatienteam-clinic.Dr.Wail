@@ -72,7 +72,7 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
 
   // Get specialty rejection rates
   const specialtyRejectionRates: SpecialtyRejectionRate[] = Object.entries(specialtyStats)
-    .map(([specialty, stats]) => ({
+    .map(([specialty, stats]: [string, SpecialtyStats]) => ({
       specialty,
       total: stats.total,
       rejected: stats.rejected,
@@ -84,7 +84,7 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
   const getServiceRejectionRates = (specialty: string): ServiceRejectionRate[] => {
     const services = specialtyStats[specialty]?.services || {};
     return Object.entries(services)
-      .map(([service, stats]) => ({
+      .map(([service, stats]: [string, ServiceStats]) => ({
         service,
         total: stats.total,
         rejected: stats.rejected,
@@ -107,7 +107,7 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
   }, {} as Record<string, DoctorStats>);
 
   const top3DoctorsRejection: DoctorRejectionRate[] = Object.entries(doctorStats)
-    .map(([doctor, stats]) => ({
+    .map(([doctor, stats]: [string, DoctorStats]) => ({
       doctor,
       total: stats.total,
       rejected: stats.rejected,
