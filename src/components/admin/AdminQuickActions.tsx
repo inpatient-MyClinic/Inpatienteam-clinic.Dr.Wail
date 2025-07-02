@@ -32,8 +32,33 @@ export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickAct
   };
 
   const handleManageUsers = () => {
-    console.log("Manage Users clicked - navigating to settings");
+    console.log("Manage Users clicked - navigating to settings with user management");
+    // Navigate to settings and ensure we're on the users tab
     navigate("/settings");
+    
+    // Force the page to load the users tab by setting a timeout
+    setTimeout(() => {
+      const usersTab = document.querySelector('[value="users"]') as HTMLElement;
+      if (usersTab) {
+        usersTab.click();
+        console.log("Users tab clicked successfully");
+      } else {
+        console.log("Users tab not found, page might still be loading");
+        // Try again after a longer delay
+        setTimeout(() => {
+          const retryUsersTab = document.querySelector('[value="users"]') as HTMLElement;
+          if (retryUsersTab) {
+            retryUsersTab.click();
+            console.log("Users tab clicked on retry");
+          }
+        }, 500);
+      }
+    }, 100);
+    
+    toast({
+      title: "Navigating to User Management",
+      description: "Opening user management section...",
+    });
   };
 
   const handleGenerateReport = () => {
@@ -53,9 +78,9 @@ export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickAct
     navigate("/settings");
     // We could add a query parameter to open the system tab directly
     setTimeout(() => {
-      const systemTab = document.querySelector('[value="system"]');
+      const systemTab = document.querySelector('[value="system"]') as HTMLElement;
       if (systemTab) {
-        (systemTab as HTMLElement).click();
+        systemTab.click();
       }
     }, 100);
   };
