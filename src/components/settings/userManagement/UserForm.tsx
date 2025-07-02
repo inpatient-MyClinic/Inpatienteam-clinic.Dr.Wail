@@ -1,10 +1,11 @@
+
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import { userCategories, specialties } from "./types";
 import UserExcelUpload from "../userExcelUpload";
 
@@ -32,25 +33,33 @@ const UserForm = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New User</CardTitle>
-        <CardDescription>Add users with automatic field permissions based on their role</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <UserPlus className="w-5 h-5" />
+          Add New User
+        </CardTitle>
+        <CardDescription>
+          Add users with email validation and automatic role-based permissions. 
+          Choose category to set default privileges for website access.
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex gap-4 items-end">
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div className="flex-1">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">Email Address *</Label>
             <Input
               id="email"
               type="email"
               placeholder="user@hospital.com"
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
+              className="mt-1"
             />
           </div>
-          <div className="w-48">
-            <Label htmlFor="category">Category</Label>
+          
+          <div>
+            <Label htmlFor="category">User Category *</Label>
             <Select value={newUserCategory} onValueChange={setNewUserCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -62,11 +71,12 @@ const UserForm = ({
               </SelectContent>
             </Select>
           </div>
+          
           {newUserCategory === "Doctor" && (
-            <div className="w-48">
-              <Label htmlFor="specialty">Specialty</Label>
+            <div>
+              <Label htmlFor="specialty">Medical Specialty</Label>
               <Select value={newUserSpecialty} onValueChange={setNewUserSpecialty}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select specialty" />
                 </SelectTrigger>
                 <SelectContent>
@@ -80,12 +90,66 @@ const UserForm = ({
               </Select>
             </div>
           )}
-          <Button onClick={onAddUser}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add User
-          </Button>
-          <UserExcelUpload onUpload={onExcelUpload} />
+          
+          <div className="flex gap-2">
+            <Button onClick={onAddUser} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add User
+            </Button>
+            <UserExcelUpload onUpload={onExcelUpload} />
+          </div>
         </div>
+
+        {/* Role Privileges Preview */}
+        {newUserCategory && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <h4 className="font-medium text-sm mb-2">Default Privileges for {newUserCategory}:</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              {newUserCategory === "Admin" && (
+                <>
+                  <span className="text-green-600">✓ Full System Access</span>
+                  <span className="text-green-600">✓ User Management</span>
+                  <span className="text-green-600">✓ All Field Editing</span>
+                </>
+              )}
+              {newUserCategory === "Doctor" && (
+                <>
+                  <span className="text-green-600">✓ Patient Records</span>
+                  <span className="text-green-600">✓ Medical Fields</span>
+                  <span className="text-yellow-600">◐ Payment View Only</span>
+                </>
+              )}
+              {newUserCategory === "Nurse" && (
+                <>
+                  <span className="text-green-600">✓ Patient Care</span>
+                  <span className="text-green-600">✓ Medical Records</span>
+                  <span className="text-red-600">✗ Payment Access</span>
+                </>
+              )}
+              {newUserCategory === "Finance" && (
+                <>
+                  <span className="text-green-600">✓ Payment Management</span>
+                  <span className="text-yellow-600">◐ Patient View Only</span>
+                  <span className="text-yellow-600">◐ Medical View Only</span>
+                </>
+              )}
+              {newUserCategory === "Case Coordinator" && (
+                <>
+                  <span className="text-yellow-600">◐ All Fields View</span>
+                  <span className="text-green-600">✓ Case Management</span>
+                  <span className="text-green-600">✓ Status Updates</span>
+                </>
+              )}
+              {newUserCategory === "Customer Service" && (
+                <>
+                  <span className="text-yellow-600">◐ Basic Info View</span>
+                  <span className="text-green-600">✓ Patient Contact</span>
+                  <span className="text-red-600">✗ Medical Details</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

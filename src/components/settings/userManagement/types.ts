@@ -7,6 +7,7 @@ export type User = {
   status: "Active" | "Inactive";
   createdAt: string;
   fieldPermissions: Record<string, "none" | "view" | "edit">;
+  hospitalPrivileges?: string[];
 };
 
 export const userCategories = [

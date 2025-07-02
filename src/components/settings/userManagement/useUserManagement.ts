@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "./types";
@@ -79,6 +78,13 @@ export const useUserManagement = () => {
     }
   };
 
+  const updateUser = (userId: string, updates: Partial<User>) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, ...updates } : user
+    ));
+    console.log('useUserManagement: Updated user:', userId, 'with:', updates);
+  };
+
   const startEditing = (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (user) {
@@ -156,6 +162,7 @@ export const useUserManagement = () => {
     handleExcelUpload: userActions.handleExcelUpload,
     exportToExcel: () => userActions.exportToExcel(searchFilter, categoryFilter, specialtyFilter, statusFilter),
     clearFilters,
+    updateUser,
     
     // Computed
     filteredUsers: getFilteredUsers(),

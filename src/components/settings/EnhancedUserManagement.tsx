@@ -6,6 +6,7 @@ import SystemFeatures from "./userManagement/SystemFeatures";
 import UserManagementHeader from "./userManagement/UserManagementHeader";
 import UserTableSection from "./userManagement/UserTableSection";
 import LoadingState from "./userManagement/LoadingState";
+import DoctorPrivileges from "./userManagement/DoctorPrivileges";
 import { useUserManagement } from "./userManagement/useUserManagement";
 
 const EnhancedUserManagement = () => {
@@ -42,6 +43,7 @@ const EnhancedUserManagement = () => {
     handleExcelUpload,
     exportToExcel,
     clearFilters,
+    updateUser,
     
     // Computed
     filteredUsers,
@@ -71,6 +73,11 @@ const EnhancedUserManagement = () => {
         setNewUserSpecialty={setNewUserSpecialty}
         onAddUser={addUser}
         onExcelUpload={handleExcelUpload}
+      />
+
+      <DoctorPrivileges 
+        users={users}
+        onUpdateUser={updateUser}
       />
 
       <UserFilters
