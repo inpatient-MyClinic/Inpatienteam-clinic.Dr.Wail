@@ -1,21 +1,24 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 const LoadingState = () => {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Enhanced User Management</h2>
-          <p className="text-gray-600">Loading user management system...</p>
-        </div>
-      </div>
       <Card>
-        <CardContent className="text-center py-8">
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading users...</span>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading User Management
+          </CardTitle>
+          <CardDescription>
+            Initializing user data and system settings...
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </div>
         </CardContent>
       </Card>

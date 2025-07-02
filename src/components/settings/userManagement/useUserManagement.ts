@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "./types";
@@ -24,44 +25,58 @@ export const useUserManagement = () => {
   const { toast } = useToast();
   const userActions = useUserActions(users, setUsers, toast);
 
-  // Load users from localStorage on component mount
+  // Initialize users
   useEffect(() => {
-    console.log('useUserManagement: Starting to load users from storage...');
+    console.log('useUserManagement: Initializing users...');
     
-    const initializeUsers = () => {
+    const initializeUsers = async () => {
       try {
-        const loadedUsers = loadUsersFromStorage();
-        console.log('useUserManagement: Loaded users from storage:', loadedUsers.length);
+        // First try to load from storage
+        let loadedUsers = loadUsersFromStorage();
+        console.log('useUserManagement: Loaded from storage:', loadedUsers.length, 'users');
         
         // If no users exist, create default ones
         if (loadedUsers.length === 0) {
-          console.log('useUserManagement: No users found, creating default users');
+          console.log('useUserManagement: No users found, creating defaults');
           const defaultUsers = createDefaultUsers();
-          setUsers(defaultUsers);
+          loadedUsers = defaultUsers;
           saveUsersToStorage(defaultUsers);
-          console.log('useUserManagement: Created and saved default users:', defaultUsers.length);
-        } else {
-          setUsers(loadedUsers);
-          console.log('useUserManagement: Set loaded users to state');
+          console.log('useUserManagement: Created default users:', defaultUsers.length);
+          
+          toast({
+            title: "System Initialized",
+            description: `Created ${defaultUsers.length} default users`
+          });
         }
+        
+        setUsers(loadedUsers);
+        console.log('useUserManagement: Users set in state:', loadedUsers.length);
+        
       } catch (error) {
-        console.error('useUserManagement: Error loading users:', error);
-        // Create default users as fallback
+        console.error('useUserManagement: Error during initialization:', error);
+        
+        // Fallback: create default users
         const defaultUsers = createDefaultUsers();
         setUsers(defaultUsers);
         saveUsersToStorage(defaultUsers);
+        
+        toast({
+          title: "System Recovered",
+          description: "Created default users after error",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
-        console.log('useUserManagement: Loading complete, isLoading set to false');
+        console.log('useUserManagement: Initialization complete');
       }
     };
 
-    // Small delay to ensure proper loading state display
-    const timer = setTimeout(initializeUsers, 500);
+    // Add small delay to show loading state
+    const timer = setTimeout(initializeUsers, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [toast]);
 
-  // Save users to localStorage whenever users array changes
+  // Save users to storage whenever users change
   useEffect(() => {
     if (!isLoading && users.length > 0) {
       console.log('useUserManagement: Saving users to storage:', users.length);
@@ -70,19 +85,21 @@ export const useUserManagement = () => {
   }, [users, isLoading]);
 
   const addUser = () => {
+    console.log('useUserManagement: Adding user:', newUserEmail, newUserCategory);
     const success = userActions.addUser(newUserEmail, newUserCategory, newUserSpecialty);
     if (success) {
       setNewUserEmail("");
       setNewUserCategory("Doctor");
       setNewUserSpecialty("none");
+      console.log('useUserManagement: User added successfully');
     }
   };
 
   const updateUser = (userId: string, updates: Partial<User>) => {
+    console.log('useUserManagement: Updating user:', userId, updates);
     setUsers(prev => prev.map(user => 
       user.id === userId ? { ...user, ...updates } : user
     ));
-    console.log('useUserManagement: Updated user:', userId, 'with:', updates);
   };
 
   const startEditing = (userId: string) => {
@@ -95,6 +112,7 @@ export const useUserManagement = () => {
   };
 
   const savePermissions = (userId: string) => {
+    console.log('useUserManagement: Saving permissions for:', userId);
     userActions.savePermissions(userId, editingPermissions);
     setEditingUser(null);
     setEditingPermissions({});
@@ -123,13 +141,11 @@ export const useUserManagement = () => {
 
   const getFilteredUsers = () => {
     const filtered = filterUsers(users, searchFilter, categoryFilter, specialtyFilter, statusFilter);
-    console.log('useUserManagement: Filtering users - Total:', users.length, 'Filtered:', filtered.length);
+    console.log('useUserManagement: Filtered users:', filtered.length, 'of', users.length);
     return filtered;
   };
 
   const hasActiveFilters = checkActiveFilters(searchFilter, categoryFilter, specialtyFilter, statusFilter);
-
-  console.log('useUserManagement: Current state - users:', users.length, 'isLoading:', isLoading);
 
   return {
     // State
