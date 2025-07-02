@@ -5,7 +5,7 @@ import { User, defaultFieldPermissions } from "./types";
 import { loadUsersFromStorage, saveUsersToStorage } from "./UserStorage";
 
 export const useUserManagement = () => {
-  const [users, setUsers] = useState<User[]>(() => loadUsersFromStorage());
+  const [users, setUsers] = useState<User[]>([]);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserCategory, setNewUserCategory] = useState("Doctor");
   const [newUserSpecialty, setNewUserSpecialty] = useState("none");
@@ -17,13 +17,32 @@ export const useUserManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
 
+  // Load users from localStorage on component mount
+  useEffect(() => {
+    console.log('Loading users from storage...');
+    setIsLoading(true);
+    try {
+      const loadedUsers = loadUsersFromStorage();
+      console.log('Loaded users:', loadedUsers);
+      setUsers(loadedUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setUsers([]);
+    }
+    setIsLoading(false);
+  }, []);
+
   // Save users to localStorage whenever users array changes
   useEffect(() => {
-    saveUsersToStorage(users);
-  }, [users]);
+    if (!isLoading && users.length >= 0) {
+      console.log('Saving users to storage:', users.length);
+      saveUsersToStorage(users);
+    }
+  }, [users, isLoading]);
 
   const addUser = () => {
     if (!newUserEmail.trim()) {
@@ -56,28 +75,32 @@ export const useUserManagement = () => {
     }
 
     const newUser: User = {
-      id: (users.length + 1).toString(),
+      id: Date.now().toString(),
       email: newUserEmail,
       category: newUserCategory,
-      specialty: newUserCategory === "Doctor" ? newUserSpecialty : undefined,
+      specialty: newUserCategory === "Doctor" ? (newUserSpecialty === "none" ? undefined : newUserSpecialty) : undefined,
       status: "Active",
       createdAt: new Date().toISOString().split('T')[0],
-      fieldPermissions: defaultFieldPermissions[newUserCategory as keyof typeof defaultFieldPermissions]
+      fieldPermissions: defaultFieldPermissions[newUserCategory as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
     };
 
-    setUsers([...users, newUser]);
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
     setNewUserEmail("");
     setNewUserCategory("Doctor");
     setNewUserSpecialty("none");
 
+    console.log('Added new user:', newUser);
     toast({
       title: "Success",
-      description: "User added successfully"
+      description: `User ${newUserEmail} added successfully`
     });
   };
 
   const deleteUser = (userId: string) => {
-    setUsers(users.filter(user => user.id !== userId));
+    const updatedUsers = users.filter(user => user.id !== userId);
+    setUsers(updatedUsers);
+    console.log('Deleted user:', userId);
     toast({
       title: "Success",
       description: "User deleted successfully"
@@ -88,19 +111,22 @@ export const useUserManagement = () => {
     const user = users.find(u => u.id === userId);
     if (user) {
       setEditingUser(userId);
-      setEditingPermissions(user.fieldPermissions);
+      setEditingPermissions({ ...user.fieldPermissions });
+      console.log('Started editing user:', userId);
     }
   };
 
   const savePermissions = (userId: string) => {
-    setUsers(users.map(user => 
+    const updatedUsers = users.map(user => 
       user.id === userId 
-        ? { ...user, fieldPermissions: editingPermissions }
+        ? { ...user, fieldPermissions: { ...editingPermissions } }
         : user
-    ));
+    );
+    setUsers(updatedUsers);
     setEditingUser(null);
     setEditingPermissions({});
     
+    console.log('Saved permissions for user:', userId);
     toast({
       title: "Success",
       description: "Permissions updated successfully"
@@ -110,6 +136,7 @@ export const useUserManagement = () => {
   const cancelEditing = () => {
     setEditingUser(null);
     setEditingPermissions({});
+    console.log('Cancelled editing');
   };
 
   const updatePermission = (fieldId: string, permission: "none" | "view" | "edit") => {
@@ -120,13 +147,15 @@ export const useUserManagement = () => {
   };
 
   const handleExcelUpload = (uploadedUsers: any[]) => {
+    console.log('Processing Excel upload:', uploadedUsers.length, 'users');
+    
     const newUsers: User[] = uploadedUsers.map((userData, index) => {
-      const newId = (users.length + index + 1).toString();
+      const newId = Date.now().toString() + index;
       
       return {
         id: newId,
-        email: userData.Email || userData.email || '',
-        category: userData.Category || (userData["Doctor Name"] ? "Doctor" : "Staff"),
+        email: userData.Email || userData.email || `user${index}@example.com`,
+        category: userData.Category || userData.category || "Doctor",
         specialty: userData.Specialty || userData.specialty,
         status: "Active" as const,
         createdAt: new Date().toISOString().split('T')[0],
@@ -140,6 +169,7 @@ export const useUserManagement = () => {
     const duplicates = newUsers.filter(newUser => existingEmails.includes(newUser.email));
 
     if (duplicates.length > 0) {
+      console.log('Found duplicates:', duplicates.length);
       toast({
         title: "Duplicates Found",
         description: `${duplicates.length} users already exist and were skipped. ${uniqueNewUsers.length} new users added.`,
@@ -148,7 +178,9 @@ export const useUserManagement = () => {
     }
 
     if (uniqueNewUsers.length > 0) {
-      setUsers([...users, ...uniqueNewUsers]);
+      const updatedUsers = [...users, ...uniqueNewUsers];
+      setUsers(updatedUsers);
+      console.log('Added users from Excel:', uniqueNewUsers.length);
       toast({
         title: "Success",
         description: `${uniqueNewUsers.length} users imported successfully from Excel`
@@ -186,6 +218,7 @@ export const useUserManagement = () => {
     a.click();
     window.URL.revokeObjectURL(url);
 
+    console.log('Exported users to CSV:', filteredUsers.length);
     toast({
       title: "Success",
       description: "Users exported successfully"
@@ -212,6 +245,7 @@ export const useUserManagement = () => {
     setCategoryFilter("all");
     setSpecialtyFilter("all");
     setStatusFilter("all");
+    console.log('Cleared all filters');
   };
 
   const hasActiveFilters = searchFilter !== "" || categoryFilter !== "all" || specialtyFilter !== "all" || statusFilter !== "all";
@@ -235,6 +269,7 @@ export const useUserManagement = () => {
     setSpecialtyFilter,
     statusFilter,
     setStatusFilter,
+    isLoading,
     
     // Actions
     addUser,
