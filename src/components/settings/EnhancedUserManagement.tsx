@@ -7,6 +7,8 @@ import { useUserManagement } from "./userManagement/useUserManagement";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const EnhancedUserManagement = () => {
+  console.log('EnhancedUserManagement: Component rendering');
+  
   const {
     // State
     users,
@@ -44,11 +46,14 @@ const EnhancedUserManagement = () => {
     hasActiveFilters
   } = useUserManagement();
 
+  console.log('EnhancedUserManagement: Hook returned - users:', users.length, 'isLoading:', isLoading, 'filteredUsers:', filteredUsers.length);
+
   if (isLoading) {
+    console.log('EnhancedUserManagement: Showing loading state');
     return (
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle>Enhanced User Management</CardTitle>
           <CardDescription>Loading users...</CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,6 +119,9 @@ const EnhancedUserManagement = () => {
           <CardContent className="text-center py-8">
             <p className="text-gray-500">
               {hasActiveFilters ? "No users match the current filters." : "No users found. Add some users to get started."}
+            </p>
+            <p className="text-sm text-blue-600 mt-2">
+              Debug: Total users in storage: {users.length}
             </p>
           </CardContent>
         </Card>
