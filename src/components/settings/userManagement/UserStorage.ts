@@ -9,12 +9,12 @@ export const loadUsersFromStorage = (): User[] => {
     if (savedUsers) {
       const parsed = JSON.parse(savedUsers);
       console.log(`Successfully loaded ${parsed.length} users from localStorage`);
-      // Ensure each user has the required properties
+      // Ensure each user has the required properties with proper defaults
       return parsed.map((user: any) => ({
         id: user.id || Date.now().toString(),
         email: user.email || '',
         category: user.category || 'Doctor',
-        specialty: user.specialty,
+        specialty: user.specialty || undefined,
         status: user.status || 'Active',
         createdAt: user.createdAt || new Date().toISOString().split('T')[0],
         fieldPermissions: user.fieldPermissions || {}

@@ -24,21 +24,15 @@ export const useUserManagement = () => {
   // Load users from localStorage on component mount
   useEffect(() => {
     console.log('Loading users from storage...');
-    setIsLoading(true);
-    try {
-      const loadedUsers = loadUsersFromStorage();
-      console.log('Loaded users:', loadedUsers);
-      setUsers(loadedUsers);
-    } catch (error) {
-      console.error('Error loading users:', error);
-      setUsers([]);
-    }
+    const loadedUsers = loadUsersFromStorage();
+    console.log('Loaded users:', loadedUsers);
+    setUsers(loadedUsers);
     setIsLoading(false);
   }, []);
 
   // Save users to localStorage whenever users array changes
   useEffect(() => {
-    if (!isLoading && users.length >= 0) {
+    if (!isLoading) {
       console.log('Saving users to storage:', users.length);
       saveUsersToStorage(users);
     }
@@ -84,8 +78,7 @@ export const useUserManagement = () => {
       fieldPermissions: defaultFieldPermissions[newUserCategory as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
     };
 
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
+    setUsers(prev => [...prev, newUser]);
     setNewUserEmail("");
     setNewUserCategory("Doctor");
     setNewUserSpecialty("none");
@@ -98,8 +91,7 @@ export const useUserManagement = () => {
   };
 
   const deleteUser = (userId: string) => {
-    const updatedUsers = users.filter(user => user.id !== userId);
-    setUsers(updatedUsers);
+    setUsers(prev => prev.filter(user => user.id !== userId));
     console.log('Deleted user:', userId);
     toast({
       title: "Success",
@@ -117,12 +109,11 @@ export const useUserManagement = () => {
   };
 
   const savePermissions = (userId: string) => {
-    const updatedUsers = users.map(user => 
+    setUsers(prev => prev.map(user => 
       user.id === userId 
         ? { ...user, fieldPermissions: { ...editingPermissions } }
         : user
-    );
-    setUsers(updatedUsers);
+    ));
     setEditingUser(null);
     setEditingPermissions({});
     
@@ -178,8 +169,7 @@ export const useUserManagement = () => {
     }
 
     if (uniqueNewUsers.length > 0) {
-      const updatedUsers = [...users, ...uniqueNewUsers];
-      setUsers(updatedUsers);
+      setUsers(prev => [...prev, ...uniqueNewUsers]);
       console.log('Added users from Excel:', uniqueNewUsers.length);
       toast({
         title: "Success",
