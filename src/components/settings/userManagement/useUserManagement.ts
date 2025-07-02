@@ -1,7 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { User, defaultFieldPermissions } from "./types";
+import { User } from "./types";
 import { loadUsersFromStorage, saveUsersToStorage } from "./UserStorage";
+import { createDefaultUsers } from "./userOperations";
+import { filterUsers, hasActiveFilters as checkActiveFilters } from "./userFilters";
+import { useUserActions } from "./userActions";
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -19,6 +23,7 @@ export const useUserManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
+  const userActions = useUserActions(users, setUsers, toast);
 
   // Load users from localStorage on component mount
   useEffect(() => {
@@ -29,33 +34,7 @@ export const useUserManagement = () => {
     // If no users exist, create some default ones for demo purposes
     if (loadedUsers.length === 0) {
       console.log('useUserManagement: No users found, creating default users');
-      const defaultUsers: User[] = [
-        {
-          id: "1",
-          email: "admin@hospital.com",
-          category: "Admin",
-          status: "Active",
-          createdAt: new Date().toISOString().split('T')[0],
-          fieldPermissions: defaultFieldPermissions["Admin"]
-        },
-        {
-          id: "2",
-          email: "doctor@hospital.com",
-          category: "Doctor",
-          specialty: "Cardiology",
-          status: "Active",
-          createdAt: new Date().toISOString().split('T')[0],
-          fieldPermissions: defaultFieldPermissions["Doctor"]
-        },
-        {
-          id: "3",
-          email: "nurse@hospital.com",
-          category: "Nurse",
-          status: "Active",
-          createdAt: new Date().toISOString().split('T')[0],
-          fieldPermissions: defaultFieldPermissions["Nurse"]
-        }
-      ];
+      const defaultUsers = createDefaultUsers();
       setUsers(defaultUsers);
       saveUsersToStorage(defaultUsers);
     } else {
@@ -75,66 +54,12 @@ export const useUserManagement = () => {
   }, [users, isLoading]);
 
   const addUser = () => {
-    console.log('useUserManagement: Adding user with email:', newUserEmail);
-    
-    if (!newUserEmail.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an email address",
-        variant: "destructive"
-      });
-      return;
+    const success = userActions.addUser(newUserEmail, newUserCategory, newUserSpecialty);
+    if (success) {
+      setNewUserEmail("");
+      setNewUserCategory("Doctor");
+      setNewUserSpecialty("none");
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newUserEmail)) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (users.some(user => user.email === newUserEmail)) {
-      toast({
-        title: "Error", 
-        description: "User with this email already exists",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      email: newUserEmail,
-      category: newUserCategory,
-      specialty: newUserCategory === "Doctor" ? (newUserSpecialty === "none" ? undefined : newUserSpecialty) : undefined,
-      status: "Active",
-      createdAt: new Date().toISOString().split('T')[0],
-      fieldPermissions: defaultFieldPermissions[newUserCategory as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
-    };
-
-    setUsers(prev => [...prev, newUser]);
-    setNewUserEmail("");
-    setNewUserCategory("Doctor");
-    setNewUserSpecialty("none");
-
-    console.log('useUserManagement: Added new user:', newUser);
-    toast({
-      title: "Success",
-      description: `User ${newUserEmail} added successfully`
-    });
-  };
-
-  const deleteUser = (userId: string) => {
-    console.log('useUserManagement: Deleting user:', userId);
-    setUsers(prev => prev.filter(user => user.id !== userId));
-    toast({
-      title: "Success",
-      description: "User deleted successfully"
-    });
   };
 
   const startEditing = (userId: string) => {
@@ -147,19 +72,9 @@ export const useUserManagement = () => {
   };
 
   const savePermissions = (userId: string) => {
-    console.log('useUserManagement: Saving permissions for user:', userId);
-    setUsers(prev => prev.map(user => 
-      user.id === userId 
-        ? { ...user, fieldPermissions: { ...editingPermissions } }
-        : user
-    ));
+    userActions.savePermissions(userId, editingPermissions);
     setEditingUser(null);
     setEditingPermissions({});
-    
-    toast({
-      title: "Success",
-      description: "Permissions updated successfully"
-    });
   };
 
   const cancelEditing = () => {
@@ -175,99 +90,6 @@ export const useUserManagement = () => {
     }));
   };
 
-  const handleExcelUpload = (uploadedUsers: any[]) => {
-    console.log('useUserManagement: Processing Excel upload:', uploadedUsers.length, 'users');
-    
-    const newUsers: User[] = uploadedUsers.map((userData, index) => {
-      const newId = Date.now().toString() + index;
-      
-      return {
-        id: newId,
-        email: userData.Email || userData.email || `user${index}@example.com`,
-        category: userData.Category || userData.category || "Doctor",
-        specialty: userData.Specialty || userData.specialty,
-        status: "Active" as const,
-        createdAt: new Date().toISOString().split('T')[0],
-        fieldPermissions: defaultFieldPermissions[userData.Category as keyof typeof defaultFieldPermissions] || defaultFieldPermissions["Doctor"]
-      };
-    });
-
-    // Check for duplicates based on email
-    const existingEmails = users.map(u => u.email);
-    const uniqueNewUsers = newUsers.filter(newUser => !existingEmails.includes(newUser.email));
-    const duplicates = newUsers.filter(newUser => existingEmails.includes(newUser.email));
-
-    if (duplicates.length > 0) {
-      console.log('useUserManagement: Found duplicates:', duplicates.length);
-      toast({
-        title: "Duplicates Found",
-        description: `${duplicates.length} users already exist and were skipped. ${uniqueNewUsers.length} new users added.`,
-        variant: "destructive"
-      });
-    }
-
-    if (uniqueNewUsers.length > 0) {
-      setUsers(prev => [...prev, ...uniqueNewUsers]);
-      console.log('useUserManagement: Added users from Excel:', uniqueNewUsers.length);
-      toast({
-        title: "Success",
-        description: `${uniqueNewUsers.length} users imported successfully from Excel`
-      });
-    }
-  };
-
-  const exportToExcel = () => {
-    const filteredUsers = getFilteredUsers();
-    if (filteredUsers.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No users to export",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const csvContent = [
-      ["Email", "Category", "Specialty", "Status", "Created Date"].join(","),
-      ...filteredUsers.map(user => [
-        user.email,
-        user.category,
-        user.specialty || "",
-        user.status,
-        user.createdAt
-      ].join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "users_export.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    console.log('useUserManagement: Exported users to CSV:', filteredUsers.length);
-    toast({
-      title: "Success",
-      description: "Users exported successfully"
-    });
-  };
-
-  const getFilteredUsers = () => {
-    return users.filter(user => {
-      const matchesSearch = searchFilter === "" || 
-        user.email.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        user.category.toLowerCase().includes(searchFilter.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || user.category === categoryFilter;
-      const matchesSpecialty = specialtyFilter === "all" || 
-        (specialtyFilter === "none" && !user.specialty) ||
-        user.specialty === specialtyFilter;
-      const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-      
-      return matchesSearch && matchesCategory && matchesSpecialty && matchesStatus;
-    });
-  };
-
   const clearFilters = () => {
     setSearchFilter("");
     setCategoryFilter("all");
@@ -276,7 +98,11 @@ export const useUserManagement = () => {
     console.log('useUserManagement: Cleared all filters');
   };
 
-  const hasActiveFilters = searchFilter !== "" || categoryFilter !== "all" || specialtyFilter !== "all" || statusFilter !== "all";
+  const getFilteredUsers = () => {
+    return filterUsers(users, searchFilter, categoryFilter, specialtyFilter, statusFilter);
+  };
+
+  const hasActiveFilters = checkActiveFilters(searchFilter, categoryFilter, specialtyFilter, statusFilter);
 
   console.log('useUserManagement: Current state - users:', users.length, 'isLoading:', isLoading);
 
@@ -303,13 +129,13 @@ export const useUserManagement = () => {
     
     // Actions
     addUser,
-    deleteUser,
+    deleteUser: userActions.deleteUser,
     startEditing,
     savePermissions,
     cancelEditing,
     updatePermission,
-    handleExcelUpload,
-    exportToExcel,
+    handleExcelUpload: userActions.handleExcelUpload,
+    exportToExcel: () => userActions.exportToExcel(searchFilter, categoryFilter, specialtyFilter, statusFilter),
     clearFilters,
     
     // Computed
