@@ -97,32 +97,37 @@ const EnhancedUserManagement = () => {
         totalCount={users.length}
       />
 
-      <UserTable
-        users={filteredUsers}
-        editingUser={editingUser}
-        editingPermissions={editingPermissions}
-        onEdit={startEditing}
-        onSave={savePermissions}
-        onCancel={cancelEditing}
-        onDelete={deleteUser}
-        onUpdatePermission={updatePermission}
-        categoryFilter={categoryFilter}
-        specialtyFilter={specialtyFilter}
-        statusFilter={statusFilter}
-        onCategoryFilterChange={setCategoryFilter}
-        onSpecialtyFilterChange={setSpecialtyFilter}
-        onStatusFilterChange={setStatusFilter}
-      />
-
-      {filteredUsers.length === 0 && !isLoading && (
+      {filteredUsers.length > 0 ? (
+        <UserTable
+          users={filteredUsers}
+          editingUser={editingUser}
+          editingPermissions={editingPermissions}
+          onEdit={startEditing}
+          onSave={savePermissions}
+          onCancel={cancelEditing}
+          onDelete={deleteUser}
+          onUpdatePermission={updatePermission}
+          categoryFilter={categoryFilter}
+          specialtyFilter={specialtyFilter}
+          statusFilter={statusFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          onSpecialtyFilterChange={setSpecialtyFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
+      ) : (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-gray-500">
+            <p className="text-gray-500 mb-4">
               {hasActiveFilters ? "No users match the current filters." : "No users found. Add some users to get started."}
             </p>
-            <p className="text-sm text-blue-600 mt-2">
-              Debug: Total users in storage: {users.length}
+            <p className="text-sm text-blue-600">
+              Debug: Total users in storage: {users.length}, Filtered: {filteredUsers.length}
             </p>
+            {users.length === 0 && (
+              <p className="text-sm text-green-600 mt-2">
+                Try adding your first user using the form above!
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

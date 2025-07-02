@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { User, defaultFieldPermissions } from "./types";
@@ -26,14 +25,50 @@ export const useUserManagement = () => {
     console.log('useUserManagement: Loading users from storage...');
     const loadedUsers = loadUsersFromStorage();
     console.log('useUserManagement: Loaded users:', loadedUsers);
-    setUsers(loadedUsers);
+    
+    // If no users exist, create some default ones for demo purposes
+    if (loadedUsers.length === 0) {
+      console.log('useUserManagement: No users found, creating default users');
+      const defaultUsers: User[] = [
+        {
+          id: "1",
+          email: "admin@hospital.com",
+          category: "Admin",
+          status: "Active",
+          createdAt: new Date().toISOString().split('T')[0],
+          fieldPermissions: defaultFieldPermissions["Admin"]
+        },
+        {
+          id: "2",
+          email: "doctor@hospital.com",
+          category: "Doctor",
+          specialty: "Cardiology",
+          status: "Active",
+          createdAt: new Date().toISOString().split('T')[0],
+          fieldPermissions: defaultFieldPermissions["Doctor"]
+        },
+        {
+          id: "3",
+          email: "nurse@hospital.com",
+          category: "Nurse",
+          status: "Active",
+          createdAt: new Date().toISOString().split('T')[0],
+          fieldPermissions: defaultFieldPermissions["Nurse"]
+        }
+      ];
+      setUsers(defaultUsers);
+      saveUsersToStorage(defaultUsers);
+    } else {
+      setUsers(loadedUsers);
+    }
+    
     setIsLoading(false);
     console.log('useUserManagement: Loading complete, isLoading set to false');
   }, []);
 
   // Save users to localStorage whenever users array changes
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && users.length > 0) {
       console.log('useUserManagement: Saving users to storage:', users.length);
       saveUsersToStorage(users);
     }
