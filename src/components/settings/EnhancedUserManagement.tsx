@@ -50,23 +50,6 @@ const EnhancedUserManagement = () => {
 
   console.log('EnhancedUserManagement: Hook returned - users:', users.length, 'isLoading:', isLoading, 'filteredUsers:', filteredUsers.length);
 
-  if (isLoading) {
-    console.log('EnhancedUserManagement: Showing loading state');
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Enhanced User Management</CardTitle>
-          <CardDescription>Loading users...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const features = [
     {
       icon: Users,
@@ -111,6 +94,29 @@ const EnhancedUserManagement = () => {
       color: "bg-teal-100 text-teal-800"
     }
   ];
+
+  // Show loading state
+  if (isLoading) {
+    console.log('EnhancedUserManagement: Showing loading state');
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Enhanced User Management</h2>
+            <p className="text-gray-600">Loading user management system...</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="text-center py-8">
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600">Loading users...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -167,40 +173,56 @@ const EnhancedUserManagement = () => {
         totalCount={users.length}
       />
 
-      {filteredUsers.length > 0 ? (
-        <UserTable
-          users={filteredUsers}
-          editingUser={editingUser}
-          editingPermissions={editingPermissions}
-          onEdit={startEditing}
-          onSave={savePermissions}
-          onCancel={cancelEditing}
-          onDelete={deleteUser}
-          onUpdatePermission={updatePermission}
-          categoryFilter={categoryFilter}
-          specialtyFilter={specialtyFilter}
-          statusFilter={statusFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          onSpecialtyFilterChange={setSpecialtyFilter}
-          onStatusFilterChange={setStatusFilter}
-        />
-      ) : (
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-gray-500 mb-4">
-              {hasActiveFilters ? "No users match the current filters." : "No users found. Add some users to get started."}
-            </p>
-            <p className="text-sm text-blue-600">
-              Debug: Total users in storage: {users.length}, Filtered: {filteredUsers.length}
-            </p>
-            {users.length === 0 && (
-              <p className="text-sm text-green-600 mt-2">
-                Try adding your first user using the form above!
+      {/* Always show the user table, even if empty */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Users ({filteredUsers.length} of {users.length})</CardTitle>
+          <CardDescription>
+            {hasActiveFilters ? 
+              "Filtered user list - click 'Clear All Filters' to see all users" : 
+              "Complete user list with management options"
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filteredUsers.length > 0 ? (
+            <UserTable
+              users={filteredUsers}
+              editingUser={editingUser}
+              editingPermissions={editingPermissions}
+              onEdit={startEditing}
+              onSave={savePermissions}
+              onCancel={cancelEditing}
+              onDelete={deleteUser}
+              onUpdatePermission={updatePermission}
+              categoryFilter={categoryFilter}
+              specialtyFilter={specialtyFilter}
+              statusFilter={statusFilter}
+              onCategoryFilterChange={setCategoryFilter}
+              onSpecialtyFilterChange={setSpecialtyFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+          ) : (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">
+                {hasActiveFilters ? 
+                  "No users match the current filters." : 
+                  "No users found. Add some users to get started."
+                }
               </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              <p className="text-sm text-blue-600 mb-2">
+                Debug Info: Total users in storage: {users.length}, Filtered: {filteredUsers.length}
+              </p>
+              {users.length === 0 && (
+                <p className="text-sm text-green-600">
+                  Try adding your first user using the form above!
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

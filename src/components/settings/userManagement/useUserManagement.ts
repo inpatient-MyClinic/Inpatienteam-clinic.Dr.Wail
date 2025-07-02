@@ -27,22 +27,39 @@ export const useUserManagement = () => {
 
   // Load users from localStorage on component mount
   useEffect(() => {
-    console.log('useUserManagement: Loading users from storage...');
-    const loadedUsers = loadUsersFromStorage();
-    console.log('useUserManagement: Loaded users:', loadedUsers);
+    console.log('useUserManagement: Starting to load users from storage...');
     
-    // If no users exist, create some default ones for demo purposes
-    if (loadedUsers.length === 0) {
-      console.log('useUserManagement: No users found, creating default users');
-      const defaultUsers = createDefaultUsers();
-      setUsers(defaultUsers);
-      saveUsersToStorage(defaultUsers);
-    } else {
-      setUsers(loadedUsers);
-    }
-    
-    setIsLoading(false);
-    console.log('useUserManagement: Loading complete, isLoading set to false');
+    const initializeUsers = () => {
+      try {
+        const loadedUsers = loadUsersFromStorage();
+        console.log('useUserManagement: Loaded users from storage:', loadedUsers.length);
+        
+        // If no users exist, create default ones
+        if (loadedUsers.length === 0) {
+          console.log('useUserManagement: No users found, creating default users');
+          const defaultUsers = createDefaultUsers();
+          setUsers(defaultUsers);
+          saveUsersToStorage(defaultUsers);
+          console.log('useUserManagement: Created and saved default users:', defaultUsers.length);
+        } else {
+          setUsers(loadedUsers);
+          console.log('useUserManagement: Set loaded users to state');
+        }
+      } catch (error) {
+        console.error('useUserManagement: Error loading users:', error);
+        // Create default users as fallback
+        const defaultUsers = createDefaultUsers();
+        setUsers(defaultUsers);
+        saveUsersToStorage(defaultUsers);
+      } finally {
+        setIsLoading(false);
+        console.log('useUserManagement: Loading complete, isLoading set to false');
+      }
+    };
+
+    // Small delay to ensure proper loading state display
+    const timer = setTimeout(initializeUsers, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Save users to localStorage whenever users array changes
@@ -99,7 +116,9 @@ export const useUserManagement = () => {
   };
 
   const getFilteredUsers = () => {
-    return filterUsers(users, searchFilter, categoryFilter, specialtyFilter, statusFilter);
+    const filtered = filterUsers(users, searchFilter, categoryFilter, specialtyFilter, statusFilter);
+    console.log('useUserManagement: Filtering users - Total:', users.length, 'Filtered:', filtered.length);
+    return filtered;
   };
 
   const hasActiveFilters = checkActiveFilters(searchFilter, categoryFilter, specialtyFilter, statusFilter);
