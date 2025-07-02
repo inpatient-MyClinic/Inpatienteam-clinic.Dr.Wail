@@ -17,6 +17,7 @@ import CaseCoordinatorDashboard from "@/pages/CaseCoordinatorDashboard";
 import FinanceDashboard from "@/pages/FinanceDashboard";
 import CustomerCareDashboard from "@/pages/CustomerCareDashboard";
 import CreateRequest from "@/pages/CreateRequest";
+import SettingsDirectory from "@/pages/SettingsDirectory";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,16 @@ const App = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Settings Route */}
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']} currentUserRole={currentUserRole}>
+                  <SettingsDirectory />
                 </ProtectedRoute>
               } 
             />
