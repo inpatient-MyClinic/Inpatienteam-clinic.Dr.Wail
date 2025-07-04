@@ -3,19 +3,8 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
-
-interface Transaction {
-  id: string;
-  patientName: string;
-  serviceDescription: string;
-  hospital: string;
-  doctor: string;
-  specialty: string;
-  amount: string;
-  status: string;
-  date: string;
-}
+import { Check } from "lucide-react";
+import { Transaction } from '@/types/finance';
 
 interface FinanceTableProps {
   transactions: Transaction[];
