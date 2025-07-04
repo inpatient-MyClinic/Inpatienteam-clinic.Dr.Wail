@@ -1,20 +1,13 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Download, Printer } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import FinanceSidebar from "@/components/finance/FinanceSidebar";
 import FinanceFilters from "@/components/finance/FinanceFilters";
-import FinanceTable from "@/components/finance/FinanceTable";
-import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
-import MessagingIcons from "@/components/messaging/MessagingIcons";
-import Footer from "@/components/Footer";
-import EnhancedExcelUpload from "@/components/finance/upload/EnhancedExcelUpload";
+import FinanceDashboardHeader from "@/components/finance/FinanceDashboardHeader";
+import FinanceDashboardContent from "@/components/finance/FinanceDashboardContent";
 import { useFinanceDashboard } from "@/hooks/useFinanceDashboard";
 
 export default function FinanceDashboard() {
-  const navigate = useNavigate();
   const {
     filteredTransactions,
     statusCounts,
@@ -39,14 +32,6 @@ export default function FinanceDashboard() {
   } = useFinanceDashboard();
 
   const currentFinanceName = "Finance Team";
-
-  // Calculate analytics
-  const totalPaid = filteredTransactions.filter(t => t.status === "Paid").length;
-  const totalNotPaid = filteredTransactions.filter(t => t.status !== "Paid").length;
-  const totalAmount = "₹35,500";
-  const paidAmount = "₹15,000";
-  const unpaidAmount = "₹20,500";
-
   const unreadCount = 3;
 
   return (
@@ -82,39 +67,18 @@ export default function FinanceDashboard() {
               />
             </div>
 
-            <div className="flex gap-2">
-              <MessagingIcons currentUserRole="finance" unreadCount={unreadCount} />
-              <EnhancedExcelUpload onUpdatePayments={handleBulkUpdatePayments} />
-              <Button onClick={handleExportToExcel} variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export Excel
-              </Button>
-              <Button onClick={handlePrint} variant="outline">
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-            </div>
+            <FinanceDashboardHeader
+              onExportToExcel={handleExportToExcel}
+              onPrint={handlePrint}
+              onBulkUpdatePayments={handleBulkUpdatePayments}
+              unreadCount={unreadCount}
+            />
           </div>
 
-          <div className="p-6">
-            {/* Transactions Table */}
-            <FinanceTable
-              transactions={filteredTransactions}
-              onUpdatePaymentStatus={handleUpdatePaymentStatus}
-            />
-
-            {/* Analytics */}
-            <FinanceAnalytics
-              totalPaid={totalPaid}
-              totalNotPaid={totalNotPaid}
-              totalAmount={totalAmount}
-              paidAmount={paidAmount}
-              unpaidAmount={unpaidAmount}
-            />
-
-            {/* Footer */}
-            <Footer />
-          </div>
+          <FinanceDashboardContent
+            filteredTransactions={filteredTransactions}
+            onUpdatePaymentStatus={handleUpdatePaymentStatus}
+          />
         </ScrollArea>
       </main>
     </div>
