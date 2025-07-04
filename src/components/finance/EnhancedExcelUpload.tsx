@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +36,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
         'Hospital': 'King Abdulaziz Hospital',
         'Doctor': 'Dr. Ahmed Al-Rashid',
         'Specialty': 'Cardiology',
-        'Amount': '15000',
+        'Amount': '₹15,000',
         'Status': 'Paid',
         'Date': '2025-06-15'
       },
@@ -48,20 +47,31 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
         'Hospital': 'Prince Sultan Hospital',
         'Doctor': 'Dr. Sarah Al-Mahmoud',
         'Specialty': 'Orthopedics',
-        'Amount': '8500',
+        'Amount': '₹8,500',
         'Status': 'Pending',
         'Date': '2025-06-10'
+      },
+      {
+        'ID': 'FIN003',
+        'Patient Name': 'Omar Ali',
+        'MRN': 'MRN009876',
+        'Hospital': 'Medical Center',
+        'Doctor': 'Dr. Mohammed Hassan',
+        'Specialty': 'General Surgery',
+        'Amount': '₹12,000',
+        'Status': 'Delay Payment',
+        'Date': '2025-06-08'
       }
     ];
 
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Finance Template');
-    XLSX.writeFile(wb, 'finance_upload_template.xlsx');
+    XLSX.writeFile(wb, 'finance_payment_template.xlsx');
     
     toast({
       title: "Template Downloaded",
-      description: "Excel template has been downloaded to your computer.",
+      description: "Finance payment template has been downloaded. Fill in your data and upload it back.",
     });
   };
 
@@ -196,24 +206,24 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
         <DialogHeader>
           <DialogTitle>Upload Excel Files for Payment Updates</DialogTitle>
           <DialogDescription>
-            Upload multiple Excel files with ID columns to bulk update payments. Download the template first.
+            Download the template first, fill in your data, then upload multiple Excel files to bulk update payments.
           </DialogDescription>
         </DialogHeader>
         
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-6">
-            {/* Template Download */}
-            <Card>
+            {/* Template Download - Highlighted */}
+            <Card className="border-blue-200 bg-blue-50">
               <CardHeader>
-                <CardTitle className="text-sm">Download Template</CardTitle>
-                <CardDescription>
-                  Download the Excel template with the correct format and column headers
+                <CardTitle className="text-sm text-blue-800">📥 Step 1: Download Template</CardTitle>
+                <CardDescription className="text-blue-600">
+                  Download the Excel template with the correct format matching your finance table
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={downloadTemplate} variant="outline" size="sm">
+                <Button onClick={downloadTemplate} className="bg-blue-600 hover:bg-blue-700 text-white">
                   <Download className="w-4 h-4 mr-2" />
-                  Download Template
+                  Download Finance Template
                 </Button>
               </CardContent>
             </Card>
@@ -221,7 +231,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
             {/* Expected Fields */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Expected Columns</CardTitle>
+                <CardTitle className="text-sm">📋 Expected Columns</CardTitle>
                 <CardDescription>
                   Your Excel files should contain these columns (ID column is required)
                 </CardDescription>
@@ -240,7 +250,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
             {/* File Upload */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Upload Files</CardTitle>
+                <CardTitle className="text-sm">📤 Step 2: Upload Files</CardTitle>
                 <CardDescription>
                   Select multiple Excel files to upload (supports .xlsx and .xls)
                 </CardDescription>
@@ -259,7 +269,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
                     <Button
                       variant="outline"
                       disabled={isUploading}
-                      className="w-full flex items-center gap-2 h-12 border-dashed"
+                      className="w-full flex items-center gap-2 h-12 border-dashed border-2 hover:bg-green-50"
                     >
                       {isUploading ? (
                         <FileSpreadsheet className="w-4 h-4 animate-pulse" />
@@ -278,17 +288,17 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
 
             {/* Uploaded Files Preview */}
             {uploadedFiles.length > 0 && (
-              <Card>
+              <Card className="border-green-200 bg-green-50">
                 <CardHeader>
-                  <CardTitle className="text-sm">Uploaded Files ({uploadedFiles.length})</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-sm text-green-800">✅ Uploaded Files ({uploadedFiles.length})</CardTitle>
+                  <CardDescription className="text-green-600">
                     Total IDs found: {totalIds}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {uploadedFiles.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                      <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <FileSpreadsheet className="w-4 h-4 text-green-600" />
