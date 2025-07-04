@@ -8,7 +8,7 @@ import { Check, X } from "lucide-react";
 interface Transaction {
   id: string;
   patientName: string;
-  mrn: string;
+  serviceDescription: string;
   hospital: string;
   doctor: string;
   specialty: string;
@@ -51,7 +51,7 @@ export default function FinanceTable({
         <TableHeader>
           <TableRow>
             <TableHead>Patient Name</TableHead>
-            <TableHead>MRN</TableHead>
+            <TableHead>Service Description</TableHead>
             <TableHead>ID</TableHead>
             <TableHead>Hospital</TableHead>
             <TableHead>Doctor</TableHead>
@@ -65,7 +65,7 @@ export default function FinanceTable({
           {transactions.map((transaction) => (
             <TableRow key={transaction.id} className="hover:bg-gray-50">
               <TableCell className="font-medium">{transaction.patientName}</TableCell>
-              <TableCell className="text-gray-600">{transaction.mrn}</TableCell>
+              <TableCell className="text-gray-600">{transaction.serviceDescription}</TableCell>
               <TableCell className="text-gray-600">{transaction.id}</TableCell>
               <TableCell className="text-gray-600">{transaction.hospital}</TableCell>
               <TableCell className="text-gray-600">{transaction.doctor}</TableCell>

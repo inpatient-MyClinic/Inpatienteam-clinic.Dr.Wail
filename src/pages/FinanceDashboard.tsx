@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,12 +12,12 @@ import Footer from "@/components/Footer";
 import EnhancedExcelUpload from "@/components/finance/EnhancedExcelUpload";
 import { useToast } from "@/hooks/use-toast";
 
-// Sample financial data with specialty instead of service
+// Sample financial data with serviceDescription instead of mrn
 const initialTransactions = [
   {
     id: "FIN001",
     patientName: "Ahmed Mohammed",
-    mrn: "MRN001234",
+    serviceDescription: "Cardiac Surgery Consultation",
     hospital: "King Abdulaziz Hospital",
     doctor: "Dr. Ahmed Al-Rashid",
     specialty: "Cardiology",
@@ -29,7 +28,7 @@ const initialTransactions = [
   {
     id: "FIN002", 
     patientName: "Fatima Hassan",
-    mrn: "MRN005678",
+    serviceDescription: "Orthopedic Joint Replacement",
     hospital: "Prince Sultan Hospital",
     doctor: "Dr. Sarah Al-Mahmoud",
     specialty: "Orthopedics",
@@ -40,7 +39,7 @@ const initialTransactions = [
   {
     id: "FIN003",
     patientName: "Omar Ali",
-    mrn: "MRN009876", 
+    serviceDescription: "General Surgery Procedure",
     hospital: "Medical Center",
     doctor: "Dr. Mohammed Hassan",
     specialty: "General Surgery",

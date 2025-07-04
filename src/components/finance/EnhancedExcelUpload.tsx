@@ -32,7 +32,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
       {
         'ID': 'FIN001',
         'Patient Name': 'Ahmed Mohammed',
-        'MRN': 'MRN001234',
+        'Service Description': 'Cardiac Surgery Consultation',
         'Hospital': 'King Abdulaziz Hospital',
         'Doctor': 'Dr. Ahmed Al-Rashid',
         'Specialty': 'Cardiology',
@@ -43,7 +43,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
       {
         'ID': 'FIN002',
         'Patient Name': 'Fatima Hassan',
-        'MRN': 'MRN005678',
+        'Service Description': 'Orthopedic Joint Replacement',
         'Hospital': 'Prince Sultan Hospital',
         'Doctor': 'Dr. Sarah Al-Mahmoud',
         'Specialty': 'Orthopedics',
@@ -54,7 +54,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
       {
         'ID': 'FIN003',
         'Patient Name': 'Omar Ali',
-        'MRN': 'MRN009876',
+        'Service Description': 'General Surgery Procedure',
         'Hospital': 'Medical Center',
         'Doctor': 'Dr. Mohammed Hassan',
         'Specialty': 'General Surgery',
@@ -238,7 +238,7 @@ export default function EnhancedExcelUpload({ onUpdatePayments }: EnhancedExcelU
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-1">
-                  {['ID', 'Patient Name', 'MRN', 'Hospital', 'Doctor', 'Specialty', 'Amount', 'Status', 'Date'].map(field => (
+                  {['ID', 'Patient Name', 'Service Description', 'Hospital', 'Doctor', 'Specialty', 'Amount', 'Status', 'Date'].map(field => (
                     <Badge key={field} variant={field === 'ID' ? 'default' : 'outline'} className="text-xs">
                       {field} {field === 'ID' && '*'}
                     </Badge>
