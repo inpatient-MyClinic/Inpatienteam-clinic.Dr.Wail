@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import FinanceTable from "@/components/finance/FinanceTable";
 import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import Footer from "@/components/Footer";
-import EnhancedExcelUpload from "@/components/finance/EnhancedExcelUpload";
+import EnhancedExcelUpload from "@/components/finance/upload/EnhancedExcelUpload";
 import { useToast } from "@/hooks/use-toast";
 
 // Sample financial data with serviceDescription instead of mrn
