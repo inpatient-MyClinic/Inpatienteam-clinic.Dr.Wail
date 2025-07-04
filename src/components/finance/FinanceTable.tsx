@@ -11,7 +11,7 @@ interface Transaction {
   mrn: string;
   hospital: string;
   doctor: string;
-  service: string;
+  specialty: string;
   amount: string;
   status: string;
   date: string;
@@ -55,7 +55,7 @@ export default function FinanceTable({
             <TableHead>ID</TableHead>
             <TableHead>Hospital</TableHead>
             <TableHead>Doctor</TableHead>
-            <TableHead>Service</TableHead>
+            <TableHead>Specialty</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Actions</TableHead>
@@ -69,7 +69,7 @@ export default function FinanceTable({
               <TableCell className="text-gray-600">{transaction.id}</TableCell>
               <TableCell className="text-gray-600">{transaction.hospital}</TableCell>
               <TableCell className="text-gray-600">{transaction.doctor}</TableCell>
-              <TableCell className="text-gray-600">{transaction.service}</TableCell>
+              <TableCell className="text-gray-600">{transaction.specialty}</TableCell>
               <TableCell>
                 {getStatusBadge(transaction.status)}
               </TableCell>

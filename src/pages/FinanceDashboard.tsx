@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
@@ -9,9 +10,10 @@ import FinanceTable from "@/components/finance/FinanceTable";
 import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import Footer from "@/components/Footer";
+import EnhancedExcelUpload from "@/components/finance/EnhancedExcelUpload";
 import { useToast } from "@/hooks/use-toast";
 
-// Sample financial data
+// Sample financial data with specialty instead of service
 const initialTransactions = [
   {
     id: "FIN001",
@@ -19,7 +21,7 @@ const initialTransactions = [
     mrn: "MRN001234",
     hospital: "King Abdulaziz Hospital",
     doctor: "Dr. Ahmed Al-Rashid",
-    service: "Cardiac Surgery",
+    specialty: "Cardiology",
     amount: "₹15,000",
     status: "Paid",
     date: "2025-06-15"
@@ -30,7 +32,7 @@ const initialTransactions = [
     mrn: "MRN005678",
     hospital: "Prince Sultan Hospital",
     doctor: "Dr. Sarah Al-Mahmoud",
-    service: "Orthopedic Surgery",
+    specialty: "Orthopedics",
     amount: "₹8,500",
     status: "Pending",
     date: "2025-06-10"
@@ -41,12 +43,28 @@ const initialTransactions = [
     mrn: "MRN009876", 
     hospital: "Medical Center",
     doctor: "Dr. Mohammed Hassan",
-    service: "General Surgery",
+    specialty: "General Surgery",
     amount: "₹12,000",
     status: "Delay Payment",
     date: "2025-06-08"
   }
 ];
+
+// Function to save payment updates to global system (localStorage for demo)
+const savePaymentUpdateToSystem = (transactionId: string, newStatus: string) => {
+  try {
+    const existingUpdates = JSON.parse(localStorage.getItem('systemPaymentUpdates') || '{}');
+    existingUpdates[transactionId] = {
+      status: newStatus,
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'finance'
+    };
+    localStorage.setItem('systemPaymentUpdates', JSON.stringify(existingUpdates));
+    console.log(`Payment status for ${transactionId} saved to system:`, newStatus);
+  } catch (error) {
+    console.error('Failed to save payment update to system:', error);
+  }
+};
 
 export default function FinanceDashboard() {
   const [transactions, setTransactions] = useState(initialTransactions);
@@ -60,6 +78,24 @@ export default function FinanceDashboard() {
   const { toast } = useToast();
 
   const currentFinanceName = "Finance Team";
+
+  // Load system payment updates on component mount
+  useEffect(() => {
+    try {
+      const systemUpdates = JSON.parse(localStorage.getItem('systemPaymentUpdates') || '{}');
+      if (Object.keys(systemUpdates).length > 0) {
+        setTransactions(prev => prev.map(transaction => {
+          if (systemUpdates[transaction.id]) {
+            return { ...transaction, status: systemUpdates[transaction.id].status };
+          }
+          return transaction;
+        }));
+        console.log('Loaded payment updates from system:', Object.keys(systemUpdates).length);
+      }
+    } catch (error) {
+      console.error('Failed to load system payment updates:', error);
+    }
+  }, []);
 
   // Enhanced filtering logic
   const filteredTransactions = transactions.filter(transaction => {
@@ -107,17 +143,22 @@ export default function FinanceDashboard() {
   };
 
   const handleUpdatePaymentStatus = (id: string, isPaid: boolean) => {
+    const newStatus = isPaid ? "Paid" : "Pending";
+    
     setTransactions(prev =>
       prev.map(transaction =>
         transaction.id === id 
-          ? { ...transaction, status: isPaid ? "Paid" : "Pending" }
+          ? { ...transaction, status: newStatus }
           : transaction
       )
     );
     
+    // Save to global system
+    savePaymentUpdateToSystem(id, newStatus);
+    
     toast({
       title: isPaid ? "Payment Confirmed" : "Payment Status Updated",
-      description: `Transaction ${id} has been marked as ${isPaid ? "paid" : "pending"}`,
+      description: `Transaction ${id} has been marked as ${newStatus} and updated system-wide`,
     });
   };
 
@@ -130,9 +171,12 @@ export default function FinanceDashboard() {
       )
     );
     
+    // Save all updates to global system
+    ids.forEach(id => savePaymentUpdateToSystem(id, "Paid"));
+    
     toast({
       title: "Bulk Update Completed",
-      description: `${ids.length} transactions updated from Excel upload`,
+      description: `${ids.length} transactions updated from Excel upload and reflected system-wide`,
     });
   };
 
@@ -188,6 +232,7 @@ export default function FinanceDashboard() {
 
             <div className="flex gap-2">
               <MessagingIcons currentUserRole="finance" unreadCount={unreadCount} />
+              <EnhancedExcelUpload onUpdatePayments={handleBulkUpdatePayments} />
               <Button onClick={handleExportToExcel} variant="outline">
                 <Download className="w-4 h-4 mr-2" />
                 Export Excel
