@@ -9,8 +9,14 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import HospitalPrivilegesTable from "./HospitalPrivilegesTable";
+import { User } from "./types";
 
-const SystemFeatures = () => {
+interface SystemFeaturesProps {
+  users?: User[];
+}
+
+const SystemFeatures = ({ users = [] }: SystemFeaturesProps) => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -66,7 +72,8 @@ const SystemFeatures = () => {
         "Bulk privilege assignment",
         "Visual privilege status indicators",
         "Immediate access control updates"
-      ]
+      ],
+      showTable: true
     },
     {
       id: "advanced-filtering",
@@ -151,7 +158,7 @@ const SystemFeatures = () => {
                   </div>
                 </DialogTrigger>
                 
-                <DialogContent className="max-w-md">
+                <DialogContent className={feature.showTable ? "max-w-6xl" : "max-w-md"}>
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <div className={`p-2 rounded-md ${feature.color}`}>
@@ -165,26 +172,40 @@ const SystemFeatures = () => {
                   </DialogHeader>
                   
                   <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Feature Details:</h4>
-                      <ul className="space-y-1">
-                        {feature.details.map((detail, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span>{detail}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div className="flex justify-between items-center pt-4 border-t">
-                      <Badge variant="secondary" className="text-xs">
-                        Status: {feature.status}
-                      </Badge>
-                      <Button size="sm" onClick={closeDialog}>
-                        Got it
-                      </Button>
-                    </div>
+                    {feature.showTable && feature.id === "hospital-privileges" ? (
+                      <HospitalPrivilegesTable users={users} />
+                    ) : (
+                      <>
+                        <div>
+                          <h4 className="font-medium mb-2">Feature Details:</h4>
+                          <ul className="space-y-1">
+                            {feature.details.map((detail, index) => (
+                              <li key={index} className="flex items-start gap-2 text-sm">
+                                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                <span>{detail}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className="flex justify-between items-center pt-4 border-t">
+                          <Badge variant="secondary" className="text-xs">
+                            Status: {feature.status}
+                          </Badge>
+                          <Button size="sm" onClick={closeDialog}>
+                            Got it
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {feature.showTable && (
+                      <div className="flex justify-end pt-4 border-t">
+                        <Button size="sm" onClick={closeDialog}>
+                          Close
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
