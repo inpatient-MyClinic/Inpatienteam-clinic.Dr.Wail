@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Building2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Building2, ChevronDown, ChevronUp, Table } from "lucide-react";
 import { User } from "./types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import HospitalPrivilegesTable from "./HospitalPrivilegesTable";
 
 interface DoctorPrivilegesProps {
   users: User[];
@@ -28,6 +30,7 @@ const DoctorPrivileges = ({ users, onUpdateUser }: DoctorPrivilegesProps) => {
   const [selectedDoctor, setSelectedDoctor] = useState<string>("");
   const [selectedHospital, setSelectedHospital] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
+  const [showPrivilegesTable, setShowPrivilegesTable] = useState(false);
 
   const doctors = users.filter(user => user.category === "Doctor");
 
@@ -111,6 +114,43 @@ const DoctorPrivileges = ({ users, onUpdateUser }: DoctorPrivilegesProps) => {
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
+            </div>
+
+            {/* Hospital Privileges Table Button */}
+            <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+              <div className="flex-1">
+                <h4 className="font-medium text-blue-900 mb-1">Manage All Hospital Privileges</h4>
+                <p className="text-sm text-blue-700">
+                  View and modify hospital privileges for all doctors in a comprehensive table view
+                </p>
+              </div>
+              <Dialog open={showPrivilegesTable} onOpenChange={setShowPrivilegesTable}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm" className="flex items-center gap-2">
+                    <Table className="w-4 h-4" />
+                    Open Privileges Table
+                  </Button>
+                </DialogTrigger>
+                
+                <DialogContent className="max-w-[95vw] max-h-[95vh] p-0">
+                  <DialogHeader className="p-6 pb-4">
+                    <DialogTitle className="flex items-center gap-2">
+                      <Building2 className="w-5 h-5" />
+                      Hospital Privileges Management
+                    </DialogTitle>
+                    <DialogDescription>
+                      Manage hospital access privileges for all doctors. Click checkboxes to grant or revoke access.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="px-6 pb-6 h-[calc(95vh-120px)]">
+                    <HospitalPrivilegesTable 
+                      users={users} 
+                      onUpdateUser={onUpdateUser}
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
             {/* Summary */}

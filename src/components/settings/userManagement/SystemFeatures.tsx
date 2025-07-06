@@ -1,14 +1,14 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Users, Shield, Trash2, Search, FileSpreadsheet, 
-  Save, RefreshCw, Building2, UserPlus, CheckCircle 
+  Save, RefreshCw, UserPlus, CheckCircle 
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import HospitalPrivilegesTable from "./HospitalPrivilegesTable";
 import { User } from "./types";
 
 interface SystemFeaturesProps {
@@ -58,22 +58,6 @@ const SystemFeatures = ({ users = [], onUpdateUser }: SystemFeaturesProps) => {
         "Individual user permission overrides",
         "Real-time permission updates"
       ]
-    },
-    {
-      id: "hospital-privileges",
-      icon: Building2,
-      title: "Hospital Privileges",
-      description: "Assign specific hospital access rights to doctors",
-      color: "bg-purple-100 text-purple-800",
-      status: "Active",
-      details: [
-        "8+ major hospitals in the system",
-        "Doctor-specific hospital access management",
-        "Bulk privilege assignment",
-        "Visual privilege status indicators",
-        "Immediate access control updates"
-      ],
-      showTable: true
     },
     {
       id: "advanced-filtering",
@@ -158,7 +142,7 @@ const SystemFeatures = ({ users = [], onUpdateUser }: SystemFeaturesProps) => {
                   </div>
                 </DialogTrigger>
                 
-                <DialogContent className={feature.showTable ? "max-w-7xl max-h-[90vh]" : "max-w-md"}>
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <div className={`p-2 rounded-md ${feature.color}`}>
@@ -172,43 +156,26 @@ const SystemFeatures = ({ users = [], onUpdateUser }: SystemFeaturesProps) => {
                   </DialogHeader>
                   
                   <div className="space-y-4">
-                    {feature.showTable && feature.id === "hospital-privileges" ? (
-                      <HospitalPrivilegesTable 
-                        users={users} 
-                        onUpdateUser={onUpdateUser || (() => {})}
-                      />
-                    ) : (
-                      <>
-                        <div>
-                          <h4 className="font-medium mb-2">Feature Details:</h4>
-                          <ul className="space-y-1">
-                            {feature.details.map((detail, index) => (
-                              <li key={index} className="flex items-start gap-2 text-sm">
-                                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                <span>{detail}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div className="flex justify-between items-center pt-4 border-t">
-                          <Badge variant="secondary" className="text-xs">
-                            Status: {feature.status}
-                          </Badge>
-                          <Button size="sm" onClick={closeDialog}>
-                            Got it
-                          </Button>
-                        </div>
-                      </>
-                    )}
-
-                    {feature.showTable && (
-                      <div className="flex justify-end pt-4 border-t">
-                        <Button size="sm" onClick={closeDialog}>
-                          Close
-                        </Button>
-                      </div>
-                    )}
+                    <div>
+                      <h4 className="font-medium mb-2">Feature Details:</h4>
+                      <ul className="space-y-1">
+                        {feature.details.map((detail, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span>{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <Badge variant="secondary" className="text-xs">
+                        Status: {feature.status}
+                      </Badge>
+                      <Button size="sm" onClick={closeDialog}>
+                        Got it
+                      </Button>
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -222,7 +189,7 @@ const SystemFeatures = ({ users = [], onUpdateUser }: SystemFeaturesProps) => {
             <div>
               <h4 className="font-medium text-blue-900">All Systems Operational</h4>
               <p className="text-sm text-blue-700 mt-1">
-                All 6 core system capabilities are fully functional and actively managing your user data. 
+                All 5 core system capabilities are fully functional and actively managing your user data. 
                 Click any feature above to see detailed information about its current status and capabilities.
               </p>
             </div>
