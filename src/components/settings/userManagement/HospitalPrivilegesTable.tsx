@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { User } from "./types";
 
 interface HospitalPrivilegesTableProps {
@@ -74,7 +74,7 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
   };
 
   return (
-    <div className="space-y-4 h-[80vh] flex flex-col">
+    <div className="space-y-4 h-[75vh] flex flex-col">
       {/* Filters - Fixed at top */}
       <div className="flex gap-4 items-center flex-shrink-0">
         <div className="relative flex-1">
@@ -104,15 +104,19 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
       {/* Scrollable Table Container */}
       <div className="flex-1 border rounded-lg overflow-hidden">
         <ScrollArea className="h-full w-full">
-          <div className="min-w-[1200px]">
+          <div className="min-w-[1400px]">
             <Table>
               <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
                 <TableRow className="border-b-2">
-                  <TableHead className="min-w-[200px] bg-white font-semibold">Doctor</TableHead>
-                  <TableHead className="min-w-[120px] bg-white font-semibold">Specialty</TableHead>
+                  <TableHead className="min-w-[220px] bg-white font-semibold sticky left-0 z-20 border-r shadow-sm">
+                    Doctor
+                  </TableHead>
+                  <TableHead className="min-w-[140px] bg-white font-semibold sticky left-[220px] z-20 border-r shadow-sm">
+                    Specialty
+                  </TableHead>
                   {hospitals.map(hospital => (
-                    <TableHead key={hospital} className="text-center min-w-[140px] bg-white font-semibold">
-                      <div className="text-xs leading-tight px-2">{hospital}</div>
+                    <TableHead key={hospital} className="text-center min-w-[160px] bg-white font-semibold">
+                      <div className="text-xs leading-tight px-2 py-1">{hospital}</div>
                     </TableHead>
                   ))}
                 </TableRow>
@@ -121,14 +125,18 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
                 {filteredDoctors.length > 0 ? (
                   filteredDoctors.map(doctor => (
                     <TableRow key={doctor.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium sticky left-0 bg-white border-r">
-                        {doctor.email}
+                      <TableCell className="font-medium sticky left-0 bg-white border-r z-10 shadow-sm">
+                        <div className="truncate max-w-[200px]" title={doctor.email}>
+                          {doctor.email}
+                        </div>
                       </TableCell>
-                      <TableCell className="sticky left-[200px] bg-white border-r">
+                      <TableCell className="sticky left-[220px] bg-white border-r z-10 shadow-sm">
                         {doctor.specialty ? (
-                          <Badge variant="outline">{doctor.specialty}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {doctor.specialty}
+                          </Badge>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400 text-xs">-</span>
                         )}
                       </TableCell>
                       {hospitals.map(hospital => (
@@ -154,6 +162,7 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
               </TableBody>
             </Table>
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
 
