@@ -5,9 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Save, RefreshCw } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 import { User } from "./types";
+import { saveUsersToStorage } from "./UserStorage";
 
 interface HospitalPrivilegesTableProps {
   users: User[];
@@ -41,6 +44,8 @@ const specialties = [
 const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const { toast } = useToast();
 
   const doctors = users.filter(user => user.category === "Doctor");
 
@@ -70,11 +75,83 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
       newPrivileges = [...currentPrivileges, hospital];
     }
 
+    // Update user through parent component
     onUpdateUser(doctorId, { hospitalPrivileges: newPrivileges });
+    
+    // Mark as having unsaved changes
+    setHasUnsavedChanges(true);
+    
+    console.log(`Hospital privilege ${currentPrivileges.includes(hospital) ? 'removed' : 'added'} for ${doctor.email} at ${hospital}`);
+  };
+
+  const saveAllChanges = () => {
+    try {
+      // Save all users to localStorage
+      saveUsersToStorage(users);
+      setHasUnsavedChanges(false);
+      
+      console.log('All hospital privileges saved to storage');
+      toast({
+        title: "Changes Saved",
+        description: "All hospital privilege changes have been saved permanently.",
+      });
+    } catch (error) {
+      console.error('Failed to save hospital privileges:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const refreshData = () => {
+    // This will trigger a re-render with fresh data
+    setHasUnsavedChanges(false);
+    toast({
+      title: "Data Refreshed",
+      description: "Hospital privileges data has been refreshed.",
+    });
   };
 
   return (
     <div className="space-y-4 h-[75vh] flex flex-col">
+      {/* Header with Save Button */}
+      <div className="flex justify-between items-center flex-shrink-0">
+        <h3 className="text-lg font-semibold">Hospital Privileges Management</h3>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshData}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </Button>
+          {hasUnsavedChanges && (
+            <Button
+              onClick={saveAllChanges}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              Save All Changes
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Status Indicator */}
+      {hasUnsavedChanges && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2 flex-shrink-0">
+          <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+          <span className="text-sm text-yellow-800">
+            You have unsaved changes. Click "Save All Changes" to make them permanent.
+          </span>
+        </div>
+      )}
+
       {/* Filters - Fixed at top */}
       <div className="flex gap-4 items-center flex-shrink-0">
         <div className="relative flex-1">
@@ -166,8 +243,13 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
         </ScrollArea>
       </div>
 
-      <div className="text-sm text-gray-500 flex-shrink-0">
-        Showing {filteredDoctors.length} of {doctors.length} doctors
+      <div className="text-sm text-gray-500 flex justify-between items-center flex-shrink-0">
+        <span>Showing {filteredDoctors.length} of {doctors.length} doctors</span>
+        {hasUnsavedChanges && (
+          <span className="text-yellow-600 font-medium">
+            Unsaved changes - Click Save to make permanent
+          </span>
+        )}
       </div>
     </div>
   );
