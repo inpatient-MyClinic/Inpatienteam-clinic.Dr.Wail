@@ -78,7 +78,7 @@ const EnhancedUserManagement = () => {
             If this persists, try refreshing the page.
           </AlertDescription>
         </Alert>
-        <SystemFeatures users={users} />
+        <SystemFeatures users={users} onUpdateUser={updateUser} />
         <UserForm
           newUserEmail={newUserEmail}
           setNewUserEmail={setNewUserEmail}
@@ -97,7 +97,7 @@ const EnhancedUserManagement = () => {
     <div className="space-y-6">
       <UserManagementHeader totalUsers={users.length} />
 
-      <SystemFeatures users={users} />
+      <SystemFeatures users={users} onUpdateUser={updateUser} />
 
       <UserForm
         newUserEmail={newUserEmail}

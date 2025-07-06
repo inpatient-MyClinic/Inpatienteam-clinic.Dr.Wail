@@ -4,11 +4,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Search } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search } from "lucide-react";
 import { User } from "./types";
 
 interface HospitalPrivilegesTableProps {
   users: User[];
+  onUpdateUser: (userId: string, updates: Partial<User>) => void;
 }
 
 const hospitals = [
@@ -35,7 +37,7 @@ const specialties = [
   "Psychiatry"
 ];
 
-const HospitalPrivilegesTable = ({ users }: HospitalPrivilegesTableProps) => {
+const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
 
@@ -49,6 +51,24 @@ const HospitalPrivilegesTable = ({ users }: HospitalPrivilegesTableProps) => {
 
   const hasPrivilege = (doctor: User, hospital: string) => {
     return doctor.hospitalPrivileges?.includes(hospital) || false;
+  };
+
+  const togglePrivilege = (doctorId: string, hospital: string) => {
+    const doctor = doctors.find(d => d.id === doctorId);
+    if (!doctor) return;
+
+    const currentPrivileges = doctor.hospitalPrivileges || [];
+    let newPrivileges;
+
+    if (currentPrivileges.includes(hospital)) {
+      // Remove privilege
+      newPrivileges = currentPrivileges.filter(h => h !== hospital);
+    } else {
+      // Add privilege
+      newPrivileges = [...currentPrivileges, hospital];
+    }
+
+    onUpdateUser(doctorId, { hospitalPrivileges: newPrivileges });
   };
 
   return (
@@ -107,11 +127,13 @@ const HospitalPrivilegesTable = ({ users }: HospitalPrivilegesTableProps) => {
                   </TableCell>
                   {hospitals.map(hospital => (
                     <TableCell key={hospital} className="text-center">
-                      {hasPrivilege(doctor, hospital) ? (
-                        <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-400 mx-auto" />
-                      )}
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={hasPrivilege(doctor, hospital)}
+                          onCheckedChange={() => togglePrivilege(doctor.id, hospital)}
+                          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                        />
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>

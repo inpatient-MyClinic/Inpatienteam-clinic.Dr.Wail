@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +13,10 @@ import { User } from "./types";
 
 interface SystemFeaturesProps {
   users?: User[];
+  onUpdateUser?: (userId: string, updates: Partial<User>) => void;
 }
 
-const SystemFeatures = ({ users = [] }: SystemFeaturesProps) => {
+const SystemFeatures = ({ users = [], onUpdateUser }: SystemFeaturesProps) => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -173,7 +173,10 @@ const SystemFeatures = ({ users = [] }: SystemFeaturesProps) => {
                   
                   <div className="space-y-4">
                     {feature.showTable && feature.id === "hospital-privileges" ? (
-                      <HospitalPrivilegesTable users={users} />
+                      <HospitalPrivilegesTable 
+                        users={users} 
+                        onUpdateUser={onUpdateUser || (() => {})}
+                      />
                     ) : (
                       <>
                         <div>
