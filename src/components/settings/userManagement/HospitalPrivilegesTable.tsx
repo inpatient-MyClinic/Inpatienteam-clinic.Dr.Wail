@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { User } from "./types";
 
 interface HospitalPrivilegesTableProps {
@@ -72,9 +73,9 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
   };
 
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex gap-4 items-center">
+    <div className="space-y-4 max-h-[70vh] flex flex-col">
+      {/* Filters - Fixed at top */}
+      <div className="flex gap-4 items-center flex-shrink-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
           <Input
@@ -99,57 +100,59 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
         </Select>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="min-w-[200px]">Doctor</TableHead>
-              <TableHead className="min-w-[120px]">Specialty</TableHead>
-              {hospitals.map(hospital => (
-                <TableHead key={hospital} className="text-center min-w-[150px]">
-                  {hospital}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDoctors.length > 0 ? (
-              filteredDoctors.map(doctor => (
-                <TableRow key={doctor.id}>
-                  <TableCell className="font-medium">{doctor.email}</TableCell>
-                  <TableCell>
-                    {doctor.specialty ? (
-                      <Badge variant="outline">{doctor.specialty}</Badge>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </TableCell>
-                  {hospitals.map(hospital => (
-                    <TableCell key={hospital} className="text-center">
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={hasPrivilege(doctor, hospital)}
-                          onCheckedChange={() => togglePrivilege(doctor.id, hospital)}
-                          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                        />
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
+      {/* Scrollable Table */}
+      <ScrollArea className="flex-1 border rounded-lg">
+        <div className="min-w-full">
+          <Table>
+            <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow>
-                <TableCell colSpan={hospitals.length + 2} className="text-center py-6 text-gray-500">
-                  No doctors found matching the criteria
-                </TableCell>
+                <TableHead className="min-w-[200px] bg-white">Doctor</TableHead>
+                <TableHead className="min-w-[120px] bg-white">Specialty</TableHead>
+                {hospitals.map(hospital => (
+                  <TableHead key={hospital} className="text-center min-w-[150px] bg-white">
+                    <div className="text-xs leading-tight">{hospital}</div>
+                  </TableHead>
+                ))}
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredDoctors.length > 0 ? (
+                filteredDoctors.map(doctor => (
+                  <TableRow key={doctor.id}>
+                    <TableCell className="font-medium">{doctor.email}</TableCell>
+                    <TableCell>
+                      {doctor.specialty ? (
+                        <Badge variant="outline">{doctor.specialty}</Badge>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    {hospitals.map(hospital => (
+                      <TableCell key={hospital} className="text-center">
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={hasPrivilege(doctor, hospital)}
+                            onCheckedChange={() => togglePrivilege(doctor.id, hospital)}
+                            className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                          />
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={hospitals.length + 2} className="text-center py-6 text-gray-500">
+                    No doctors found matching the criteria
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ScrollArea>
 
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-gray-500 flex-shrink-0">
         Showing {filteredDoctors.length} of {doctors.length} doctors
       </div>
     </div>

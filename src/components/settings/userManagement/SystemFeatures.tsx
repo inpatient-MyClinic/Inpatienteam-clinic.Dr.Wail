@@ -158,7 +158,7 @@ const SystemFeatures = ({ users = [], onUpdateUser }: SystemFeaturesProps) => {
                   </div>
                 </DialogTrigger>
                 
-                <DialogContent className={feature.showTable ? "max-w-6xl" : "max-w-md"}>
+                <DialogContent className={feature.showTable ? "max-w-7xl max-h-[90vh]" : "max-w-md"}>
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <div className={`p-2 rounded-md ${feature.color}`}>
