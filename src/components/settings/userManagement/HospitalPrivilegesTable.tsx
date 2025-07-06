@@ -46,7 +46,8 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
 
   const filteredDoctors = doctors.filter(doctor => {
     const matchesSearch = doctor.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSpecialty = selectedSpecialty === "all" || doctor.specialty === selectedSpecialty;
+    const matchesSpecialty = selectedSpecialty === "all" || 
+      (doctor.specialty && doctor.specialty.toLowerCase() === selectedSpecialty.toLowerCase());
     return matchesSearch && matchesSpecialty;
   });
 
@@ -73,7 +74,7 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
   };
 
   return (
-    <div className="space-y-4 max-h-[70vh] flex flex-col">
+    <div className="space-y-4 h-[80vh] flex flex-col">
       {/* Filters - Fixed at top */}
       <div className="flex gap-4 items-center flex-shrink-0">
         <div className="relative flex-1">
@@ -100,57 +101,61 @@ const HospitalPrivilegesTable = ({ users, onUpdateUser }: HospitalPrivilegesTabl
         </Select>
       </div>
 
-      {/* Scrollable Table */}
-      <ScrollArea className="flex-1 border rounded-lg">
-        <div className="min-w-full">
-          <Table>
-            <TableHeader className="sticky top-0 bg-white z-10">
-              <TableRow>
-                <TableHead className="min-w-[200px] bg-white">Doctor</TableHead>
-                <TableHead className="min-w-[120px] bg-white">Specialty</TableHead>
-                {hospitals.map(hospital => (
-                  <TableHead key={hospital} className="text-center min-w-[150px] bg-white">
-                    <div className="text-xs leading-tight">{hospital}</div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDoctors.length > 0 ? (
-                filteredDoctors.map(doctor => (
-                  <TableRow key={doctor.id}>
-                    <TableCell className="font-medium">{doctor.email}</TableCell>
-                    <TableCell>
-                      {doctor.specialty ? (
-                        <Badge variant="outline">{doctor.specialty}</Badge>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                    {hospitals.map(hospital => (
-                      <TableCell key={hospital} className="text-center">
-                        <div className="flex items-center justify-center">
-                          <Checkbox
-                            checked={hasPrivilege(doctor, hospital)}
-                            onCheckedChange={() => togglePrivilege(doctor.id, hospital)}
-                            className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                          />
-                        </div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={hospitals.length + 2} className="text-center py-6 text-gray-500">
-                    No doctors found matching the criteria
-                  </TableCell>
+      {/* Scrollable Table Container */}
+      <div className="flex-1 border rounded-lg overflow-hidden">
+        <ScrollArea className="h-full w-full">
+          <div className="min-w-[1200px]">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                <TableRow className="border-b-2">
+                  <TableHead className="min-w-[200px] bg-white font-semibold">Doctor</TableHead>
+                  <TableHead className="min-w-[120px] bg-white font-semibold">Specialty</TableHead>
+                  {hospitals.map(hospital => (
+                    <TableHead key={hospital} className="text-center min-w-[140px] bg-white font-semibold">
+                      <div className="text-xs leading-tight px-2">{hospital}</div>
+                    </TableHead>
+                  ))}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </ScrollArea>
+              </TableHeader>
+              <TableBody>
+                {filteredDoctors.length > 0 ? (
+                  filteredDoctors.map(doctor => (
+                    <TableRow key={doctor.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium sticky left-0 bg-white border-r">
+                        {doctor.email}
+                      </TableCell>
+                      <TableCell className="sticky left-[200px] bg-white border-r">
+                        {doctor.specialty ? (
+                          <Badge variant="outline">{doctor.specialty}</Badge>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      {hospitals.map(hospital => (
+                        <TableCell key={hospital} className="text-center">
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={hasPrivilege(doctor, hospital)}
+                              onCheckedChange={() => togglePrivilege(doctor.id, hospital)}
+                              className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                            />
+                          </div>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={hospitals.length + 2} className="text-center py-8 text-gray-500">
+                      No doctors found matching the criteria
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
+      </div>
 
       <div className="text-sm text-gray-500 flex-shrink-0">
         Showing {filteredDoctors.length} of {doctors.length} doctors
