@@ -2,11 +2,13 @@ export const validateEmail = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@gmail.com"
+    "inpatienteam@myclinic.com.sa"
   ];
   
-  // Allow admin emails or any other email (they will default to nurse if not in user management)
-  return adminEmails.includes(email.toLowerCase().trim()) || true;
+  const cleanEmail = email.toLowerCase().trim();
+  
+  // Allow admin emails or any email with @myclinic.com.sa domain
+  return adminEmails.includes(cleanEmail) || cleanEmail.endsWith('@myclinic.com.sa');
 };
 
 export const isRegisteredUser = (email: string) => {
@@ -51,7 +53,7 @@ export const getUserRole = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@gmail.com"
+    "inpatienteam@myclinic.com.sa"
   ];
   
   console.log("Checking role for email:", email);
