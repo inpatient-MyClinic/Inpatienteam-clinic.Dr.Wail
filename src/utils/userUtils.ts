@@ -3,7 +3,8 @@ export const validateEmail = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@myclinic.com.sa"
+    "inpatienteam@myclinic.com.sa",
+    "faisal.jambi@myclinic.com.sa"
   ];
   
   const cleanEmail = email.toLowerCase().trim();
@@ -48,6 +49,10 @@ export const extractUserName = (email: string) => {
     return "System Administrator";
   }
   
+  if (email === "faisal.jambi@myclinic.com.sa") {
+    return "Faisal Jambi";
+  }
+  
   // For other users, extract from email or use stored name
   const userData = localStorage.getItem(`user_${email.toLowerCase().trim()}`);
   if (userData) {
@@ -72,7 +77,8 @@ export const getUserRole = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@myclinic.com.sa"
+    "inpatienteam@myclinic.com.sa",
+    "faisal.jambi@myclinic.com.sa"
   ];
   
   console.log("Checking role for email:", email);

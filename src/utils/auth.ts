@@ -35,7 +35,8 @@ export const isAdmin = (email: string): boolean => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@myclinic.com.sa"
+    "inpatienteam@myclinic.com.sa",
+    "faisal.jambi@myclinic.com.sa"
   ];
   
   const isAdminUser = adminEmails.includes(email.toLowerCase().trim());
