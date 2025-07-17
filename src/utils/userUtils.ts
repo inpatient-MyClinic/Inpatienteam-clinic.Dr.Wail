@@ -1,3 +1,4 @@
+
 export const validateEmail = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
@@ -6,13 +7,26 @@ export const validateEmail = (email: string) => {
   ];
   
   const cleanEmail = email.toLowerCase().trim();
-  console.log("Email validation for:", cleanEmail);
+  console.log("=== EMAIL VALIDATION DEBUG ===");
+  console.log("Original email:", email);
+  console.log("Cleaned email:", cleanEmail);
   console.log("Is admin email:", adminEmails.includes(cleanEmail));
   console.log("Ends with @myclinic.com.sa:", cleanEmail.endsWith('@myclinic.com.sa'));
+  console.log("Email length:", cleanEmail.length);
+  console.log("Domain part:", cleanEmail.split('@')[1]);
+  
+  // Check for common issues
+  if (cleanEmail.includes(' ')) {
+    console.log("WARNING: Email contains spaces");
+  }
+  if (cleanEmail !== email) {
+    console.log("WARNING: Email was modified during cleaning");
+  }
   
   // Allow admin emails or any email with @myclinic.com.sa domain
   const isValid = adminEmails.includes(cleanEmail) || cleanEmail.endsWith('@myclinic.com.sa');
-  console.log("Email validation result:", isValid);
+  console.log("Final validation result:", isValid);
+  console.log("=== END EMAIL VALIDATION DEBUG ===");
   return isValid;
 };
 

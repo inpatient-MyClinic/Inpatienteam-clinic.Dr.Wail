@@ -17,13 +17,18 @@ export const useAuthLogic = () => {
   const handlePasswordCreation = (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("Creating password for:", email);
+    console.log("=== PASSWORD CREATION ATTEMPT ===");
+    console.log("Email used:", email);
     
     // Validate email domain FIRST
-    if (!validateEmail(email)) {
+    const emailIsValid = validateEmail(email);
+    console.log("Email validation result in password creation:", emailIsValid);
+    
+    if (!emailIsValid) {
+      console.log("PASSWORD CREATION BLOCKED: Invalid email domain");
       toast({
-        title: "Unauthorized Access",
-        description: "Access is restricted to @myclinic.com.sa email addresses only. Please contact your system administrator.",
+        title: "غير مصرح بالدخول",
+        description: "الدخول مقتصر على عناوين البريد الإلكتروني @myclinic.com.sa فقط. يرجى التواصل مع مدير النظام.",
         variant: "destructive",
       });
       return;
@@ -31,8 +36,8 @@ export const useAuthLogic = () => {
     
     if (password.length < 6) {
       toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters long",
+        title: "كلمة المرور قصيرة جداً",
+        description: "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
         variant: "destructive",
       });
       return;
@@ -40,8 +45,8 @@ export const useAuthLogic = () => {
 
     if (password !== confirmPassword) {
       toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match",
+        title: "كلمات المرور غير متطابقة",
+        description: "كلمات المرور غير متطابقة",
         variant: "destructive",
       });
       return;
@@ -66,8 +71,8 @@ export const useAuthLogic = () => {
     console.log("User data stored with role:", userRole);
 
     toast({
-      title: "Account Created Successfully",
-      description: `Welcome ${userName}! Redirecting to your dashboard...`,
+      title: "تم إنشاء الحساب بنجاح",
+      description: `مرحباً ${userName}! جاري التوجيه إلى لوحة التحكم...`,
     });
 
     // CRITICAL: Force immediate redirect for admin users
@@ -86,23 +91,30 @@ export const useAuthLogic = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("Login attempt with email:", email);
+    console.log("=== LOGIN ATTEMPT ===");
+    console.log("Email used:", email);
+    console.log("Password length:", password.length);
     
     if (!email || !password) {
       toast({
-        title: "Missing Information",
-        description: "Please enter both email and password",
+        title: "معلومات ناقصة",
+        description: "يرجى إدخال البريد الإلكتروني وكلمة المرور",
         variant: "destructive",
       });
       return;
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    console.log("Normalized email:", normalizedEmail);
     
-    if (!validateEmail(normalizedEmail)) {
+    const emailIsValid = validateEmail(normalizedEmail);
+    console.log("Email validation result in login:", emailIsValid);
+    
+    if (!emailIsValid) {
+      console.log("LOGIN BLOCKED: Invalid email domain");
       toast({
-        title: "Unauthorized Access",
-        description: "Access is restricted to @myclinic.com.sa email addresses only. Please contact your system administrator.",
+        title: "غير مصرح بالدخول",
+        description: "الدخول مقتصر على عناوين البريد الإلكتروني @myclinic.com.sa فقط. يرجى التواصل مع مدير النظام.",
         variant: "destructive",
       });
       return;
@@ -112,12 +124,12 @@ export const useAuthLogic = () => {
     console.log("User exists check:", !!userExists);
     
     if (!userExists) {
-      console.log("First time login detected");
+      console.log("First time login detected - showing password creation form");
       setIsFirstTimeLogin(true);
       setEmail(normalizedEmail);
       toast({
-        title: "First Time Login",
-        description: "Please create your password to access the system.",
+        title: "أول تسجيل دخول",
+        description: "يرجى إنشاء كلمة المرور للدخول إلى النظام.",
       });
       return;
     }
@@ -126,9 +138,10 @@ export const useAuthLogic = () => {
     console.log("Password check:", password === savedPassword);
     
     if (savedPassword !== password) {
+      console.log("LOGIN FAILED: Incorrect password");
       toast({
-        title: "Incorrect Password",
-        description: "Please check your password and try again",
+        title: "كلمة مرور خاطئة",
+        description: "يرجى التحقق من كلمة المرور والمحاولة مرة أخرى",
         variant: "destructive",
       });
       return;
@@ -149,8 +162,8 @@ export const useAuthLogic = () => {
     console.log("Updated user data in localStorage with role:", userRole);
 
     toast({
-      title: "Login Successful",
-      description: `Welcome back, ${userName}!`,
+      title: "تم تسجيل الدخول بنجاح",
+      description: `مرحباً بعودتك، ${userName}!`,
     });
 
     // CRITICAL: Force immediate redirect for admin users using window.location
