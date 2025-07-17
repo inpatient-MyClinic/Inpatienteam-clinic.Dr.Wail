@@ -36,7 +36,7 @@ export default function Index() {
             </div>
             <CardTitle className="text-2xl font-bold text-white bg-blue-600 py-2 px-4 rounded-lg mx-auto inline-block">My Clinic In-Patient</CardTitle>
             <CardDescription className="text-gray-600 mt-2">
-              Administrative Access Portal
+              Medical Management System
             </CardDescription>
           </CardHeader>
           
@@ -65,7 +65,7 @@ export default function Index() {
             
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
-                Authorized administrators only • System access restricted
+                Authorized staff only • Access restricted to @myclinic.com.sa
               </p>
             </div>
           </CardContent>

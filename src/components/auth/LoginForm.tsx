@@ -27,11 +27,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Administrator Email</Label>
+        <Label htmlFor="email">Email Address</Label>
         <Input
           id="email"
           type="email"
-          placeholder="admin@myclinic.com.sa"
+          placeholder="your.name@myclinic.com.sa"
           value={email}
           onChange={(e) => setEmail(e.target.value.toLowerCase().trim())}
           className="w-full"
@@ -67,7 +67,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       </div>
       
       <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-        Administrator Sign In
+        Sign In
       </Button>
     </form>
   );
