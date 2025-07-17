@@ -123,11 +123,12 @@ export const useAuthLogic = () => {
       return;
     }
 
-    const userExists = localStorage.getItem(`user_${normalizedEmail}`);
-    console.log("User exists check:", !!userExists);
+    // Check if password exists for this user
+    const savedPassword = localStorage.getItem(`password_${normalizedEmail}`);
+    console.log("Saved password exists:", !!savedPassword);
     
-    if (!userExists) {
-      console.log("First time login detected - showing password creation form");
+    if (!savedPassword) {
+      console.log("No password found - showing password creation form");
       setIsFirstTimeLogin(true);
       setEmail(normalizedEmail);
       toast({
@@ -137,7 +138,7 @@ export const useAuthLogic = () => {
       return;
     }
 
-    const savedPassword = localStorage.getItem(`password_${normalizedEmail}`);
+    // Check if password matches
     console.log("Password check:", password === savedPassword);
     
     if (savedPassword !== password) {
