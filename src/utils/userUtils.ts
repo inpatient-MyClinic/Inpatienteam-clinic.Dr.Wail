@@ -6,9 +6,14 @@ export const validateEmail = (email: string) => {
   ];
   
   const cleanEmail = email.toLowerCase().trim();
+  console.log("Email validation for:", cleanEmail);
+  console.log("Is admin email:", adminEmails.includes(cleanEmail));
+  console.log("Ends with @myclinic.com.sa:", cleanEmail.endsWith('@myclinic.com.sa'));
   
   // Allow admin emails or any email with @myclinic.com.sa domain
-  return adminEmails.includes(cleanEmail) || cleanEmail.endsWith('@myclinic.com.sa');
+  const isValid = adminEmails.includes(cleanEmail) || cleanEmail.endsWith('@myclinic.com.sa');
+  console.log("Email validation result:", isValid);
+  return isValid;
 };
 
 export const isRegisteredUser = (email: string) => {
