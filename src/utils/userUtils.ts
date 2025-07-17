@@ -23,9 +23,14 @@ export const validateEmail = (email: string) => {
     console.log("WARNING: Email was modified during cleaning");
   }
   
-  // Allow admin emails or any email with @myclinic.com.sa domain
-  const isValid = adminEmails.includes(cleanEmail) || cleanEmail.endsWith('@myclinic.com.sa');
+  // Allow admin emails or any email with @myclinic.com.sa domain (more flexible)
+  const isValidDomain = cleanEmail.endsWith('@myclinic.com.sa') || cleanEmail.endsWith('@myclinic.com.sa.');
+  const isAdminEmail = adminEmails.includes(cleanEmail);
+  const isValid = isAdminEmail || isValidDomain;
+  
   console.log("Final validation result:", isValid);
+  console.log("Is admin email:", isAdminEmail);
+  console.log("Is valid domain:", isValidDomain);
   console.log("=== END EMAIL VALIDATION DEBUG ===");
   return isValid;
 };

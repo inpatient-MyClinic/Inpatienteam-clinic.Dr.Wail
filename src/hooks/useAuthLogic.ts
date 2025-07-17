@@ -106,15 +106,18 @@ export const useAuthLogic = () => {
 
     const normalizedEmail = email.toLowerCase().trim();
     console.log("Normalized email:", normalizedEmail);
+    console.log("Email domain check:", normalizedEmail.split('@')[1]);
     
     const emailIsValid = validateEmail(normalizedEmail);
     console.log("Email validation result in login:", emailIsValid);
     
     if (!emailIsValid) {
       console.log("LOGIN BLOCKED: Invalid email domain");
+      console.log("Email used:", normalizedEmail);
+      console.log("Expected domain: @myclinic.com.sa");
       toast({
-        title: "غير مصرح بالدخول",
-        description: "الدخول مقتصر على عناوين البريد الإلكتروني @myclinic.com.sa فقط. يرجى التواصل مع مدير النظام.",
+        title: "خطأ في البريد الإلكتروني",
+        description: `البريد الإلكتروني: ${normalizedEmail} غير مصرح له بالدخول. يجب أن ينتهي البريد بـ @myclinic.com.sa`,
         variant: "destructive",
       });
       return;
