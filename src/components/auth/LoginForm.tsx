@@ -38,7 +38,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           required
         />
         <p className="text-xs text-gray-500">
-          Authorized administrators only
+          Access restricted to @myclinic.com.sa domain only
         </p>
       </div>
       

@@ -19,6 +19,16 @@ export const useAuthLogic = () => {
     
     console.log("Creating password for:", email);
     
+    // Validate email domain FIRST
+    if (!validateEmail(email)) {
+      toast({
+        title: "Unauthorized Access",
+        description: "Access is restricted to @myclinic.com.sa email addresses only. Please contact your system administrator.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (password.length < 6) {
       toast({
         title: "Password Too Short",
@@ -91,8 +101,8 @@ export const useAuthLogic = () => {
     
     if (!validateEmail(normalizedEmail)) {
       toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
+        title: "Unauthorized Access",
+        description: "Access is restricted to @myclinic.com.sa email addresses only. Please contact your system administrator.",
         variant: "destructive",
       });
       return;
