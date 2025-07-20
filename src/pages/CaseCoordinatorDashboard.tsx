@@ -19,6 +19,7 @@ import ExportButton from "@/components/ExportButton";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import { useCaseCoordinatorRequests } from "@/hooks/useCaseCoordinatorRequests";
 import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { requestStorage } from "@/services/requestStorage";
 
 export default function CaseCoordinatorDashboard() {
   const navigate = useNavigate();
@@ -148,6 +149,12 @@ export default function CaseCoordinatorDashboard() {
     assignToCoordinator(requestId, currentCoordinatorName);
   };
 
+  const resetData = () => {
+    requestStorage.clearAllData();
+    requestStorage.initializeSampleData();
+    window.location.reload();
+  };
+
   // Calculate unread messages for case-coordinator role
   const unreadCount = 5;
 
@@ -195,6 +202,14 @@ export default function CaseCoordinatorDashboard() {
               </div>
               <div className="flex gap-2">
                 <MessagingIcons currentUserRole="case-coordinator" unreadCount={unreadCount} />
+                <Button 
+                  variant="outline" 
+                  onClick={resetData}
+                  className="flex items-center gap-2"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  Refresh Data
+                </Button>
                 <Button 
                   variant="outline" 
                   onClick={handlePrint}
