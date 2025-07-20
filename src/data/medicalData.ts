@@ -52,49 +52,49 @@ export const getHospitalsBySpecialty = (specialty: string): string[] => {
 // Static doctors data - always available for all users
 const staticDoctorsBySpecialty = {
   cardiology: [
-    { value: "card1", label: "Dr. Ahmed Al-Mansouri", privileges: hospitals },
-    { value: "card2", label: "Dr. Sarah Johnson", privileges: hospitals }
+    { value: "card1", label: "Dr. Ahmed Al-Mansouri", privileges: [...hospitals] },
+    { value: "card2", label: "Dr. Sarah Johnson", privileges: [...hospitals] }
   ],
   ent: [
-    { value: "ent1", label: "Dr. Omar Hassan", privileges: hospitals },
-    { value: "ent2", label: "Dr. Lisa Chen", privileges: hospitals }
+    { value: "ent1", label: "Dr. Omar Hassan", privileges: [...hospitals] },
+    { value: "ent2", label: "Dr. Lisa Chen", privileges: [...hospitals] }
   ],
   gastroenterology: [
-    { value: "git1", label: "Dr. Mohammed Al-Rashid", privileges: hospitals },
-    { value: "git2", label: "Dr. Emily Wilson", privileges: hospitals }
+    { value: "git1", label: "Dr. Mohammed Al-Rashid", privileges: [...hospitals] },
+    { value: "git2", label: "Dr. Emily Wilson", privileges: [...hospitals] }
   ],
   general_surgery: [
-    { value: "gs1", label: "Dr. Khalid Al-Zahra", privileges: hospitals },
-    { value: "gs2", label: "Dr. Michael Brown", privileges: hospitals }
+    { value: "gs1", label: "Dr. Khalid Al-Zahra", privileges: [...hospitals] },
+    { value: "gs2", label: "Dr. Michael Brown", privileges: [...hospitals] }
   ],
   neurology: [
-    { value: "neuro1", label: "Dr. Fatima Al-Qasimi", privileges: hospitals },
-    { value: "neuro2", label: "Dr. David Smith", privileges: hospitals }
+    { value: "neuro1", label: "Dr. Fatima Al-Qasimi", privileges: [...hospitals] },
+    { value: "neuro2", label: "Dr. David Smith", privileges: [...hospitals] }
   ],
   neurosurgery: [
-    { value: "ns1", label: "Dr. Hassan Al-Maktoum", privileges: hospitals },
-    { value: "ns2", label: "Dr. Jennifer Davis", privileges: hospitals }
+    { value: "ns1", label: "Dr. Hassan Al-Maktoum", privileges: [...hospitals] },
+    { value: "ns2", label: "Dr. Jennifer Davis", privileges: [...hospitals] }
   ],
   obgyn: [
-    { value: "obgyn1", label: "Dr. Aisha Al-Nahyan", privileges: hospitals },
-    { value: "obgyn2", label: "Dr. Maria Rodriguez", privileges: hospitals }
+    { value: "obgyn1", label: "Dr. Aisha Al-Nahyan", privileges: [...hospitals] },
+    { value: "obgyn2", label: "Dr. Maria Rodriguez", privileges: [...hospitals] }
   ],
   ophthalmology: [
     { value: "opht1", label: "Dr. Saeed Al-Mansouri", privileges: ["Al Batal Eye Centre", "Bin Rushd Eye Center"] },
     { value: "opht2", label: "Dr. Robert Taylor", privileges: ["Al Batal Eye Centre", "Bin Rushd Eye Center"] }
   ],
   orthopedics: [
-    { value: "ortho1", label: "Dr. Ali Al-Rashid", privileges: hospitals },
-    { value: "ortho2", label: "Dr. James Wilson", privileges: hospitals },
-    { value: "ortho3", label: "Dr. Ahmed Al-Zahra", privileges: hospitals }
+    { value: "ortho1", label: "Dr. Ali Al-Rashid", privileges: [...hospitals] },
+    { value: "ortho2", label: "Dr. James Wilson", privileges: [...hospitals] },
+    { value: "ortho3", label: "Dr. Ahmed Al-Zahra", privileges: [...hospitals] }
   ],
   urology: [
-    { value: "uro1", label: "Dr. Yousef Al-Maktoum", privileges: hospitals },
-    { value: "uro2", label: "Dr. Christopher Lee", privileges: hospitals }
+    { value: "uro1", label: "Dr. Yousef Al-Maktoum", privileges: [...hospitals] },
+    { value: "uro2", label: "Dr. Christopher Lee", privileges: [...hospitals] }
   ],
   vascular_surgery: [
-    { value: "vasc1", label: "Dr. Mariam Al-Qasimi", privileges: hospitals },
-    { value: "vasc2", label: "Dr. Daniel Martinez", privileges: hospitals }
+    { value: "vasc1", label: "Dr. Mariam Al-Qasimi", privileges: [...hospitals] },
+    { value: "vasc2", label: "Dr. Daniel Martinez", privileges: [...hospitals] }
   ]
 };
 
