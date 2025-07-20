@@ -38,7 +38,11 @@ export default function HospitalDashboard() {
   
   const navigate = useNavigate();
   
-  const currentHospitalName = "Princess Nourah Hospital";
+  // Get current user data from localStorage
+  const currentUserData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const currentHospitalName = currentUserData.hospitalName || "Default Hospital";
+  console.log('Hospital Dashboard - Current hospital name:', currentHospitalName);
+  
   const { requests, filteredRequests, updateStatus } = useNurseRequests(currentHospitalName);
 
   // Calculate unread messages for hospital role

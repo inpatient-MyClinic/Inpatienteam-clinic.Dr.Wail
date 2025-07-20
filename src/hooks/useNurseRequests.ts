@@ -80,11 +80,23 @@ export const useNurseRequests = (currentNurseName: string) => {
 
     loadRequests();
     
-    // Set up storage change listener
-    const handleStorageChange = () => loadRequests();
-    window.addEventListener('storage', handleStorageChange);
+    // Set up storage change listener and custom request update listener
+    const handleStorageChange = () => {
+      console.log('Nurse/Hospital - Storage changed, reloading requests...');
+      loadRequests();
+    };
+    const handleRequestsUpdate = () => {
+      console.log('Nurse/Hospital - Requests updated, reloading...');
+      loadRequests();
+    };
     
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('requestsUpdated', handleRequestsUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+    };
   }, [currentNurseName]);
 
   // Check for delayed requests

@@ -36,7 +36,11 @@ export default function CaseCoordinatorDashboard() {
     selectedMonths: []
   });
 
-  const currentCoordinatorName = "Sarah Johnson";
+  // Get current user name from localStorage or default
+  const currentUserData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const currentCoordinatorName = currentUserData.name || "Default Coordinator";
+  console.log('Case Coordinator Dashboard - Current coordinator name:', currentCoordinatorName);
+  
   const { allRequests, coordinatorRequests, overdueRequests, updateStatus, assignToCoordinator } = useCaseCoordinatorRequests(currentCoordinatorName);
 
   // Apply additional filters beyond the hook's filtering
