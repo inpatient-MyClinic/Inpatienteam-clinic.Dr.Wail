@@ -72,6 +72,9 @@ export const useNurseRequests = (currentNurseName: string) => {
     const loadRequests = () => {
       const storedRequests = requestStorage.getAllRequests();
       const convertedRequests = storedRequests.map(convertToNurseRequest);
+      console.log('All stored requests:', storedRequests);
+      console.log('Converted requests:', convertedRequests);
+      console.log('Current nurse name for filtering:', currentNurseName);
       setRequests(convertedRequests);
     };
 
@@ -82,7 +85,7 @@ export const useNurseRequests = (currentNurseName: string) => {
     window.addEventListener('storage', handleStorageChange);
     
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [currentNurseName]);
 
   // Check for delayed requests
   useEffect(() => {
@@ -153,9 +156,12 @@ export const useNurseRequests = (currentNurseName: string) => {
   };
 
   // Filter to show only requests created by this nurse
-  const filteredRequests = requests.filter(request => 
-    request.createdBy === currentNurseName
-  );
+  const filteredRequests = requests.filter(request => {
+    console.log(`Comparing request.createdBy: "${request.createdBy}" with currentNurseName: "${currentNurseName}"`);
+    return request.createdBy === currentNurseName;
+  });
+  
+  console.log('Filtered requests for nurse:', filteredRequests);
 
   return {
     requests,
