@@ -43,6 +43,7 @@ const MedicalInfoSection = ({
   useEffect(() => {
     console.log('MedicalInfoSection: Selected specialty changed:', selectedSpecialty);
     console.log('MedicalInfoSection: Current doctorsBySpecialty:', doctorsBySpecialty);
+    console.log('MedicalInfoSection: Available doctors for specialty:', selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : []);
   }, [selectedSpecialty, doctorsBySpecialty]);
 
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
@@ -93,7 +94,7 @@ const MedicalInfoSection = ({
           <SelectTrigger>
             <SelectValue placeholder="Select specialty" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+          <SelectContent>
             {specialties.map((specialty) => (
               <SelectItem key={specialty.value} value={specialty.value}>
                 {specialty.label}
@@ -110,7 +111,7 @@ const MedicalInfoSection = ({
             <SelectTrigger>
               <SelectValue placeholder={availableDoctors.length > 0 ? "Select doctor" : "No doctors available for this specialty"} />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+            <SelectContent>
               {availableDoctors.length > 0 ? (
                 availableDoctors.map((doctor) => (
                   <SelectItem key={doctor.value} value={doctor.label}>
@@ -133,7 +134,7 @@ const MedicalInfoSection = ({
           <SelectTrigger>
             <SelectValue placeholder="Select referral source" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+          <SelectContent>
             {referralSources.map((source) => (
               <SelectItem key={source} value={source}>
                 {source}
@@ -149,7 +150,7 @@ const MedicalInfoSection = ({
           <SelectTrigger>
             <SelectValue placeholder="Select hospital" />
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+          <SelectContent>
             {hospitalOptions.map((hospital) => (
               <SelectItem key={hospital} value={hospital}>
                 {hospital}
@@ -202,7 +203,7 @@ const MedicalInfoSection = ({
             <SelectTrigger>
               <SelectValue placeholder="Select service" />
             </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+          <SelectContent>
             {availableServices.map((service) => (
               <SelectItem key={service} value={service}>
                 {service}
