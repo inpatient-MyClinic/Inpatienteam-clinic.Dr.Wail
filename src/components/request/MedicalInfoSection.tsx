@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RequestFormData } from "@/types/request";
-import { specialties, getDoctorsBySpecialty, servicesBySpecialty, referralSources, getHospitalsBySpecialty } from "@/data/medicalData";
+import { specialties, doctorsBySpecialty, servicesBySpecialty, referralSources, getHospitalsBySpecialty } from "@/data/medicalData";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -27,25 +27,10 @@ const MedicalInfoSection = ({
   onSpecialtyChange,
   onDoctorChange
 }: MedicalInfoSectionProps) => {
-  const [doctorsBySpecialty, setDoctorsBySpecialty] = useState<Record<string, Array<{ value: string; label: string; privileges: string[] }>>>({});
   const [selectedHospital, setSelectedHospital] = useState<string>(form.referredToHospital || "");
   const [opdDate, setOpdDate] = useState<Date>();
 
-  // Load fresh doctor data when component mounts and when specialty changes
-  useEffect(() => {
-    console.log('MedicalInfoSection: Loading doctor data...');
-    const freshDoctorData = getDoctorsBySpecialty();
-    console.log('MedicalInfoSection: Fresh doctor data loaded:', freshDoctorData);
-    setDoctorsBySpecialty(freshDoctorData);
-  }, []);
-
-  // Log when specialty changes
-  useEffect(() => {
-    console.log('MedicalInfoSection: Selected specialty changed:', selectedSpecialty);
-    console.log('MedicalInfoSection: Current doctorsBySpecialty:', doctorsBySpecialty);
-    console.log('MedicalInfoSection: Available doctors for specialty:', selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : []);
-  }, [selectedSpecialty, doctorsBySpecialty]);
-
+  // Use static data directly - no async loading needed
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
   console.log('MedicalInfoSection: Available doctors for specialty', selectedSpecialty, ':', availableDoctors);
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
