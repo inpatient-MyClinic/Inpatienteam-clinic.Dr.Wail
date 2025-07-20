@@ -111,10 +111,10 @@ const MedicalInfoSection = ({
             <SelectTrigger>
               <SelectValue placeholder={availableDoctors.length > 0 ? "Select doctor" : "No doctors available for this specialty"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50">
               {availableDoctors.length > 0 ? (
                 availableDoctors.map((doctor) => (
-                  <SelectItem key={doctor.value} value={doctor.label}>
+                  <SelectItem key={doctor.value} value={doctor.label} className="hover:bg-gray-100 dark:hover:bg-gray-700">
                     {doctor.label}
                   </SelectItem>
                 ))
