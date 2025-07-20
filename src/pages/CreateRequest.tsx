@@ -136,6 +136,20 @@ const CreateRequest = () => {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
+    // Get current user's name from localStorage to match dashboard filtering
+    const currentUserEmail = Object.keys(localStorage)
+      .find(key => key.startsWith('user_'))
+      ?.replace('user_', '');
+    
+    let currentUserName = 'Unknown User';
+    if (currentUserEmail) {
+      const userData = localStorage.getItem(`user_${currentUserEmail}`);
+      if (userData) {
+        const user = JSON.parse(userData);
+        currentUserName = user.name || 'Unknown User';
+      }
+    }
+    
     const requestData: RequestFormData = { 
       ...form as RequestFormData,
       status: "Pending", 
@@ -145,8 +159,8 @@ const CreateRequest = () => {
       ]
     };
     
-    // Save request to centralized storage
-    const savedRequest = requestStorage.saveRequest(requestData, getCurrentUserEmail() || 'Unknown User');
+    // Save request to centralized storage with proper user name
+    const savedRequest = requestStorage.saveRequest(requestData, currentUserName);
     
     console.log("New request created and saved:", savedRequest);
     
