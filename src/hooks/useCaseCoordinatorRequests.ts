@@ -193,10 +193,15 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
     requestStorage.initializeSampleData();
     
     const loadRequests = () => {
+      // Debug localStorage content
+      const rawData = localStorage.getItem('medicalRequests');
+      console.log('Case Coordinator - Raw localStorage data:', rawData);
+      
       const storedRequests = requestStorage.getAllRequests();
       const convertedRequests = storedRequests.map(convertToCaseCoordinatorRequest);
       console.log('Case Coordinator - All stored requests:', storedRequests);
       console.log('Case Coordinator - Converted requests:', convertedRequests);
+      console.log('Case Coordinator - Total requests found:', convertedRequests.length);
       setRequests(convertedRequests);
     };
 
