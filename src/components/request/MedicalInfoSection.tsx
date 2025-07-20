@@ -33,13 +33,20 @@ const MedicalInfoSection = ({
 
   // Load fresh doctor data when component mounts and when specialty changes
   useEffect(() => {
+    console.log('MedicalInfoSection: Loading doctor data...');
     const freshDoctorData = getDoctorsBySpecialty();
-    console.log('Fresh doctor data loaded:', freshDoctorData);
+    console.log('MedicalInfoSection: Fresh doctor data loaded:', freshDoctorData);
     setDoctorsBySpecialty(freshDoctorData);
   }, []);
 
+  // Log when specialty changes
+  useEffect(() => {
+    console.log('MedicalInfoSection: Selected specialty changed:', selectedSpecialty);
+    console.log('MedicalInfoSection: Current doctorsBySpecialty:', doctorsBySpecialty);
+  }, [selectedSpecialty, doctorsBySpecialty]);
+
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
-  console.log('Available doctors for specialty', selectedSpecialty, ':', availableDoctors);
+  console.log('MedicalInfoSection: Available doctors for specialty', selectedSpecialty, ':', availableDoctors);
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   
   // Get hospitals based on specialty
@@ -86,7 +93,7 @@ const MedicalInfoSection = ({
           <SelectTrigger>
             <SelectValue placeholder="Select specialty" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
             {specialties.map((specialty) => (
               <SelectItem key={specialty.value} value={specialty.value}>
                 {specialty.label}
@@ -101,14 +108,20 @@ const MedicalInfoSection = ({
           <label className="block font-medium text-gray-600 mb-1">Treating Doctor Name</label>
           <Select value={selectedDoctor} onValueChange={onDoctorChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Select doctor" />
+              <SelectValue placeholder={availableDoctors.length > 0 ? "Select doctor" : "No doctors available for this specialty"} />
             </SelectTrigger>
-            <SelectContent>
-              {availableDoctors.map((doctor) => (
-                <SelectItem key={doctor.value} value={doctor.label}>
-                  {doctor.label}
+            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+              {availableDoctors.length > 0 ? (
+                availableDoctors.map((doctor) => (
+                  <SelectItem key={doctor.value} value={doctor.label}>
+                    {doctor.label}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-doctors" disabled>
+                  No doctors available for {selectedSpecialty}
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -120,7 +133,7 @@ const MedicalInfoSection = ({
           <SelectTrigger>
             <SelectValue placeholder="Select referral source" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
             {referralSources.map((source) => (
               <SelectItem key={source} value={source}>
                 {source}
@@ -136,7 +149,7 @@ const MedicalInfoSection = ({
           <SelectTrigger>
             <SelectValue placeholder="Select hospital" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
             {hospitalOptions.map((hospital) => (
               <SelectItem key={hospital} value={hospital}>
                 {hospital}
@@ -189,15 +202,15 @@ const MedicalInfoSection = ({
             <SelectTrigger>
               <SelectValue placeholder="Select service" />
             </SelectTrigger>
-            <SelectContent>
-              {availableServices.map((service) => (
-                <SelectItem key={service} value={service}>
-                  {service}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg z-[9999]">
+            {availableServices.map((service) => (
+              <SelectItem key={service} value={service}>
+                {service}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       )}
     </div>
   );
