@@ -31,13 +31,15 @@ const MedicalInfoSection = ({
   const [selectedHospital, setSelectedHospital] = useState<string>(form.referredToHospital || "");
   const [opdDate, setOpdDate] = useState<Date>();
 
-  // Load fresh doctor data when component mounts
+  // Load fresh doctor data when component mounts and when specialty changes
   useEffect(() => {
     const freshDoctorData = getDoctorsBySpecialty();
+    console.log('Fresh doctor data loaded:', freshDoctorData);
     setDoctorsBySpecialty(freshDoctorData);
   }, []);
 
   const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
+  console.log('Available doctors for specialty', selectedSpecialty, ':', availableDoctors);
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   
   // Get hospitals based on specialty
