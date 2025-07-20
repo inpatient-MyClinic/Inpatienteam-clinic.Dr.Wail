@@ -1,6 +1,7 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { isWithinInterval, parseISO, differenceInHours, isAfter, isBefore, setHours } from 'date-fns';
+import { requestStorage, StoredRequest } from "@/services/requestStorage";
 
 export interface CaseCoordinatorRequest {
   id: number;
@@ -164,8 +165,47 @@ function isOverdue(request: CaseCoordinatorRequest): boolean {
   return false;
 }
 
+// Convert StoredRequest to CaseCoordinatorRequest format
+const convertToCaseCoordinatorRequest = (req: StoredRequest): CaseCoordinatorRequest => ({
+  id: req.id,
+  patientName: req.patientName || '',
+  mrn: req.hospitalMRN || '',
+  serviceDescription: req.serviceDescription || '',
+  hospital: req.hospitalName || req.referredToHospital || '',
+  status: req.status || COORDINATOR_REQUEST_STATUSES.PENDING,
+  createdAt: req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}:00Z` : new Date().toISOString(),
+  expectedSurgeryDate: req.expectedSurgeryDate || '',
+  agreedSurgeryDate: req.agreedSurgeryDate,
+  isDelayed: req.isDelayed || false,
+  doctorName: req.doctorName || '',
+  assignedDoctor: req.assignedDoctor || req.doctorName || '',
+  attachments: req.attachments || [],
+  assignedCoordinator: req.assignedCoordinator,
+  coordinatorActionTime: req.coordinatorActionTime,
+  delayCause: req.delayCause
+});
+
 export function useCaseCoordinatorRequests(coordinatorName: string) {
-  const [requests, setRequests] = useState<CaseCoordinatorRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<CaseCoordinatorRequest[]>([]);
+
+  // Initialize storage data and load requests
+  useEffect(() => {
+    requestStorage.initializeSampleData();
+    
+    const loadRequests = () => {
+      const storedRequests = requestStorage.getAllRequests();
+      const convertedRequests = storedRequests.map(convertToCaseCoordinatorRequest);
+      setRequests(convertedRequests);
+    };
+
+    loadRequests();
+    
+    // Set up storage change listener
+    const handleStorageChange = () => loadRequests();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const allRequests = useMemo(() => requests, [requests]);
   
@@ -180,17 +220,39 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
   }, [coordinatorRequests]);
 
   const updateStatus = (requestId: number, newStatus: string) => {
+    // Update in centralized storage
+    requestStorage.updateRequest(requestId, { status: newStatus });
+    
+    // Update local state
+    setRequests(prevRequests => 
+      prevRequests.map(request => 
+        request.id === requestId 
+          ? { ...request, status: newStatus }
+          : request
+      )
+    );
+    
     console.log(`Updating request ${requestId} status to ${newStatus}`);
   };
 
   const assignToCoordinator = (requestId: number, coordinatorName: string) => {
+    const actionTime = new Date().toISOString();
+    
+    // Update in centralized storage
+    requestStorage.updateRequest(requestId, { 
+      assignedCoordinator: coordinatorName, 
+      coordinatorActionTime: actionTime 
+    });
+    
+    // Update local state
     setRequests(prevRequests => 
       prevRequests.map(request => 
         request.id === requestId 
-          ? { ...request, assignedCoordinator: coordinatorName, coordinatorActionTime: new Date().toISOString() }
+          ? { ...request, assignedCoordinator: coordinatorName, coordinatorActionTime: actionTime }
           : request
       )
     );
+    
     console.log(`Assigned request ${requestId} to ${coordinatorName}`);
   };
 

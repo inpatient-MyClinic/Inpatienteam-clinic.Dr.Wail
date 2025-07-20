@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { getCurrentUserRole } from "@/utils/auth";
 import { SystemInitializationService } from "@/services/systemInitializationService";
+import { requestStorage } from "@/services/requestStorage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "@/pages/Login";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -27,6 +28,7 @@ const App = () => {
   useEffect(() => {
     // Initialize the medical request system
     SystemInitializationService.initialize();
+    requestStorage.initializeSampleData();
     
     // Cleanup on unmount
     return () => {

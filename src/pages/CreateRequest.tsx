@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { RequestFormData } from "@/types/request";
+import { requestStorage } from "@/services/requestStorage";
+import { getCurrentUserEmail } from "@/utils/auth";
 import PatientInfoSection from "@/components/request/PatientInfoSection";
 import HospitalInfoSection from "@/components/request/HospitalInfoSection";
 import MedicalInfoSection from "@/components/request/MedicalInfoSection";
@@ -134,8 +136,8 @@ const CreateRequest = () => {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    const requestData = { 
-      ...form, 
+    const requestData: RequestFormData = { 
+      ...form as RequestFormData,
       status: "Pending", 
       attachments: attachments.map(file => file.name),
       statusHistory: [
@@ -143,11 +145,14 @@ const CreateRequest = () => {
       ]
     };
     
-    console.log("New request created:", requestData);
+    // Save request to centralized storage
+    const savedRequest = requestStorage.saveRequest(requestData, getCurrentUserEmail() || 'Unknown User');
+    
+    console.log("New request created and saved:", savedRequest);
     
     toast({
       title: "Request Created",
-      description: "Request has been successfully created with status: Pending",
+      description: `Request #${savedRequest.id} has been successfully created with status: Pending`,
     });
     
     setTimeout(() => {

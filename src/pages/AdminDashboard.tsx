@@ -1,11 +1,14 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AdminDashboardLayout from "@/components/admin/AdminDashboardLayout";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
+import { requestStorage } from "@/services/requestStorage";
 
 export default function AdminDashboard() {
+  const [allRequestsData, setAllRequestsData] = useState<any[]>([]);
+
   const {
     activeFilter,
     selectedDates,
@@ -31,12 +34,48 @@ export default function AdminDashboard() {
     handleToggleAIAssistant,
   } = useAdminDashboard();
 
+  // Load request data from centralized storage
+  useEffect(() => {
+    requestStorage.initializeSampleData();
+    
+    const loadAllData = () => {
+      const requests = requestStorage.getAllRequests();
+      // Convert requests to admin format and combine with existing admin data
+      const requestAdminData = requests.map(req => ({
+        id: `REQ${req.id}`,
+        type: "Medical Request",
+        description: req.serviceDescription || "Medical Request",
+        user: req.createdBy || "Unknown",
+        status: req.status || "Pending",
+        date: req.dateCreated || new Date().toISOString().split('T')[0],
+        priority: "Medium",
+        specialty: req.specialty || "General",
+        hospital: req.hospitalName || req.referredToHospital || "Unknown Hospital",
+        caseCoordinator: req.assignedCoordinator || "Unassigned",
+        requestDate: new Date(req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}:00Z` : new Date()),
+        completionDate: req.status === "Done" || req.status === "Completed" ? new Date() : null,
+        serviceDescription: req.serviceDescription || "Unknown Service"
+      }));
+      
+      // Combine with existing admin data
+      setAllRequestsData([...adminData, ...requestAdminData]);
+    };
+
+    loadAllData();
+    
+    // Set up storage change listener
+    const handleStorageChange = () => loadAllData();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
-  console.log("Admin data length:", adminData.length);
+  console.log("All data length:", allRequestsData.length);
 
   // Filter data based on active filter and date filters
   const filteredData = filterAdminData(
-    adminData, 
+    allRequestsData, 
     activeFilter, 
     selectedDates, 
     selectedWeeks, 
@@ -57,7 +96,7 @@ export default function AdminDashboard() {
       showTeamMonitoring={showTeamMonitoring}
       showGeneralReport={showGeneralReport}
       showAIAssistant={showAIAssistant}
-      adminData={adminData}
+      adminData={allRequestsData}
       filteredData={filteredData}
       unreadCount={unreadCount}
       onStatusFilter={handleStatusFilter}

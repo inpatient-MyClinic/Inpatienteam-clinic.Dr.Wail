@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { requestStorage, StoredRequest } from "@/services/requestStorage";
 
 // Request workflow statuses
 export const REQUEST_STATUSES = {
@@ -39,65 +40,51 @@ export interface DoctorRequest {
 export const useDoctorRequests = (currentDoctorName: string) => {
   const { toast } = useToast();
   
-  const [requests, setRequests] = useState<DoctorRequest[]>([
-    {
-      id: 1,
-      patientName: "Layla Hasan",
-      mrn: "2019988776",
-      serviceDescription: "Cardiac Surgery - Valve Replacement",
-      hospital: "King Khaled Hospital",
-      status: REQUEST_STATUSES.PENDING,
-      assignedDoctor: "Dr. Ahmed Salem",
-      assignedDoctorValue: "dr_ahmed_salem_uro",
-      specialty: "urology",
-      createdAt: "2024-01-10T11:00:00Z",
-      phone: "0554447777",
-      expectedSurgeryDate: "2025-07-12",
-      createdBy: "Nurse Sara",
-      attachments: ["patient_records.pdf"],
-      isDelayed: false,
-      notifications: [],
-      paymentStatus: "Not Paid"
-    },
-    {
-      id: 2,
-      patientName: "Khaled Ali",
-      mrn: "2015566778",
-      serviceDescription: "Orthopedic Surgery - Hip Replacement",
-      hospital: "King Abdulaziz Hospital",
-      status: REQUEST_STATUSES.NOT_COMPLETED,
-      assignedDoctor: "Dr. Ahmed Salem",
-      assignedDoctorValue: "dr_ahmed_salem_uro",
-      specialty: "orthopedics",
-      createdAt: "2024-01-09T15:30:00Z",
-      phone: "0508889992",
-      expectedSurgeryDate: "2025-07-14",
-      createdBy: "Nurse Sara",
-      attachments: [],
-      isDelayed: false,
-      notifications: ["Request marked as incomplete by coordinator - additional documentation required"],
-      paymentStatus: "Paid"
-    },
-    {
-      id: 3,
-      patientName: "Sara Ahmed",
-      mrn: "2020123456",
-      serviceDescription: "Upper Endoscopy",
-      hospital: "King Faisal Hospital",
-      status: REQUEST_STATUSES.UNDER_PROCESS,
-      assignedDoctor: "Dr. Ahmed Salem",
-      assignedDoctorValue: "dr_ahmed_salem_uro",
-      specialty: "gastroenterology",
-      createdAt: "2024-01-08T09:30:00Z",
-      phone: "0551234567",
-      expectedSurgeryDate: "2025-07-20",
-      createdBy: "Nurse Sara",
-      attachments: [],
-      isDelayed: false,
-      notifications: [],
-      paymentStatus: "Not Paid"
-    },
-  ]);
+  // Initialize storage data on first load
+  useEffect(() => {
+    requestStorage.initializeSampleData();
+  }, []);
+
+  // Convert StoredRequest to DoctorRequest format
+  const convertToDoctorRequest = (req: StoredRequest): DoctorRequest => ({
+    id: req.id,
+    patientName: req.patientName || '',
+    mrn: req.hospitalMRN || '',
+    serviceDescription: req.serviceDescription || '',
+    hospital: req.hospitalName || req.referredToHospital || '',
+    status: req.status || REQUEST_STATUSES.PENDING,
+    assignedDoctor: req.assignedDoctor || req.doctorName || '',
+    assignedDoctorValue: req.assignedDoctor || req.doctorName || '',
+    specialty: req.specialty || '',
+    createdAt: req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}:00Z` : new Date().toISOString(),
+    phone: req.patientMobileNo || '',
+    expectedSurgeryDate: req.expectedSurgeryDate || '',
+    createdBy: req.createdBy || 'Unknown',
+    attachments: req.attachments || [],
+    isDelayed: req.isDelayed || false,
+    notifications: req.notifications || [],
+    paymentStatus: req.paymentStatus || "Not Paid"
+  });
+
+  // Get requests from centralized storage
+  const [requests, setRequests] = useState<DoctorRequest[]>([]);
+
+  // Load requests on component mount and when storage changes
+  useEffect(() => {
+    const loadRequests = () => {
+      const storedRequests = requestStorage.getRequestsByDoctor(currentDoctorName);
+      const convertedRequests = storedRequests.map(convertToDoctorRequest);
+      setRequests(convertedRequests);
+    };
+
+    loadRequests();
+    
+    // Set up storage change listener
+    const handleStorageChange = () => loadRequests();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [currentDoctorName]);
 
   // Check for delayed requests
   useEffect(() => {
@@ -144,6 +131,13 @@ export const useDoctorRequests = (currentDoctorName: string) => {
   }, [requests, toast]);
 
   const updateStatus = (requestId: number, newStatus: string) => {
+    // Update in centralized storage
+    requestStorage.updateRequest(requestId, { 
+      status: newStatus,
+      notifications: [...(requestStorage.getAllRequests().find(r => r.id === requestId)?.notifications || []), `Status updated to ${newStatus}`]
+    });
+
+    // Update local state
     setRequests(prev =>
       prev.map(req =>
         req.id === requestId ? { 
@@ -161,6 +155,13 @@ export const useDoctorRequests = (currentDoctorName: string) => {
   };
 
   const updatePaymentStatus = (requestId: number, paymentStatus: "Paid" | "Not Paid") => {
+    // Update in centralized storage
+    requestStorage.updateRequest(requestId, { 
+      paymentStatus,
+      notifications: [...(requestStorage.getAllRequests().find(r => r.id === requestId)?.notifications || []), `Payment status updated to ${paymentStatus}`]
+    });
+
+    // Update local state
     setRequests(prev =>
       prev.map(req =>
         req.id === requestId ? { 
