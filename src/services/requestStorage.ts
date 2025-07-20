@@ -85,6 +85,7 @@ class RequestStorageService {
   private saveToStorage(requests: StoredRequest[]): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(requests));
+      this.triggerStorageEvent();
     } catch (error) {
       console.error('Error saving requests:', error);
     }
@@ -93,6 +94,7 @@ class RequestStorageService {
   // Initialize with sample data if empty
   initializeSampleData(): void {
     if (this.getAllRequests().length === 0) {
+      console.log('No requests found, initializing with sample data...');
       const sampleRequests: Omit<StoredRequest, 'id'>[] = [
         {
           dateCreated: "2024-01-15",
@@ -125,7 +127,25 @@ class RequestStorageService {
       sampleRequests.forEach(req => {
         this.saveRequest(req as RequestFormData, req.createdBy);
       });
+    } else {
+      console.log('Found existing requests, skipping sample data initialization');
     }
+  }
+  
+  // Clear all data for debugging
+  clearAllData(): void {
+    localStorage.removeItem(this.STORAGE_KEY);
+    console.log('All request data cleared');
+  }
+  
+  // Force trigger events when data changes
+  private triggerStorageEvent(): void {
+    // Trigger both storage and custom events
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: this.STORAGE_KEY,
+      newValue: localStorage.getItem(this.STORAGE_KEY)
+    }));
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
   }
 }
 

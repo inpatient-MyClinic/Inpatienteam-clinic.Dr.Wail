@@ -167,8 +167,14 @@ const CreateRequest = () => {
       ]
     };
     
+    console.log('=== SAVING NEW REQUEST ===');
+    console.log('Request data to save:', requestData);
+    
     // Save request to centralized storage with proper user name
     const savedRequest = requestStorage.saveRequest(requestData, currentUserName);
+    
+    console.log('Saved request result:', savedRequest);
+    console.log('All requests after save:', requestStorage.getAllRequests().length);
     
     // If created by a case coordinator, assign the request to them
     const userRole = localStorage.getItem('userRole');
@@ -181,11 +187,17 @@ const CreateRequest = () => {
       });
     }
     
-    console.log("New request created and saved:", savedRequest);
-    console.log("All requests after save:", requestStorage.getAllRequests());
+    console.log("=== FINAL SAVE COMPLETE ===");
+    console.log("Total requests in storage:", requestStorage.getAllRequests().length);
     
-    // Force a storage event to notify other components
-    window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    // Force multiple storage events to ensure all components refresh
+    setTimeout(() => {
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'medical_requests',
+        newValue: localStorage.getItem('medical_requests')
+      }));
+      window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    }, 100);
     
     toast({
       title: "Request Created",

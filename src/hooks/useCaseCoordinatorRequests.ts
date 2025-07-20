@@ -224,10 +224,9 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
   const allRequests = useMemo(() => requests, [requests]);
   
   const coordinatorRequests = useMemo(() => {
-    return requests.filter(request => 
-      request.assignedCoordinator === coordinatorName || !request.assignedCoordinator
-    );
-  }, [requests, coordinatorName]);
+    // Show all requests - case coordinators should see everything to manage workload
+    return requests;
+  }, [requests]);
 
   const overdueRequests = useMemo(() => {
     return coordinatorRequests.filter(request => isOverdue(request));
