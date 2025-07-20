@@ -64,11 +64,20 @@ export default function AdminDashboard() {
 
     loadAllData();
     
-    // Set up storage change listener
+    // Set up storage change listener and custom request update listener
     const handleStorageChange = () => loadAllData();
-    window.addEventListener('storage', handleStorageChange);
+    const handleRequestsUpdate = () => {
+      console.log('Admin Dashboard - Requests updated, reloading...');
+      loadAllData();
+    };
     
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('requestsUpdated', handleRequestsUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+    };
   }, []);
 
   console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);

@@ -171,6 +171,10 @@ const CreateRequest = () => {
     const savedRequest = requestStorage.saveRequest(requestData, currentUserName);
     
     console.log("New request created and saved:", savedRequest);
+    console.log("All requests after save:", requestStorage.getAllRequests());
+    
+    // Force a storage event to notify other components
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
     
     toast({
       title: "Request Created",
