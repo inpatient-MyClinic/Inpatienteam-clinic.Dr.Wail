@@ -203,14 +203,21 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
     loadRequests();
     
     // Set up storage change listener and custom request update listener
-    const handleStorageChange = () => {
-      console.log('Case Coordinator - Storage changed, reloading requests...');
-      loadRequests();
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'medical_requests') {
+        console.log('Case Coordinator - Storage changed, reloading requests...');
+        loadRequests();
+      }
     };
     const handleRequestsUpdate = () => {
       console.log('Case Coordinator - Requests updated, reloading...');
       loadRequests();
     };
+    
+    // Also set up a periodic check every 2 seconds to ensure data is fresh
+    const intervalId = setInterval(() => {
+      loadRequests();
+    }, 2000);
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('requestsUpdated', handleRequestsUpdate);
@@ -218,6 +225,7 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+      clearInterval(intervalId);
     };
   }, []);
 
