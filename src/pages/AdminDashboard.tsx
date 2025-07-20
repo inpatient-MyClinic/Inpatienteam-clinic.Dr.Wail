@@ -40,6 +40,7 @@ export default function AdminDashboard() {
     
     const loadAllData = () => {
       const requests = requestStorage.getAllRequests();
+      console.log('Admin Dashboard - All stored requests:', requests);
       // Convert requests to admin format and combine with existing admin data
       const requestAdminData = requests.map(req => ({
         id: `REQ${req.id}`,

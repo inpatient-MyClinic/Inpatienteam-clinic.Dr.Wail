@@ -195,6 +195,8 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
     const loadRequests = () => {
       const storedRequests = requestStorage.getAllRequests();
       const convertedRequests = storedRequests.map(convertToCaseCoordinatorRequest);
+      console.log('Case Coordinator - All stored requests:', storedRequests);
+      console.log('Case Coordinator - Converted requests:', convertedRequests);
       setRequests(convertedRequests);
     };
 
