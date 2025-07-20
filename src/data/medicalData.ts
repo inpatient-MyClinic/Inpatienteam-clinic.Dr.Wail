@@ -49,8 +49,8 @@ export const getHospitalsBySpecialty = (specialty: string): string[] => {
   return hospitalsBySpecialty[specialty] || hospitalsBySpecialty.default;
 };
 
-// Static fallback doctors for when no doctors are stored in user management
-const fallbackDoctorsBySpecialty = {
+// Static doctors data - always available for all users
+const staticDoctorsBySpecialty = {
   cardiology: [
     { value: "card1", label: "Dr. Ahmed Al-Mansouri", privileges: hospitals },
     { value: "card2", label: "Dr. Sarah Johnson", privileges: hospitals }
@@ -98,57 +98,10 @@ const fallbackDoctorsBySpecialty = {
   ]
 };
 
-// Dynamic function to get doctors by specialty from User Management
+// Function to get doctors by specialty - now uses static data primarily
 export const getDoctorsBySpecialty = () => {
-  const users = loadUsersFromStorage();
-  const doctors = users.filter(user => user.category === "Doctor");
-  
-  console.log('Processing doctors for specialty grouping:', doctors);
-  
-  // If no doctors found in user management, use fallback data
-  if (doctors.length === 0) {
-    console.log('No doctors found in user management, using fallback data');
-    return fallbackDoctorsBySpecialty;
-  }
-  
-  const doctorsBySpecialty: Record<string, Array<{ value: string; label: string; privileges: string[] }>> = {};
-  
-  // Initialize all specialties with empty arrays
-  specialties.forEach(specialty => {
-    doctorsBySpecialty[specialty.value] = [];
-  });
-  
-  // Group doctors by their specialty
-  doctors.forEach(doctor => {
-    let specialty = doctor.specialty?.toLowerCase().replace(/\s+/g, '_').trim() || "none";
-    
-    // Handle specialty mapping variations
-    if (specialty === "orthopedic") specialty = "orthopedics";
-    if (specialty.includes("vascular_surgery") || specialty.includes("vascular")) specialty = "vascular_surgery";
-    if (specialty.includes("obgyn") || specialty.includes("obstetrics")) specialty = "obgyn";
-    if (specialty.includes("git") || specialty.includes("gastroenterology")) specialty = "gastroenterology";
-    if (specialty === "neurosurgery") specialty = "neurosurgery";
-    
-    // Remove trailing underscores
-    specialty = specialty.replace(/_+$/, '');
-    
-    const displayName = doctor.email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    
-    console.log(`Mapping doctor ${doctor.email} with specialty "${doctor.specialty}" to group "${specialty}"`);
-    
-    if (!doctorsBySpecialty[specialty]) {
-      doctorsBySpecialty[specialty] = [];
-    }
-    
-    doctorsBySpecialty[specialty].push({
-      value: doctor.id,
-      label: `Dr. ${displayName}`,
-      privileges: hospitals // For now, give all doctors access to all hospitals
-    });
-  });
-  
-  console.log('Final doctors by specialty:', doctorsBySpecialty);
-  return doctorsBySpecialty;
+  console.log('getDoctorsBySpecialty: Using static doctor data for all users');
+  return staticDoctorsBySpecialty;
 };
 
 // Export the dynamic doctorsBySpecialty
