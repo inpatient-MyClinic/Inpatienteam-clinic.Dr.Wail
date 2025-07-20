@@ -141,14 +141,22 @@ const CreateRequest = () => {
       .find(key => key.startsWith('user_'))
       ?.replace('user_', '');
     
+    console.log('=== CREATE REQUEST DEBUG ===');
+    console.log('Current user email:', currentUserEmail);
+    
     let currentUserName = 'Unknown User';
     if (currentUserEmail) {
       const userData = localStorage.getItem(`user_${currentUserEmail}`);
+      console.log('User data from localStorage:', userData);
       if (userData) {
         const user = JSON.parse(userData);
         currentUserName = user.name || 'Unknown User';
+        console.log('Extracted user name:', currentUserName);
       }
     }
+    
+    console.log('Final createdBy name that will be saved:', currentUserName);
+    console.log('=== END CREATE REQUEST DEBUG ===');
     
     const requestData: RequestFormData = { 
       ...form as RequestFormData,
