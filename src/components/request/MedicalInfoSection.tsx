@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -30,15 +29,21 @@ const MedicalInfoSection = ({
   const [selectedHospital, setSelectedHospital] = useState<string>(form.referredToHospital || "");
   const [opdDate, setOpdDate] = useState<Date>();
 
-  // Use static data directly - no async loading needed
-  const availableDoctors = selectedSpecialty ? doctorsBySpecialty[selectedSpecialty] || [] : [];
-  console.log('MedicalInfoSection: Available doctors for specialty', selectedSpecialty, ':', availableDoctors);
-  const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
+  // Get doctors for selected specialty - direct access to static data
+  const getDoctorsForSpecialty = (specialty: string) => {
+    if (!specialty) return [];
+    const doctors = doctorsBySpecialty[specialty as keyof typeof doctorsBySpecialty];
+    console.log(`Getting doctors for ${specialty}:`, doctors);
+    return doctors || [];
+  };
+
+  const availableDoctors = getDoctorsForSpecialty(selectedSpecialty);
+  const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty as keyof typeof servicesBySpecialty] || [] : [];
   
   // Get hospitals based on specialty
   const availableHospitals = getHospitalsBySpecialty(selectedSpecialty);
   
-  // Get hospitals where selected doctor has privileges (if applicable)
+  // Get hospitals where selected doctor has privileges
   const selectedDoctorData = availableDoctors.find(doc => doc.label === selectedDoctor);
   const doctorHospitals = selectedDoctorData ? selectedDoctorData.privileges : [];
   
@@ -73,15 +78,20 @@ const MedicalInfoSection = ({
     <div className="space-y-5">
       <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Medical Information</h3>
       
+      {/* Specialty Selection */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">Specialty</label>
         <Select value={selectedSpecialty} onValueChange={onSpecialtyChange}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select specialty" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
             {specialties.map((specialty) => (
-              <SelectItem key={specialty.value} value={specialty.value}>
+              <SelectItem 
+                key={specialty.value} 
+                value={specialty.value}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 {specialty.label}
               </SelectItem>
             ))}
@@ -89,22 +99,38 @@ const MedicalInfoSection = ({
         </Select>
       </div>
 
+      {/* Doctor Selection */}
       {selectedSpecialty && (
         <div>
-          <label className="block font-medium text-gray-600 mb-1">Treating Doctor Name</label>
+          <label className="block font-medium text-gray-600 mb-1">
+            Treating Doctor Name
+            <span className="text-sm text-gray-400 ml-2">
+              ({availableDoctors.length} doctor{availableDoctors.length !== 1 ? 's' : ''} available)
+            </span>
+          </label>
           <Select value={selectedDoctor} onValueChange={onDoctorChange}>
-            <SelectTrigger>
-              <SelectValue placeholder={availableDoctors.length > 0 ? "Select doctor" : "No doctors available for this specialty"} />
+            <SelectTrigger className="w-full">
+              <SelectValue 
+                placeholder={
+                  availableDoctors.length > 0 
+                    ? "Select doctor" 
+                    : `No doctors available for ${selectedSpecialty}`
+                } 
+              />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50">
+            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
               {availableDoctors.length > 0 ? (
                 availableDoctors.map((doctor) => (
-                  <SelectItem key={doctor.value} value={doctor.label} className="hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <SelectItem 
+                    key={doctor.value} 
+                    value={doctor.label}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
                     {doctor.label}
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="no-doctors" disabled>
+                <SelectItem value="no-doctors" disabled className="text-gray-400">
                   No doctors available for {selectedSpecialty}
                 </SelectItem>
               )}
@@ -113,15 +139,20 @@ const MedicalInfoSection = ({
         </div>
       )}
 
+      {/* Referral Source */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">Referred From</label>
         <Select value={form.referredFrom || ""} onValueChange={(value) => onFieldChange("referredFrom", value)}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select referral source" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50">
             {referralSources.map((source) => (
-              <SelectItem key={source} value={source}>
+              <SelectItem 
+                key={source} 
+                value={source}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 {source}
               </SelectItem>
             ))}
@@ -129,15 +160,20 @@ const MedicalInfoSection = ({
         </Select>
       </div>
 
+      {/* Hospital Selection */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">Referred To Hospital</label>
         <Select value={selectedHospital} onValueChange={handleHospitalChange}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select hospital" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
             {hospitalOptions.map((hospital) => (
-              <SelectItem key={hospital} value={hospital}>
+              <SelectItem 
+                key={hospital} 
+                value={hospital}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 {hospital}
               </SelectItem>
             ))}
@@ -145,7 +181,7 @@ const MedicalInfoSection = ({
         </Select>
       </div>
 
-      {/* DSFH OPD Booking Date - Mandatory */}
+      {/* DSFH OPD Booking Date */}
       {isDSFHSelected && (
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
           <label className="block font-medium text-gray-600 mb-2">
@@ -164,7 +200,7 @@ const MedicalInfoSection = ({
                 {opdDate ? format(opdDate, "PPP") : "Select OPD booking date"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 bg-white border shadow-lg z-50" align="start">
               <Calendar
                 mode="single"
                 selected={opdDate}
@@ -181,22 +217,27 @@ const MedicalInfoSection = ({
         </div>
       )}
 
-      {selectedSpecialty && (
+      {/* Service Description */}
+      {selectedSpecialty && availableServices.length > 0 && (
         <div>
           <label className="block font-medium text-gray-600 mb-1">Service Description</label>
           <Select value={form.serviceDescription || ""} onValueChange={(value) => onFieldChange("serviceDescription", value)}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select service" />
             </SelectTrigger>
-          <SelectContent>
-            {availableServices.map((service) => (
-              <SelectItem key={service} value={service}>
-                {service}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
+              {availableServices.map((service) => (
+                <SelectItem 
+                  key={service} 
+                  value={service}
+                  className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {service}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
     </div>
   );
