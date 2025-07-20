@@ -7,6 +7,7 @@ export const specialties = [
   { value: "gastroenterology", label: "GIT (Gastroenterology)" },
   { value: "general_surgery", label: "General Surgery" },
   { value: "neurology", label: "Neurology" },
+  { value: "neurosurgery", label: "Neurosurgery" },
   { value: "obgyn", label: "OBGYN" },
   { value: "ophthalmology", label: "Ophthalmology" },
   { value: "orthopedics", label: "Orthopaedic" },
@@ -64,13 +65,17 @@ export const getDoctorsBySpecialty = () => {
   
   // Group doctors by their specialty
   doctors.forEach(doctor => {
-    let specialty = doctor.specialty?.toLowerCase().replace(/\s+/g, '_') || "none";
+    let specialty = doctor.specialty?.toLowerCase().replace(/\s+/g, '_').trim() || "none";
     
     // Handle specialty mapping variations
     if (specialty === "orthopedic") specialty = "orthopedics";
-    if (specialty === "vascular_surgery") specialty = "vascular_surgery";
+    if (specialty.includes("vascular_surgery") || specialty.includes("vascular")) specialty = "vascular_surgery";
     if (specialty.includes("obgyn") || specialty.includes("obstetrics")) specialty = "obgyn";
     if (specialty.includes("git") || specialty.includes("gastroenterology")) specialty = "gastroenterology";
+    if (specialty === "neurosurgery") specialty = "neurosurgery";
+    
+    // Remove trailing underscores
+    specialty = specialty.replace(/_+$/, '');
     
     const displayName = doctor.email.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     
@@ -169,12 +174,21 @@ export const servicesBySpecialty = {
   ],
   neurology: [
     "Brain Tumor Surgery",
-    "Spinal Cord Surgery",
+    "Spinal Cord Surgery", 
     "Epilepsy Surgery",
     "Deep Brain Stimulation",
     "Aneurysm Surgery",
     "Stroke Intervention",
     "Peripheral Nerve Surgery",
+  ],
+  neurosurgery: [
+    "Brain Tumor Surgery",
+    "Spinal Cord Surgery",
+    "Aneurysm Surgery", 
+    "Deep Brain Stimulation",
+    "Epilepsy Surgery",
+    "Craniotomy",
+    "Spinal Fusion",
   ],
   vascular_surgery: [
     "Aortic Aneurysm Repair",
