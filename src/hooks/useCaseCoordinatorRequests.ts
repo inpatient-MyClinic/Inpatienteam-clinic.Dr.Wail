@@ -225,7 +225,7 @@ export function useCaseCoordinatorRequests(coordinatorName: string) {
   
   const coordinatorRequests = useMemo(() => {
     return requests.filter(request => 
-      request.assignedCoordinator === coordinatorName
+      request.assignedCoordinator === coordinatorName || !request.assignedCoordinator
     );
   }, [requests, coordinatorName]);
 
