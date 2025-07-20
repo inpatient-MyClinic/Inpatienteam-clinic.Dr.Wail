@@ -170,6 +170,17 @@ const CreateRequest = () => {
     // Save request to centralized storage with proper user name
     const savedRequest = requestStorage.saveRequest(requestData, currentUserName);
     
+    // If created by a case coordinator, assign the request to them
+    const userRole = localStorage.getItem('userRole');
+    if (userRole === 'case-coordinator') {
+      const coordinatorName = localStorage.getItem('coordinatorName') || 'Default Coordinator';
+      console.log('Assigning request to coordinator:', coordinatorName);
+      requestStorage.updateRequest(savedRequest.id, { 
+        assignedCoordinator: coordinatorName,
+        coordinatorActionTime: new Date().toISOString()
+      });
+    }
+    
     console.log("New request created and saved:", savedRequest);
     console.log("All requests after save:", requestStorage.getAllRequests());
     
