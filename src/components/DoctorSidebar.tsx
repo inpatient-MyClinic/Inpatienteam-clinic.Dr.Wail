@@ -100,10 +100,8 @@ export default function DoctorSidebar({
           {[
             { label: "Pending", value: statusCounts.pending, color: "bg-yellow-600", key: "pending" },
             { label: "Under Process", value: statusCounts.underProcess, color: "bg-blue-600", key: "under_process" },
-            { label: "Need Justification", value: statusCounts.needJustification, color: "bg-orange-600", key: "need_justification" },
             { label: "Done", value: statusCounts.done, color: "bg-green-600", key: "done" },
             { label: "Rejected", value: statusCounts.rejected, color: "bg-red-600", key: "rejected" },
-            { label: "Delayed", value: statusCounts.delayed, color: "bg-gray-600", key: "delayed" },
           ].map((stat) => (
             <div
               key={stat.key}
