@@ -1,12 +1,17 @@
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LoginForm from "@/components/auth/LoginForm";
 import PasswordCreationForm from "@/components/auth/PasswordCreationForm";
 import Footer from "@/components/Footer";
 import { useAuthLogic } from "@/hooks/useAuthLogic";
+import { getCurrentUserRole } from "@/utils/auth";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const currentUserRole = getCurrentUserRole();
+  
   const {
     email,
     setEmail,
@@ -21,6 +26,38 @@ const Login = () => {
     handleLogin,
     handleBackToLogin
   } = useAuthLogic();
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (currentUserRole) {
+      console.log("Login: User already authenticated with role:", currentUserRole);
+      switch (currentUserRole) {
+        case 'admin':
+          navigate('/admin', { replace: true });
+          break;
+        case 'nurse':
+          navigate('/nurse-dashboard', { replace: true });
+          break;
+        case 'doctor':
+          navigate('/doctor-dashboard', { replace: true });
+          break;
+        case 'hospital':
+          navigate('/hospital-dashboard', { replace: true });
+          break;
+        case 'case-coordinator':
+          navigate('/case-coordinator-dashboard', { replace: true });
+          break;
+        case 'finance':
+          navigate('/finance-dashboard', { replace: true });
+          break;
+        case 'customer-care':
+          navigate('/customer-care-dashboard', { replace: true });
+          break;
+        default:
+          console.log("Login: Unknown role, staying on login page");
+      }
+    }
+  }, [currentUserRole, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
