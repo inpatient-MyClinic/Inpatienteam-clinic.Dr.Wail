@@ -149,6 +149,14 @@ export default function CaseCoordinatorDashboard() {
     assignToCoordinator(requestId, currentCoordinatorName);
   };
 
+  // Force refresh to get latest data from storage
+  const refreshData = () => {
+    console.log('Force refreshing case coordinator data...');
+    // Force re-trigger data loading
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    setTimeout(() => window.location.reload(), 100);
+  };
+
   const resetData = () => {
     requestStorage.clearAllData();
     requestStorage.initializeSampleData();
@@ -204,11 +212,19 @@ export default function CaseCoordinatorDashboard() {
                 <MessagingIcons currentUserRole="case-coordinator" unreadCount={unreadCount} />
                 <Button 
                   variant="outline" 
-                  onClick={resetData}
+                  onClick={refreshData}
                   className="flex items-center gap-2"
                 >
                   <AlertCircle className="w-4 h-4" />
-                  Refresh Data
+                  Refresh
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={resetData}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Reset Data
                 </Button>
                 <Button 
                   variant="outline" 
