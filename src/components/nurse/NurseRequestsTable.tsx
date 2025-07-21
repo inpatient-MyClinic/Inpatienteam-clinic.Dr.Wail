@@ -604,42 +604,128 @@ export default function NurseRequestsTable({
                       <>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              Add Justification
+                            <Button size="sm" variant="outline" className="bg-pink-50 border-pink-200 text-pink-800 hover:bg-pink-100">
+                              Need Justification
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Add Justification for {req.patientName}</DialogTitle>
+                              <DialogTitle className="text-pink-800">Justification Required - {req.patientName}</DialogTitle>
                               <DialogDescription>
-                                Review the original request and provide additional justification
+                                The hospital or case coordinator has requested additional justification for this case
                               </DialogDescription>
                             </DialogHeader>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
+                              {/* Patient Information */}
+                              <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg">
+                                <div>
+                                  <Label className="font-semibold text-blue-900">Patient Details</Label>
+                                  <div className="mt-2 space-y-1 text-sm">
+                                    <p><span className="font-medium">Name:</span> {req.patientName}</p>
+                                    <p><span className="font-medium">MRN:</span> {req.mrn}</p>
+                                    <p><span className="font-medium">Phone:</span> {req.phone}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label className="font-semibold text-blue-900">Request Details</Label>
+                                  <div className="mt-2 space-y-1 text-sm">
+                                    <p><span className="font-medium">Hospital:</span> {req.hospital}</p>
+                                    <p><span className="font-medium">Specialty:</span> {req.specialty}</p>
+                                    <p><span className="font-medium">Surgery Date:</span> {req.expectedSurgeryDate || "Not set"}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Original Request */}
                               <div>
-                                <Label>Original Request</Label>
-                                <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
+                                <Label className="font-semibold">Original Service Request</Label>
+                                <div className="mt-2 p-4 bg-gray-50 rounded-lg text-sm">
                                   {req.serviceDescription}
                                 </div>
                               </div>
+
+                              {/* Justification Request from Hospital/Case Coordinator */}
+                              <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                                <Label className="font-semibold text-yellow-800">Why Justification is Needed</Label>
+                                <div className="mt-2 space-y-2">
+                                  <div className="p-3 bg-white rounded border">
+                                    <p className="text-sm font-medium text-gray-700">Hospital Review Comments:</p>
+                                    <p className="text-sm mt-1">
+                                      "This case requires additional medical justification to support the necessity of the procedure. 
+                                      Please provide more detailed clinical rationale including current symptoms, previous treatment attempts, 
+                                      and urgency indicators."
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      - Dr. Sarah Al-Mahmoud, Medical Review Committee
+                                    </p>
+                                  </div>
+                                  
+                                  <div className="p-3 bg-white rounded border">
+                                    <p className="text-sm font-medium text-gray-700">Case Coordinator Notes:</p>
+                                    <p className="text-sm mt-1">
+                                      "Insurance pre-authorization requires additional documentation. 
+                                      Please include recent diagnostic reports, treatment timeline, and clinical assessment."
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      - Case Coordinator Ahmed Hassan
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Current Attachments */}
                               <div>
-                                <Label htmlFor="justification">Additional Justification</Label>
+                                <Label className="font-semibold">Current Attachments</Label>
+                                <div className="mt-2 space-y-2">
+                                  {req.attachments.length > 0 ? req.attachments.map((attachment, index) => (
+                                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                                      <div className="flex items-center">
+                                        <FileText className="w-4 h-4 mr-2 text-blue-600" />
+                                        <span className="text-sm">{attachment}</span>
+                                      </div>
+                                      <Button size="sm" variant="ghost" className="text-blue-600">
+                                        <Download className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  )) : (
+                                    <p className="text-sm text-gray-500 italic">No attachments uploaded yet</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Additional Justification Form */}
+                              <div className="space-y-4 p-4 bg-green-50 rounded-lg">
+                                <Label className="font-semibold text-green-800">Provide Additional Justification</Label>
                                 <Textarea
-                                  id="justification"
-                                  placeholder="Provide additional medical justification for this request..."
+                                  placeholder="Address the specific concerns mentioned above. Include:
+• Detailed clinical rationale
+• Current patient symptoms and assessment
+• Previous treatment attempts and outcomes
+• Urgency factors and medical necessity
+• Any additional supporting medical evidence"
                                   value={justificationText}
                                   onChange={(e) => setJustificationText(e.target.value)}
-                                  className="mt-1"
-                                  rows={4}
+                                  className="mt-2"
+                                  rows={6}
                                 />
+                                <div className="flex gap-3">
+                                  <Button 
+                                    onClick={() => submitJustification(req.id)}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    disabled={!justificationText.trim()}
+                                  >
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Submit Justification
+                                  </Button>
+                                  <Button 
+                                    variant="outline"
+                                    className="flex-1"
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Upload Additional Documents
+                                  </Button>
+                                </div>
                               </div>
-                              <Button 
-                                onClick={() => submitJustification(req.id)}
-                                className="w-full"
-                                disabled={!justificationText.trim()}
-                              >
-                                Submit Justification
-                              </Button>
                             </div>
                           </DialogContent>
                         </Dialog>
