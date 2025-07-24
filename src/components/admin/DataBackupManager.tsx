@@ -111,8 +111,8 @@ export default function DataBackupManager() {
       title: "Patient Data Cleared",
       description: "All patient/request data has been deleted. Users and settings preserved.",
     });
-    // Reload the page to reflect cleared data
-    setTimeout(() => window.location.reload(), 1000);
+    // Force reload to ensure UI updates
+    window.location.reload();
   };
 
   const handleCleanDemoData = () => {

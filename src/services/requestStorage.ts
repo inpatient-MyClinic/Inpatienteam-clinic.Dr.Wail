@@ -91,9 +91,10 @@ class RequestStorageService {
     }
   }
 
-  // Initialize with sample data if empty
+  // Initialize with sample data if empty and not cleared by admin
   initializeSampleData(): void {
-    if (this.getAllRequests().length === 0) {
+    const sampleDataCleared = localStorage.getItem('sample_data_cleared');
+    if (this.getAllRequests().length === 0 && !sampleDataCleared) {
       console.log('No requests found, initializing with sample data...');
       const sampleRequests: Omit<StoredRequest, 'id'>[] = [
         {
@@ -184,6 +185,8 @@ class RequestStorageService {
   // Clear all data for debugging
   clearAllData(): void {
     localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.setItem('sample_data_cleared', 'true');
+    this.triggerStorageEvent();
     console.log('All request data cleared');
   }
   

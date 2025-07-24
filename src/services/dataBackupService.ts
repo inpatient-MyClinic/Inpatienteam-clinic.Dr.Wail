@@ -239,6 +239,16 @@ export class DataBackupService {
     localStorage.setItem('medical_requests', JSON.stringify([]));
     localStorage.setItem('notifications', JSON.stringify([]));
     
+    // Set a flag to prevent sample data reinitialization
+    localStorage.setItem('sample_data_cleared', 'true');
+    
+    // Trigger storage events to update UI
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'medical_requests',
+      newValue: '[]'
+    }));
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    
     console.log('All patient data cleared, users and settings preserved');
   }
 
