@@ -7,15 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Download, Upload, Trash2, Database, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { DataBackupService, BackupSchedule } from "@/services/dataBackupService";
+import { DataSyncService } from "@/services/dataSync";
+import { Trash2, Download, Upload, Database, Settings, Shield, Clock } from "lucide-react";
 
 export default function DataBackupManager() {
   const [backupSettings, setBackupSettings] = useState(DataBackupService.getBackupSettings());
+  const [backupVersions, setBackupVersions] = useState(DataBackupService.getBackupVersions());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const refreshVersions = () => {
+    setBackupVersions(DataBackupService.getBackupVersions());
+  };
 
   const handleScheduleChange = (schedule: BackupSchedule) => {
     const newSettings = { ...backupSettings, schedule };
@@ -88,12 +96,23 @@ export default function DataBackupManager() {
 
   const handleClearAllData = () => {
     DataBackupService.clearAllData();
+    DataSyncService.initializeProduction();
     toast({
-      title: "All Data Cleared",
-      description: "All application data has been permanently deleted.",
+      title: "System Reset Complete",
+      description: "All demo data cleared and system ready for production.",
     });
     // Reload the page to reflect cleared data
     setTimeout(() => window.location.reload(), 1000);
+  };
+
+  const handleCleanDemoData = () => {
+    DataSyncService.cleanDemoData();
+    DataSyncService.syncHospitalNames();
+    DataSyncService.syncDoctorNames();
+    toast({
+      title: "Demo Data Cleaned",
+      description: "All demo/test data has been removed and names synchronized.",
+    });
   };
 
   return (
@@ -122,9 +141,15 @@ export default function DataBackupManager() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6">
-            {/* Backup Settings */}
-            <Card>
+          <Tabs defaultValue="settings" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="versions">Versions</TabsTrigger>
+              <TabsTrigger value="actions">Actions</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="settings" className="space-y-6">
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="w-4 h-4" />
@@ -156,6 +181,7 @@ export default function DataBackupManager() {
                         <SelectItem value="now">Backup Now</SelectItem>
                         <SelectItem value="daily">Daily</SelectItem>
                         <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
                         <SelectItem value="disabled">Disabled</SelectItem>
                       </SelectContent>
                     </Select>
@@ -179,6 +205,102 @@ export default function DataBackupManager() {
                 )}
               </CardContent>
             </Card>
+            </TabsContent>
+            
+            <TabsContent value="versions" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Backup Versions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {backupVersions.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">No backup versions available</p>
+                    ) : (
+                      backupVersions.map((version) => (
+                        <div key={version.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{new Date(version.timestamp).toLocaleString()}</span>
+                              {version.isMainVersion && (
+                                <Badge variant="default" className="text-xs">
+                                  <Shield className="w-3 h-3 mr-1" />
+                                  Main Version
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {version.data.metadata.totalRequests} requests, {version.data.metadata.totalUsers} users
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {!version.isMainVersion && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  DataBackupService.setMainVersion(version.id);
+                                  refreshVersions();
+                                  toast({ title: "Main version updated" });
+                                }}
+                              >
+                                Set as Main
+                              </Button>
+                            )}
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                const dataStr = JSON.stringify(version.data, null, 2);
+                                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                                const linkElement = document.createElement('a');
+                                linkElement.setAttribute('href', dataUri);
+                                linkElement.setAttribute('download', `backup_${version.id}.json`);
+                                linkElement.click();
+                              }}
+                            >
+                              <Download className="w-3 h-3" />
+                            </Button>
+                            {!version.isMainVersion && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive">
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Backup Version?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently delete this backup version.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => {
+                                      DataBackupService.deleteVersion(version.id);
+                                      refreshVersions();
+                                      toast({ title: "Version deleted" });
+                                    }}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="actions" className="space-y-6">
             
             {/* Manual Actions */}
             <Card>
@@ -186,7 +308,7 @@ export default function DataBackupManager() {
                 <CardTitle>Manual Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Button onClick={handleManualBackup} className="flex items-center gap-2">
                     <Download className="w-4 h-4" />
                     Create Backup
@@ -196,28 +318,33 @@ export default function DataBackupManager() {
                     <Upload className="w-4 h-4" />
                     Restore Backup
                   </Button>
+
+                  <Button onClick={handleCleanDemoData} variant="secondary" className="flex items-center gap-2">
+                    <Database className="w-4 h-4" />
+                    Clean Demo Data
+                  </Button>
                   
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" className="flex items-center gap-2">
                         <Trash2 className="w-4 h-4" />
-                        Clear All Data
+                        Reset for Production
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete all application data including requests, users, notifications, and settings.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleClearAllData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          Yes, delete everything
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Reset System for Production?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will clear all demo/test data and initialize the system for production use. A main backup version will be created before clearing.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleClearAllData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Yes, reset for production
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
                   </AlertDialog>
                 </div>
               </CardContent>
@@ -231,13 +358,15 @@ export default function DataBackupManager() {
               <CardContent>
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p>• Backups include all requests, users, settings, and notifications</p>
-                  <p>• Automatic backups are saved locally and downloaded to your device</p>
-                  <p>• Manual backups are immediately downloaded as JSON files</p>
-                  <p>• Use "Clear All Data" to reset the system for production use</p>
+                  <p>• Automatic backups support daily, weekly, and monthly schedules</p>
+                  <p>• Up to 3 backup versions are kept, plus protected main version</p>
+                  <p>• "Clean Demo Data" removes test data and synchronizes names</p>
+                  <p>• "Reset for Production" clears everything and creates fresh main backup</p>
                 </div>
               </CardContent>
             </Card>
-          </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </>
