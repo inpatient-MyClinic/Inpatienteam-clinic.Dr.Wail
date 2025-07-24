@@ -54,12 +54,13 @@ const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: Spe
       return (
         <div className="space-y-4">
           <div>
-            <Label htmlFor="requiredImplant">Required Implant</Label>
+            <Label htmlFor="requiredImplant">Required Implant *</Label>
             <Input
               id="requiredImplant"
               value={formData.requiredImplant || ''}
               onChange={(e) => handleInputChange('requiredImplant', e.target.value)}
               placeholder="Specify implant details"
+              required
             />
           </div>
           {renderAssistanceField()}
@@ -70,21 +71,23 @@ const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: Spe
       return (
         <div className="space-y-4">
           <div>
-            <Label htmlFor="lastMenstrualPeriod">Last Menstrual Period</Label>
+            <Label htmlFor="lastMenstrualPeriod">Last Menstrual Period *</Label>
             <Input
               id="lastMenstrualPeriod"
               type="date"
               value={formData.lastMenstrualPeriod || ''}
               onChange={(e) => handleInputChange('lastMenstrualPeriod', e.target.value)}
+              required
             />
           </div>
           <div>
-            <Label htmlFor="estimatedDueDate">Estimated Due Date</Label>
+            <Label htmlFor="estimatedDueDate">Estimated Due Date *</Label>
             <Input
               id="estimatedDueDate"
               type="date"
               value={formData.estimatedDueDate || ''}
               onChange={(e) => handleInputChange('estimatedDueDate', e.target.value)}
+              required
             />
           </div>
         </div>
