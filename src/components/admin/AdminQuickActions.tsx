@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Users, FileText, Settings, BarChart3 } from "lucide-react";
 import AdminRequestsUpload from "./AdminRequestsUpload";
+import DataBackupManager from "./DataBackupManager";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -71,7 +72,7 @@ export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickAct
         <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
           <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleAddTask}>
             <Plus className="w-5 h-5" />
             <span className="text-xs">Add Task</span>
@@ -83,6 +84,8 @@ export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickAct
           </Button>
           
           <AdminRequestsUpload onUpload={handleRequestsUpload} />
+          
+          <DataBackupManager />
           
           <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleGenerateReport}>
             <FileText className="w-5 h-5" />

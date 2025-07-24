@@ -1,5 +1,6 @@
 
 import { RequestEscalationService } from './requestEscalationService';
+import { DataBackupService } from './dataBackupService';
 
 export class SystemInitializationService {
   static initialize() {
@@ -7,6 +8,9 @@ export class SystemInitializationService {
     
     // Start the escalation monitoring service
     RequestEscalationService.startEscalationMonitoring();
+    
+    // Initialize backup service
+    DataBackupService.initializeBackupService();
     
     // Initialize empty notifications if none exist
     if (!localStorage.getItem('notifications')) {
@@ -24,5 +28,6 @@ export class SystemInitializationService {
   static cleanup() {
     console.log('Cleaning up medical request system...');
     RequestEscalationService.stopEscalationMonitoring();
+    DataBackupService.stopBackupService();
   }
 }
