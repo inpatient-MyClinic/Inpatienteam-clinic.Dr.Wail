@@ -67,7 +67,7 @@ const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: Spe
         </div>
       );
 
-    case 'obstetrics_gynecology':
+    case 'obgyn':
       return (
         <div className="space-y-4">
           <div>
