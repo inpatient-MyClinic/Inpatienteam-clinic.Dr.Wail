@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import UserExcelUpload from "./userExcelUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { hospitals } from "@/data/medicalData";
 
 interface FieldConfig {
   id: string;
@@ -53,7 +54,7 @@ const AdminFieldConfiguration = () => {
       id: 'hospitalName',
       name: 'Hospital Name',
       type: 'select',
-      options: ['King Fahad Hospital', 'King Faisal Hospital', 'King Abdulaziz Hospital', 'Prince Sultan Hospital', 'King Khaled Hospital', 'National Guard Hospital'],
+      options: hospitals,
       required: true,
       category: 'Hospital',
       userRoles: ['Doctor', 'Nurse', 'Hospital', 'Case Coordinator', 'Admin']

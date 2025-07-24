@@ -3,6 +3,7 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestFormData } from "@/types/request";
+import { hospitals } from "@/data/medicalData";
 
 interface HospitalInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -30,10 +31,11 @@ const HospitalInfoSection = ({ form, onFieldChange }: HospitalInfoSectionProps) 
             <SelectValue placeholder="Select hospital" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="King Fahad Hospital">King Fahad Hospital</SelectItem>
-            <SelectItem value="King Faisal Hospital">King Faisal Hospital</SelectItem>
-            <SelectItem value="King Abdulaziz Hospital">King Abdulaziz Hospital</SelectItem>
-            <SelectItem value="Prince Sultan Hospital">Prince Sultan Hospital</SelectItem>
+            {hospitals.map((hospital) => (
+              <SelectItem key={hospital} value={hospital}>
+                {hospital}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
