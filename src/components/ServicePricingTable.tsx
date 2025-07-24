@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { servicesBySpecialty } from "@/data/medicalData";
 import { useToast } from "@/hooks/use-toast";
-import ServicePricingAccess from "./settings/ServicePricingAccess";
+import DoctorPricingAccess from "./settings/DoctorPricingAccess";
 
 const hospitals = [
   "King Fahad Hospital",
@@ -118,7 +118,7 @@ const ServicePricingTable = () => {
       </TabsContent>
 
       <TabsContent value="access">
-        <ServicePricingAccess />
+        <DoctorPricingAccess />
       </TabsContent>
     </Tabs>
   );
