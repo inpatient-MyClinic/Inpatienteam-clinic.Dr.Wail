@@ -271,9 +271,9 @@ const CreateRequest = () => {
             />
 
             <SpecialtySpecificFields
-              form={form}
-              selectedSpecialty={selectedSpecialty}
-              onFieldChange={handleFieldChange}
+              specialty={selectedSpecialty}
+              formData={form}
+              handleInputChange={handleFieldChange}
             />
             
             <HospitalInfoSection 
