@@ -89,17 +89,37 @@ export const getUserRole = (email: string) => {
     return "admin";
   }
   
-  // Check if user exists in localStorage with a specific role (user management)
-  const userData = localStorage.getItem(`user_${email.toLowerCase().trim()}`);
-  if (userData) {
-    const user = JSON.parse(userData);
-    console.log("User found in user management with role:", user.role);
-    return user.role;
+  // Check if user exists in user management system
+  const userManagementUsers = JSON.parse(localStorage.getItem('enhancedUserManagementUsers') || '[]');
+  const foundUser = userManagementUsers.find((user: any) => user.email.toLowerCase().trim() === email.toLowerCase().trim());
+  
+  if (foundUser) {
+    console.log("User found in user management with category:", foundUser.category);
+    return foundUser.category.toLowerCase().replace(' ', '-'); // Convert "Case Coordinator" to "case-coordinator"
   }
   
-  // Default to nurse for any other user not in user management
-  console.log("User not found in user management, defaulting to nurse role");
-  return "nurse";
+  // If user not found in user management, return null to indicate unauthorized
+  console.log("User not found in user management - UNAUTHORIZED");
+  return null;
+};
+
+export const isUserAuthorized = (email: string): boolean => {
+  const adminEmails = [
+    "admin@myclinic.com.sa",
+    "wail.ahmed@myclinic.com.sa",
+    "inpatienteam@myclinic.com.sa"
+  ];
+  
+  // Admin emails are always authorized
+  if (adminEmails.includes(email.toLowerCase().trim())) {
+    return true;
+  }
+  
+  // Check if user exists in user management system
+  const userManagementUsers = JSON.parse(localStorage.getItem('enhancedUserManagementUsers') || '[]');
+  const foundUser = userManagementUsers.find((user: any) => user.email.toLowerCase().trim() === email.toLowerCase().trim());
+  
+  return !!foundUser;
 };
 
 export const redirectToUserDashboard = (userRole: string, navigate: (path: string) => void) => {

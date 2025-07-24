@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { validateEmail, extractUserName, getUserRole, redirectToUserDashboard } from "@/utils/userUtils";
+import { validateEmail, extractUserName, getUserRole, redirectToUserDashboard, isUserAuthorized } from "@/utils/userUtils";
 import { isAdmin } from "@/utils/auth";
 
 export const useAuthLogic = () => {
@@ -34,6 +34,36 @@ export const useAuthLogic = () => {
       return;
     }
     
+    // Check if user is authorized (exists in user management)
+    const userAuthorized = isUserAuthorized(email);
+    console.log("User authorization check:", userAuthorized);
+    
+    if (!userAuthorized) {
+      console.log("PASSWORD CREATION BLOCKED: User not authorized - not in user management");
+      
+      // Create a notification for admin
+      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+      const newNotification = {
+        id: Date.now().toString(),
+        type: 'user_access_request',
+        title: 'طلب وصول مستخدم جديد',
+        message: `المستخدم ${email} يطلب الوصول إلى النظام`,
+        email: email,
+        timestamp: new Date().toISOString(),
+        read: false,
+        priority: 'high'
+      };
+      notifications.push(newNotification);
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+      
+      toast({
+        title: "طلب وصول مرسل",
+        description: "تم إرسال طلب وصولك إلى مدير النظام. سيتم التواصل معك قريباً.",
+        variant: "default",
+      });
+      return;
+    }
+    
     if (password.length < 6) {
       toast({
         title: "كلمة المرور قصيرة جداً",
@@ -52,9 +82,19 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // Get user role - admin emails get admin role, others get their assigned role or default to nurse
+    // Get user role - admin emails get admin role, others get their assigned role
     const userRole = getUserRole(email);
     console.log("Password creation - determined role:", userRole, "for email:", email);
+    
+    if (!userRole) {
+      console.log("PASSWORD CREATION BLOCKED: Unable to determine user role");
+      toast({
+        title: "خطأ في تحديد الصلاحيات",
+        description: "غير قادر على تحديد صلاحيات المستخدم. يرجى التواصل مع مدير النظام.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const userName = extractUserName(email);
 
@@ -123,6 +163,20 @@ export const useAuthLogic = () => {
       return;
     }
 
+    // Check if user is authorized BEFORE checking password
+    const userAuthorized = isUserAuthorized(normalizedEmail);
+    console.log("User authorization check for login:", userAuthorized);
+    
+    if (!userAuthorized) {
+      console.log("LOGIN BLOCKED: User not authorized - not in user management");
+      toast({
+        title: "غير مصرح بالدخول",
+        description: "حسابك غير مفعل في النظام. يرجى التواصل مع مدير النظام لتفعيل الحساب.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if password exists for this user
     const savedPassword = localStorage.getItem(`password_${normalizedEmail}`);
     console.log("Saved password exists:", !!savedPassword);
@@ -151,9 +205,19 @@ export const useAuthLogic = () => {
       return;
     }
 
-    // Get user role - admin emails get admin role, others get their assigned role or default to nurse
+    // Get user role - admin emails get admin role, others get their assigned role
     const userRole = getUserRole(normalizedEmail);
     console.log("Login successful - determined role:", userRole, "for email:", normalizedEmail);
+    
+    if (!userRole) {
+      console.log("LOGIN BLOCKED: Unable to determine user role");
+      toast({
+        title: "خطأ في تحديد الصلاحيات",
+        description: "غير قادر على تحديد صلاحيات المستخدم. يرجى التواصل مع مدير النظام.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // FORCE UPDATE stored user data to ensure role is correct
     const userName = extractUserName(normalizedEmail);

@@ -108,10 +108,45 @@ const staticDoctorsBySpecialty = {
   ]
 };
 
-// Function to get doctors by specialty - now uses static data primarily
+// Function to get doctors by specialty - loads from user management system
 export const getDoctorsBySpecialty = () => {
-  console.log('getDoctorsBySpecialty: Using static doctor data for all users');
-  return staticDoctorsBySpecialty;
+  console.log('getDoctorsBySpecialty: Loading doctors from user management system');
+  
+  try {
+    const users = loadUsersFromStorage();
+    const doctors = users.filter(user => user.category === 'Doctor' && user.status === 'Active');
+    
+    // Group doctors by specialty
+    const doctorsBySpecialty: Record<string, Array<{ value: string; label: string; privileges: string[] }>> = {};
+    
+    // Initialize all specialties
+    specialties.forEach(specialty => {
+      doctorsBySpecialty[specialty.value] = [];
+    });
+    
+    // Add doctors to their specialties
+    doctors.forEach(doctor => {
+      if (doctor.specialty) {
+        const doctorData = {
+          value: doctor.id,
+          label: doctor.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          privileges: doctor.hospitalPrivileges || []
+        };
+        
+        if (doctorsBySpecialty[doctor.specialty]) {
+          doctorsBySpecialty[doctor.specialty].push(doctorData);
+        }
+      }
+    });
+    
+    console.log('getDoctorsBySpecialty: Loaded doctors by specialty:', doctorsBySpecialty);
+    return doctorsBySpecialty;
+  } catch (error) {
+    console.error('Error loading doctors from user management:', error);
+    // Fallback to static data if there's an error
+    console.log('getDoctorsBySpecialty: Falling back to static data');
+    return staticDoctorsBySpecialty;
+  }
 };
 
 // Export the dynamic doctorsBySpecialty
