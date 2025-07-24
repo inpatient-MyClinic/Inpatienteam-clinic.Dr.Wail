@@ -23,7 +23,7 @@ export const referralSources = [
   "MCR"
 ];
 
-// Updated hospital list - eye centers removed from general list
+// Updated hospital list - includes all hospitals
 export const hospitals = [
   "DSAH",
   "DSFH (Basateen Branch)", 
@@ -31,7 +31,9 @@ export const hospitals = [
   "EMC/ European Medical Center",
   "King's College Hospital",
   "IMC",
-  "DSFH (main)"
+  "DSFH (main)",
+  "Al Batal Eye Centre",
+  "Bin Rushd Eye Center"
 ];
 
 // Hospitals filtered by specialty
@@ -40,8 +42,16 @@ export const hospitalsBySpecialty: Record<string, string[]> = {
     "Al Batal Eye Centre",
     "Bin Rushd Eye Center"
   ],
-  // For all other specialties, show all hospitals (without eye centers)
-  default: hospitals
+  // For all other specialties, show general hospitals (excluding eye centers)
+  default: [
+    "DSAH",
+    "DSFH (Basateen Branch)", 
+    "Al Salamah Hospital",
+    "EMC/ European Medical Center",
+    "King's College Hospital",
+    "IMC",
+    "DSFH (main)"
+  ]
 };
 
 // Function to get hospitals by specialty

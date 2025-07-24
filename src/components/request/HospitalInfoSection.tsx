@@ -3,7 +3,7 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestFormData } from "@/types/request";
-import { hospitals } from "@/data/medicalData";
+import { hospitals, getHospitalsBySpecialty } from "@/data/medicalData";
 
 interface HospitalInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -11,6 +11,8 @@ interface HospitalInfoSectionProps {
 }
 
 const HospitalInfoSection = ({ form, onFieldChange }: HospitalInfoSectionProps) => {
+  // Get appropriate hospitals based on specialty
+  const availableHospitals = form.specialty ? getHospitalsBySpecialty(form.specialty) : hospitals;
   return (
     <div className="space-y-5">
       <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Hospital Information</h3>
@@ -31,7 +33,7 @@ const HospitalInfoSection = ({ form, onFieldChange }: HospitalInfoSectionProps) 
             <SelectValue placeholder="Select hospital" />
           </SelectTrigger>
           <SelectContent>
-            {hospitals.map((hospital) => (
+            {availableHospitals.map((hospital) => (
               <SelectItem key={hospital} value={hospital}>
                 {hospital}
               </SelectItem>
