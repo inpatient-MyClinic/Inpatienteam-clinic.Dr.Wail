@@ -1,247 +1,266 @@
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Eye, Edit, Printer } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Download, Filter, Eye, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getFullAuditReport } from "@/utils/userUtils";
 import * as XLSX from 'xlsx';
 
-const UserTracker = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [selectedUser, setSelectedUser] = useState("all");
+interface UserActivity {
+  id: string;
+  userId: string;
+  userName: string;
+  userCategory: string;
+  action: string;
+  actionType: 'view' | 'modification';
+  timestamp: string;
+  details: string;
+  ipAddress: string;
+}
+
+export default function UserTracker() {
+  const [activities, setActivities] = useState<UserActivity[]>([
+    {
+      id: "1",
+      userId: "user001",
+      userName: "Dr. Ahmed Al-Rashid",
+      userCategory: "doctor",
+      action: "Viewed request REQ001",
+      actionType: "view",
+      timestamp: "2025-01-15T10:30:00Z",
+      details: "Accessed patient request details",
+      ipAddress: "192.168.1.100"
+    },
+    {
+      id: "2",
+      userId: "user002",
+      userName: "Sarah Al-Mahmoud",
+      userCategory: "case_coordinator",
+      action: "Modified request REQ002",
+      actionType: "modification",
+      timestamp: "2025-01-15T11:15:00Z",
+      details: "Updated request status to approved",
+      ipAddress: "192.168.1.101"
+    },
+    {
+      id: "3",
+      userId: "user003",
+      userName: "Admin User",
+      userCategory: "admin",
+      action: "Accessed user management",
+      actionType: "view",
+      timestamp: "2025-01-15T09:45:00Z",
+      details: "Viewed user management panel",
+      ipAddress: "192.168.1.102"
+    }
+  ]);
+
+  const [filteredActivities, setFilteredActivities] = useState<UserActivity[]>(activities);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { toast } = useToast();
 
-  const auditData = useMemo(() => {
-    return getFullAuditReport();
-  }, []);
+  const userCategories = ["doctor", "nurse", "case_coordinator", "hospital_admin", "admin", "finance"];
 
-  const users = useMemo(() => {
-    const savedUsers = localStorage.getItem('enhancedUserManagementUsers');
-    return savedUsers ? JSON.parse(savedUsers) : [];
-  }, []);
+  const handleCategoryFilter = (category: string) => {
+    setSelectedCategory(category);
+    applyFilters(category, searchTerm);
+  };
 
-  const usersByCategory = useMemo(() => {
-    if (categoryFilter === "all") return users;
-    return users.filter(user => user.category === categoryFilter);
-  }, [users, categoryFilter]);
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    applyFilters(selectedCategory, term);
+  };
 
-  const filteredData = useMemo(() => {
-    return auditData.filter(entry => {
-      const matchesSearch = 
-        entry.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.action.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesCategory = categoryFilter === "all" || 
-        users.find(user => user.email === entry.userEmail)?.category === categoryFilter;
-      
-      const matchesUser = selectedUser === "all" || entry.userEmail === selectedUser;
-      
-      return matchesSearch && matchesCategory && matchesUser;
-    });
-  }, [auditData, searchTerm, categoryFilter, selectedUser, users]);
+  const applyFilters = (category: string, search: string) => {
+    let filtered = activities;
 
-  const handleExport = () => {
-    const exportData = filteredData.map(entry => ({
-      'User Name': entry.userName,
-      'User Email': entry.userEmail,
-      'User Category': users.find(u => u.email === entry.userEmail)?.category || 'Unknown',
-      'Request ID': entry.requestId,
-      'Action': entry.action,
-      'Date': entry.date,
-      'Time': entry.time,
-      'Details': JSON.stringify(entry.details)
+    if (category !== "all") {
+      filtered = filtered.filter(activity => activity.userCategory === category);
+    }
+
+    if (search) {
+      filtered = filtered.filter(activity => 
+        activity.userName.toLowerCase().includes(search.toLowerCase()) ||
+        activity.action.toLowerCase().includes(search.toLowerCase()) ||
+        activity.details.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    setFilteredActivities(filtered);
+  };
+
+  const exportToExcel = () => {
+    const exportData = filteredActivities.map(activity => ({
+      "User ID": activity.userId,
+      "User Name": activity.userName,
+      "User Category": activity.userCategory,
+      "Action": activity.action,
+      "Action Type": activity.actionType,
+      "Timestamp": new Date(activity.timestamp).toLocaleString(),
+      "Details": activity.details,
+      "IP Address": activity.ipAddress
     }));
 
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'User Activity');
-    
-    const filename = `user_activity_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(workbook, filename);
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "User Activity");
+    XLSX.writeFile(wb, `user_activity_${new Date().toISOString().split('T')[0]}.xlsx`);
     
     toast({
-      title: "Activity Report Exported",
-      description: `User activity report exported to ${filename}`,
+      title: "Export Successful",
+      description: "User activity data has been exported to Excel.",
     });
   };
 
-  const handlePrint = () => {
-    window.print();
+  const getActionIcon = (actionType: 'view' | 'modification') => {
+    return actionType === 'view' ? (
+      <Eye className="w-4 h-4 text-blue-600" />
+    ) : (
+      <Edit className="w-4 h-4 text-orange-600" />
+    );
   };
 
-  const getActionBadge = (action) => {
-    switch (action.toLowerCase()) {
-      case 'view':
-        return <Badge className="bg-blue-100 text-blue-800">{action}</Badge>;
-      case 'modify':
-      case 'update':
-        return <Badge className="bg-yellow-100 text-yellow-800">{action}</Badge>;
-      case 'create':
-        return <Badge className="bg-green-100 text-green-800">{action}</Badge>;
-      case 'delete':
-        return <Badge className="bg-red-100 text-red-800">{action}</Badge>;
-      default:
-        return <Badge variant="outline">{action}</Badge>;
-    }
+  const getActionBadge = (actionType: 'view' | 'modification') => {
+    return actionType === 'view' ? (
+      <Badge variant="secondary">View</Badge>
+    ) : (
+      <Badge variant="default">Modification</Badge>
+    );
   };
-
-  const categories = [...new Set(users.map(user => user.category))];
-  const userActivities = filteredData.reduce((acc, entry) => {
-    acc[entry.userEmail] = (acc[entry.userEmail] || 0) + 1;
-    return acc;
-  }, {});
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="w-5 h-5" />
-            User Activity Tracker
-          </CardTitle>
+          <CardTitle>User Activity Tracker</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex-1 min-w-64">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by user name, email, or action..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="space-y-4">
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-64">
+                <Label htmlFor="search">Search Users</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="search"
+                    placeholder="Search by name, action, or details..."
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
               </div>
+              
+              <div className="min-w-48">
+                <Label htmlFor="category">User Category</Label>
+                <Select value={selectedCategory} onValueChange={handleCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {userCategories.map(category => (
+                      <SelectItem key={category} value={category}>
+                        {category.replace('_', ' ').toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button onClick={exportToExcel} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Excel
+              </Button>
             </div>
-            
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select User" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                {usersByCategory.map(user => (
-                  <SelectItem key={user.email} value={user.email}>
-                    {user.email} ({user.category})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button onClick={handleExport} className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Export Excel
-            </Button>
-            
-            <Button onClick={handlePrint} variant="outline" className="flex items-center gap-2">
-              <Printer className="w-4 h-4" />
-              Print
-            </Button>
-          </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">{filteredActivities.length}</div>
+                  <p className="text-xs text-muted-foreground">Total Activities</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">
+                    {filteredActivities.filter(a => a.actionType === 'view').length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">View Actions</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">
+                    {filteredActivities.filter(a => a.actionType === 'modification').length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Modifications</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold">
+                    {[...new Set(filteredActivities.map(a => a.userId))].length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Unique Users</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Activity Table */}
             <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{filteredData.length}</div>
-                <p className="text-xs text-muted-foreground">Total Activities</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{Object.keys(userActivities).length}</div>
-                <p className="text-xs text-muted-foreground">Active Users</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{filteredData.filter(a => a.action === 'view').length}</div>
-                <p className="text-xs text-muted-foreground">View Actions</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{filteredData.filter(a => a.action === 'modify').length}</div>
-                <p className="text-xs text-muted-foreground">Modify Actions</p>
+              <CardHeader>
+                <CardTitle className="text-sm">Activity Log</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead>IP Address</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredActivities.map((activity) => (
+                      <TableRow key={activity.id}>
+                        <TableCell className="font-medium">{activity.userName}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {activity.userCategory.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getActionIcon(activity.actionType)}
+                            {activity.action}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getActionBadge(activity.actionType)}</TableCell>
+                        <TableCell>{new Date(activity.timestamp).toLocaleString()}</TableCell>
+                        <TableCell className="max-w-xs truncate">{activity.details}</TableCell>
+                        <TableCell>{activity.ipAddress}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </div>
-
-          {/* Activity Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Request ID</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    No activity found for the selected filters
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((entry, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{entry.userName}</div>
-                        <div className="text-sm text-gray-500">{entry.userEmail}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {users.find(u => u.email === entry.userEmail)?.category || 'Unknown'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{entry.requestId}</TableCell>
-                    <TableCell>{getActionBadge(entry.action)}</TableCell>
-                    <TableCell>{entry.date}</TableCell>
-                    <TableCell>{entry.time}</TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate text-sm text-gray-600">
-                        {typeof entry.details === 'object' 
-                          ? JSON.stringify(entry.details).substring(0, 50) + '...'
-                          : entry.details
-                        }
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default UserTracker;
+}

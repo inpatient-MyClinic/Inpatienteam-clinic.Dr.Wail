@@ -1,399 +1,306 @@
 
-import * as React from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Upload, Download, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Upload, Download, AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import * as XLSX from 'xlsx';
 
-type DoctorAccess = {
+interface ServicePricing {
   id: string;
-  name: string;
-  email: string;
+  hospitalName: string;
+  service: string;
   specialty: string;
-  canViewPricing: boolean;
-  isActive: boolean;
-};
+  price: number;
+  lastUpdated: string;
+  version: number;
+}
 
-const ServicePricingAccess = () => {
+interface PricingVersion {
+  version: number;
+  uploadDate: string;
+  fileName: string;
+  recordsCount: number;
+}
+
+export default function ServicePricingAccess() {
+  const [servicePricing, setServicePricing] = useState<ServicePricing[]>([]);
+  const [pricingHistory, setPricingHistory] = useState<PricingVersion[]>([]);
+  const [selectedHospital, setSelectedHospital] = useState<string>("all");
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const [doctorAccess, setDoctorAccess] = React.useState<DoctorAccess[]>([
-    {
-      id: "1",
-      name: "Dr. Ahmed Al-Rashid",
-      email: "dr.ahmed@hospital.com",
-      specialty: "Cardiology",
-      canViewPricing: true,
-      isActive: true
-    },
-    {
-      id: "2",
-      name: "Dr. Sarah Johnson",
-      email: "dr.sarah@hospital.com",
-      specialty: "Neurology",
-      canViewPricing: false,
-      isActive: true
-    },
-    {
-      id: "3",
-      name: "Dr. Mohammed Hassan",
-      email: "dr.mohammed@hospital.com",
-      specialty: "Orthopedics",
-      canViewPricing: true,
-      isActive: false
-    },
-    {
-      id: "4",
-      name: "Dr. Fatima Al-Zahra",
-      email: "dr.fatima@hospital.com",
-      specialty: "Pediatrics",
-      canViewPricing: false,
-      isActive: true
-    }
-  ]);
 
-  const [servicePricing, setServicePricing] = React.useState([]);
-  const [pricingVersions, setPricingVersions] = React.useState([]);
-  const fileInputRef = React.useRef(null);
+  const hospitals = ["King Abdulaziz Hospital", "Prince Mohammed Hospital", "Al-Noor Hospital", "Riyadh Medical Complex"];
+  const specialties = ["Cardiology", "Orthopedics", "Neurology", "General Surgery", "Pediatrics"];
 
-  React.useEffect(() => {
-    const savedPricing = localStorage.getItem('service_pricing');
-    if (savedPricing) {
-      setServicePricing(JSON.parse(savedPricing));
-    }
-    
-    const savedVersions = localStorage.getItem('pricing_versions');
-    if (savedVersions) {
-      setPricingVersions(JSON.parse(savedVersions));
-    }
-  }, []);
-
-  const toggleViewAccess = (doctorId: string) => {
-    setDoctorAccess(prev => 
-      prev.map(doctor => 
-        doctor.id === doctorId 
-          ? { ...doctor, canViewPricing: !doctor.canViewPricing }
-          : doctor
-      )
-    );
-    
-    const doctor = doctorAccess.find(d => d.id === doctorId);
-    toast({
-      title: "Access Updated",
-      description: `${doctor?.name}'s pricing access has been ${
-        doctor?.canViewPricing ? 'removed' : 'granted'
-      }`
-    });
-  };
-
-  const toggleActiveStatus = (doctorId: string) => {
-    setDoctorAccess(prev => 
-      prev.map(doctor => 
-        doctor.id === doctorId 
-          ? { ...doctor, isActive: !doctor.isActive, canViewPricing: doctor.isActive ? false : doctor.canViewPricing }
-          : doctor
-      )
-    );
-    
-    const doctor = doctorAccess.find(d => d.id === doctorId);
-    toast({
-      title: "Status Updated",
-      description: `${doctor?.name} has been ${
-        doctor?.isActive ? 'deactivated' : 'activated'
-      }`
-    });
-  };
-
-  const handleExcelUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    setIsUploading(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-        // Save current version as backup
-        const currentVersion = {
-          id: Date.now(),
-          date: new Date().toISOString().split('T')[0],
-          version: `v${pricingVersions.length + 1}`,
-          data: servicePricing,
-          uploadedBy: 'Admin'
-        };
+      const newPricing: ServicePricing[] = data.map((row, index) => ({
+        id: `pricing-${Date.now()}-${index}`,
+        hospitalName: row['Hospital Name'] || '',
+        service: row['Service'] || '',
+        specialty: row['Specialty'] || '',
+        price: parseFloat(row['Price']) || 0,
+        lastUpdated: new Date().toISOString(),
+        version: pricingHistory.length + 1
+      }));
 
-        const newVersions = [...pricingVersions, currentVersion];
-        setPricingVersions(newVersions);
-        localStorage.setItem('pricing_versions', JSON.stringify(newVersions));
+      setServicePricing(prev => [...prev, ...newPricing]);
+      
+      // Add to history
+      const newVersion: PricingVersion = {
+        version: pricingHistory.length + 1,
+        uploadDate: new Date().toISOString(),
+        fileName: file.name,
+        recordsCount: newPricing.length
+      };
+      setPricingHistory(prev => [...prev, newVersion]);
 
-        // Update current pricing
-        setServicePricing(jsonData);
-        localStorage.setItem('service_pricing', JSON.stringify(jsonData));
-
-        toast({
-          title: "Success",
-          description: `Service pricing updated with ${jsonData.length} items. Previous version saved as ${currentVersion.version}`
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to process Excel file. Please check the format.",
-          variant: "destructive"
-        });
-      }
-    };
-    reader.readAsArrayBuffer(file);
+      toast({
+        title: "Upload Successful",
+        description: `${newPricing.length} pricing records imported successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to process the Excel file. Please check the format.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const downloadTemplate = () => {
-    const template = [
+    const templateData = [
       {
-        'Hospital Name': 'King Fahad Hospital',
-        'Service Description': 'Cardiac Surgery - Valve Replacement',
-        'Specialty': 'Cardiology',
-        'Price': 50000
+        "Hospital Name": "King Abdulaziz Hospital",
+        "Service": "Cardiac Surgery",
+        "Specialty": "Cardiology",
+        "Price": 25000
       },
       {
-        'Hospital Name': 'King Faisal Hospital',
-        'Service Description': 'Orthopedic Surgery - Knee Replacement',
-        'Specialty': 'Orthopedics',
-        'Price': 35000
+        "Hospital Name": "Prince Mohammed Hospital",
+        "Service": "Knee Replacement",
+        "Specialty": "Orthopedics",
+        "Price": 18000
       }
     ];
 
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Service Pricing Template');
-    XLSX.writeFile(workbook, 'service_pricing_template.xlsx');
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Service Pricing");
+    XLSX.writeFile(wb, "service_pricing_template.xlsx");
+    
+    toast({
+      title: "Template Downloaded",
+      description: "Excel template has been downloaded to your computer.",
+    });
   };
 
-  const downloadCurrentPricing = () => {
+  const exportCurrentData = () => {
     if (servicePricing.length === 0) {
       toast({
         title: "No Data",
-        description: "No pricing data available to download",
-        variant: "destructive"
+        description: "No pricing data available to export.",
+        variant: "destructive",
       });
       return;
     }
 
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(servicePricing);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Current Service Pricing');
-    XLSX.writeFile(workbook, `service_pricing_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
+    const exportData = servicePricing.map(item => ({
+      "Hospital Name": item.hospitalName,
+      "Service": item.service,
+      "Specialty": item.specialty,
+      "Price": item.price,
+      "Last Updated": new Date(item.lastUpdated).toLocaleDateString(),
+      "Version": item.version
+    }));
 
-  const grantAccessToAll = () => {
-    setDoctorAccess(prev => 
-      prev.map(doctor => 
-        doctor.isActive ? { ...doctor, canViewPricing: true } : doctor
-      )
-    );
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Service Pricing");
+    XLSX.writeFile(wb, `service_pricing_export_${new Date().toISOString().split('T')[0]}.xlsx`);
     
     toast({
-      title: "Bulk Access Granted",
-      description: "All active doctors can now view pricing"
+      title: "Export Successful",
+      description: "Pricing data has been exported to Excel.",
     });
   };
 
-  const revokeAccessFromAll = () => {
-    setDoctorAccess(prev => 
-      prev.map(doctor => ({ ...doctor, canViewPricing: false }))
-    );
-    
-    toast({
-      title: "Bulk Access Revoked",
-      description: "Pricing access removed from all doctors"
-    });
-  };
-
-  const activeDoctors = doctorAccess.filter(d => d.isActive);
-  const doctorsWithAccess = doctorAccess.filter(d => d.canViewPricing && d.isActive);
+  const filteredPricing = servicePricing.filter(item => {
+    const hospitalMatch = selectedHospital === "all" || item.hospitalName === selectedHospital;
+    const specialtyMatch = selectedSpecialty === "all" || item.specialty === selectedSpecialty;
+    return hospitalMatch && specialtyMatch;
+  });
 
   return (
     <div className="space-y-6">
-      {/* Service Pricing Upload Section */}
       <Card>
         <CardHeader>
           <CardTitle>Service Pricing Management</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Download Template
-            </Button>
-            <Button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              Upload Excel
-            </Button>
-            <Button onClick={downloadCurrentPricing} variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Download Current Pricing
-            </Button>
-          </div>
-
-          <Input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleExcelUpload}
-            className="hidden"
-          />
-
-          {/* Pricing Versions History */}
-          {pricingVersions.length > 0 && (
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Pricing History</h3>
-              <div className="space-y-2">
-                {pricingVersions.map((version) => (
-                  <div key={version.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+        <CardContent>
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="upload">Upload & Manage</TabsTrigger>
+              <TabsTrigger value="pricing">Current Pricing</TabsTrigger>
+              <TabsTrigger value="history">Version History</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Upload Excel File</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div>
-                      <Badge variant="outline">{version.version}</Badge>
-                      <span className="ml-2 text-sm text-gray-600">
-                        {version.date} - {version.data.length} items
-                      </span>
+                      <Label htmlFor="file-upload">Select Excel File</Label>
+                      <Input
+                        id="file-upload"
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                      />
                     </div>
-                    <span className="text-sm text-gray-500">by {version.uploadedBy}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                    {isUploading && (
+                      <div className="text-sm text-blue-600 flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                        Processing file...
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-          {/* Current Pricing Preview */}
-          {servicePricing.length > 0 && (
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Current Pricing Data ({servicePricing.length} items)</h3>
-              <div className="max-h-48 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Hospital</TableHead>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Specialty</TableHead>
-                      <TableHead>Price</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {servicePricing.slice(0, 10).map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item['Hospital Name']}</TableCell>
-                        <TableCell>{item['Service Description']}</TableCell>
-                        <TableCell>{item['Specialty']}</TableCell>
-                        <TableCell>{item['Price']}</TableCell>
-                      </TableRow>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Templates & Export</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button onClick={downloadTemplate} variant="outline" size="sm" className="w-full">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Template
+                    </Button>
+                    <Button onClick={exportCurrentData} variant="outline" size="sm" className="w-full">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Export Current Data
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="pricing" className="space-y-4">
+              <div className="flex gap-4 mb-4">
+                <Select value={selectedHospital} onValueChange={setSelectedHospital}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by Hospital" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Hospitals</SelectItem>
+                    {hospitals.map(hospital => (
+                      <SelectItem key={hospital} value={hospital}>{hospital}</SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
-                {servicePricing.length > 10 && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    ... and {servicePricing.length - 10} more items
-                  </p>
-                )}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter by Specialty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Specialties</SelectItem>
+                    {specialties.map(specialty => (
+                      <SelectItem key={specialty} value={specialty}>{specialty}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Doctor Access Control */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Service Pricing Access Control</CardTitle>
-          <div className="flex gap-4 text-sm text-gray-600">
-            <span>Total Doctors: {doctorAccess.length}</span>
-            <span>Active: {activeDoctors.length}</span>
-            <span>With Pricing Access: {doctorsWithAccess.length}</span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Button onClick={grantAccessToAll} variant="outline" size="sm">
-              Grant Access to All Active
-            </Button>
-            <Button onClick={revokeAccessFromAll} variant="outline" size="sm">
-              Revoke All Access
-            </Button>
-          </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Hospital</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Specialty</TableHead>
+                    <TableHead>Price (SAR)</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                    <TableHead>Version</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPricing.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.hospitalName}</TableCell>
+                      <TableCell>{item.service}</TableCell>
+                      <TableCell>{item.specialty}</TableCell>
+                      <TableCell>{item.price.toLocaleString()}</TableCell>
+                      <TableCell>{new Date(item.lastUpdated).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">v{item.version}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Doctor</TableHead>
-                <TableHead>Specialty</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Pricing Access</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {doctorAccess.map((doctor) => (
-                <TableRow key={doctor.id} className={!doctor.isActive ? "opacity-50" : ""}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{doctor.name}</div>
-                      <div className="text-sm text-gray-500">{doctor.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{doctor.specialty}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={doctor.isActive ? "default" : "secondary"}>
-                      {doctor.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {doctor.canViewPricing && doctor.isActive ? (
-                        <Eye className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-gray-400" />
-                      )}
-                      <span className={doctor.canViewPricing && doctor.isActive ? "text-green-600" : "text-gray-400"}>
-                        {doctor.canViewPricing && doctor.isActive ? "Can View" : "No Access"}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <Label htmlFor={`access-${doctor.id}`} className="text-xs">Access</Label>
-                        <Switch
-                          id={`access-${doctor.id}`}
-                          checked={doctor.canViewPricing}
-                          onCheckedChange={() => toggleViewAccess(doctor.id)}
-                          disabled={!doctor.isActive}
-                        />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Label htmlFor={`active-${doctor.id}`} className="text-xs">Active</Label>
-                        <Switch
-                          id={`active-${doctor.id}`}
-                          checked={doctor.isActive}
-                          onCheckedChange={() => toggleActiveStatus(doctor.id)}
-                        />
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            <TabsContent value="history" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    Upload History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Version</TableHead>
+                        <TableHead>Upload Date</TableHead>
+                        <TableHead>File Name</TableHead>
+                        <TableHead>Records Count</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pricingHistory.map((version) => (
+                        <TableRow key={version.version}>
+                          <TableCell>
+                            <Badge variant="outline">v{version.version}</Badge>
+                          </TableCell>
+                          <TableCell>{new Date(version.uploadDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{version.fileName}</TableCell>
+                          <TableCell>{version.recordsCount}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default ServicePricingAccess;
+}
