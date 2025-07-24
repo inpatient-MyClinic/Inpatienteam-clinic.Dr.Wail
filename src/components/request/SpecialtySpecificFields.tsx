@@ -1,72 +1,112 @@
 
 import React from "react";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RequestFormData } from "@/types/request";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SpecialtySpecificFieldsProps {
-  form: Partial<RequestFormData>;
-  selectedSpecialty: string;
-  onFieldChange: (key: string, value: string) => void;
+  specialty: string;
+  formData: any;
+  handleInputChange: (field: string, value: any) => void;
 }
 
-const SpecialtySpecificFields = ({ 
-  form, 
-  selectedSpecialty, 
-  onFieldChange 
-}: SpecialtySpecificFieldsProps) => {
-  // Render specialty-specific fields based on selected specialty
-  if (selectedSpecialty === "orthopedics") {
+const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: SpecialtySpecificFieldsProps) => {
+  const nonAssistanceHospitals = ["DSFH", "DSFH (Albasateen)", "EMC"];
+  const assistanceSpecialties = ["orthopedics", "general_surgery", "ent"];
+  
+  const shouldShowAssistanceField = !nonAssistanceHospitals.includes(formData.hospitalName) && 
+                                   assistanceSpecialties.includes(specialty);
+
+  const renderAssistanceField = () => {
+    if (!shouldShowAssistanceField) return null;
+
     return (
-      <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
-        <h4 className="font-medium text-blue-900">Orthopedic Specific Information</h4>
-        <div>
-          <label className="block font-medium text-gray-600 mb-1">
-            Required Implant <span className="text-red-500">*</span>
-          </label>
-          <Input
-            value={form.requiredImplant || ""}
-            onChange={(e) => onFieldChange("requiredImplant", e.target.value)}
-            placeholder="Enter required implant details"
-            required
+      <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="assistanceNeeded"
+            checked={formData.assistanceNeeded || false}
+            onCheckedChange={(checked) => handleInputChange('assistanceNeeded', checked)}
           />
+          <Label htmlFor="assistanceNeeded" className="text-sm font-medium">
+            Assistance Needed
+          </Label>
         </div>
+        
+        {formData.assistanceNeeded && (
+          <div>
+            <Label htmlFor="companySystem">Company/System Needed</Label>
+            <Input
+              id="companySystem"
+              value={formData.companySystem || ''}
+              onChange={(e) => handleInputChange('companySystem', e.target.value)}
+              placeholder="Enter company or system requirements"
+            />
+          </div>
+        )}
       </div>
     );
-  }
+  };
 
-  if (selectedSpecialty === "obgyn") {
-    return (
-      <div className="space-y-4 p-4 bg-pink-50 rounded-lg">
-        <h4 className="font-medium text-pink-900">OB/GYN Specific Information</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  switch (specialty) {
+    case 'orthopedics':
+      return (
+        <div className="space-y-4">
           <div>
-            <label className="block font-medium text-gray-600 mb-1">
-              Last Menstrual Period (LMP) <span className="text-red-500">*</span>
-            </label>
+            <Label htmlFor="requiredImplant">Required Implant</Label>
             <Input
+              id="requiredImplant"
+              value={formData.requiredImplant || ''}
+              onChange={(e) => handleInputChange('requiredImplant', e.target.value)}
+              placeholder="Specify implant details"
+            />
+          </div>
+          {renderAssistanceField()}
+        </div>
+      );
+
+    case 'obstetrics_gynecology':
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="lastMenstrualPeriod">Last Menstrual Period</Label>
+            <Input
+              id="lastMenstrualPeriod"
               type="date"
-              value={form.lastMenstrualPeriod || ""}
-              onChange={(e) => onFieldChange("lastMenstrualPeriod", e.target.value)}
-              required
+              value={formData.lastMenstrualPeriod || ''}
+              onChange={(e) => handleInputChange('lastMenstrualPeriod', e.target.value)}
             />
           </div>
           <div>
-            <label className="block font-medium text-gray-600 mb-1">
-              Estimated Due Date (EDD) <span className="text-red-500">*</span>
-            </label>
+            <Label htmlFor="estimatedDueDate">Estimated Due Date</Label>
             <Input
+              id="estimatedDueDate"
               type="date"
-              value={form.estimatedDueDate || ""}
-              onChange={(e) => onFieldChange("estimatedDueDate", e.target.value)}
-              required
+              value={formData.estimatedDueDate || ''}
+              onChange={(e) => handleInputChange('estimatedDueDate', e.target.value)}
             />
           </div>
         </div>
-      </div>
-    );
-  }
+      );
 
-  return null;
+    case 'general_surgery':
+      return (
+        <div className="space-y-4">
+          {renderAssistanceField()}
+        </div>
+      );
+
+    case 'ent':
+      return (
+        <div className="space-y-4">
+          {renderAssistanceField()}
+        </div>
+      );
+
+    default:
+      return null;
+  }
 };
 
 export default SpecialtySpecificFields;

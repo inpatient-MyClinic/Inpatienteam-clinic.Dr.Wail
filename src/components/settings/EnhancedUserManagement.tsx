@@ -9,6 +9,7 @@ import UserManagementHeader from "./userManagement/UserManagementHeader";
 import UserTableSection from "./userManagement/UserTableSection";
 import LoadingState from "./userManagement/LoadingState";
 import DoctorPrivileges from "./userManagement/DoctorPrivileges";
+import AccessControl from "./userManagement/AccessControl";
 import { useUserManagement } from "./userManagement/useUserManagement";
 
 const EnhancedUserManagement = () => {
@@ -96,6 +97,8 @@ const EnhancedUserManagement = () => {
   return (
     <div className="space-y-6">
       <UserManagementHeader totalUsers={users.length} />
+
+      <AccessControl />
 
       <SystemFeatures users={users} onUpdateUser={updateUser} />
 
