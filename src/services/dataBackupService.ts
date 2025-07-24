@@ -234,6 +234,14 @@ export class DataBackupService {
     console.log('All application data cleared and production data initialized');
   }
 
+  static clearPatientDataOnly(): void {
+    // Clear only patient/request data, keep users and settings
+    localStorage.setItem('medical_requests', JSON.stringify([]));
+    localStorage.setItem('notifications', JSON.stringify([]));
+    
+    console.log('All patient data cleared, users and settings preserved');
+  }
+
   static initializeProductionData(): void {
     // Initialize empty but valid data structures
     localStorage.setItem('medical_requests', JSON.stringify([]));

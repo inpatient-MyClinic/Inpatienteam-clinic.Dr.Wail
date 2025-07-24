@@ -105,6 +105,16 @@ export default function DataBackupManager() {
     setTimeout(() => window.location.reload(), 1000);
   };
 
+  const handleClearPatientData = () => {
+    DataBackupService.clearPatientDataOnly();
+    toast({
+      title: "Patient Data Cleared",
+      description: "All patient/request data has been deleted. Users and settings preserved.",
+    });
+    // Reload the page to reflect cleared data
+    setTimeout(() => window.location.reload(), 1000);
+  };
+
   const handleCleanDemoData = () => {
     DataSyncService.cleanDemoData();
     DataSyncService.syncHospitalNames();
@@ -308,25 +318,54 @@ export default function DataBackupManager() {
                 <CardTitle>Manual Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Button onClick={handleManualBackup} className="flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Create Backup
-                  </Button>
-                  
-                  <Button onClick={handleRestoreBackup} variant="outline" className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Restore Backup
-                  </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button onClick={handleManualBackup} className="flex items-center gap-2">
+                      <Download className="w-4 h-4" />
+                      Create Backup
+                    </Button>
+                    
+                    <Button onClick={handleRestoreBackup} variant="outline" className="flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      Restore Backup
+                    </Button>
+                  </div>
 
-                  <Button onClick={handleCleanDemoData} variant="secondary" className="flex items-center gap-2">
-                    <Database className="w-4 h-4" />
-                    Clean Demo Data
-                  </Button>
-                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button onClick={handleCleanDemoData} variant="secondary" className="flex items-center gap-2">
+                      <Database className="w-4 h-4" />
+                      Clean Demo Data
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="flex items-center gap-2">
+                          <Trash2 className="w-4 h-4" />
+                          Clear Patients
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Clear All Patient Data?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete all patient requests and notifications, but keep users and system settings.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleClearPatientData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Yes, clear patient data
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+                </div>
+
+                <div className="mt-4">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="flex items-center gap-2">
+                      <Button variant="destructive" className="flex items-center gap-2 w-full">
                         <Trash2 className="w-4 h-4" />
                         Reset for Production
                       </Button>
