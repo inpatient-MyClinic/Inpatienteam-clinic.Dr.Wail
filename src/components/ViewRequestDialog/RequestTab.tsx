@@ -85,7 +85,7 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
     onFieldChange("hospital", value);
     
     // If DSFH is selected, mandate visit booking date
-    if (value === "DSFH") {
+    if (value.includes("DSFH")) {
       onFieldChange("requiresVisitBooking", true);
     } else {
       onFieldChange("requiresVisitBooking", false);
@@ -273,18 +273,21 @@ export default function RequestTab({ request, onFieldChange }: RequestTabProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="King Khaled Hospital">King Khaled Hospital</SelectItem>
-                <SelectItem value="King Abdulaziz Hospital">King Abdulaziz Hospital</SelectItem>
-                <SelectItem value="King Faisal Hospital">King Faisal Hospital</SelectItem>
-                <SelectItem value="Prince Sultan Hospital">Prince Sultan Hospital</SelectItem>
-                <SelectItem value="King Fahd Hospital">King Fahd Hospital</SelectItem>
-                <SelectItem value="National Guard Hospital">National Guard Hospital</SelectItem>
-                <SelectItem value="DSFH">DSFH</SelectItem>
+                <SelectItem value="DSAH">DSAH</SelectItem>
+                <SelectItem value="DSFH (Basateen Branch)">DSFH (Basateen Branch)</SelectItem>
+                <SelectItem value="Al Salamah Hospital">Al Salamah Hospital</SelectItem>
+                <SelectItem value="EMC/ European Medical Center">EMC/ European Medical Center</SelectItem>
+                <SelectItem value="King's College Hospital">King's College Hospital</SelectItem>
+                <SelectItem value="IMC">IMC</SelectItem>
+                <SelectItem value="DSFH (main)">DSFH (main)</SelectItem>
+                <SelectItem value="Al Batal Eye Centre">Al Batal Eye Centre</SelectItem>
+                <SelectItem value="Bin Rushd Eye Center">Bin Rushd Eye Center</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* DSFH Visit Booking Requirement */}
-          {selectedHospital === "DSFH" && (
+          {selectedHospital.includes("DSFH") && (
             <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
               <Label htmlFor="visitBookingDate">Visit Booking Date (Required for DSFH)</Label>
               <Input

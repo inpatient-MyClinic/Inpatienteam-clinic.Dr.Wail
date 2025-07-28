@@ -12,7 +12,7 @@ interface SpecialtySpecificFieldsProps {
 }
 
 const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: SpecialtySpecificFieldsProps) => {
-  const nonAssistanceHospitals = ["DSFH", "DSFH (Albasateen)", "EMC"];
+  const nonAssistanceHospitals = ["DSFH (main)", "DSFH (Basateen Branch)", "EMC/ European Medical Center"];
   const assistanceSpecialties = ["orthopedics", "general_surgery", "ent"];
   
   const shouldShowAssistanceField = !nonAssistanceHospitals.includes(formData.hospitalName) && 

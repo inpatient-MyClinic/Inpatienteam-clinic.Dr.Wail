@@ -11,17 +11,15 @@ import { Building, Plus, Edit, Trash2, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const hospitals = [
-  "King Fahad Hospital",
-  "King Faisal Hospital", 
-  "King Abdulaziz Hospital",
-  "Prince Sultan Hospital",
-  "King Khalid Hospital",
-  "King Saud Hospital",
-  "National Guard Hospital",
-  "Specialized Hospital",
-  "DSFH",
-  "DSFH (Albasateen)",
-  "EMC"
+  "DSAH",
+  "DSFH (Basateen Branch)", 
+  "Al Salamah Hospital",
+  "EMC/ European Medical Center",
+  "King's College Hospital",
+  "IMC",
+  "DSFH (main)",
+  "Al Batal Eye Centre",
+  "Bin Rushd Eye Center"
 ];
 
 const HospitalCodes = () => {
