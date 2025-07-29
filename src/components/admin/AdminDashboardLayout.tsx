@@ -32,6 +32,7 @@ interface AdminDashboardLayoutProps {
   onToggleTeamMonitoring: () => void;
   onToggleAIAssistant: () => void;
   onShowGeneralReport: () => void;
+  onShowChart: () => void;
 }
 
 export default function AdminDashboardLayout({
@@ -60,6 +61,7 @@ export default function AdminDashboardLayout({
   onToggleTeamMonitoring,
   onToggleAIAssistant,
   onShowGeneralReport,
+  onShowChart,
 }: AdminDashboardLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
@@ -98,6 +100,7 @@ export default function AdminDashboardLayout({
               onTogglePrivilegesSearch={onTogglePrivilegesSearch}
               onToggleTeamMonitoring={onToggleTeamMonitoring}
               onToggleAIAssistant={onToggleAIAssistant}
+              onShowChart={onShowChart}
             />
 
             {/* Main Content */}

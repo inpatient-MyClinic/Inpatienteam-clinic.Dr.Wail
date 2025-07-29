@@ -5,9 +5,12 @@ import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
 import { requestStorage } from "@/services/requestStorage";
+import RequestLifecycleChart from "@/components/RequestLifecycleChart";
+import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
   const [allRequestsData, setAllRequestsData] = useState<any[]>([]);
+  const [showChart, setShowChart] = useState(false);
 
   const {
     activeFilter,
@@ -107,6 +110,23 @@ export default function AdminDashboard() {
   // Calculate unread messages for admin role
   const unreadCount = 12;
 
+  if (showChart) {
+    return (
+      <div className="min-h-screen">
+        <div className="absolute top-4 left-4 z-10">
+          <Button 
+            onClick={() => setShowChart(false)}
+            variant="outline"
+            className="bg-white shadow-md"
+          >
+            ← Back to Dashboard
+          </Button>
+        </div>
+        <RequestLifecycleChart />
+      </div>
+    );
+  }
+
   return (
     <AdminDashboardLayout
       activeFilter={activeFilter}
@@ -134,6 +154,7 @@ export default function AdminDashboard() {
       onToggleTeamMonitoring={handleToggleTeamMonitoring}
       onToggleAIAssistant={handleToggleAIAssistant}
       onShowGeneralReport={handleShowGeneralReport}
+      onShowChart={() => setShowChart(true)}
     />
   );
 }

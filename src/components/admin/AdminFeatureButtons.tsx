@@ -10,6 +10,7 @@ interface AdminFeatureButtonsProps {
   onTogglePrivilegesSearch: () => void;
   onToggleTeamMonitoring: () => void;
   onToggleAIAssistant: () => void;
+  onShowChart: () => void;
 }
 
 export default function AdminFeatureButtons({
@@ -19,6 +20,7 @@ export default function AdminFeatureButtons({
   onTogglePrivilegesSearch,
   onToggleTeamMonitoring,
   onToggleAIAssistant,
+  onShowChart,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -78,6 +80,12 @@ export default function AdminFeatureButtons({
               {pendingCount}
             </Badge>
           )}
+        </button>
+        <button
+          onClick={onShowChart}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
+        >
+          📊 Lifecycle Chart
         </button>
       </div>
 
