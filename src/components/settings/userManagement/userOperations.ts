@@ -22,7 +22,7 @@ export const createDefaultUsers = (): User[] => {
       status: "Active",
       createdAt: new Date().toISOString().split('T')[0],
       fieldPermissions: defaultFieldPermissions["Doctor"],
-      hospitalPrivileges: ["King Abdulaziz Hospital", "King Faisal Specialist Hospital"]
+      hospitalPrivileges: ["DSAH", "DSFH (main)"]
     },
     {
       id: "default-nurse-1",
