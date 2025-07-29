@@ -29,13 +29,19 @@ const MedicalInfoSection = ({
   const [selectedHospital, setSelectedHospital] = useState<string>(form.referredToHospital || "");
   const [opdDate, setOpdDate] = useState<Date>();
 
-  // Get doctors for selected specialty - get fresh data from user management
+  // Get doctors for selected specialty - get fresh data from user management and remove duplicates
   const getDoctorsForSpecialty = (specialty: string) => {
     if (!specialty) return [];
     const freshDoctorsBySpecialty = getDoctorsBySpecialtyFresh();
-    const doctors = freshDoctorsBySpecialty[specialty as keyof typeof freshDoctorsBySpecialty];
-    console.log(`Getting doctors for ${specialty}:`, doctors);
-    return doctors || [];
+    let doctors = freshDoctorsBySpecialty[specialty as keyof typeof freshDoctorsBySpecialty] || [];
+    
+    // Remove duplicates based on label (doctor name)
+    const uniqueDoctors = doctors.filter((doctor, index, self) => 
+      index === self.findIndex(d => d.label === doctor.label)
+    );
+    
+    console.log(`Getting doctors for ${specialty}: found ${doctors.length}, unique ${uniqueDoctors.length}`, uniqueDoctors);
+    return uniqueDoctors;
   };
 
   const availableDoctors = getDoctorsForSpecialty(selectedSpecialty);
@@ -121,9 +127,9 @@ const MedicalInfoSection = ({
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
               {availableDoctors.length > 0 ? (
-                availableDoctors.map((doctor) => (
+                availableDoctors.map((doctor, index) => (
                   <SelectItem 
-                    key={doctor.value} 
+                    key={`${doctor.value}-${index}`}
                     value={doctor.label}
                     className="hover:bg-gray-100 dark:hover:bg-gray-700"
                   >

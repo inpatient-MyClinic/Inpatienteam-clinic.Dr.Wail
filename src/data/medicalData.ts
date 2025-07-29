@@ -147,24 +147,37 @@ export const getDoctorsBySpecialty = () => {
       "Vascular Surgery": "vascular_surgery"
     };
     
-    // Add doctors to their specialties
+    // Add doctors to their specialties with deduplication
+    const addedDoctors = new Set<string>(); // Track added doctor names to prevent duplicates
+    
     doctors.forEach(doctor => {
       if (doctor.specialty) {
         // Map the display specialty name to the internal value
         const specialtyValue = specialtyMapping[doctor.specialty] || doctor.specialty.toLowerCase().replace(/\s+/g, '_');
         
-        const doctorData = {
-          value: doctor.id,
-          label: doctor.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          privileges: doctor.hospitalPrivileges || []
-        };
+        // Create a clean doctor name from email
+        const doctorName = doctor.email.split('@')[0].replace(/[.\-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         
-        console.log(`Adding doctor ${doctorData.label} to specialty: ${doctor.specialty} -> ${specialtyValue}`);
+        // Check for duplicates using a combination of name and specialty
+        const doctorKey = `${doctorName}-${specialtyValue}`;
         
-        if (doctorsBySpecialty[specialtyValue]) {
-          doctorsBySpecialty[specialtyValue].push(doctorData);
+        if (!addedDoctors.has(doctorKey)) {
+          const doctorData = {
+            value: doctor.id,
+            label: doctorName,
+            privileges: doctor.hospitalPrivileges || []
+          };
+          
+          console.log(`Adding doctor ${doctorData.label} to specialty: ${doctor.specialty} -> ${specialtyValue}`);
+          
+          if (doctorsBySpecialty[specialtyValue]) {
+            doctorsBySpecialty[specialtyValue].push(doctorData);
+            addedDoctors.add(doctorKey);
+          } else {
+            console.warn(`Unknown specialty mapping: ${doctor.specialty} -> ${specialtyValue}`);
+          }
         } else {
-          console.warn(`Unknown specialty mapping: ${doctor.specialty} -> ${specialtyValue}`);
+          console.log(`Skipping duplicate doctor: ${doctorName} in ${specialtyValue}`);
         }
       }
     });
