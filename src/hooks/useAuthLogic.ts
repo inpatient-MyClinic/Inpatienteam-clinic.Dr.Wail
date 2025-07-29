@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { validateEmail, extractUserName, getUserRole, redirectToUserDashboard, isUserAuthorized } from "@/utils/userUtils";
 import { isAdmin } from "@/utils/auth";
+import { LoginAttemptService } from "@/services/loginAttemptService";
 
 export const useAuthLogic = () => {
   const [email, setEmail] = useState("");
@@ -169,9 +170,13 @@ export const useAuthLogic = () => {
     
     if (!userAuthorized) {
       console.log("LOGIN BLOCKED: User not authorized - not in user management");
+      
+      // Log the unauthorized login attempt
+      LoginAttemptService.addLoginAttempt(normalizedEmail);
+      
       toast({
         title: "غير مصرح بالدخول",
-        description: "حسابك غير مفعل في النظام. يرجى التواصل مع مدير النظام لتفعيل الحساب.",
+        description: "تم إرسال طلب وصولك إلى مدير النظام للمراجعة.",
         variant: "destructive",
       });
       return;
