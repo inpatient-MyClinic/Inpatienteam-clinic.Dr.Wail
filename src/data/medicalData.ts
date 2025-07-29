@@ -116,6 +116,8 @@ export const getDoctorsBySpecialty = () => {
     const users = loadUsersFromStorage();
     const doctors = users.filter(user => user.category === 'Doctor' && user.status === 'Active');
     
+    console.log('Found doctors:', doctors.map(d => ({ email: d.email, specialty: d.specialty, category: d.category, status: d.status })));
+    
     // Group doctors by specialty
     const doctorsBySpecialty: Record<string, Array<{ value: string; label: string; privileges: string[] }>> = {};
     
@@ -124,17 +126,39 @@ export const getDoctorsBySpecialty = () => {
       doctorsBySpecialty[specialty.value] = [];
     });
     
+    // Create specialty mapping from display name to value
+    const specialtyMapping: Record<string, string> = {
+      "Cardiology": "cardiology",
+      "ENT": "ent", 
+      "GIT (Gastroenterology)": "gastroenterology",
+      "General Surgery": "general_surgery",
+      "Neurology": "neurology",
+      "Neurosurgery": "neurosurgery",
+      "OBGYN": "obgyn",
+      "Ophthalmology": "ophthalmology",
+      "Orthopaedic": "orthopedics",
+      "Urology": "urology",
+      "Vascular Surgery": "vascular_surgery"
+    };
+    
     // Add doctors to their specialties
     doctors.forEach(doctor => {
       if (doctor.specialty) {
+        // Map the display specialty name to the internal value
+        const specialtyValue = specialtyMapping[doctor.specialty] || doctor.specialty.toLowerCase().replace(/\s+/g, '_');
+        
         const doctorData = {
           value: doctor.id,
           label: doctor.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
           privileges: doctor.hospitalPrivileges || []
         };
         
-        if (doctorsBySpecialty[doctor.specialty]) {
-          doctorsBySpecialty[doctor.specialty].push(doctorData);
+        console.log(`Adding doctor ${doctorData.label} to specialty: ${doctor.specialty} -> ${specialtyValue}`);
+        
+        if (doctorsBySpecialty[specialtyValue]) {
+          doctorsBySpecialty[specialtyValue].push(doctorData);
+        } else {
+          console.warn(`Unknown specialty mapping: ${doctor.specialty} -> ${specialtyValue}`);
         }
       }
     });
