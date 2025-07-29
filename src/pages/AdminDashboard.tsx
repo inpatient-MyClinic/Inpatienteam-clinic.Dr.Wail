@@ -39,8 +39,18 @@ export default function AdminDashboard() {
     requestStorage.initializeSampleData();
     
     const loadAllData = () => {
+      // Check if data was cleared
+      const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
+      
+      if (dataCleared) {
+        // If data was cleared, show empty data
+        setAllRequestsData([]);
+        return;
+      }
+      
       const requests = requestStorage.getAllRequests();
       console.log('Admin Dashboard - All stored requests:', requests);
+      
       // Convert requests to admin format and combine with existing admin data
       const requestAdminData = requests.map(req => ({
         id: `REQ${req.id}`,
@@ -58,7 +68,7 @@ export default function AdminDashboard() {
         serviceDescription: req.serviceDescription || "Unknown Service"
       }));
       
-      // Combine with existing admin data
+      // Combine with existing admin data only if not cleared
       setAllRequestsData([...adminData, ...requestAdminData]);
     };
 
@@ -73,10 +83,12 @@ export default function AdminDashboard() {
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('requestsUpdated', handleRequestsUpdate);
+    window.addEventListener('adminDataCleared', handleRequestsUpdate);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+      window.removeEventListener('adminDataCleared', handleRequestsUpdate);
     };
   }, []);
 

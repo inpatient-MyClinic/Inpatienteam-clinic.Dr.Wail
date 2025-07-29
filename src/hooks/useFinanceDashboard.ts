@@ -6,7 +6,13 @@ import { savePaymentUpdateToSystem, loadSystemPaymentUpdates } from '@/utils/fin
 import { useToast } from '@/hooks/use-toast';
 
 export const useFinanceDashboard = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  // Check if data was cleared and initialize accordingly
+  const getInitialTransactions = () => {
+    const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
+    return dataCleared ? [] : initialTransactions;
+  };
+  
+  const [transactions, setTransactions] = useState<Transaction[]>(getInitialTransactions());
   const [dateFilter, setDateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
@@ -17,6 +23,14 @@ export const useFinanceDashboard = () => {
 
   // Load system payment updates on component mount
   useEffect(() => {
+    // Check if data was cleared
+    const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
+    
+    if (dataCleared) {
+      setTransactions([]);
+      return;
+    }
+    
     const systemUpdates = loadSystemPaymentUpdates();
     if (Object.keys(systemUpdates).length > 0) {
       setTransactions(prev => prev.map(transaction => {
@@ -27,6 +41,17 @@ export const useFinanceDashboard = () => {
       }));
       console.log('Loaded payment updates from system:', Object.keys(systemUpdates).length);
     }
+    
+    // Listen for data clear events
+    const handleDataCleared = () => {
+      setTransactions([]);
+    };
+    
+    window.addEventListener('financeDataCleared', handleDataCleared);
+    
+    return () => {
+      window.removeEventListener('financeDataCleared', handleDataCleared);
+    };
   }, []);
 
   // Enhanced filtering logic
