@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, UserPlus, AlertTriangle } from "lucide-react";
 import { userCategories, specialties } from "./types";
 import UserExcelUpload from "../userExcelUpload";
 
@@ -18,6 +18,7 @@ interface UserFormProps {
   setNewUserSpecialty: (specialty: string) => void;
   onAddUser: () => void;
   onExcelUpload: (users: any[]) => void;
+  onCleanupDuplicates?: () => void;
 }
 
 const UserForm = ({
@@ -28,7 +29,8 @@ const UserForm = ({
   newUserSpecialty,
   setNewUserSpecialty,
   onAddUser,
-  onExcelUpload
+  onExcelUpload,
+  onCleanupDuplicates
 }: UserFormProps) => {
   return (
     <Card>
@@ -97,6 +99,16 @@ const UserForm = ({
               Add User
             </Button>
             <UserExcelUpload onUpload={onExcelUpload} />
+            {onCleanupDuplicates && (
+              <Button 
+                variant="outline" 
+                onClick={onCleanupDuplicates}
+                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Remove Duplicates
+              </Button>
+            )}
           </div>
         </div>
 

@@ -77,26 +77,67 @@ export const useUserActions = (
     
     const newUsers = processExcelUsers(uploadedUsers);
 
-    // Check for duplicates based on email
-    const existingEmails = users.map(u => u.email);
-    const uniqueNewUsers = newUsers.filter(newUser => !existingEmails.includes(newUser.email));
-    const duplicates = newUsers.filter(newUser => existingEmails.includes(newUser.email));
+    // Comprehensive duplicate checking - by email AND doctor name
+    const duplicates: User[] = [];
+    const uniqueNewUsers: User[] = [];
+
+    newUsers.forEach(newUser => {
+      const isDuplicateByEmail = users.some(existing => existing.email === newUser.email);
+      const isDuplicateByName = users.some(existing => 
+        existing.category === 'Doctor' && 
+        newUser.category === 'Doctor' && 
+        existing.email.split('@')[0].toLowerCase().replace(/[.\-_]/g, '') === 
+        newUser.email.split('@')[0].toLowerCase().replace(/[.\-_]/g, '')
+      );
+
+      if (isDuplicateByEmail || isDuplicateByName) {
+        duplicates.push(newUser);
+        console.log('Found duplicate:', newUser.email);
+      } else {
+        uniqueNewUsers.push(newUser);
+      }
+    });
+
+    // Remove duplicates within the new data itself
+    const finalUniqueUsers: User[] = [];
+    const seenEmails = new Set<string>();
+    const seenNames = new Set<string>();
+
+    uniqueNewUsers.forEach(user => {
+      const emailKey = user.email.toLowerCase();
+      const nameKey = user.category === 'Doctor' ? user.email.split('@')[0].toLowerCase().replace(/[.\-_]/g, '') : '';
+      
+      if (!seenEmails.has(emailKey) && (user.category !== 'Doctor' || !seenNames.has(nameKey))) {
+        seenEmails.add(emailKey);
+        if (user.category === 'Doctor') seenNames.add(nameKey);
+        finalUniqueUsers.push(user);
+      } else {
+        duplicates.push(user);
+        console.log('Found internal duplicate:', user.email);
+      }
+    });
 
     if (duplicates.length > 0) {
       console.log('userActions: Found duplicates:', duplicates.length);
       toast({
-        title: "Duplicates Found",
-        description: `${duplicates.length} users already exist and were skipped. ${uniqueNewUsers.length} new users added.`,
+        title: "Duplicates Prevented",
+        description: `${duplicates.length} duplicate users were skipped. ${finalUniqueUsers.length} new users added.`,
         variant: "destructive"
       });
     }
 
-    if (uniqueNewUsers.length > 0) {
-      setUsers(prev => [...prev, ...uniqueNewUsers]);
-      console.log('userActions: Added users from Excel:', uniqueNewUsers.length);
+    if (finalUniqueUsers.length > 0) {
+      setUsers(prev => [...prev, ...finalUniqueUsers]);
+      console.log('userActions: Added users from Excel:', finalUniqueUsers.length);
       toast({
         title: "Success",
-        description: `${uniqueNewUsers.length} users imported successfully from Excel`
+        description: `${finalUniqueUsers.length} users imported successfully from Excel`
+      });
+    } else if (duplicates.length > 0) {
+      toast({
+        title: "No New Users",
+        description: "All uploaded users already exist in the system",
+        variant: "destructive"
       });
     }
   };

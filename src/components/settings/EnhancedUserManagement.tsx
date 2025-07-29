@@ -47,6 +47,7 @@ const EnhancedUserManagement = () => {
     exportToExcel,
     clearFilters,
     updateUser,
+    cleanupDuplicates,
     
     // Computed
     filteredUsers,
@@ -111,6 +112,7 @@ const EnhancedUserManagement = () => {
         setNewUserSpecialty={setNewUserSpecialty}
         onAddUser={addUser}
         onExcelUpload={handleExcelUpload}
+        onCleanupDuplicates={cleanupDuplicates}
       />
 
       <DoctorPrivileges 

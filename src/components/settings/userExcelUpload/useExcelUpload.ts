@@ -68,16 +68,39 @@ export function useExcelUpload() {
     const duplicates: any[] = [];
     const unique: any[] = [];
     
+    // Check against existing preview data AND remove internal duplicates
+    const seenEmails = new Set(previewData.map(user => user.Email?.toLowerCase()));
+    const seenNames = new Set(previewData.filter(user => user.Role === 'Doctor')
+      .map(user => user["Doctor Name"]?.toLowerCase().replace(/[.\-_\s]/g, '')));
+    
     newData.forEach(newUser => {
-      const isDuplicate = previewData.some(existingUser => 
-        existingUser.Email === newUser.Email || 
-        (existingUser["Doctor Name"] && newUser["Doctor Name"] && existingUser["Doctor Name"] === newUser["Doctor Name"])
-      );
+      const emailKey = newUser.Email?.toLowerCase();
+      const nameKey = newUser.Role === 'Doctor' ? 
+        newUser["Doctor Name"]?.toLowerCase().replace(/[.\-_\s]/g, '') : '';
       
-      if (isDuplicate) {
+      const isDuplicateByEmail = seenEmails.has(emailKey);
+      const isDuplicateByName = newUser.Role === 'Doctor' && seenNames.has(nameKey);
+      
+      if (isDuplicateByEmail || isDuplicateByName) {
         duplicates.push(newUser);
+        console.log('Found duplicate in preview data:', newUser.Email);
       } else {
-        unique.push(newUser);
+        // Check for duplicates within the new data itself
+        const internalDuplicateByEmail = unique.some(existing => 
+          existing.Email?.toLowerCase() === emailKey);
+        const internalDuplicateByName = newUser.Role === 'Doctor' && 
+          unique.some(existing => 
+            existing.Role === 'Doctor' && 
+            existing["Doctor Name"]?.toLowerCase().replace(/[.\-_\s]/g, '') === nameKey);
+        
+        if (internalDuplicateByEmail || internalDuplicateByName) {
+          duplicates.push(newUser);
+          console.log('Found internal duplicate:', newUser.Email);
+        } else {
+          unique.push(newUser);
+          seenEmails.add(emailKey);
+          if (newUser.Role === 'Doctor') seenNames.add(nameKey);
+        }
       }
     });
     

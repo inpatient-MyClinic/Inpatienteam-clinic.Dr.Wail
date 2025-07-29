@@ -6,6 +6,7 @@ import { loadUsersFromStorage, saveUsersToStorage } from "./UserStorage";
 import { createDefaultUsers } from "./userOperations";
 import { filterUsers, hasActiveFilters as checkActiveFilters } from "./userFilters";
 import { useUserActions } from "./userActions";
+import { cleanupDuplicateUsers } from "./duplicateCleanup";
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -147,6 +148,24 @@ export const useUserManagement = () => {
 
   const hasActiveFilters = checkActiveFilters(searchFilter, categoryFilter, specialtyFilter, statusFilter);
 
+  const cleanupDuplicates = () => {
+    console.log('useUserManagement: Starting duplicate cleanup...');
+    const { removed, cleaned } = cleanupDuplicateUsers();
+    
+    if (removed > 0) {
+      setUsers(cleaned);
+      toast({
+        title: "Duplicates Cleaned",
+        description: `Removed ${removed} duplicate users. ${cleaned.length} users remain.`,
+      });
+    } else {
+      toast({
+        title: "No Duplicates Found",
+        description: "All users are unique.",
+      });
+    }
+  };
+
   return {
     // State
     users,
@@ -179,6 +198,7 @@ export const useUserManagement = () => {
     exportToExcel: () => userActions.exportToExcel(searchFilter, categoryFilter, specialtyFilter, statusFilter),
     clearFilters,
     updateUser,
+    cleanupDuplicates,
     
     // Computed
     filteredUsers: getFilteredUsers(),
