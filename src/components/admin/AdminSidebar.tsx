@@ -8,24 +8,47 @@ import Logo from "@/components/Logo";
 interface AdminSidebarProps {
   activeFilter: string | null;
   showAnalytics: boolean;
+  filteredData: any[];
   onStatusFilter: (status: string | null) => void;
   onToggleAnalytics: () => void;
 }
 
-const adminStats = [
-  { label: "Pending", value: 12, color: "bg-yellow-500", key: "pending" },
-  { label: "Completed", value: 156, color: "bg-green-600", key: "completed" },
-  { label: "In Progress", value: 34, color: "bg-blue-600", key: "in_progress" },
-  { label: "High Priority", value: 8, color: "bg-red-600", key: "high_priority" },
-];
-
 export default function AdminSidebar({ 
   activeFilter, 
   showAnalytics, 
+  filteredData,
   onStatusFilter, 
   onToggleAnalytics 
 }: AdminSidebarProps) {
   const navigate = useNavigate();
+
+  // Calculate dynamic stats from filtered data
+  const adminStats = [
+    { 
+      label: "Pending", 
+      value: filteredData.filter(item => item.status === "Pending").length, 
+      color: "bg-yellow-500", 
+      key: "pending" 
+    },
+    { 
+      label: "Completed", 
+      value: filteredData.filter(item => item.status === "Completed" || item.status === "Done").length, 
+      color: "bg-green-600", 
+      key: "completed" 
+    },
+    { 
+      label: "In Progress", 
+      value: filteredData.filter(item => item.status === "In Progress").length, 
+      color: "bg-blue-600", 
+      key: "in_progress" 
+    },
+    { 
+      label: "High Priority", 
+      value: filteredData.filter(item => item.priority === "High" || item.priority === "High Priority").length, 
+      color: "bg-red-600", 
+      key: "high_priority" 
+    },
+  ];
 
   console.log("AdminSidebar rendering, showAnalytics:", showAnalytics);
 

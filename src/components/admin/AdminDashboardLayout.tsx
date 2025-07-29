@@ -67,6 +67,7 @@ export default function AdminDashboardLayout({
       <AdminSidebar
         activeFilter={activeFilter}
         showAnalytics={showAnalytics}
+        filteredData={filteredData}
         onStatusFilter={onStatusFilter}
         onToggleAnalytics={onToggleAnalytics}
       />
