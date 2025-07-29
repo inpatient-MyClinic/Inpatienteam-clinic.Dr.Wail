@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RequestFormData } from "@/types/request";
-import { specialties, doctorsBySpecialty, servicesBySpecialty, referralSources, getHospitalsBySpecialty } from "@/data/medicalData";
+import { specialties, getDoctorsBySpecialtyFresh, servicesBySpecialty, referralSources, getHospitalsBySpecialty } from "@/data/medicalData";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -29,10 +29,11 @@ const MedicalInfoSection = ({
   const [selectedHospital, setSelectedHospital] = useState<string>(form.referredToHospital || "");
   const [opdDate, setOpdDate] = useState<Date>();
 
-  // Get doctors for selected specialty - direct access to static data
+  // Get doctors for selected specialty - get fresh data from user management
   const getDoctorsForSpecialty = (specialty: string) => {
     if (!specialty) return [];
-    const doctors = doctorsBySpecialty[specialty as keyof typeof doctorsBySpecialty];
+    const freshDoctorsBySpecialty = getDoctorsBySpecialtyFresh();
+    const doctors = freshDoctorsBySpecialty[specialty as keyof typeof freshDoctorsBySpecialty];
     console.log(`Getting doctors for ${specialty}:`, doctors);
     return doctors || [];
   };

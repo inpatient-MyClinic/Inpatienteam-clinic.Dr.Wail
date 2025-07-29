@@ -149,8 +149,11 @@ export const getDoctorsBySpecialty = () => {
   }
 };
 
-// Export the dynamic doctorsBySpecialty
-export const doctorsBySpecialty = getDoctorsBySpecialty();
+// Export a function that gets fresh data each time
+export const getDoctorsBySpecialtyFresh = () => getDoctorsBySpecialty();
+
+// Export the dynamic doctorsBySpecialty - this will be updated when needed
+export let doctorsBySpecialty = getDoctorsBySpecialty();
 
 export const servicesBySpecialty = {
   cardiology: [

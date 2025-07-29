@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { specialties, getDoctorsBySpecialty } from "@/data/medicalData";
+import { specialties, getDoctorsBySpecialtyFresh } from "@/data/medicalData";
 
 interface NurseFiltersProps {
   specialtyFilter: string;
@@ -19,10 +19,10 @@ export default function NurseFilters({
 }: NurseFiltersProps) {
   const [doctorsBySpecialty, setDoctorsBySpecialty] = useState<Record<string, Array<{ value: string; label: string; privileges: string[] }>>>({});
 
-  // Load fresh doctor data when component mounts
   useEffect(() => {
-    const freshDoctorData = getDoctorsBySpecialty();
-    setDoctorsBySpecialty(freshDoctorData);
+    // Load fresh doctor data when component mounts
+    const freshDoctorsBySpecialty = getDoctorsBySpecialtyFresh();
+    setDoctorsBySpecialty(freshDoctorsBySpecialty);
   }, []);
 
   const availableDoctors = specialtyFilter ? 
