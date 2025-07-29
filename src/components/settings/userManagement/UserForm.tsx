@@ -44,9 +44,9 @@ const UserForm = ({
           Choose category to set default privileges for website access.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <div className="flex-1">
+      <CardContent className="space-y-6 p-6">
+        <div className="space-y-4">
+          <div className="w-full">
             <Label htmlFor="email">Email Address *</Label>
             <Input
               id="email"
@@ -54,56 +54,60 @@ const UserForm = ({
               placeholder="user@hospital.com"
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
-              className="mt-1"
+              className="mt-1 w-full"
             />
           </div>
           
-          <div>
-            <Label htmlFor="category">User Category *</Label>
-            <Select value={newUserCategory} onValueChange={setNewUserCategory}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {userCategories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {newUserCategory === "Doctor" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="specialty">Medical Specialty</Label>
-              <Select value={newUserSpecialty} onValueChange={setNewUserSpecialty}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select specialty" />
+              <Label htmlFor="category">User Category *</Label>
+              <Select value={newUserCategory} onValueChange={setNewUserCategory}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No Specialty</SelectItem>
-                  {specialties.map(specialty => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
+                  {userCategories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
+            
+            {newUserCategory === "Doctor" && (
+              <div>
+                <Label htmlFor="specialty">Medical Specialty</Label>
+                <Select value={newUserSpecialty} onValueChange={setNewUserSpecialty}>
+                  <SelectTrigger className="mt-1 w-full">
+                    <SelectValue placeholder="Select specialty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Specialty</SelectItem>
+                    {specialties.map(specialty => (
+                      <SelectItem key={specialty} value={specialty}>
+                        {specialty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
           
-          <div className="flex gap-2">
-            <Button onClick={onAddUser} className="bg-blue-600 hover:bg-blue-700">
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button onClick={onAddUser} className="flex-1 min-w-[120px] bg-primary hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
               Add User
             </Button>
-            <UserExcelUpload onUpload={onExcelUpload} />
+            <div className="flex-1 min-w-[120px]">
+              <UserExcelUpload onUpload={onExcelUpload} />
+            </div>
             {onCleanupDuplicates && (
               <Button 
                 variant="outline" 
                 onClick={onCleanupDuplicates}
-                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                className="flex-1 min-w-[140px] text-destructive border-destructive/20 hover:bg-destructive/10"
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Remove Duplicates
