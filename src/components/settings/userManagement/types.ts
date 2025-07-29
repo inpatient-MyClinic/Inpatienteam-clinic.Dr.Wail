@@ -22,15 +22,16 @@ export const userCategories = [
 
 export const specialties = [
   "Cardiology",
-  "Neurology", 
-  "Orthopedics",
-  "Pediatrics",
-  "Surgery",
-  "Radiology",
-  "Emergency Medicine",
-  "Internal Medicine",
-  "Dermatology",
-  "Psychiatry"
+  "ENT",
+  "GIT (Gastroenterology)",
+  "General Surgery",
+  "Neurology",
+  "Neurosurgery", 
+  "OBGYN",
+  "Ophthalmology",
+  "Orthopaedic",
+  "Urology",
+  "Vascular Surgery"
 ];
 
 export const systemFields = [
