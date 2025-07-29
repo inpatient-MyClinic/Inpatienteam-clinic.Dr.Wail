@@ -56,9 +56,11 @@ export class DataBackupService {
     };
   }
 
-  static saveBackupSettings(settings: BackupSettings): void {
+  static saveBackupSettings(settings: BackupSettings, scheduleNext: boolean = true): void {
     localStorage.setItem(this.BACKUP_SETTINGS_KEY, JSON.stringify(settings));
-    this.scheduleNextBackup();
+    if (scheduleNext) {
+      this.scheduleNextBackup();
+    }
   }
 
   static createBackup(): BackupData {
@@ -101,10 +103,10 @@ export class DataBackupService {
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
 
-    // Update last backup time
+    // Update last backup time without rescheduling (prevent infinite loop)
     const settings = this.getBackupSettings();
     settings.lastBackup = new Date().toISOString();
-    this.saveBackupSettings(settings);
+    this.saveBackupSettings(settings, false);
   }
 
   static saveBackupVersion(backupData: BackupData, isMainVersion: boolean = false): void {
@@ -165,10 +167,10 @@ export class DataBackupService {
     const backupData = this.createBackup();
     localStorage.setItem(this.BACKUP_DATA_KEY, JSON.stringify(backupData));
     
-    // Update last backup time
+    // Update last backup time without rescheduling (prevent infinite loop)
     const settings = this.getBackupSettings();
     settings.lastBackup = new Date().toISOString();
-    this.saveBackupSettings(settings);
+    this.saveBackupSettings(settings, false);
   }
 
   static restoreFromFile(file: File): Promise<boolean> {
