@@ -101,18 +101,23 @@ export default function CustomerCareDashboard() {
   useEffect(() => {
     requests.forEach(request => {
       if (request.status === "done" && !request.surveySent) {
-        setTimeout(() => {
+        const requestCompletedTime = new Date(request.completionDate).getTime();
+        const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+        const currentTime = Date.now();
+        
+        // Check if 2 days have passed since completion
+        if (currentTime - requestCompletedTime >= twoDaysInMs) {
           setRequests(prev =>
             prev.map(req =>
               req.id === request.id ? { ...req, surveySent: true } : req
             )
           );
-          console.log(`Auto-sent WhatsApp survey to ${request.patientName} for request ${request.id}`);
+          console.log(`Auto-sent WhatsApp survey to ${request.patientName} for request ${request.id} after 2 days`);
           toast({
             title: "Survey sent automatically",
-            description: `WhatsApp survey sent to ${request.patientName}`,
+            description: `WhatsApp survey sent to ${request.patientName} after 2 days`,
           });
-        }, 1000);
+        }
       }
     });
   }, [requests, toast]);
