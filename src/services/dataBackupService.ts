@@ -237,21 +237,51 @@ export class DataBackupService {
   }
 
   static clearPatientDataOnly(): void {
-    // Clear only patient/request data, keep users and settings
+    // Clear all patient/request data across all modules
+    const keysToRemove = [
+      'medical_requests',
+      'notifications',
+      'statusCounts',
+      'requestStats', 
+      'dashboardCache',
+      'systemPaymentUpdates', // Clear finance payment updates
+      'adminData', // Clear admin data
+      'financeTransactions', // Clear finance transactions
+      'caseCoordinatorRequests',
+      'doctorRequests',
+      'nurseRequests',
+      'hospitalRequests'
+    ];
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Reset all data to empty arrays
     localStorage.setItem('medical_requests', JSON.stringify([]));
     localStorage.setItem('notifications', JSON.stringify([]));
+    localStorage.setItem('systemPaymentUpdates', JSON.stringify({}));
+    localStorage.setItem('adminData', JSON.stringify([]));
+    localStorage.setItem('financeTransactions', JSON.stringify([]));
     
-    // Set a flag to prevent sample data reinitialization
+    // Set flag to prevent sample data reinitialization
     localStorage.setItem('sample_data_cleared', 'true');
     
-    // Trigger storage events to update UI
+    // Trigger comprehensive UI refresh
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'medical_requests',
       newValue: '[]'
     }));
     window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    window.dispatchEvent(new CustomEvent('financeDataCleared'));
+    window.dispatchEvent(new CustomEvent('adminDataCleared'));
     
-    console.log('All patient data cleared, users and settings preserved');
+    console.log('All patient, finance, and admin data cleared, users and settings preserved');
+    
+    // Force page reload to ensure complete reset
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   }
 
   static initializeProductionData(): void {
