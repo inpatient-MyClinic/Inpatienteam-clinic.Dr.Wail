@@ -10,7 +10,7 @@ export const specialties = [
   { value: "neurosurgery", label: "Neurosurgery" },
   { value: "obgyn", label: "OBGYN" },
   { value: "ophthalmology", label: "Ophthalmology" },
-  { value: "orthopedics", label: "Orthopaedic" },
+  { value: "orthopaedic", label: "Orthopaedic" },
   { value: "urology", label: "Urology" },
   { value: "vascular_surgery", label: "Vascular Surgery" },
 ];
@@ -93,7 +93,7 @@ const staticDoctorsBySpecialty = {
     { value: "opht1", label: "Dr. Saeed Al-Mansouri", privileges: ["Al Batal Eye Centre", "Bin Rushd Eye Center"] },
     { value: "opht2", label: "Dr. Robert Taylor", privileges: ["Al Batal Eye Centre", "Bin Rushd Eye Center"] }
   ],
-  orthopedics: [
+  orthopaedic: [
     { value: "ortho1", label: "Dr. Ali Al-Rashid", privileges: [...hospitals] },
     { value: "ortho2", label: "Dr. James Wilson", privileges: [...hospitals] },
     { value: "ortho3", label: "Dr. Ahmed Al-Zahra", privileges: [...hospitals] }
@@ -126,17 +126,23 @@ export const getDoctorsBySpecialty = () => {
       doctorsBySpecialty[specialty.value] = [];
     });
     
-    // Create specialty mapping from display name to value
+    // Create comprehensive specialty mapping to handle variations
     const specialtyMapping: Record<string, string> = {
       "Cardiology": "cardiology",
       "ENT": "ent", 
       "GIT (Gastroenterology)": "gastroenterology",
+      "Gastroenterology": "gastroenterology",
       "General Surgery": "general_surgery",
       "Neurology": "neurology",
       "Neurosurgery": "neurosurgery",
       "OBGYN": "obgyn",
+      "OB/GYN": "obgyn",
+      "Obstetrics and Gynecology": "obgyn",
       "Ophthalmology": "ophthalmology",
-      "Orthopaedic": "orthopedics",
+      "Orthopaedic": "orthopaedic",
+      "Orthopedic": "orthopaedic",
+      "Orthopedics": "orthopaedic",
+      "Ortho": "orthopaedic",
       "Urology": "urology",
       "Vascular Surgery": "vascular_surgery"
     };
@@ -198,7 +204,7 @@ export const servicesBySpecialty = {
     "Gallbladder Surgery",
     "Hernia Repair",
   ],
-  orthopedics: [
+  orthopaedic: [
     "Joint Replacement Surgery (Hip/Knee)",
     "Arthroscopic Surgery",
     "Fracture Repair",

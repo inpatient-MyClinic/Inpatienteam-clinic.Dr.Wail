@@ -13,7 +13,7 @@ interface SpecialtySpecificFieldsProps {
 
 const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: SpecialtySpecificFieldsProps) => {
   const nonAssistanceHospitals = ["DSFH (main)", "DSFH (Basateen Branch)", "EMC/ European Medical Center"];
-  const assistanceSpecialties = ["orthopedics", "general_surgery", "ent"];
+  const assistanceSpecialties = ["orthopaedic", "general_surgery", "ent"];
   
   const shouldShowAssistanceField = !nonAssistanceHospitals.includes(formData.hospitalName) && 
                                    assistanceSpecialties.includes(specialty);
@@ -50,7 +50,7 @@ const SpecialtySpecificFields = ({ specialty, formData, handleInputChange }: Spe
   };
 
   switch (specialty) {
-    case 'orthopedics':
+    case 'orthopaedic':
       return (
         <div className="space-y-4">
           <div>
