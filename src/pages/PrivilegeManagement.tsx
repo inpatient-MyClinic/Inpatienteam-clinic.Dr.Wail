@@ -22,23 +22,27 @@ const doctors = [
 ];
 
 const hospitals = [
-  { id: "1", name: "Al-Noor Hospital" },
-  { id: "2", name: "City Medical Center" },
-  { id: "3", name: "Royal Hospital" },
-  { id: "4", name: "Green Valley Hospital" },
-  { id: "5", name: "Unity Medical Complex" },
+  { id: "1", name: "DSAH" },
+  { id: "2", name: "DSFH (Basateen Branch)" },
+  { id: "3", name: "Al Salamah Hospital" },
+  { id: "4", name: "EMC/ European Medical Center" },
+  { id: "5", name: "King's College Hospital" },
+  { id: "6", name: "IMC" },
+  { id: "7", name: "DSFH (main)" },
+  { id: "8", name: "Al Batal Eye Centre" },
+  { id: "9", name: "Bin Rushd Eye Center" },
 ];
 
 const specialties = ["All", "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Surgery", "Radiology"];
 
 // Mock privilege data - doctorId -> hospitalId -> boolean
 const initialPrivileges = {
-  "1": { "1": true, "2": true, "3": false, "4": true, "5": false },
-  "2": { "1": false, "2": true, "3": true, "4": false, "5": true },
-  "3": { "1": true, "2": false, "3": true, "4": true, "5": false },
-  "4": { "1": true, "2": true, "3": false, "4": false, "5": true },
-  "5": { "1": false, "2": true, "3": true, "4": true, "5": true },
-  "6": { "1": true, "2": false, "3": false, "4": true, "5": false },
+  "1": { "1": true, "2": true, "3": false, "4": true, "5": false, "6": true, "7": true, "8": false, "9": false },
+  "2": { "1": false, "2": true, "3": true, "4": false, "5": true, "6": false, "7": true, "8": false, "9": true },
+  "3": { "1": true, "2": false, "3": true, "4": true, "5": false, "6": true, "7": false, "8": false, "9": false },
+  "4": { "1": true, "2": true, "3": false, "4": false, "5": true, "6": false, "7": true, "8": false, "9": false },
+  "5": { "1": false, "2": true, "3": true, "4": true, "5": true, "6": true, "7": false, "8": false, "9": false },
+  "6": { "1": true, "2": false, "3": false, "4": true, "5": false, "6": false, "7": true, "8": true, "9": true },
 };
 
 // Mock current user - in real app this would come from auth context
