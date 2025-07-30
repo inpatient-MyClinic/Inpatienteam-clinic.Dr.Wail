@@ -12,6 +12,7 @@ export function useAdminDashboard() {
   const [showTeamMonitoring, setShowTeamMonitoring] = useState(false);
   const [showGeneralReport, setShowGeneralReport] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showSIASlide, setShowSIASlide] = useState(false);
   const { toast } = useToast();
 
   const handleStatusFilter = (status: string | null) => {
@@ -61,6 +62,10 @@ export function useAdminDashboard() {
     setShowAIAssistant(!showAIAssistant);
   };
 
+  const handleToggleSIASlide = () => {
+    setShowSIASlide(!showSIASlide);
+  };
+
   return {
     // State
     activeFilter,
@@ -72,6 +77,7 @@ export function useAdminDashboard() {
     showTeamMonitoring,
     showGeneralReport,
     showAIAssistant,
+    showSIASlide,
     // Setters
     setSelectedDates,
     setSelectedWeeks,
@@ -87,5 +93,6 @@ export function useAdminDashboard() {
     handleTogglePrivilegesSearch,
     handleToggleTeamMonitoring,
     handleToggleAIAssistant,
+    handleToggleSIASlide,
   };
 }
