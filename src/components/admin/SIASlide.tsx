@@ -14,8 +14,8 @@ interface SIASlideProps {
 }
 
 export default function SIASlide({ data, onClose }: SIASlideProps) {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [isEditing, setIsEditing] = useState(false);
   const [editableData, setEditableData] = useState({
     npsScore: 85,
@@ -60,11 +60,11 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   );
 
   // Calculate previous month data (Month -25 concept)
-  const previousMonth = selectedMonth === 1 ? 12 : (selectedMonth as number) - 1;
-  const previousYear = selectedMonth === 1 ? (selectedYear as number) - 1 : selectedYear;
+  const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+  const previousYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
   const previousMonthData = data.filter(item => {
     const itemDate = new Date(item.date);
-    return itemDate.getMonth() + 1 === (previousMonth as number) && itemDate.getFullYear() === (previousYear as number);
+    return itemDate.getMonth() + 1 === previousMonth && itemDate.getFullYear() === previousYear;
   });
 
   // Top 5 Hospitals
@@ -73,9 +73,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     return acc;
   }, {} as Record<string, number>);
   const top5Hospitals = Object.entries(hospitalCounts)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => (b[1] as number) - (a[1] as number))
     .slice(0, 5)
-    .map(([name, count]) => ({ name, count }));
+    .map(([name, count]) => ({ name, count: count as number }));
 
   // Top 5 Specialties
   const specialtyCounts = filteredData.reduce((acc, item) => {
@@ -83,9 +83,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     return acc;
   }, {} as Record<string, number>);
   const top5Specialties = Object.entries(specialtyCounts)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => (b[1] as number) - (a[1] as number))
     .slice(0, 5)
-    .map(([name, count]) => ({ name, count }));
+    .map(([name, count]) => ({ name, count: count as number }));
 
   // Conversion Rate
   const totalReferred = filteredData.length;
