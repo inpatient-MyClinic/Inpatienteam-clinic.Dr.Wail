@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminAnalyticsFilters from "./analytics/AdminAnalyticsFilters";
+import AdminIPOperationsPerformance from "./analytics/AdminIPOperationsPerformance";
 import AdminMetricsCards from "./analytics/AdminMetricsCards";
 import AdminTopCharts from "./analytics/AdminTopCharts";
 import AdminLossTreeChart from "./analytics/AdminLossTreeChart";
@@ -146,6 +147,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
 
   return (
     <div className="space-y-6 mb-6">
+      {/* IP Operations Performance Dashboard */}
+      <AdminIPOperationsPerformance
+        data={filteredData}
+        selectedMonths={selectedMonths}
+      />
+
       {/* Filters */}
       <AdminAnalyticsFilters
         filterBy={filterBy}
