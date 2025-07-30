@@ -20,8 +20,24 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   const [editableData, setEditableData] = useState({
     npsScore: 85,
     revenue: 250000,
+    ytdRevenue: 12000000,
+    revenueGrowthPercent: 15.5,
     additionalNotes: ""
   });
+
+  // Editable table data
+  const [tableData, setTableData] = useState([
+    { currentStatus: "Complete", actionPlan: "Resume OB/GYN case referrals to DSAH as they have now started offering a split-share model", priority: "High", timeline: "Jun - 2025" },
+    { currentStatus: "In Progress (90%)", actionPlan: "Implement operations with PHS with 3 contracted hospitals. Complete with 3 out of 3 hospitals (CMO support)", priority: "Medium", timeline: "Sep-2025" },
+    { currentStatus: "Complete", actionPlan: "Expand the hospital network with IMC and KCH.", priority: "Medium", timeline: "May-2025" },
+    { currentStatus: "In Progress 90%", actionPlan: "All payments from Q1 2024 & Q1 2025 have been received from Al Salamah. However, no payments have been recovered from April 2025 to date.", priority: "High", timeline: "Jun-2025" },
+    { currentStatus: "In Progress", actionPlan: "Conducted a financial performance review by specialty to guide redirection to the highest revenue-generating partner hospitals. (Revenue concentration)", priority: "High", timeline: "Ongoing" },
+    { currentStatus: "In Progress 90%", actionPlan: "Contracts with IMC and KCH have been signed. Operations have been finalized and tested. Privilege approval will currently be processed.", priority: "High", timeline: "Apr-May 2025" },
+    { currentStatus: "In Progress 90%", actionPlan: "A proposal has been received from DSAH and is currently under discussion.", priority: "High", timeline: "Jun 2025" },
+    { currentStatus: "In Progress 90%", actionPlan: "The CRM initiative shifted to building a customized platform to manage patient journey and coordination.", priority: "High", timeline: "Development Phase – Jun 2025" },
+    { currentStatus: "In Progress", actionPlan: "To add the Ophthalmology revenue from the Finance & to add it with the In-Patient revenue( Finance)", priority: "High", timeline: "July - 2025" },
+    { currentStatus: "In Progress", actionPlan: "Introduction presentation in general for In-patient and another one per specialty", priority: "High", timeline: "Aug- 2025" }
+  ]);
   const { toast } = useToast();
 
   // Generate month options
@@ -47,9 +63,13 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   });
 
   // Calculate MC branch data
-  const mcBranchData = filteredData.filter(item => 
-    item.referredFrom && (item.referredFrom.includes("MCJ1") || item.referredFrom.includes("MCJ2"))
+  const mcj1Data = filteredData.filter(item => 
+    item.referredFrom && item.referredFrom.includes("MCJ1")
   );
+  const mcj2Data = filteredData.filter(item => 
+    item.referredFrom && item.referredFrom.includes("MCJ2")
+  );
+  const mcBranchData = [...mcj1Data, ...mcj2Data];
 
   // Calculate IP Cases - MTD
   const ipCases = filteredData.filter(item => item.type === "IP" || (item.description && item.description.includes("IP")));
@@ -202,6 +222,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">{mcBranchData.length}</div>
+                <div className="flex justify-between text-xs mt-2">
+                  <span>MCJ1: {mcj1Data.length}</span>
+                  <span>MCJ2: {mcj2Data.length}</span>
+                </div>
                 <p className="text-xs text-gray-500">Referred from MC branches</p>
               </CardContent>
             </Card>
@@ -212,6 +236,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{ipCases.length}</div>
+                <div className="text-sm mt-2">
+                  <div>Done: {doneCases.length} / Total: {totalReferred}</div>
+                </div>
                 <p className="text-xs text-gray-500">In-patient cases this month</p>
               </CardContent>
             </Card>
@@ -272,6 +299,128 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </Card>
           </div>
 
+          {/* Middle Row - Editable Table */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Action Plan Status</CardTitle>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setTableData([...tableData, { currentStatus: "", actionPlan: "", priority: "", timeline: "" }])}
+                >
+                  Add Row
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setTableData(tableData.slice(0, -1))}
+                  disabled={tableData.length <= 1}
+                >
+                  Remove Row
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr>
+                      <th className="border border-gray-300 p-2 bg-teal-600 text-white text-sm">Current Status</th>
+                      <th className="border border-gray-300 p-2 bg-teal-600 text-white text-sm">Action Plan</th>
+                      <th className="border border-gray-300 p-2 bg-teal-600 text-white text-sm">Priority</th>
+                      <th className="border border-gray-300 p-2 bg-teal-600 text-white text-sm">Timeline</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableData.map((row, index) => (
+                      <tr key={index}>
+                        <td className="border border-gray-300 p-1">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={row.currentStatus}
+                              onChange={(e) => {
+                                const newData = [...tableData];
+                                newData[index].currentStatus = e.target.value;
+                                setTableData(newData);
+                              }}
+                              className="w-full p-1 text-xs bg-transparent"
+                            />
+                          ) : (
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              row.currentStatus.includes('Complete') ? 'bg-green-100' :
+                              row.currentStatus.includes('In Progress') ? 'bg-yellow-100' : 'bg-gray-100'
+                            }`}>
+                              {row.currentStatus}
+                            </span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 p-1">
+                          {isEditing ? (
+                            <textarea
+                              value={row.actionPlan}
+                              onChange={(e) => {
+                                const newData = [...tableData];
+                                newData[index].actionPlan = e.target.value;
+                                setTableData(newData);
+                              }}
+                              className="w-full p-1 text-xs bg-transparent resize-none"
+                              rows={2}
+                            />
+                          ) : (
+                            <span className="text-xs">{row.actionPlan}</span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center">
+                          {isEditing ? (
+                            <select
+                              value={row.priority}
+                              onChange={(e) => {
+                                const newData = [...tableData];
+                                newData[index].priority = e.target.value;
+                                setTableData(newData);
+                              }}
+                              className="w-full p-1 text-xs bg-transparent"
+                            >
+                              <option value="">Select</option>
+                              <option value="High">High</option>
+                              <option value="Medium">Medium</option>
+                              <option value="Low">Low</option>
+                            </select>
+                          ) : (
+                            <span className={`text-xs px-2 py-1 rounded text-white ${
+                              row.priority === 'High' ? 'bg-red-500' :
+                              row.priority === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'
+                            }`}>
+                              {row.priority}
+                            </span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 p-1">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={row.timeline}
+                              onChange={(e) => {
+                                const newData = [...tableData];
+                                newData[index].timeline = e.target.value;
+                                setTableData(newData);
+                              }}
+                              className="w-full p-1 text-xs bg-transparent"
+                            />
+                          ) : (
+                            <span className="text-xs">{row.timeline}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Bottom Row - Conversion Rate Chart */}
           <Card>
             <CardHeader>
@@ -316,16 +465,21 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   onChange={(e) => setEditableData({...editableData, npsScore: parseInt(e.target.value)})}
                 />
               ) : (
-                <div className="text-3xl font-bold text-green-600">{editableData.npsScore}</div>
+                <div>
+                  <div className="text-3xl font-bold text-green-600">{editableData.npsScore}</div>
+                  <div className="mt-2 h-20 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+                    Chart can be added here
+                  </div>
+                </div>
               )}
               <p className="text-xs text-gray-500">Net Promoter Score</p>
             </CardContent>
           </Card>
 
-          {/* Cancelled/Rejected */}
+          {/* Loss Tree */}
           <Card>
             <CardHeader>
-              <CardTitle>Cancelled/Rejected Cases</CardTitle>
+              <CardTitle>Loss Tree</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -336,6 +490,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                 <div className="flex justify-between">
                   <span>Rejected:</span>
                   <Badge variant="destructive">{rejectedData.length}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pending:</span>
+                  <Badge variant="outline">{pendingData.length}</Badge>
                 </div>
                 <div className="mt-4">
                   <p className="text-sm font-medium mb-2">Failure Categories:</p>
@@ -368,17 +526,31 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </CardHeader>
             <CardContent>
               {isEditing ? (
-                <Input
-                  type="number"
-                  value={editableData.revenue}
-                  onChange={(e) => setEditableData({...editableData, revenue: parseInt(e.target.value)})}
-                />
+                <div className="space-y-2">
+                  <Input
+                    type="number"
+                    placeholder="YTD Achievement"
+                    value={editableData.ytdRevenue}
+                    onChange={(e) => setEditableData({...editableData, ytdRevenue: parseInt(e.target.value)})}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Growth %"
+                    value={editableData.revenueGrowthPercent}
+                    onChange={(e) => setEditableData({...editableData, revenueGrowthPercent: parseFloat(e.target.value)})}
+                  />
+                </div>
               ) : (
-                <div className="text-2xl font-bold text-green-600">
-                  ${editableData.revenue.toLocaleString()}
+                <div>
+                  <div className="text-lg font-bold text-green-600">
+                    YTD: ${editableData.ytdRevenue.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Growth: {editableData.revenueGrowthPercent}% vs. last year
+                  </div>
                 </div>
               )}
-              <p className="text-xs text-gray-500">Monthly revenue from finance</p>
+              <p className="text-xs text-gray-500">YTD Achievement - Revenue Growth</p>
             </CardContent>
           </Card>
 
