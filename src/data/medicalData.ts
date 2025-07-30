@@ -144,7 +144,8 @@ export const getDoctorsBySpecialty = () => {
       "Orthopedics": "orthopaedic",
       "Ortho": "orthopaedic",
       "Urology": "urology",
-      "Vascular Surgery": "vascular_surgery"
+      "Vascular Surgery": "vascular_surgery",
+      "Vascular Surgery ": "vascular_surgery" // Handle trailing space
     };
     
     // Add doctors to their specialties with deduplication
@@ -152,8 +153,11 @@ export const getDoctorsBySpecialty = () => {
     
     doctors.forEach(doctor => {
       if (doctor.specialty) {
+        // Clean the specialty name first (trim whitespace)
+        const cleanSpecialty = doctor.specialty.trim();
+        
         // Map the display specialty name to the internal value
-        const specialtyValue = specialtyMapping[doctor.specialty] || doctor.specialty.toLowerCase().replace(/\s+/g, '_');
+        const specialtyValue = specialtyMapping[cleanSpecialty] || cleanSpecialty.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
         
         // Create a clean doctor name from email
         const doctorName = doctor.email.split('@')[0].replace(/[.\-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -168,13 +172,18 @@ export const getDoctorsBySpecialty = () => {
             privileges: doctor.hospitalPrivileges || []
           };
           
-          console.log(`Adding doctor ${doctorData.label} to specialty: ${doctor.specialty} -> ${specialtyValue}`);
+        console.log(`Adding doctor ${doctorData.label} to specialty: ${cleanSpecialty} -> ${specialtyValue}`);
           
           if (doctorsBySpecialty[specialtyValue]) {
             doctorsBySpecialty[specialtyValue].push(doctorData);
             addedDoctors.add(doctorKey);
           } else {
-            console.warn(`Unknown specialty mapping: ${doctor.specialty} -> ${specialtyValue}`);
+            console.warn(`Unknown specialty mapping: ${cleanSpecialty} -> ${specialtyValue}. Adding to default specialty.`);
+            // Add to general_surgery as fallback instead of failing
+            if (doctorsBySpecialty['general_surgery']) {
+              doctorsBySpecialty['general_surgery'].push(doctorData);
+              addedDoctors.add(doctorKey);
+            }
           }
         } else {
           console.log(`Skipping duplicate doctor: ${doctorName} in ${specialtyValue}`);

@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { getCurrentUserRole } from "@/utils/auth";
 import { SystemInitializationService } from "@/services/systemInitializationService";
 import { requestStorage } from "@/services/requestStorage";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "@/pages/Login";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -37,12 +38,13 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
             <Route path="/" element={<Login />} />
             
             {/* Admin Routes */}
@@ -138,6 +140,7 @@ const App = () => {
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

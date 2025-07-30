@@ -93,9 +93,10 @@ class RequestStorageService {
 
   // Initialize with sample data if empty and not cleared by admin
   initializeSampleData(): void {
-    const sampleDataCleared = localStorage.getItem('sample_data_cleared');
-    if (this.getAllRequests().length === 0 && !sampleDataCleared) {
-      console.log('No requests found, initializing with sample data...');
+    try {
+      const sampleDataCleared = localStorage.getItem('sample_data_cleared');
+      if (this.getAllRequests().length === 0 && !sampleDataCleared) {
+        console.log('No requests found, initializing with sample data...');
       const sampleRequests: Omit<StoredRequest, 'id'>[] = [
         {
           dateCreated: "2024-01-15",
@@ -174,11 +175,14 @@ class RequestStorageService {
         }
       ];
 
-      sampleRequests.forEach(req => {
-        this.saveRequest(req as RequestFormData, req.createdBy);
-      });
-    } else {
-      console.log('Found existing requests, skipping sample data initialization');
+        sampleRequests.forEach(req => {
+          this.saveRequest(req as RequestFormData, req.createdBy);
+        });
+      } else {
+        console.log('Found existing requests, skipping sample data initialization');
+      }
+    } catch (error) {
+      console.error('Error initializing sample data:', error);
     }
   }
   
