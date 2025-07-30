@@ -52,7 +52,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   );
 
   // Calculate IP Cases - MTD
-  const ipCases = filteredData.filter(item => item.type === "IP" || item.description?.includes("IP"));
+  const ipCases = filteredData.filter(item => item.type === "IP" || (item.description && item.description.includes("IP")));
   
   // Calculate Done Cases (Done + Scheduled + Planned NVD)
   const doneCases = filteredData.filter(item => 
@@ -69,7 +69,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
   // Top 5 Hospitals
   const hospitalCounts = filteredData.reduce((acc, item) => {
-    acc[item.hospital] = (acc[item.hospital] || 0) + 1;
+    if (item.hospital) {
+      acc[item.hospital] = (acc[item.hospital] || 0) + 1;
+    }
     return acc;
   }, {} as Record<string, number>);
   const top5Hospitals = Object.entries(hospitalCounts)
@@ -79,7 +81,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
   // Top 5 Specialties
   const specialtyCounts = filteredData.reduce((acc, item) => {
-    acc[item.specialty] = (acc[item.specialty] || 0) + 1;
+    if (item.specialty) {
+      acc[item.specialty] = (acc[item.specialty] || 0) + 1;
+    }
     return acc;
   }, {} as Record<string, number>);
   const top5Specialties = Object.entries(specialtyCounts)

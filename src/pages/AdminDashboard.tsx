@@ -6,6 +6,7 @@ import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
 import { requestStorage } from "@/services/requestStorage";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
+import SIASlide from "@/components/admin/SIASlide";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
     showTeamMonitoring,
     showGeneralReport,
     showAIAssistant,
+    showSIASlide,
     setSelectedDates,
     setSelectedWeeks,
     setSelectedMonths,
@@ -35,6 +37,7 @@ export default function AdminDashboard() {
     handleTogglePrivilegesSearch,
     handleToggleTeamMonitoring,
     handleToggleAIAssistant,
+    handleToggleSIASlide,
   } = useAdminDashboard();
 
   // Load request data from centralized storage
@@ -127,6 +130,15 @@ export default function AdminDashboard() {
     );
   }
 
+  if (showSIASlide) {
+    return (
+      <SIASlide 
+        data={allRequestsData} 
+        onClose={() => handleToggleSIASlide()} 
+      />
+    );
+  }
+
   return (
     <AdminDashboardLayout
       activeFilter={activeFilter}
@@ -138,6 +150,7 @@ export default function AdminDashboard() {
       showTeamMonitoring={showTeamMonitoring}
       showGeneralReport={showGeneralReport}
       showAIAssistant={showAIAssistant}
+      showSIASlide={showSIASlide}
       adminData={allRequestsData}
       filteredData={filteredData}
       unreadCount={unreadCount}
@@ -153,6 +166,7 @@ export default function AdminDashboard() {
       onTogglePrivilegesSearch={handleTogglePrivilegesSearch}
       onToggleTeamMonitoring={handleToggleTeamMonitoring}
       onToggleAIAssistant={handleToggleAIAssistant}
+      onToggleSIASlide={handleToggleSIASlide}
       onShowGeneralReport={handleShowGeneralReport}
       onShowChart={() => setShowChart(true)}
     />

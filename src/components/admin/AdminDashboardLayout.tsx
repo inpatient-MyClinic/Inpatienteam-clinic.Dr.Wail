@@ -16,6 +16,7 @@ interface AdminDashboardLayoutProps {
   showTeamMonitoring: boolean;
   showGeneralReport: boolean;
   showAIAssistant: boolean;
+  showSIASlide: boolean;
   adminData: any[];
   filteredData: any[];
   unreadCount: number;
@@ -31,6 +32,7 @@ interface AdminDashboardLayoutProps {
   onTogglePrivilegesSearch: () => void;
   onToggleTeamMonitoring: () => void;
   onToggleAIAssistant: () => void;
+  onToggleSIASlide: () => void;
   onShowGeneralReport: () => void;
   onShowChart: () => void;
 }
@@ -45,6 +47,7 @@ export default function AdminDashboardLayout({
   showTeamMonitoring,
   showGeneralReport,
   showAIAssistant,
+  showSIASlide,
   adminData,
   filteredData,
   unreadCount,
@@ -60,6 +63,7 @@ export default function AdminDashboardLayout({
   onTogglePrivilegesSearch,
   onToggleTeamMonitoring,
   onToggleAIAssistant,
+  onToggleSIASlide,
   onShowGeneralReport,
   onShowChart,
 }: AdminDashboardLayoutProps) {
@@ -97,9 +101,11 @@ export default function AdminDashboardLayout({
               showPrivilegesSearch={showPrivilegesSearch}
               showTeamMonitoring={showTeamMonitoring}
               showAIAssistant={showAIAssistant}
+              showSIASlide={showSIASlide}
               onTogglePrivilegesSearch={onTogglePrivilegesSearch}
               onToggleTeamMonitoring={onToggleTeamMonitoring}
               onToggleAIAssistant={onToggleAIAssistant}
+              onToggleSIASlide={onToggleSIASlide}
               onShowChart={onShowChart}
             />
 

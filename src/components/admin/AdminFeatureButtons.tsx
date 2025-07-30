@@ -7,9 +7,11 @@ interface AdminFeatureButtonsProps {
   showPrivilegesSearch: boolean;
   showTeamMonitoring: boolean;
   showAIAssistant: boolean;
+  showSIASlide: boolean;
   onTogglePrivilegesSearch: () => void;
   onToggleTeamMonitoring: () => void;
   onToggleAIAssistant: () => void;
+  onToggleSIASlide: () => void;
   onShowChart: () => void;
 }
 
@@ -17,9 +19,11 @@ export default function AdminFeatureButtons({
   showPrivilegesSearch,
   showTeamMonitoring,
   showAIAssistant,
+  showSIASlide,
   onTogglePrivilegesSearch,
   onToggleTeamMonitoring,
   onToggleAIAssistant,
+  onToggleSIASlide,
   onShowChart,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
@@ -80,6 +84,16 @@ export default function AdminFeatureButtons({
               {pendingCount}
             </Badge>
           )}
+        </button>
+        <button
+          onClick={onToggleSIASlide}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            showSIASlide 
+              ? 'bg-green-600 text-white' 
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          SIA
         </button>
         <button
           onClick={onShowChart}
