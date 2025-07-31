@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { getCurrentUserRole, getCurrentUserEmail } from "@/utils/auth";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -27,25 +27,15 @@ const queryClient = new QueryClient();
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
-  const { user, profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
+  const currentUserRole = getCurrentUserRole();
+  const currentUserEmail = getCurrentUserEmail();
+  
+  if (!currentUserRole || !currentUserEmail) {
     return <Navigate to="/" replace />;
   }
 
-  if (profile.status !== 'active') {
-    return <Navigate to="/" replace />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(profile.role) && profile.role !== 'admin') {
+  // Check if user role is allowed for this route
+  if (allowedRoles && !allowedRoles.includes(currentUserRole) && currentUserRole !== 'admin') {
     return <Navigate to="/" replace />;
   }
 
@@ -53,40 +43,13 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode;
 };
 
 const HomePage = () => {
-  const { user, profile, loading } = useAuth();
+  const currentUserRole = getCurrentUserRole();
+  const currentUserEmail = getCurrentUserEmail();
 
-  console.log('HomePage: Rendering with state:', { 
-    hasUser: !!user, 
-    hasProfile: !!profile, 
-    loading, 
-    profileStatus: profile?.status 
-  });
-
-  if (loading) {
-    console.log('HomePage: Showing loading state');
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // If user is authenticated but no profile, show login page
-  if (user && !profile) {
-    console.log('HomePage: User authenticated but no profile found, showing login');
-    return <Index />;
-  }
-
-  // If user has profile but not active, show login page
-  if (user && profile && profile.status !== 'active') {
-    console.log('HomePage: User has profile but status is not active:', profile.status);
-    return <Index />;
-  }
-
-  // If user is authenticated and active, redirect to their dashboard
-  if (user && profile && profile.status === 'active') {
-    console.log('HomePage: Redirecting active user to dashboard for role:', profile.role);
-    switch (profile.role) {
+  // If user is authenticated, redirect to their dashboard
+  if (currentUserRole && currentUserEmail) {
+    console.log('HomePage: Redirecting authenticated user to dashboard for role:', currentUserRole);
+    switch (currentUserRole) {
       case 'admin':
         return <Navigate to="/admin" replace />;
       case 'doctor':
@@ -119,8 +82,7 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <ErrorBoundary>
+          <ErrorBoundary>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -141,7 +103,6 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ErrorBoundary>
-          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
