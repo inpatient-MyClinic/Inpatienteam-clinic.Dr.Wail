@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Trash2, Clock, User, ArrowUpDown, GitCommit } from "lucide-react";
+import { Search, Download, Trash2, Clock, User, ArrowUpDown, GitCommit, KeyRound, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { loadUsersFromStorage } from "./userManagement/UserStorage";
 import { DataBackupService } from "@/services/dataBackupService";
+import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
 
 interface UserActivity {
@@ -27,6 +29,9 @@ interface UserActivity {
   isOnline: boolean;
   sessionDuration: string;
   ipAddress: string;
+  passwordCreatedAt?: string;
+  mustChangePassword?: boolean;
+  passwordChangeRequiredAt?: string;
 }
 
 interface LifecycleStage {
@@ -84,6 +89,7 @@ const lifecycleStages: LifecycleStage[] = [
 export default function UserTracker() {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [filteredActivities, setFilteredActivities] = useState<UserActivity[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -92,6 +98,8 @@ export default function UserTracker() {
   const [sortBy, setSortBy] = useState<string>("lastLogin");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showLifecycle, setShowLifecycle] = useState(false);
+  const [isRenewingPassword, setIsRenewingPassword] = useState<string | null>(null);
+  const [isBulkRenewing, setIsBulkRenewing] = useState(false);
   const { toast } = useToast();
 
   const userCategories = ["Admin", "Doctor", "Nurse", "Case Coordinator", "Hospital", "Finance", "Customer Service"];
@@ -124,7 +132,10 @@ export default function UserTracker() {
         daysSinceCreated,
         isOnline: userLoginData.isOnline || false,
         sessionDuration: userLoginData.sessionDuration || '0 min',
-        ipAddress: userLoginData.lastIP || '192.168.1.100'
+        ipAddress: userLoginData.lastIP || '192.168.1.100',
+        passwordCreatedAt: (user as any).passwordCreatedAt || user.createdAt,
+        mustChangePassword: (user as any).mustChangePassword || false,
+        passwordChangeRequiredAt: (user as any).passwordChangeRequiredAt
       };
     });
 
@@ -234,6 +245,118 @@ export default function UserTracker() {
     } else {
       setSortBy(field);
       setSortOrder('desc');
+    }
+  };
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(prev => [...prev, userId]);
+    } else {
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(filteredActivities.map(activity => activity.userId));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const formatPasswordDate = (dateString?: string) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const isPasswordExpired = (activity: UserActivity) => {
+    if (activity.mustChangePassword) return true;
+    if (!activity.passwordChangeRequiredAt) return false;
+    return new Date(activity.passwordChangeRequiredAt) <= new Date();
+  };
+
+  const handleRenewPassword = async (userId: string, userEmail: string) => {
+    setIsRenewingPassword(userId);
+    try {
+      // Update the user's profile to force password change
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          must_change_password: true,
+          password_change_required_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error forcing password renewal:', error);
+        toast({
+          title: "Error",
+          description: "Failed to force password renewal",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Password renewal forced for ${userEmail}`,
+        });
+        loadUserActivities(); // Refresh the data
+      }
+    } catch (error) {
+      console.error('Error forcing password renewal:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRenewingPassword(null);
+    }
+  };
+
+  const handleBulkRenewPasswords = async () => {
+    if (selectedUsers.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select users to renew passwords",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsBulkRenewing(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          must_change_password: true,
+          password_change_required_at: new Date().toISOString()
+        })
+        .in('id', selectedUsers);
+
+      if (error) {
+        console.error('Error bulk renewing passwords:', error);
+        toast({
+          title: "Error",
+          description: "Failed to renew passwords for selected users",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Password renewal forced for ${selectedUsers.length} users`,
+        });
+        setSelectedUsers([]);
+        loadUserActivities();
+      }
+    } catch (error) {
+      console.error('Error bulk renewing passwords:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBulkRenewing(false);
     }
   };
 
@@ -439,6 +562,28 @@ export default function UserTracker() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Bulk Actions */}
+            {selectedUsers.length > 0 && (
+              <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <span className="text-sm font-medium">
+                  {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
+                </span>
+                <Button
+                  onClick={handleBulkRenewPasswords}
+                  disabled={isBulkRenewing}
+                  size="sm"
+                  variant="outline"
+                >
+                  {isBulkRenewing ? (
+                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <KeyRound className="w-4 h-4 mr-2" />
+                  )}
+                  Renew Selected Passwords
+                </Button>
+              </div>
+            )}
+
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
               <div>
@@ -590,6 +735,14 @@ export default function UserTracker() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedUsers.length === filteredActivities.length && filteredActivities.length > 0}
+                          onCheckedChange={handleSelectAll}
+                          aria-label="Select all users"
+                        />
+                      </TableHead>
+                      <TableHead>Password Actions</TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('userName')}>
                         <div className="flex items-center gap-1">
                           User <ArrowUpDown className="w-3 h-3" />
@@ -603,6 +756,12 @@ export default function UserTracker() {
                       <TableHead>Specialty</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Lifecycle Stage</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('passwordCreatedAt')}>
+                        <div className="flex items-center gap-1">
+                          Password Created <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </TableHead>
+                      <TableHead>Password Status</TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('lastLogin')}>
                         <div className="flex items-center gap-1">
                           Last Login <ArrowUpDown className="w-3 h-3" />
@@ -626,6 +785,28 @@ export default function UserTracker() {
                       const lifecycleStage = getUserLifecycleStage(activity.daysSinceCreated);
                       return (
                         <TableRow key={activity.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedUsers.includes(activity.userId)}
+                              onCheckedChange={(checked) => handleSelectUser(activity.userId, checked as boolean)}
+                              aria-label={`Select ${activity.userEmail}`}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRenewPassword(activity.userId, activity.userEmail)}
+                              disabled={isRenewingPassword === activity.userId}
+                              className="h-8"
+                            >
+                              {isRenewingPassword === activity.userId ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <KeyRound className="w-3 h-3" />
+                              )}
+                            </Button>
+                          </TableCell>
                           <TableCell className="font-medium">
                             <div>
                               <div className="font-semibold">{activity.userName}</div>
@@ -641,6 +822,23 @@ export default function UserTracker() {
                             <Badge className={lifecycleStage.color}>
                               {lifecycleStage.icon} {lifecycleStage.name}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-400" />
+                              <span className="text-xs">{formatPasswordDate(activity.passwordCreatedAt)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {isPasswordExpired(activity) ? (
+                              <Badge variant="destructive" className="text-xs">
+                                Renewal Required
+                              </Badge>
+                            ) : (
+                              <Badge variant="default" className="text-xs">
+                                Valid
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
