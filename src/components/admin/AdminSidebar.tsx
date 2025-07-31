@@ -121,7 +121,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/doctor-dashboard")}
+          onClick={() => navigate("/doctor")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <Stethoscope className="w-4 h-4 mr-2" />
@@ -130,7 +130,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/nurse-dashboard")}
+          onClick={() => navigate("/nurse")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <UserCheck className="w-4 h-4 mr-2" />
@@ -139,7 +139,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/hospital-dashboard")}
+          onClick={() => navigate("/hospital")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <Building2 className="w-4 h-4 mr-2" />
@@ -148,7 +148,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/case-coordinator-dashboard")}
+          onClick={() => navigate("/case-coordinator")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <Clipboard className="w-4 h-4 mr-2" />
@@ -157,7 +157,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/finance-dashboard")}
+          onClick={() => navigate("/finance")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <DollarSign className="w-4 h-4 mr-2" />
@@ -166,7 +166,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/customer-care-dashboard")}
+          onClick={() => navigate("/customer-care")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <HeartHandshake className="w-4 h-4 mr-2" />
