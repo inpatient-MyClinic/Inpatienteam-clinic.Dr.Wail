@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Users, Settings, FileText, BarChart3, ArrowLeft, Plus } from "lucide-react";
+import { Users, Settings, FileText, BarChart3, ArrowLeft, Plus, LogOut, UserCheck, Stethoscope, Building2, Clipboard, DollarSign, HeartHandshake } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 interface AdminSidebarProps {
   activeFilter: string | null;
@@ -114,14 +115,80 @@ export default function AdminSidebar({
         </Button>
       </div>
 
-      <Button 
-        variant="outline"
-        onClick={() => navigate("/role-selection")}
-        className="w-full flex items-center gap-2 mt-auto border-blue-300 text-blue-700 hover:bg-blue-100"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Roles
-      </Button>
+      {/* Admin Dashboard Navigation */}
+      <div className="flex flex-col gap-2 w-full mb-4">
+        <p className="text-sm font-semibold text-blue-900 mb-2">View Other Dashboards:</p>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate("/doctor-dashboard")}
+          className="w-full justify-start text-blue-700 hover:bg-blue-100"
+        >
+          <Stethoscope className="w-4 h-4 mr-2" />
+          Doctor Dashboard
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate("/nurse-dashboard")}
+          className="w-full justify-start text-blue-700 hover:bg-blue-100"
+        >
+          <UserCheck className="w-4 h-4 mr-2" />
+          Nurse Dashboard
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate("/hospital-dashboard")}
+          className="w-full justify-start text-blue-700 hover:bg-blue-100"
+        >
+          <Building2 className="w-4 h-4 mr-2" />
+          Hospital Dashboard
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate("/case-coordinator-dashboard")}
+          className="w-full justify-start text-blue-700 hover:bg-blue-100"
+        >
+          <Clipboard className="w-4 h-4 mr-2" />
+          Case Coordinator
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate("/finance-dashboard")}
+          className="w-full justify-start text-blue-700 hover:bg-blue-100"
+        >
+          <DollarSign className="w-4 h-4 mr-2" />
+          Finance Dashboard
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate("/customer-care-dashboard")}
+          className="w-full justify-start text-blue-700 hover:bg-blue-100"
+        >
+          <HeartHandshake className="w-4 h-4 mr-2" />
+          Customer Care
+        </Button>
+      </div>
+
+      <div className="mt-auto flex flex-col gap-2 w-full">
+        <LogoutButton 
+          variant="outline"
+          className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
+        />
+        
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/role-selection")}
+          className="w-full flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Roles
+        </Button>
+      </div>
     </aside>
   );
 }
