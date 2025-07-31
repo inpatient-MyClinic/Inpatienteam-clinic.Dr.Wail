@@ -18,11 +18,14 @@ interface UserSearchSelectProps {
   selectedUsers: User[];
   onUsersChange: (users: User[]) => void;
   currentUserRole: string;
+  selectedRole?: string | null;
+  onRoleChange?: (role: string | null) => void;
 }
 
-const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole }: UserSearchSelectProps) => {
+const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole, selectedRole, onRoleChange }: UserSearchSelectProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [personalNameSearch, setPersonalNameSearch] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,14 +55,19 @@ const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole }: Use
     }
   };
 
-  const fetchUsers = async (searchTerm = "", role = null) => {
+  const fetchUsers = async (searchTerm = "", role = null, personalName = "") => {
     setIsLoading(true);
     try {
-      let query = supabase.rpc('search_users', { search_term: searchTerm || '' });
+      let query;
       
-      if (role) {
+      // If personal name is provided, search by name
+      if (personalName) {
+        query = supabase.rpc('search_users', { search_term: personalName });
+      } else if (searchTerm) {
+        query = supabase.rpc('search_users', { search_term: searchTerm });
+      } else if (role) {
         query = supabase.rpc('get_users_by_role', { target_role: role });
-      } else if (!searchTerm) {
+      } else {
         query = supabase.rpc('get_users_by_role');
       }
 
@@ -70,7 +78,13 @@ const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole }: Use
         return;
       }
 
-      setUsers(data || []);
+      // Filter by role if both personal name and role are selected
+      let filteredData = data || [];
+      if (personalName && selectedRole) {
+        filteredData = data?.filter(user => user.role === selectedRole) || [];
+      }
+
+      setUsers(filteredData);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -79,19 +93,30 @@ const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole }: Use
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers("", selectedRole, personalNameSearch);
+  }, [selectedRole]);
 
   useEffect(() => {
     if (searchValue) {
       const debounce = setTimeout(() => {
-        fetchUsers(searchValue);
+        fetchUsers(searchValue, selectedRole, personalNameSearch);
       }, 300);
       return () => clearTimeout(debounce);
     } else {
-      fetchUsers();
+      fetchUsers("", selectedRole, personalNameSearch);
     }
-  }, [searchValue]);
+  }, [searchValue, selectedRole]);
+
+  useEffect(() => {
+    if (personalNameSearch) {
+      const debounce = setTimeout(() => {
+        fetchUsers("", selectedRole, personalNameSearch);
+      }, 300);
+      return () => clearTimeout(debounce);
+    } else {
+      fetchUsers("", selectedRole);
+    }
+  }, [personalNameSearch, selectedRole]);
 
   const handleSelectUser = (user: User) => {
     if (!selectedUsers.find(u => u.id === user.id)) {
@@ -101,6 +126,11 @@ const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole }: Use
   };
 
   const handleSelectRole = async (roleOption: { value: string; label: string; role: string | null }) => {
+    // Update the selected role
+    if (onRoleChange) {
+      onRoleChange(roleOption.role);
+    }
+    
     setIsLoading(true);
     try {
       const { data, error } = roleOption.role 
@@ -212,6 +242,28 @@ const UserSearchSelect = ({ selectedUsers, onUsersChange, currentUserRole }: Use
           </Command>
         </PopoverContent>
       </Popover>
+
+      {/* Personal Name Search - Optional field below TO */}
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-muted-foreground">
+          Personal Name (Optional)
+        </label>
+        <input
+          type="text"
+          placeholder={selectedRole ? `Search names in ${selectedRole} category...` : "Search by personal name..."}
+          value={personalNameSearch}
+          onChange={(e) => setPersonalNameSearch(e.target.value)}
+          className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+        />
+        {personalNameSearch && (
+          <p className="text-xs text-muted-foreground">
+            {selectedRole 
+              ? `Searching for "${personalNameSearch}" in ${selectedRole} users`
+              : `Searching for "${personalNameSearch}" in all users`
+            }
+          </p>
+        )}
+      </div>
 
       {/* Selected users display */}
       {selectedUsers.length > 0 && (

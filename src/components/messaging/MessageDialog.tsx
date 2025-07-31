@@ -31,6 +31,7 @@ interface MessageDialogProps {
 const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
   const [open, setOpen] = React.useState(false);
   const [selectedUsers, setSelectedUsers] = React.useState<User[]>([]);
+  const [selectedRole, setSelectedRole] = React.useState<string | null>(null);
   const [subject, setSubject] = React.useState("");
   const [message, setMessage] = React.useState("");
   const [attachments, setAttachments] = React.useState<File[]>([]);
@@ -153,6 +154,8 @@ const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
               selectedUsers={selectedUsers}
               onUsersChange={setSelectedUsers}
               currentUserRole={currentUserRole}
+              selectedRole={selectedRole}
+              onRoleChange={setSelectedRole}
             />
           </div>
 
