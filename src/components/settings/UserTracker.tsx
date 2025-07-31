@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Filter, Eye, Edit, Clock, User, ArrowUpDown, Trash2 } from "lucide-react";
+import { Search, Download, Filter, Eye, Edit, Clock, User, ArrowUpDown, Trash2, KeyRound, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { loadUsersFromStorage } from "./userManagement/UserStorage";
 import { DataBackupService } from "@/services/dataBackupService";
+import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
 
 interface UserActivity {
@@ -28,6 +29,9 @@ interface UserActivity {
   isOnline: boolean;
   sessionDuration: string;
   ipAddress: string;
+  passwordCreatedAt?: string;
+  mustChangePassword?: boolean;
+  passwordChangeRequiredAt?: string;
 }
 
 export default function UserTracker() {
@@ -72,7 +76,10 @@ export default function UserTracker() {
         daysSinceCreated,
         isOnline: userLoginData.isOnline || false,
         sessionDuration: userLoginData.sessionDuration || '0 min',
-        ipAddress: userLoginData.lastIP || '192.168.1.100'
+        ipAddress: userLoginData.lastIP || '192.168.1.100',
+        passwordCreatedAt: user.passwordCreatedAt || user.createdAt,
+        mustChangePassword: user.mustChangePassword || false,
+        passwordChangeRequiredAt: user.passwordChangeRequiredAt
       };
     });
 
@@ -224,6 +231,52 @@ export default function UserTracker() {
       return `${diffHours} hours ago`;
     } else {
       return 'Recently';
+    }
+  };
+
+  const formatPasswordDate = (dateString?: string) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const isPasswordExpired = (activity: UserActivity) => {
+    if (activity.mustChangePassword) return true;
+    if (!activity.passwordChangeRequiredAt) return false;
+    return new Date(activity.passwordChangeRequiredAt) <= new Date();
+  };
+
+  const handleRenewPassword = async (userId: string, userEmail: string) => {
+    try {
+      // Update the user's profile to force password change
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          must_change_password: true,
+          password_change_required_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error forcing password renewal:', error);
+        toast({
+          title: "Error",
+          description: "Failed to force password renewal",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Password renewal forced for ${userEmail}`,
+        });
+        loadUserActivities(); // Refresh the data
+      }
+    } catch (error) {
+      console.error('Error forcing password renewal:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
   };
 
@@ -425,6 +478,13 @@ export default function UserTracker() {
                           Days Active <ArrowUpDown className="w-3 h-3" />
                         </div>
                       </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('passwordCreatedAt')}>
+                        <div className="flex items-center gap-1">
+                          Password Created <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </TableHead>
+                      <TableHead>Password Status</TableHead>
+                      <TableHead>Password Actions</TableHead>
                       <TableHead>Session</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -452,6 +512,33 @@ export default function UserTracker() {
                           <Badge variant="secondary">{activity.loginCount}</Badge>
                         </TableCell>
                         <TableCell>{activity.daysSinceCreated} days</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-gray-400" />
+                            <span className="text-xs">{formatPasswordDate(activity.passwordCreatedAt)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {isPasswordExpired(activity) ? (
+                            <Badge variant="destructive" className="text-xs">
+                              Renewal Required
+                            </Badge>
+                          ) : (
+                            <Badge variant="default" className="text-xs">
+                              Valid
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRenewPassword(activity.userId, activity.userEmail)}
+                            className="h-8"
+                          >
+                            <KeyRound className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
                         <TableCell>
                           <div className="text-xs">
                             <div>{activity.sessionDuration}</div>
