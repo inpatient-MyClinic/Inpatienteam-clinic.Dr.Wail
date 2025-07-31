@@ -6,6 +6,9 @@ export type User = {
   specialty?: string;
   status: "Active" | "Inactive";
   createdAt: string;
+  passwordCreatedAt?: string;
+  mustChangePassword?: boolean;
+  passwordChangeRequiredAt?: string;
   fieldPermissions: Record<string, "none" | "view" | "edit">;
   hospitalPrivileges?: string[];
 };

@@ -54,6 +54,13 @@ const EnhancedUserManagement = () => {
     hasActiveFilters
   } = useUserManagement();
 
+  // Function to refresh users data (could fetch from Supabase profiles)
+  const handleUsersUpdate = async () => {
+    // For now, we could trigger a refresh of the component
+    // In a real implementation, this would fetch updated data from Supabase
+    window.location.reload();
+  };
+
   console.log('EnhancedUserManagement: Current state -', {
     usersCount: users.length,
     isLoading,
@@ -147,6 +154,7 @@ const EnhancedUserManagement = () => {
         onCategoryFilterChange={setCategoryFilter}
         onSpecialtyFilterChange={setSpecialtyFilter}
         onStatusFilterChange={setStatusFilter}
+        onUsersUpdate={handleUsersUpdate}
       />
     </div>
   );

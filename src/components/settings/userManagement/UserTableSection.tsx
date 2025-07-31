@@ -22,6 +22,7 @@ interface UserTableSectionProps {
   onCategoryFilterChange: (value: string) => void;
   onSpecialtyFilterChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
+  onUsersUpdate: () => void;
 }
 
 const UserTableSection = ({
@@ -40,7 +41,8 @@ const UserTableSection = ({
   statusFilter,
   onCategoryFilterChange,
   onSpecialtyFilterChange,
-  onStatusFilterChange
+  onStatusFilterChange,
+  onUsersUpdate
 }: UserTableSectionProps) => {
   return (
     <Card>
@@ -70,6 +72,7 @@ const UserTableSection = ({
             onCategoryFilterChange={onCategoryFilterChange}
             onSpecialtyFilterChange={onSpecialtyFilterChange}
             onStatusFilterChange={onStatusFilterChange}
+            onUsersUpdate={onUsersUpdate}
           />
         ) : (
           <div className="text-center py-8">
