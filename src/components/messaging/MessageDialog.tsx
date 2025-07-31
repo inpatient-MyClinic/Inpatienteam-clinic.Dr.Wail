@@ -10,15 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Upload, X, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUserRole } from "@/utils/auth";
+import UserSearchSelect from "./UserSearchSelect";
+
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+}
 
 interface MessageDialogProps {
   trigger: React.ReactNode;
@@ -27,69 +30,21 @@ interface MessageDialogProps {
 
 const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
   const [open, setOpen] = React.useState(false);
-  const [recipient, setRecipient] = React.useState("");
+  const [selectedUsers, setSelectedUsers] = React.useState<User[]>([]);
   const [subject, setSubject] = React.useState("");
   const [message, setMessage] = React.useState("");
   const [attachments, setAttachments] = React.useState<File[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
 
-  const getRecipientOptions = () => {
-    switch (currentUserRole) {
-      case "case-coordinator":
-        return [
-          { value: "all", label: "All Users" },
-          { value: "doctors", label: "All Doctors" },
-          { value: "nurses", label: "All Nurses" },
-          { value: "hospitals", label: "All Hospitals" },
-          { value: "finance", label: "Finance Team" },
-          { value: "customer-care", label: "Customer Care" },
-        ];
-      case "hospital":
-        return [
-          { value: "case-coordinators", label: "Case Coordinators" },
-          { value: "finance", label: "Finance Team" },
-          { value: "customer-care", label: "Customer Care" },
-        ];
-      case "nurse":
-        return [
-          { value: "nurse-sara", label: "Nurse Sara" },
-          { value: "nurse-ahmad", label: "Nurse Ahmad" },
-          { value: "case-coordinators", label: "Case Coordinators" },
-          { value: "finance", label: "Finance Team" },
-          { value: "customer-care", label: "Customer Care" },
-        ];
-      case "finance":
-        return [
-          { value: "all", label: "All Users" },
-          { value: "case-coordinators", label: "Case Coordinators" },
-          { value: "hospitals", label: "Hospitals" },
-          { value: "doctors", label: "Doctors" },
-          { value: "nurses", label: "Nurses" },
-          { value: "customer-care", label: "Customer Care" },
-        ];
-      case "doctor":
-        return [
-          { value: "case-coordinators", label: "Case Coordinators" },
-          { value: "nurses", label: "Nurses" },
-          { value: "hospitals", label: "Hospitals" },
-          { value: "finance", label: "Finance Team" },
-          { value: "customer-care", label: "Customer Care" },
-        ];
-      case "customer-care":
-        return [
-          { value: "all", label: "All Users" },
-          { value: "case-coordinators", label: "Case Coordinators" },
-          { value: "hospitals", label: "Hospitals" },
-          { value: "doctors", label: "Doctors" },
-          { value: "nurses", label: "Finance Team" },
-          { value: "finance", label: "Finance Team" },
-        ];
-      default:
-        return [
-          { value: "case-coordinators", label: "Case Coordinators" },
-          { value: "finance", label: "Finance Team" },
-          { value: "customer-care", label: "Customer Care" },
-        ];
+  // Get current user info for sending messages
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
     }
   };
 
@@ -102,28 +57,83 @@ const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSend = () => {
-    if (!recipient || !message.trim()) {
+  const handleSend = async () => {
+    if (selectedUsers.length === 0 || !message.trim()) {
       toast({
         title: "Missing Fields",
-        description: "Please select a recipient and enter a message",
+        description: "Please select recipients and enter a message",
         variant: "destructive",
       });
       return;
     }
 
-    // Simulate sending message
-    toast({
-      title: "Message Sent",
-      description: `Message sent to ${recipient}`,
-    });
+    setIsLoading(true);
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to send messages",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Reset form
-    setRecipient("");
-    setSubject("");
-    setMessage("");
-    setAttachments([]);
-    setOpen(false);
+      // Send message to each selected user
+      const messagePromises = selectedUsers.map(async (recipient) => {
+        const messageData = {
+          sender_id: currentUser.id,
+          recipient_id: recipient.id,
+          subject: subject.trim() || 'No Subject',
+          content: message.trim(),
+          priority: 'normal',
+          attachments: attachments.map(file => file.name),
+          metadata: {
+            recipient_name: recipient.full_name || recipient.email,
+            recipient_role: recipient.role,
+            sender_role: currentUserRole,
+            attachments_count: attachments.length
+          }
+        };
+
+        return supabase.from('messages').insert(messageData);
+      });
+
+      const results = await Promise.all(messagePromises);
+      
+      // Check for errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error('Some messages failed to send:', errors);
+        toast({
+          title: "Partial Success",
+          description: `${selectedUsers.length - errors.length} of ${selectedUsers.length} messages sent successfully`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Messages Sent Successfully",
+          description: `Message sent to ${selectedUsers.length} recipient${selectedUsers.length > 1 ? 's' : ''}`,
+        });
+      }
+
+      // Reset form
+      setSelectedUsers([]);
+      setSubject("");
+      setMessage("");
+      setAttachments([]);
+      setOpen(false);
+
+    } catch (error) {
+      console.error('Error sending messages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send messages. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -138,19 +148,12 @@ const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
         
         <div className="space-y-4">
           <div>
-            <Label htmlFor="recipient">To</Label>
-            <Select value={recipient} onValueChange={setRecipient}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select recipient" />
-              </SelectTrigger>
-              <SelectContent>
-                {getRecipientOptions().map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="recipients">To</Label>
+            <UserSearchSelect
+              selectedUsers={selectedUsers}
+              onUsersChange={setSelectedUsers}
+              currentUserRole={currentUserRole}
+            />
           </div>
 
           <div>
@@ -215,9 +218,9 @@ const MessageDialog = ({ trigger, currentUserRole }: MessageDialogProps) => {
             <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSend} className="flex-1">
+            <Button onClick={handleSend} disabled={isLoading} className="flex-1">
               <Send className="w-4 h-4 mr-2" />
-              Send
+              {isLoading ? "Sending..." : "Send"}
             </Button>
           </div>
         </div>

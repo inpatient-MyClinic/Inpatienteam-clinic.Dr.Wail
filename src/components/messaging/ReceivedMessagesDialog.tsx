@@ -16,6 +16,7 @@ import { Message, ReceivedMessagesDialogProps } from "./types";
 import MessageList from "./MessageList";
 import MessageDetails from "./MessageDetails";
 import MessageFilters from "./MessageFilters";
+import { supabase } from "@/integrations/supabase/client";
 
 const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDialogProps) => {
   const [open, setOpen] = React.useState(false);
@@ -23,6 +24,8 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   const [replyMessage, setReplyMessage] = React.useState("");
   const [replyAttachments, setReplyAttachments] = React.useState<File[]>([]);
   const [showReply, setShowReply] = React.useState(false);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
   
   // Filter states
   const [selectedDates, setSelectedDates] = React.useState<Date[]>([]);
@@ -31,96 +34,61 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   
   const { toast } = useToast();
 
-  // Generate role-specific messages with more variety
-  const generateMessagesForRole = (role: string): Message[] => {
-    const roleSpecificMessages = {
-      nurse: [
-        {
-          id: "1",
-          from: "Case Coordinator Sarah",
-          to: role,
-          subject: "Urgent: Patient Authorization Required - Ahmed Hassan",
-          content: `Dear ${role},\n\nI hope this message finds you well. I am writing to request your urgent attention regarding patient Ahmed Hassan's cardiac surgery authorization.\n\nPatient Details:\n- Name: Ahmed Hassan\n- MRN: MRN-2025-001234\n- ID: 1234567890\n- Surgery Type: Cardiac Bypass Surgery\n- Scheduled Date: June 25, 2025\n- Hospital: King Abdulaziz Medical City\n\nThe authorization documents have been prepared and are attached to this message for your review. Please note that the insurance company requires your approval within 24 hours to proceed with the surgery.\n\nKey points for your consideration:\n1. Patient's medical history indicates previous cardiac events\n2. Current medications list is included in attachment 2\n3. Pre-operative tests show clearance for surgery\n4. Expected duration: 4-6 hours\n5. Post-operative care plan is outlined in attachment 3\n\nPlease review the attached documents and provide your authorization at your earliest convenience. If you have any questions or need additional information, please don't hesitate to contact me.\n\nThank you for your prompt attention to this matter.\n\nBest regards,\nSarah Johnson, Case Coordinator\nMy Clinic - Cardiac Department\nPhone: +966-11-234567\nEmail: sarah.johnson@myclinic.sa`,
-          timestamp: "2025-06-20 10:30 AM",
-          date: new Date("2025-06-20"),
-          attachments: ["patient_authorization_form.pdf", "medical_history_report.pdf", "pre_operative_tests.pdf", "post_care_plan.pdf"],
-          isRead: false,
-          hasReply: false,
-          isNew: true,
-          priority: 'urgent' as const,
-        },
-        {
-          id: "2",
-          from: "Dr. Mohammed Al-Saud",
-          to: role,
-          subject: "Patient Care Instructions - Room 205",
-          content: `Dear Nurse Team,\n\nPlease note the following care instructions for the patient in Room 205:\n\n- Monitor vital signs every 2 hours\n- Administer medication as prescribed\n- Ensure patient comfort and hydration\n\nThank you for your excellent care.\n\nDr. Mohammed Al-Saud`,
-          timestamp: "2025-06-19 2:15 PM",
-          date: new Date("2025-06-19"),
-          attachments: ["care_instructions.pdf"],
-          isRead: true,
-          hasReply: false,
-          isNew: false,
-          priority: 'high' as const,
-        }
-      ],
-      doctor: [
-        {
-          id: "1",
-          from: "Hospital Administration",
-          to: role,
-          subject: "Surgery Schedule Update - Tomorrow",
-          content: `Dear Doctor,\n\nPlease note that your surgery scheduled for tomorrow has been moved from 8:00 AM to 10:30 AM due to emergency case prioritization.\n\nNew Schedule:\n- Time: 10:30 AM\n- Room: 205\n- Patient: Sara Al-Mahmoud\n- Procedure: Knee Replacement\n\nPlease confirm your availability.\n\nBest regards,\nHospital Administration`,
-          timestamp: "2025-06-19 11:20 AM",
-          date: new Date("2025-06-19"),
-          attachments: ["updated_schedule.pdf"],
-          isRead: false,
-          hasReply: false,
-          isNew: true,
-          priority: 'urgent' as const,
-        }
-      ],
-      admin: [
-        {
-          id: "1",
-          from: "System Administrator",
-          to: role,
-          subject: "System Maintenance Notice",
-          content: `Dear Admin,\n\nScheduled system maintenance will occur this weekend from 2:00 AM to 6:00 AM on Saturday.\n\nSystems affected:\n- Patient records database\n- Appointment scheduling\n- Billing system\n\nPlease inform all staff accordingly.\n\nIT Department`,
-          timestamp: "2025-06-19 9:00 AM",
-          date: new Date("2025-06-19"),
-          attachments: ["maintenance_schedule.pdf"],
-          isRead: false,
-          hasReply: false,
-          isNew: true,
-          priority: 'normal' as const,
-        }
-      ]
-    };
-
-    // Get role-specific messages or default messages
-    const messages = roleSpecificMessages[role.toLowerCase() as keyof typeof roleSpecificMessages] || [
-      {
-        id: "1",
-        from: "System Admin",
-        to: role,
-        subject: "Welcome to the messaging system",
-        content: `Dear ${role},\n\nWelcome to our internal messaging system. You can use this to communicate with other team members and receive important updates.\n\nBest regards,\nSystem Administration`,
-        timestamp: "2025-06-20 9:00 AM",
-        date: new Date("2025-06-20"),
-        attachments: [],
-        isRead: false,
-        hasReply: false,
-        isNew: true,
-        priority: 'normal' as const,
+  // Fetch messages from Supabase
+  const fetchMessages = async () => {
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No authenticated user');
+        setMessages([]);
+        return;
       }
-    ];
 
-    console.log(`Generated ${messages.length} messages for role: ${role}`);
-    return messages;
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:profiles(full_name, email, role)
+        `)
+        .or(`recipient_id.eq.${user.id},recipient_role.eq.${currentUserRole}`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+
+      // Transform to match Message interface
+      const transformedMessages: Message[] = (data || []).map(msg => ({
+        id: msg.id,
+        from: (msg.sender as any)?.full_name || (msg.sender as any)?.email || 'Unknown',
+        to: currentUserRole,
+        subject: msg.subject,
+        content: msg.content,
+        timestamp: format(new Date(msg.created_at), 'yyyy-MM-dd h:mm a'),
+        date: new Date(msg.created_at),
+        attachments: Array.isArray(msg.attachments) ? msg.attachments as string[] : [],
+        isRead: msg.is_read,
+        hasReply: false, // You might want to track this separately
+        isNew: !msg.is_read,
+        priority: msg.priority as 'normal' | 'high' | 'urgent',
+      }));
+
+      setMessages(transformedMessages);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const allMessages = generateMessagesForRole(currentUserRole);
+  // Fetch messages when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      fetchMessages();
+    }
+  }, [open, currentUserRole]);
 
   // Generate months for selection
   const months = Array.from({ length: 12 }, (_, i) => {
@@ -133,7 +101,7 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
   });
 
   // Filter messages based on selected dates and months
-  const filteredMessages = allMessages.filter(message => {
+  const filteredMessages = messages.filter(message => {
     let matchesDateFilter = true;
     
     if (selectedDates.length > 0 || selectedMonths.length > 0) {
@@ -199,12 +167,27 @@ const ReceivedMessagesDialog = ({ trigger, currentUserRole }: ReceivedMessagesDi
     }
   };
 
-  const markAsRead = (messageId: string) => {
+  const markAsRead = async (messageId: string) => {
     console.log("Marking message as read:", messageId);
-    const message = allMessages.find(msg => msg.id === messageId);
-    if (message) {
-      message.isRead = true;
-      message.isNew = false;
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('id', messageId);
+
+      if (error) {
+        console.error('Error marking message as read:', error);
+        return;
+      }
+
+      // Update local state
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, isRead: true, isNew: false }
+          : msg
+      ));
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 

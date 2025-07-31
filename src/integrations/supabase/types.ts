@@ -120,10 +120,12 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachments: Json | null
           content: string
           created_at: string | null
           id: string
           is_read: boolean | null
+          metadata: Json | null
           priority: string | null
           recipient_id: string | null
           recipient_role: Database["public"]["Enums"]["user_role"] | null
@@ -132,10 +134,12 @@ export type Database = {
           subject: string
         }
         Insert: {
+          attachments?: Json | null
           content: string
           created_at?: string | null
           id?: string
           is_read?: boolean | null
+          metadata?: Json | null
           priority?: string | null
           recipient_id?: string | null
           recipient_role?: Database["public"]["Enums"]["user_role"] | null
@@ -144,10 +148,12 @@ export type Database = {
           subject: string
         }
         Update: {
+          attachments?: Json | null
           content?: string
           created_at?: string | null
           id?: string
           is_read?: boolean | null
+          metadata?: Json | null
           priority?: string | null
           recipient_id?: string | null
           recipient_role?: Database["public"]["Enums"]["user_role"] | null
@@ -298,6 +304,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_users_by_role: {
+        Args: { target_role?: Database["public"]["Enums"]["user_role"] }
+        Returns: {
+          id: string
+          full_name: string
+          email: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -309,6 +324,15 @@ export type Database = {
       is_password_change_required: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      search_users: {
+        Args: { search_term: string }
+        Returns: {
+          id: string
+          full_name: string
+          email: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
       }
     }
     Enums: {
