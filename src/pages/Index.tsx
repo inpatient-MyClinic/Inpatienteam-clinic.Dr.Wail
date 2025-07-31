@@ -20,7 +20,8 @@ export default function Index() {
     setIsFirstTimeLogin,
     handlePasswordCreation,
     handleLogin,
-    handleBackToLogin
+    handleBackToLogin,
+    isAdminEmail
   } = useAuthLogic();
 
   return (
@@ -62,6 +63,7 @@ export default function Index() {
                 setConfirmPassword={setConfirmPassword}
                 onSubmit={handlePasswordCreation}
                 onBackToLogin={handleBackToLogin}
+                isAdminEmail={isAdminEmail(email)}
               />
             )}
             

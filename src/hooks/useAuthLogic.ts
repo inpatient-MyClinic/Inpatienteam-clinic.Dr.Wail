@@ -4,6 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+const ADMIN_EMAILS = [
+  'wail.ahmed@myclinic.com.sa',
+  'admin@myclinic.com.sa', 
+  'inpatienteam@gmail.com'
+];
+
+const isAdminEmail = (email: string): boolean => {
+  return ADMIN_EMAILS.includes(email.toLowerCase().trim());
+};
+
 export const useAuthLogic = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +53,11 @@ export const useAuthLogic = () => {
       }
 
       if (data.user) {
-        toast.success('Account created! Please wait for admin approval before logging in.');
+        if (isAdminEmail(email)) {
+          toast.success('Admin account created successfully! You can now login.');
+        } else {
+          toast.success('Account created! Please wait for admin approval before logging in.');
+        }
         setIsFirstTimeLogin(false);
         setEmail('');
         setPassword('');
@@ -146,6 +160,7 @@ export const useAuthLogic = () => {
     setIsFirstTimeLogin,
     handlePasswordCreation,
     handleLogin,
-    handleBackToLogin
+    handleBackToLogin,
+    isAdminEmail
   };
 };

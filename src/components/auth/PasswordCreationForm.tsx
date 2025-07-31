@@ -12,6 +12,7 @@ interface PasswordCreationFormProps {
   setConfirmPassword: (password: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onBackToLogin: () => void;
+  isAdminEmail?: boolean;
 }
 
 const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
@@ -21,21 +22,25 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
   confirmPassword,
   setConfirmPassword,
   onSubmit,
-  onBackToLogin
+  onBackToLogin,
+  isAdminEmail = false
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div className="bg-blue-50 p-4 rounded-lg mb-4">
-        <h3 className="font-semibold text-blue-900 mb-2">
-          Administrator Setup
+      <div className={`p-4 rounded-lg mb-4 ${isAdminEmail ? 'bg-blue-50' : 'bg-green-50'}`}>
+        <h3 className={`font-semibold mb-2 ${isAdminEmail ? 'text-blue-900' : 'text-green-900'}`}>
+          {isAdminEmail ? 'Administrator Setup' : 'Create Account'}
         </h3>
-        <p className="text-sm text-blue-700">
-          Create your administrator password to access the system management panel.
+        <p className={`text-sm ${isAdminEmail ? 'text-blue-700' : 'text-green-700'}`}>
+          {isAdminEmail 
+            ? 'Create your administrator password to access the system management panel.'
+            : 'Create your account. You will need admin approval before you can login.'
+          }
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Administrator Email</Label>
+        <Label htmlFor="email">{isAdminEmail ? 'Administrator Email' : 'Email'}</Label>
         <Input
           id="email"
           type="email"
@@ -46,7 +51,7 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="newPassword">Create Admin Password</Label>
+        <Label htmlFor="newPassword">{isAdminEmail ? 'Create Admin Password' : 'Create Password'}</Label>
         <Input
           id="newPassword"
           type="password"
@@ -71,8 +76,8 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
         />
       </div>
 
-      <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-        Create Admin Account & Access System
+      <Button type="submit" className={`w-full ${isAdminEmail ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+        {isAdminEmail ? 'Create Admin Account & Access System' : 'Create Account'}
       </Button>
 
       <Button 
