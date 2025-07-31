@@ -34,139 +34,164 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let profileFetched = false;
+    
+    console.log('useAuth: Setting up auth listeners');
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
+        if (!mounted) {
+          console.log('useAuth: Component unmounted, skipping auth state change');
+          return;
+        }
         
-        console.log('Auth state change:', event, session?.user?.id);
+        console.log('useAuth: Auth state change event:', event, 'User ID:', session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user && !profileFetched) {
+          profileFetched = true;
+          console.log('useAuth: User authenticated, fetching profile...');
+          
           // Defer Supabase calls with setTimeout to prevent deadlock
           setTimeout(async () => {
-            if (!mounted) return;
+            if (!mounted) {
+              console.log('useAuth: Component unmounted during profile fetch');
+              return;
+            }
             
             try {
-              console.log('Fetching profile for user:', session.user.id);
+              console.log('useAuth: Starting profile fetch for user:', session.user.id);
               
-              // Retry mechanism for profile fetch
-              let retries = 3;
-              let profile = null;
-              let error = null;
-              
-              while (retries > 0 && !profile) {
-                const result = await supabase
-                  .from('profiles')
-                  .select('*')
-                  .eq('id', session.user.id)
-                  .maybeSingle();
-                
-                if (result.error) {
-                  console.error(`Profile fetch attempt ${4 - retries} failed:`, result.error);
-                  error = result.error;
-                  retries--;
-                  if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
-                  }
-                } else {
-                  profile = result.data;
-                  break;
-                }
-              }
-              
-              if (mounted) {
-                if (profile) {
-                  console.log('Profile fetched successfully:', profile);
-                  setProfile(profile);
-                } else {
-                  console.error('Failed to fetch profile after retries:', error);
-                  setProfile(null);
-                }
-                setLoading(false);
-              }
-            } catch (error) {
-              console.error('Error fetching profile:', error);
-              if (mounted) {
-                setProfile(null);
-                setLoading(false);
-              }
-            }
-          }, 100);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      
-      console.log('Initial session check:', session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(async () => {
-          if (!mounted) return;
-          
-          try {
-            console.log('Initial profile fetch for user:', session.user.id);
-            
-            // Retry mechanism for initial profile fetch
-            let retries = 3;
-            let profile = null;
-            let error = null;
-            
-            while (retries > 0 && !profile) {
               const result = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .maybeSingle();
               
-              if (result.error) {
-                console.error(`Initial profile fetch attempt ${4 - retries} failed:`, result.error);
-                error = result.error;
-                retries--;
-                if (retries > 0) {
-                  await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
-                }
-              } else {
-                profile = result.data;
-                break;
+              if (!mounted) {
+                console.log('useAuth: Component unmounted after profile fetch');
+                return;
               }
+              
+              if (result.error) {
+                console.error('useAuth: Profile fetch error:', result.error);
+                // For specific error codes, handle differently
+                if (result.error.code === 'PGRST116') {
+                  console.log('useAuth: No profile found for user, this is expected for new users');
+                }
+                setProfile(null);
+              } else {
+                console.log('useAuth: Profile fetched successfully:', result.data);
+                setProfile(result.data);
+              }
+              
+              setLoading(false);
+              console.log('useAuth: Auth state update complete');
+            } catch (error) {
+              console.error('useAuth: Unexpected error during profile fetch:', error);
+              if (mounted) {
+                setProfile(null);
+                setLoading(false);
+              }
+            }
+          }, 50);
+        } else if (!session?.user) {
+          console.log('useAuth: No user session, clearing profile');
+          profileFetched = false;
+          setProfile(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Check for existing session with timeout to prevent hanging
+    const sessionTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('useAuth: Session check timed out, setting loading to false');
+        setLoading(false);
+      }
+    }, 5000);
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      clearTimeout(sessionTimeout);
+      
+      if (!mounted) {
+        console.log('useAuth: Component unmounted during initial session check');
+        return;
+      }
+      
+      if (error) {
+        console.error('useAuth: Error getting initial session:', error);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('useAuth: Initial session check complete:', session?.user?.id);
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user && !profileFetched) {
+        profileFetched = true;
+        console.log('useAuth: Initial session has user, fetching profile...');
+        
+        setTimeout(async () => {
+          if (!mounted) {
+            console.log('useAuth: Component unmounted during initial profile fetch');
+            return;
+          }
+          
+          try {
+            console.log('useAuth: Starting initial profile fetch for user:', session.user.id);
+            
+            const result = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (!mounted) {
+              console.log('useAuth: Component unmounted after initial profile fetch');
+              return;
             }
             
-            if (mounted) {
-              if (profile) {
-                console.log('Initial profile fetched successfully:', profile);
-                setProfile(profile);
-              } else {
-                console.error('Failed to fetch initial profile after retries:', error);
-                setProfile(null);
+            if (result.error) {
+              console.error('useAuth: Initial profile fetch error:', result.error);
+              if (result.error.code === 'PGRST116') {
+                console.log('useAuth: No profile found for user in initial fetch');
               }
-              setLoading(false);
+              setProfile(null);
+            } else {
+              console.log('useAuth: Initial profile fetched successfully:', result.data);
+              setProfile(result.data);
             }
+            
+            setLoading(false);
+            console.log('useAuth: Initial auth setup complete');
           } catch (error) {
-            console.error('Error in initial profile fetch:', error);
+            console.error('useAuth: Unexpected error in initial profile fetch:', error);
             if (mounted) {
               setProfile(null);
               setLoading(false);
             }
           }
-        }, 100);
+        }, 50);
       } else {
+        console.log('useAuth: No user in initial session or profile already fetched');
+        setLoading(false);
+      }
+    }).catch((error) => {
+      console.error('useAuth: Error in getSession promise:', error);
+      if (mounted) {
         setLoading(false);
       }
     });
 
     return () => {
+      console.log('useAuth: Cleaning up auth listeners');
       mounted = false;
+      clearTimeout(sessionTimeout);
       subscription.unsubscribe();
     };
   }, []);

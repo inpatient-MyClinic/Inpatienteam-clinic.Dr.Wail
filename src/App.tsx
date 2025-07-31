@@ -52,11 +52,18 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode;
   return <>{children}</>;
 };
 
-// Home page component that handles authentication routing
 const HomePage = () => {
   const { user, profile, loading } = useAuth();
 
+  console.log('HomePage: Rendering with state:', { 
+    hasUser: !!user, 
+    hasProfile: !!profile, 
+    loading, 
+    profileStatus: profile?.status 
+  });
+
   if (loading) {
+    console.log('HomePage: Showing loading state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -64,14 +71,21 @@ const HomePage = () => {
     );
   }
 
-  // If user is authenticated but no profile, show a message and sign out
+  // If user is authenticated but no profile, show login page
   if (user && !profile) {
-    console.error('User authenticated but no profile found');
+    console.log('HomePage: User authenticated but no profile found, showing login');
+    return <Index />;
+  }
+
+  // If user has profile but not active, show login page
+  if (user && profile && profile.status !== 'active') {
+    console.log('HomePage: User has profile but status is not active:', profile.status);
     return <Index />;
   }
 
   // If user is authenticated and active, redirect to their dashboard
   if (user && profile && profile.status === 'active') {
+    console.log('HomePage: Redirecting active user to dashboard for role:', profile.role);
     switch (profile.role) {
       case 'admin':
         return <Navigate to="/admin" replace />;
@@ -88,11 +102,13 @@ const HomePage = () => {
       case 'customer-care':
         return <Navigate to="/customer-care" replace />;
       default:
+        console.log('HomePage: Unknown role, redirecting to default dashboard');
         return <Navigate to="/dashboard" replace />;
     }
   }
 
   // Show login page for non-authenticated users
+  console.log('HomePage: No user session, showing login page');
   return <Index />;
 };
 
