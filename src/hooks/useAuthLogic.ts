@@ -1,10 +1,8 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { validateEmail, extractUserName, getUserRole, redirectToUserDashboard, isUserAuthorized } from "@/utils/userUtils";
-import { isAdmin } from "@/utils/auth";
-import { LoginAttemptService } from "@/services/loginAttemptService";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useAuthLogic = () => {
   const [email, setEmail] = useState("");
@@ -13,243 +11,119 @@ export const useAuthLogic = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isFirstTimeLogin, setIsFirstTimeLogin] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handlePasswordCreation = (e: React.FormEvent) => {
+  const handlePasswordCreation = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("=== PASSWORD CREATION ATTEMPT ===");
-    console.log("Email used:", email);
-    
-    // Validate email domain FIRST
-    const emailIsValid = validateEmail(email);
-    console.log("Email validation result in password creation:", emailIsValid);
-    
-    if (!emailIsValid) {
-      console.log("PASSWORD CREATION BLOCKED: Invalid email domain");
-      toast({
-        title: "غير مصرح بالدخول",
-        description: "الدخول مقتصر على عناوين البريد الإلكتروني @myclinic.com.sa فقط. يرجى التواصل مع مدير النظام.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Check if user is authorized (exists in user management)
-    const userAuthorized = isUserAuthorized(email);
-    console.log("User authorization check:", userAuthorized);
-    
-    if (!userAuthorized) {
-      console.log("PASSWORD CREATION BLOCKED: User not authorized - not in user management");
-      
-      // Create a notification for admin
-      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-      const newNotification = {
-        id: Date.now().toString(),
-        type: 'user_access_request',
-        title: 'طلب وصول مستخدم جديد',
-        message: `المستخدم ${email} يطلب الوصول إلى النظام`,
-        email: email,
-        timestamp: new Date().toISOString(),
-        read: false,
-        priority: 'high'
-      };
-      notifications.push(newNotification);
-      localStorage.setItem('notifications', JSON.stringify(notifications));
-      
-      toast({
-        title: "طلب وصول مرسل",
-        description: "تم إرسال طلب وصولك إلى مدير النظام. سيتم التواصل معك قريباً.",
-        variant: "default",
-      });
-      return;
-    }
-    
-    if (password.length < 6) {
-      toast({
-        title: "كلمة المرور قصيرة جداً",
-        description: "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (password !== confirmPassword) {
-      toast({
-        title: "كلمات المرور غير متطابقة",
-        description: "كلمات المرور غير متطابقة",
-        variant: "destructive",
-      });
+      toast.error('Passwords do not match');
       return;
     }
 
-    // Get user role - admin emails get admin role, others get their assigned role
-    const userRole = getUserRole(email);
-    console.log("Password creation - determined role:", userRole, "for email:", email);
-    
-    if (!userRole) {
-      console.log("PASSWORD CREATION BLOCKED: Unable to determine user role");
-      toast({
-        title: "خطأ في تحديد الصلاحيات",
-        description: "غير قادر على تحديد صلاحيات المستخدم. يرجى التواصل مع مدير النظام.",
-        variant: "destructive",
-      });
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
       return;
     }
-    
-    const userName = extractUserName(email);
 
-    // Store user data with correct role
-    localStorage.setItem(`user_${email}`, JSON.stringify({
-      email,
-      name: userName,
-      role: userRole,
-      createdAt: new Date().toISOString()
-    }));
-    localStorage.setItem(`password_${email}`, password);
-    localStorage.setItem(`lastPasswordUpdate_${email}`, new Date().toISOString());
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: email.split('@')[0], // Use email prefix as default name
+          }
+        }
+      });
 
-    console.log("User data stored with role:", userRole);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
 
-    toast({
-      title: "تم إنشاء الحساب بنجاح",
-      description: `مرحباً ${userName}! جاري التوجيه إلى لوحة التحكم...`,
-    });
-
-    // CRITICAL: Force immediate redirect for admin users
-    if (userRole === "admin") {
-      console.log("ADMIN USER - Redirecting to /admin immediately");
-      setTimeout(() => {
-        window.location.href = "/admin";
-      }, 500);
-    } else {
-      setTimeout(() => {
-        redirectToUserDashboard(userRole, navigate);
-      }, 500);
+      if (data.user) {
+        toast.success('Account created! Please wait for admin approval before logging in.');
+        setIsFirstTimeLogin(false);
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("=== LOGIN ATTEMPT ===");
-    console.log("Email used:", email);
-    console.log("Password length:", password.length);
-    
-    if (!email || !password) {
-      toast({
-        title: "معلومات ناقصة",
-        description: "يرجى إدخال البريد الإلكتروني وكلمة المرور",
-        variant: "destructive",
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      return;
-    }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    console.log("Normalized email:", normalizedEmail);
-    console.log("Email domain check:", normalizedEmail.split('@')[1]);
-    
-    const emailIsValid = validateEmail(normalizedEmail);
-    console.log("Email validation result in login:", emailIsValid);
-    
-    if (!emailIsValid) {
-      console.log("LOGIN BLOCKED: Invalid email domain");
-      console.log("Email used:", normalizedEmail);
-      console.log("Expected domain: @myclinic.com.sa");
-      toast({
-        title: "خطأ في البريد الإلكتروني",
-        description: `البريد الإلكتروني: ${normalizedEmail} غير مصرح له بالدخول. يجب أن ينتهي البريد بـ @myclinic.com.sa`,
-        variant: "destructive",
-      });
-      return;
-    }
+      if (error) {
+        if (error.message === 'Invalid login credentials') {
+          toast.error('Invalid email or password. Please try again.');
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
 
-    // Check if user is authorized BEFORE checking password
-    const userAuthorized = isUserAuthorized(normalizedEmail);
-    console.log("User authorization check for login:", userAuthorized);
-    
-    if (!userAuthorized) {
-      console.log("LOGIN BLOCKED: User not authorized - not in user management");
-      
-      // Log the unauthorized login attempt
-      LoginAttemptService.addLoginAttempt(normalizedEmail);
-      
-      toast({
-        title: "غير مصرح بالدخول",
-        description: "تم إرسال طلب وصولك إلى مدير النظام للمراجعة.",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (data.user) {
+        // Get user profile to check status and role
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, status')
+          .eq('id', data.user.id)
+          .single();
 
-    // Check if password exists for this user
-    const savedPassword = localStorage.getItem(`password_${normalizedEmail}`);
-    console.log("Saved password exists:", !!savedPassword);
-    
-    if (!savedPassword) {
-      console.log("No password found - showing password creation form");
-      setIsFirstTimeLogin(true);
-      setEmail(normalizedEmail);
-      toast({
-        title: "أول تسجيل دخول",
-        description: "يرجى إنشاء كلمة المرور للدخول إلى النظام.",
-      });
-      return;
-    }
+        if (profileError) {
+          toast.error('Error loading user profile');
+          return;
+        }
 
-    // Check if password matches
-    console.log("Password check:", password === savedPassword);
-    
-    if (savedPassword !== password) {
-      console.log("LOGIN FAILED: Incorrect password");
-      toast({
-        title: "كلمة مرور خاطئة",
-        description: "يرجى التحقق من كلمة المرور والمحاولة مرة أخرى",
-        variant: "destructive",
-      });
-      return;
-    }
+        if (profile.status !== 'active') {
+          toast.error('Your account is pending approval. Please contact an administrator.');
+          await supabase.auth.signOut();
+          return;
+        }
 
-    // Get user role - admin emails get admin role, others get their assigned role
-    const userRole = getUserRole(normalizedEmail);
-    console.log("Login successful - determined role:", userRole, "for email:", normalizedEmail);
-    
-    if (!userRole) {
-      console.log("LOGIN BLOCKED: Unable to determine user role");
-      toast({
-        title: "خطأ في تحديد الصلاحيات",
-        description: "غير قادر على تحديد صلاحيات المستخدم. يرجى التواصل مع مدير النظام.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // FORCE UPDATE stored user data to ensure role is correct
-    const userName = extractUserName(normalizedEmail);
-    localStorage.setItem(`user_${normalizedEmail}`, JSON.stringify({
-      email: normalizedEmail,
-      name: userName,
-      role: userRole,
-      createdAt: new Date().toISOString()
-    }));
-    console.log("Updated user data in localStorage with role:", userRole);
-
-    toast({
-      title: "تم تسجيل الدخول بنجاح",
-      description: `مرحباً بعودتك، ${userName}!`,
-    });
-
-    // CRITICAL: Force immediate redirect for admin users using window.location
-    if (userRole === "admin") {
-      console.log("ADMIN USER DETECTED - Using window.location to force redirect to /admin");
-      setTimeout(() => {
-        window.location.href = "/admin";
-      }, 500);
-    } else {
-      console.log("Non-admin user - using normal navigation");
-      setTimeout(() => {
-        redirectToUserDashboard(userRole, navigate);
-      }, 500);
+        toast.success('Login successful!');
+        
+        // Redirect based on role
+        switch (profile.role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'doctor':
+            navigate('/doctor');
+            break;
+          case 'nurse':
+            navigate('/nurse');
+            break;
+          case 'hospital':
+            navigate('/hospital');
+            break;
+          case 'case-coordinator':
+            navigate('/case-coordinator');
+            break;
+          case 'finance':
+            navigate('/finance');
+            break;
+          case 'customer-care':
+            navigate('/customer-care');
+            break;
+          default:
+            navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -269,6 +143,7 @@ export const useAuthLogic = () => {
     rememberMe,
     setRememberMe,
     isFirstTimeLogin,
+    setIsFirstTimeLogin,
     handlePasswordCreation,
     handleLogin,
     handleBackToLogin

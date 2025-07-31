@@ -17,6 +17,7 @@ export default function Index() {
     rememberMe,
     setRememberMe,
     isFirstTimeLogin,
+    setIsFirstTimeLogin,
     handlePasswordCreation,
     handleLogin,
     handleBackToLogin
@@ -50,6 +51,7 @@ export default function Index() {
                 rememberMe={rememberMe}
                 setRememberMe={setRememberMe}
                 onSubmit={handleLogin}
+                onCreateAccount={() => setIsFirstTimeLogin(true)}
               />
             ) : (
               <PasswordCreationForm

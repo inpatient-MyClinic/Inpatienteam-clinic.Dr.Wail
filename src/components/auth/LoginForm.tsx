@@ -13,6 +13,7 @@ interface LoginFormProps {
   rememberMe: boolean;
   setRememberMe: (remember: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onCreateAccount?: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -22,7 +23,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
   setPassword,
   rememberMe,
   setRememberMe,
-  onSubmit
+  onSubmit,
+  onCreateAccount
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -69,6 +71,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
         Sign In
       </Button>
+      
+      {onCreateAccount && (
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            First time user?{" "}
+            <Button 
+              type="button"
+              variant="link" 
+              className="p-0 h-auto text-blue-600"
+              onClick={onCreateAccount}
+            >
+              Create account
+            </Button>
+          </p>
+        </div>
+      )}
     </form>
   );
 };
