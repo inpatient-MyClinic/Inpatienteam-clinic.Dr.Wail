@@ -30,57 +30,40 @@ export const useAuthLogic = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    // Enhanced password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    if (!passwordRegex.test(password)) {
+      toast.error('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
       return;
     }
 
     try {
+      console.log('Attempting to create user with email:', email);
+      
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            full_name: email.split('@')[0], // Use email prefix as default name
+            full_name: email.split('@')[0],
+            email: email.trim().toLowerCase()
           }
         }
       });
 
       if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.user) {
-        if (isAdminEmail(email)) {
-          toast.success('Admin account created successfully! You can now login.');
-        } else {
-          toast.success('Account created! Please wait for admin approval before logging in.');
-        }
-        setIsFirstTimeLogin(false);
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-      toast.error('An unexpected error occurred. Please try again.');
-    }
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (error.message === 'Invalid login credentials') {
-          toast.error('Invalid email or password. Please try again.');
+        console.error('Signup error:', error);
+        if (error.message.includes('User already registered')) {
+          toast.error('User already exists. Please try logging in instead.');
+          setIsFirstTimeLogin(false);
+        } else if (error.message.includes('Invalid email')) {
+          toast.error('Please enter a valid email address.');
         } else {
           toast.error(error.message);
         }
@@ -88,20 +71,101 @@ export const useAuthLogic = () => {
       }
 
       if (data.user) {
+        console.log('User created successfully:', data.user.id);
+        
+        // Wait a moment for the trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Check if profile was created
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          toast.error('Account created but profile setup failed. Please contact support.');
+        } else {
+          console.log('Profile created successfully:', profile);
+          if (isAdminEmail(email)) {
+            toast.success('Admin account created successfully! You can now login.');
+          } else {
+            toast.success('Account created! Please wait for admin approval before logging in.');
+          }
+        }
+        
+        setIsFirstTimeLogin(false);
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error('Network error occurred. Please check your connection and try again.');
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      console.log('Attempting login for email:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        if (error.message === 'Invalid login credentials') {
+          toast.error('Invalid email or password. Please try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Please check your email and confirm your account before logging in.');
+        } else if (error.message.includes('Too many requests')) {
+          toast.error('Too many login attempts. Please wait a moment before trying again.');
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      if (data.user) {
+        console.log('Login successful for user:', data.user.id);
+        
         // Get user profile to check status and role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role, status')
+          .select('role, status, must_change_password, password_change_required_at')
           .eq('id', data.user.id)
           .single();
 
         if (profileError) {
-          toast.error('Error loading user profile');
+          console.error('Profile fetch error:', profileError);
+          if (profileError.code === 'PGRST116') {
+            toast.error('User profile not found. Please contact support.');
+          } else {
+            toast.error('Error loading user profile. Please try again.');
+          }
+          await supabase.auth.signOut();
           return;
         }
 
         if (profile.status !== 'active') {
           toast.error('Your account is pending approval. Please contact an administrator.');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        // Check if password change is required
+        const passwordChangeRequired = profile.must_change_password || 
+          (profile.password_change_required_at && new Date(profile.password_change_required_at) <= new Date());
+        
+        if (passwordChangeRequired) {
+          toast.error('Your password has expired. Please change your password.');
+          // Here you would redirect to password change page
+          // For now, we'll just inform the user
           await supabase.auth.signOut();
           return;
         }
@@ -137,7 +201,11 @@ export const useAuthLogic = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('An unexpected error occurred. Please try again.');
+      if (error.message?.includes('fetch')) {
+        toast.error('Network connection error. Please check your internet connection and try again.');
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
     }
   };
 

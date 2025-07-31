@@ -165,6 +165,27 @@ export type Database = {
           },
         ]
       }
+      password_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          password_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          password_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          password_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved_at: string | null
@@ -174,6 +195,9 @@ export type Database = {
           full_name: string | null
           hospital_code: string | null
           id: string
+          must_change_password: boolean | null
+          password_change_required_at: string | null
+          password_changed_at: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           specialty: string | null
@@ -188,6 +212,9 @@ export type Database = {
           full_name?: string | null
           hospital_code?: string | null
           id: string
+          must_change_password?: boolean | null
+          password_change_required_at?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           specialty?: string | null
@@ -202,6 +229,9 @@ export type Database = {
           full_name?: string | null
           hospital_code?: string | null
           id?: string
+          must_change_password?: boolean | null
+          password_change_required_at?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           specialty?: string | null
@@ -260,6 +290,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
+      check_password_similarity: {
+        Args: { user_id_param: string; new_password_hash: string }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
@@ -270,6 +304,10 @@ export type Database = {
       }
       is_admin_email: {
         Args: { email_address: string }
+        Returns: boolean
+      }
+      is_password_change_required: {
+        Args: { user_id_param: string }
         Returns: boolean
       }
     }
