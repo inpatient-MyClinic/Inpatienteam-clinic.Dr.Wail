@@ -43,12 +43,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Defer Supabase calls with setTimeout to prevent deadlock
           setTimeout(async () => {
             try {
-              const { data: profile } = await supabase
+              console.log('Fetching profile for user:', session.user.id);
+              const { data: profile, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .maybeSingle();
-              setProfile(profile);
+              
+              if (error) {
+                console.error('Supabase error fetching profile:', error);
+                setProfile(null);
+              } else {
+                console.log('Profile fetched:', profile);
+                setProfile(profile);
+              }
             } catch (error) {
               console.error('Error fetching profile:', error);
               setProfile(null);
@@ -70,14 +78,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         setTimeout(async () => {
           try {
-            const { data: profile } = await supabase
+            console.log('Initial profile fetch for user:', session.user.id);
+            const { data: profile, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
               .maybeSingle();
-            setProfile(profile);
+            
+            if (error) {
+              console.error('Supabase error in initial profile fetch:', error);
+              setProfile(null);
+            } else {
+              console.log('Initial profile fetched:', profile);
+              setProfile(profile);
+            }
           } catch (error) {
-            console.error('Error fetching profile:', error);
+            console.error('Error in initial profile fetch:', error);
             setProfile(null);
           }
           setLoading(false);

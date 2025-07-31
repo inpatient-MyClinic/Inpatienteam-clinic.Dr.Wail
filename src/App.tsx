@@ -64,6 +64,12 @@ const HomePage = () => {
     );
   }
 
+  // If user is authenticated but no profile, show a message and sign out
+  if (user && !profile) {
+    console.error('User authenticated but no profile found');
+    return <Index />;
+  }
+
   // If user is authenticated and active, redirect to their dashboard
   if (user && profile && profile.status === 'active') {
     switch (profile.role) {
