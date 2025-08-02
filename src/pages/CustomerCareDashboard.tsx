@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Download, ArrowLeft } from "lucide-react";
+import { MessageSquare, Download, ArrowLeft, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
 import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload";
 import ComplaintUpload from "@/components/customercare/ComplaintUpload";
+import NPSTargetSettings from "@/components/settings/NPSTargetSettings";
 import Footer from "@/components/Footer";
 import {
   Table,
@@ -81,6 +82,8 @@ const initialDoneRequestsWithComplaints = initialDoneRequests.map(request => ({
 
 export default function CustomerCareDashboard() {
   const [requests, setRequests] = useState(initialDoneRequestsWithComplaints);
+  const [showSettings, setShowSettings] = useState(false);
+  const [npsTargets, setNpsTargets] = useState({ customerCare: 75, inPatient: 80, overall: 70, quarterly: 72 });
   const [dateFilters, setDateFilters] = useState<{
     selectedDays: Date[];
     selectedWeeks: { month: Date; weekNumbers: number[] }[];
@@ -96,6 +99,33 @@ export default function CustomerCareDashboard() {
 
   // Calculate unread messages for customer-care role
   const unreadCount = 2;
+
+  // Load NPS targets on component mount and listen for updates
+  useEffect(() => {
+    const loadNPSTargets = () => {
+      const savedTargets = localStorage.getItem('npsTargets');
+      if (savedTargets) {
+        try {
+          setNpsTargets(JSON.parse(savedTargets));
+        } catch (error) {
+          console.error('Error loading NPS targets:', error);
+        }
+      }
+    };
+
+    loadNPSTargets();
+
+    // Listen for NPS target updates
+    const handleNPSTargetsUpdate = (event: CustomEvent) => {
+      setNpsTargets(event.detail);
+    };
+
+    window.addEventListener('npsTargetsUpdated', handleNPSTargetsUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('npsTargetsUpdated', handleNPSTargetsUpdate as EventListener);
+    };
+  }, []);
 
   // Auto-send survey when request is marked as done
   useEffect(() => {
@@ -245,9 +275,26 @@ export default function CustomerCareDashboard() {
 
   const monthlyNPS = calculateNPS(filteredRequests);
   const ytdNPS = calculateNPS(requests); // All requests for YTD
-  const targetNPS = 75;
+  const targetNPS = npsTargets.customerCare; // Use configurable target
   const complaintsOpen = requests.filter(r => r.complaintStatus === 'open').length;
   const complaintsClosed = requests.filter(r => r.complaintStatus === 'closed').length;
+
+  if (showSettings) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            onClick={() => setShowSettings(false)}
+            variant="outline"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-2xl font-bold">Customer Care Settings</h1>
+        </div>
+        <NPSTargetSettings />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full">
@@ -289,6 +336,21 @@ export default function CustomerCareDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 bg-white">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b bg-white">
+          <h1 className="text-2xl font-bold">Customer Care Dashboard</h1>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowSettings(true)}
+              variant="outline"
+              size="sm"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              NPS Settings
+            </Button>
+          </div>
+        </div>
+
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 p-6 border-b bg-white justify-between">
           <div>
