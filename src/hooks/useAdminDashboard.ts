@@ -14,6 +14,7 @@ export function useAdminDashboard() {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSIASlide, setShowSIASlide] = useState(false);
   const [showFinanceAnalytics, setShowFinanceAnalytics] = useState(false);
+  const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const { toast } = useToast();
 
   const handleStatusFilter = (status: string | null) => {
@@ -71,6 +72,14 @@ export function useAdminDashboard() {
     setShowFinanceAnalytics(true);
   };
 
+  const handleCloseFinanceAnalytics = () => {
+    setShowFinanceAnalytics(false);
+  };
+
+  const handleToggleNewUserRequests = () => {
+    setShowNewUserRequests(!showNewUserRequests);
+  };
+
   return {
     // State
     activeFilter,
@@ -84,6 +93,7 @@ export function useAdminDashboard() {
     showAIAssistant,
     showSIASlide,
     showFinanceAnalytics,
+    showNewUserRequests,
     // Setters
     setSelectedDates,
     setSelectedWeeks,
@@ -101,5 +111,7 @@ export function useAdminDashboard() {
     handleToggleAIAssistant,
     handleToggleSIASlide,
     handleShowFinanceAnalytics,
+    handleCloseFinanceAnalytics,
+    handleToggleNewUserRequests,
   };
 }

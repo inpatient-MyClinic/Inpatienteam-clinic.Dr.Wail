@@ -8,8 +8,10 @@ import LeadTeamMonitoring from "@/components/admin/LeadTeamMonitoring";
 import AdminGeneralReport from "@/components/admin/AdminGeneralReport";
 import AIAssistant from "@/components/admin/AIAssistant";
 import FinanceAnalyticsTable from "@/components/admin/analytics/FinanceAnalyticsTable";
-import UserApproval from "@/components/admin/UserApproval";
+import NewUserRequests from "@/components/admin/NewUserRequests";
 import Footer from "@/components/Footer";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AdminMainContentProps {
   showAnalytics: boolean;
@@ -18,6 +20,7 @@ interface AdminMainContentProps {
   showGeneralReport: boolean;
   showAIAssistant: boolean;
   showFinanceAnalytics: boolean;
+  showNewUserRequests: boolean;
   adminData: any[];
   filteredData: any[];
   selectedDates: Date[];
@@ -25,6 +28,8 @@ interface AdminMainContentProps {
   selectedMonths: string[];
   onShowGeneralReport: () => void;
   onShowFinanceAnalytics: () => void;
+  onToggleNewUserRequests: () => void;
+  onCloseFinanceAnalytics: () => void;
 }
 
 export default function AdminMainContent({
@@ -34,6 +39,7 @@ export default function AdminMainContent({
   showGeneralReport,
   showAIAssistant,
   showFinanceAnalytics,
+  showNewUserRequests,
   adminData,
   filteredData,
   selectedDates,
@@ -41,9 +47,18 @@ export default function AdminMainContent({
   selectedMonths,
   onShowGeneralReport,
   onShowFinanceAnalytics,
+  onToggleNewUserRequests,
+  onCloseFinanceAnalytics,
 }: AdminMainContentProps) {
   return (
     <>
+      {/* New User Requests */}
+      {showNewUserRequests && (
+        <div className="mb-6">
+          <NewUserRequests />
+        </div>
+      )}
+
       {/* New Features */}
       {showPrivilegesSearch && (
         <div className="mb-6">
@@ -71,7 +86,18 @@ export default function AdminMainContent({
 
       {/* Finance Analytics Section */}
       {showFinanceAnalytics && (
-        <div className="mb-6">
+        <div className="mb-6 relative">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Finance Analytics</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCloseFinanceAnalytics}
+              className="h-8 w-8 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <FinanceAnalyticsTable 
             onDataChange={(data) => {
               // Save finance data to localStorage for SIA integration
