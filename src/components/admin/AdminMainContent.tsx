@@ -8,6 +8,7 @@ import LeadTeamMonitoring from "@/components/admin/LeadTeamMonitoring";
 import AdminGeneralReport from "@/components/admin/AdminGeneralReport";
 import AIAssistant from "@/components/admin/AIAssistant";
 import FinanceAnalyticsTable from "@/components/admin/analytics/FinanceAnalyticsTable";
+import UserApproval from "@/components/admin/UserApproval";
 import Footer from "@/components/Footer";
 
 interface AdminMainContentProps {
@@ -79,6 +80,11 @@ export default function AdminMainContent({
           />
         </div>
       )}
+
+      {/* User Approval Section - Always visible for admins */}
+      <div className="mb-6">
+        <UserApproval />
+      </div>
 
       {/* Analytics Section */}
       {showAnalytics && (
