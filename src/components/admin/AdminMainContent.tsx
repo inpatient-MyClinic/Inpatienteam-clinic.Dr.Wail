@@ -7,6 +7,7 @@ import HospitalPrivilegesSearch from "@/components/admin/HospitalPrivilegesSearc
 import LeadTeamMonitoring from "@/components/admin/LeadTeamMonitoring";
 import AdminGeneralReport from "@/components/admin/AdminGeneralReport";
 import AIAssistant from "@/components/admin/AIAssistant";
+import FinanceAnalyticsTable from "@/components/admin/analytics/FinanceAnalyticsTable";
 import Footer from "@/components/Footer";
 
 interface AdminMainContentProps {
@@ -69,13 +70,12 @@ export default function AdminMainContent({
 
       {/* Finance Analytics Section */}
       {showFinanceAnalytics && (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Finance Analytics Table</h3>
-          <AdminAnalytics 
-            data={adminData}
-            selectedDates={selectedDates}
-            selectedWeeks={selectedWeeks}
-            selectedMonths={selectedMonths}
+        <div className="mb-6">
+          <FinanceAnalyticsTable 
+            onDataChange={(data) => {
+              // Save finance data to localStorage for SIA integration
+              localStorage.setItem('siaFinanceData', JSON.stringify(data));
+            }}
           />
         </div>
       )}
