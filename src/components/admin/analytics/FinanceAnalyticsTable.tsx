@@ -134,9 +134,92 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     return total;
   };
 
-  const calculateAchievement = (actual: number, forecast: number) => {
+  // Calculate Achievement (Actual vs Forecast)
+  const calculateAchievement = (column: string) => {
+    const actualRow = financeData.find(row => row.type === "Actual MTD");
+    const forecastRow = financeData.find(row => row.type === "Forecast MTD");
+    
+    if (!actualRow || !forecastRow) return "";
+    
+    const actual = typeof actualRow[column] === 'number' ? actualRow[column] as number : 0;
+    const forecast = typeof forecastRow[column] === 'number' ? forecastRow[column] as number : 0;
+    
     if (forecast === 0) return "#DIV/0!";
     return Math.round((actual / forecast) * 100) + "%";
+  };
+
+  // Calculate YTD Growth
+  const calculateYTDGrowth = (column: string) => {
+    const year = column.split('-')[1];
+    const month = column.split('-')[0];
+    
+    // Get current year total up to this month
+    const currentYearMonths = filteredMonthColumns.filter(col => 
+      col.split('-')[1] === year && 
+      getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
+    );
+    
+    const currentYearTotal = currentYearMonths.reduce((sum, col) => sum + calculateTotal(col), 0);
+    
+    // Get previous year total for same period
+    const prevYear = String(parseInt(`20${year}`) - 1).slice(-2);
+    const prevYearMonths = allMonthColumns.filter(col => 
+      col.split('-')[1] === prevYear && 
+      getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
+    );
+    
+    const prevYearTotal = prevYearMonths.reduce((sum, col) => sum + calculateTotal(col), 0);
+    
+    if (prevYearTotal === 0) return "";
+    return Math.round(((currentYearTotal - prevYearTotal) / prevYearTotal) * 100) + "%";
+  };
+
+  // Calculate MTD Growth (Month vs Previous Month)
+  const calculateMTDGrowth = (column: string) => {
+    const currentValue = calculateTotal(column);
+    const prevMonth = getPreviousMonth(column);
+    
+    if (!prevMonth) return "";
+    
+    const prevValue = calculateTotal(prevMonth);
+    if (prevValue === 0) return "";
+    
+    return Math.round(((currentValue - prevValue) / prevValue) * 100) + "%";
+  };
+
+  // Calculate % Change vs Last Year
+  const calculateYearOverYearChange = (column: string) => {
+    const year = column.split('-')[1];
+    const month = column.split('-')[0];
+    const prevYear = String(parseInt(`20${year}`) - 1).slice(-2);
+    const prevYearColumn = `${month}-${prevYear}`;
+    
+    const currentValue = calculateTotal(column);
+    const prevYearValue = calculateTotal(prevYearColumn);
+    
+    if (prevYearValue === 0) return "";
+    return Math.round(((currentValue - prevYearValue) / prevYearValue) * 100) + "%";
+  };
+
+  // Helper functions
+  const getMonthIndex = (month: string) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months.indexOf(month);
+  };
+
+  const getPreviousMonth = (column: string) => {
+    const [month, year] = column.split('-');
+    const monthIndex = getMonthIndex(month);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    if (monthIndex === 0) {
+      // January, go to December of previous year
+      const prevYear = String(parseInt(`20${year}`) - 1).slice(-2);
+      return `Dec-${prevYear}`;
+    } else {
+      // Previous month same year
+      return `${months[monthIndex - 1]}-${year}`;
+    }
   };
 
   const saveData = () => {
@@ -223,6 +306,16 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
       },
       {
         id: "2",
+        category: "External",
+        type: "Forecast MTD",
+        "Jan-23": 322, "Feb-23": 283, "Mar-23": 243, "Apr-23": 221, "May-23": 358, "Jun-23": 285,
+        "Jul-23": 313, "Aug-23": 386, "Sep-23": 366, "Oct-23": 418, "Nov-23": 406, "Dec-23": 351,
+        "Jan-24": 281, "Feb-24": 262, "Mar-24": 257, "Apr-24": 213, "May-24": 303, "Jun-24": 252,
+        "Jul-24": 297, "Aug-24": 284, "Sep-24": 292, "Oct-24": 319, "Nov-24": 256, "Dec-24": 283,
+        "Jan-25": 191, "Feb-25": 254, "Mar-25": 329, "Apr-25": 374, "May-25": 415, "Jun-25": 414
+      },
+      {
+        id: "3",
         category: "AlBatal",
         type: "",
         "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
@@ -232,7 +325,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
         "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": ""
       },
       {
-        id: "3",
+        id: "4",
         category: "Ibn Rushd",
         type: "",
         "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
@@ -246,7 +339,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     setFinanceData(sampleData);
     toast({
       title: "Sample Data Loaded",
-      description: "Loaded sample finance data for testing.",
+      description: "Loaded sample finance data with forecast data for testing.",
     });
   };
 
@@ -433,6 +526,58 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   {filteredMonthColumns.map(month => (
                     <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm">
                       {calculateTotal(month) || ''}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
+                {/* Achievement Row */}
+                <tr className="bg-green-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-green-700 border-green-300">Achievement</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-green-700">
+                      {calculateAchievement(month)}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
+                {/* YTD Growth Row */}
+                <tr className="bg-yellow-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-yellow-700 border-yellow-300">YTD Growth</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-yellow-700">
+                      {calculateYTDGrowth(month)}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
+                {/* MTD Growth Row */}
+                <tr className="bg-purple-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-purple-700 border-purple-300">MTD Growth</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-purple-700">
+                      {calculateMTDGrowth(month)}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
+                {/* % Change vs Last Year Row */}
+                <tr className="bg-orange-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-orange-700 border-orange-300">% Change vs Last Year</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-orange-700">
+                      {calculateYearOverYearChange(month)}
                     </td>
                   ))}
                   {isEditing && <td className="border border-gray-300 p-2"></td>}
