@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Edit, Plus, Upload, History, X } from "lucide-react";
+import { Trash2, Edit, Plus, Upload, History, X, Shield, Search, FileSpreadsheet, Database, Image, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 
@@ -75,6 +75,20 @@ const defaultCapabilities: SystemCapability[] = [
     description: "All data automatically saved to localStorage with backup capabilities",
     status: "Active",
     details: "Automatic data persistence with local storage backup, real-time synchronization, and data recovery features ensuring no data loss."
+  },
+  {
+    id: "6",
+    name: "Logo Management",
+    description: "Upload, modify, and manage system logos with history tracking",
+    status: "Active",
+    details: "Complete logo management system with upload capabilities, version history, restore functionality, and permanent deletion options."
+  },
+  {
+    id: "7",
+    name: "Logo History",
+    description: "Track and restore previous logo versions with backup functionality",
+    status: "Active", 
+    details: "Comprehensive logo version control with automatic backup, restoration capabilities, and permanent deletion management for system branding."
   }
 ];
 
@@ -426,42 +440,190 @@ const SystemSettings = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {capabilities.map((capability) => (
-              <Dialog key={capability.id}>
-                <DialogTrigger asChild>
-                  <div className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-medium">{capability.name}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {capabilities.map((capability) => {
+              const getCapabilityIcon = (name: string) => {
+                switch(name) {
+                  case "Add Users": return <Plus className="w-6 h-6" />;
+                  case "Field Permissions": return <Shield className="w-6 h-6" />;
+                  case "Advanced Filtering": return <Search className="w-6 h-6" />;
+                  case "Excel Integration": return <FileSpreadsheet className="w-6 h-6" />;
+                  case "Persistent Storage": return <Database className="w-6 h-6" />;
+                  case "Logo Management": return <Image className="w-6 h-6" />;
+                  case "Logo History": return <History className="w-6 h-6" />;
+                  default: return <Settings className="w-6 h-6" />;
+                }
+              };
+
+              const getIconBgColor = (name: string) => {
+                switch(name) {
+                  case "Add Users": return "bg-blue-100 text-blue-600";
+                  case "Field Permissions": return "bg-green-100 text-green-600";
+                  case "Advanced Filtering": return "bg-orange-100 text-orange-600";
+                  case "Excel Integration": return "bg-purple-100 text-purple-600";
+                  case "Persistent Storage": return "bg-teal-100 text-teal-600";
+                  case "Logo Management": return "bg-pink-100 text-pink-600";
+                  case "Logo History": return "bg-indigo-100 text-indigo-600";
+                  default: return "bg-gray-100 text-gray-600";
+                }
+              };
+
+              return (
+                <Dialog key={capability.id}>
+                  <DialogTrigger asChild>
+                    <div className="border rounded-lg p-6 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/20 bg-card">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`p-3 rounded-lg ${getIconBgColor(capability.name)}`}>
+                          {getCapabilityIcon(capability.name)}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={capability.status === "Active" ? "default" : "secondary"} className="text-xs">
+                            {capability.status}
+                          </Badge>
+                          <Switch
+                            checked={capability.status === "Active"}
+                            onCheckedChange={() => handleToggleStatus(capability.id)}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2">{capability.name}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {capability.description}
+                        </p>
+                      </div>
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-3 rounded-lg ${getIconBgColor(capability.name)}`}>
+                          {getCapabilityIcon(capability.name)}
+                        </div>
+                        <div>
+                          <DialogTitle className="text-xl">{capability.name}</DialogTitle>
+                          <DialogDescription>Detailed information about this system capability</DialogDescription>
+                        </div>
+                      </div>
+                    </DialogHeader>
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="font-medium mb-2 flex items-center space-x-2">
+                          <span>Status</span>
                           <Badge variant={capability.status === "Active" ? "default" : "secondary"}>
                             {capability.status}
                           </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">{capability.description}</p>
+                        </h4>
                       </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <Switch
-                          checked={capability.status === "Active"}
-                          onCheckedChange={(checked) => {
-                            handleToggleStatus(capability.id);
-                          }}
-                        />
+                      <div>
+                        <h4 className="font-medium mb-2">Description</h4>
+                        <p className="text-muted-foreground">{capability.description}</p>
+                      </div>
+                      {capability.details && (
+                        <div>
+                          <h4 className="font-medium mb-2">Technical Details</h4>
+                          <p className="text-muted-foreground leading-relaxed">{capability.details}</p>
+                        </div>
+                      )}
+                      
+                      {/* Special content for Logo Management */}
+                      {capability.name === "Logo Management" && (
+                        <div className="border-t pt-6">
+                          <h4 className="font-medium mb-4">Logo Management Actions</h4>
+                          <div className="space-y-4">
+                            <div className="p-4 border rounded-lg bg-muted/20">
+                              <div className="flex items-center justify-center mb-3">
+                                {currentLogo ? (
+                                  <Logo size="md" showText={true} />
+                                ) : (
+                                  <div className="text-center text-muted-foreground py-8">
+                                    No logo uploaded
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-2 justify-center">
+                                <div>
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoUpload}
+                                    className="hidden"
+                                    id="logo-upload-dialog"
+                                  />
+                                  <Label htmlFor="logo-upload-dialog">
+                                    <Button variant="outline" size="sm" className="cursor-pointer" asChild>
+                                      <span>
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        Upload New
+                                      </span>
+                                    </Button>
+                                  </Label>
+                                </div>
+                                {currentLogo && (
+                                  <Button variant="destructive" size="sm" onClick={handleDeleteCurrentLogo}>
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Current
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Special content for Logo History */}
+                      {capability.name === "Logo History" && (
+                        <div className="border-t pt-6">
+                          <h4 className="font-medium mb-4">Logo History ({logoHistory.length} items)</h4>
+                          {logoHistory.length === 0 ? (
+                            <div className="text-center text-muted-foreground py-8 border rounded-lg">
+                              No logo history available
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+                              {logoHistory.slice(0, 6).map((item) => (
+                                <div key={item.id} className="border rounded-lg p-3 bg-muted/20">
+                                  <div className="aspect-video bg-white rounded mb-2 flex items-center justify-center overflow-hidden">
+                                    <img 
+                                      src={item.url} 
+                                      alt={item.fileName}
+                                      className="max-w-full max-h-full object-contain"
+                                    />
+                                  </div>
+                                  <p className="text-xs font-medium truncate">{item.fileName}</p>
+                                  <p className="text-xs text-muted-foreground mb-2">
+                                    {new Date(item.uploadedAt).toLocaleDateString()}
+                                  </p>
+                                  <div className="flex space-x-1">
+                                    <Button size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => handleRestoreLogo(item)}>
+                                      Restore
+                                    </Button>
+                                    <Button size="sm" variant="destructive" className="text-xs h-7 px-2" onClick={() => handlePermanentDeleteFromHistory(item.id)}>
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {logoHistory.length > 6 && (
+                            <Button variant="outline" size="sm" className="w-full mt-3" onClick={() => setShowLogoHistory(true)}>
+                              View All History ({logoHistory.length} items)
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <div className="flex space-x-2">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingCapability(capability);
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
+                            <Button variant="outline" onClick={() => setEditingCapability(capability)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
                             </Button>
                           </DialogTrigger>
-                          <DialogContent onClick={(e) => e.stopPropagation()}>
+                          <DialogContent>
                             <DialogHeader>
                               <DialogTitle>Edit System Capability</DialogTitle>
                             </DialogHeader>
@@ -502,12 +664,9 @@ const SystemSettings = () => {
                         </Dialog>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="w-4 h-4" />
+                            <Button variant="destructive">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -526,47 +685,20 @@ const SystemSettings = () => {
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </div>
-                  </div>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{capability.name}</DialogTitle>
-                    <DialogDescription>Detailed information about this system capability</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Status</h4>
-                      <Badge variant={capability.status === "Active" ? "default" : "secondary"}>
-                        {capability.status}
-                      </Badge>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Description</h4>
-                      <p className="text-sm text-muted-foreground">{capability.description}</p>
-                    </div>
-                    {capability.details && (
-                      <div>
-                        <h4 className="font-medium mb-2">Details</h4>
-                        <p className="text-sm text-muted-foreground">{capability.details}</p>
-                      </div>
-                    )}
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline">Close</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            ))}
-            
-            {/* All Systems Operational Status */}
-            <div className="mt-6 p-4 bg-muted/30 rounded-lg border">
-              <h3 className="font-medium text-primary mb-2">All Systems Operational</h3>
-              <p className="text-sm text-muted-foreground">
-                All {capabilities.filter(cap => cap.status === "Active").length} core system capabilities are fully functional and actively managing your user data. 
-                Click any feature above to see detailed information about its current status and capabilities.
-              </p>
-            </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              );
+            })}
+          </div>
+
+          {/* All Systems Operational Status */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+            <h3 className="font-medium text-green-800 mb-2">All Systems Operational</h3>
+            <p className="text-sm text-green-700">
+              All {capabilities.filter(cap => cap.status === "Active").length} core system capabilities are fully functional and actively managing your user data. 
+              Click any feature above to see detailed information about its current status and capabilities.
+            </p>
           </div>
         </CardContent>
       </Card>
