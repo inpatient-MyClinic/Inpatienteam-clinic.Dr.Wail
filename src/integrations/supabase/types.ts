@@ -171,6 +171,33 @@ export type Database = {
           },
         ]
       }
+      otp_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          used: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          used?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          used?: boolean | null
+        }
+        Relationships: []
+      }
       password_history: {
         Row: {
           created_at: string | null
@@ -300,6 +327,10 @@ export type Database = {
         Args: { user_id_param: string; new_password_hash: string }
         Returns: boolean
       }
+      generate_otp: {
+        Args: { user_email: string }
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
@@ -333,6 +364,10 @@ export type Database = {
           email: string
           role: Database["public"]["Enums"]["user_role"]
         }[]
+      }
+      verify_otp: {
+        Args: { user_email: string; submitted_code: string }
+        Returns: boolean
       }
     }
     Enums: {
