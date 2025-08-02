@@ -1,12 +1,13 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Plus, Download, Upload, Save, Edit3, Filter } from "lucide-react";
+import { Plus, Download, Upload, Save, Edit3, Filter, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface FinanceData {
   id: string;
@@ -23,38 +24,42 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYears, setSelectedYears] = useState<string[]>(["2023", "2024", "2025"]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Initialize with sample data structure similar to user's request
+  // Initialize with empty structure or sample data
   const [financeData, setFinanceData] = useState<FinanceData[]>([
     {
       id: "1",
       category: "External",
       type: "Actual MTD",
-      "Jan-23": 250, "Feb-23": 278, "Mar-23": 284, "Apr-23": 211, "May-23": 151, "Jun-23": 206,
-      "Jul-23": 419, "Aug-23": 181, "Sep-23": 250, "Oct-23": 455, "Nov-23": 192, "Dec-23": 340,
-      "Jan-24": 187, "Feb-24": 248, "Mar-24": 321, "Apr-24": 365, "May-24": 405, "Jun-24": 403,
-      "Jul-24": 195, "Aug-24": 307, "Sep-24": 428, "Oct-24": 337, "Nov-24": 282, "Dec-24": 337,
-      "Jan-25": 350, "Feb-25": 350, "Mar-25": 136, "Apr-25": 583, "May-25": 341, "Jun-25": 166
+      "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
     },
     {
       id: "2",
       category: "AlBatal",
       type: "",
       "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
-      "Jul-23": "", "Aug-23": 77, "Sep-23": 161, "Oct-23": 148, "Nov-23": 124, "Dec-23": 165,
-      "Jan-24": 153, "Feb-24": 163, "Mar-24": 111, "Apr-24": 138, "May-24": 151, "Jun-24": 94,
-      "Jul-24": 117, "Aug-24": 105, "Sep-24": 115, "Oct-24": 28, "Nov-24": 88, "Dec-24": 95,
-      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": ""
+      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
     },
     {
       id: "3",
       category: "Ibn Rushd",
       type: "",
       "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
-      "Jul-23": "", "Aug-23": 62, "Sep-23": 68, "Oct-23": 92, "Nov-23": 26, "Dec-23": 92,
-      "Jan-24": 24, "Feb-24": 46, "Mar-24": 59, "Apr-24": 47, "May-24": 127, "Jun-24": 146,
-      "Jul-24": 50, "Aug-24": 68, "Sep-24": 96, "Oct-24": 39, "Nov-24": 23, "Dec-24": 82,
-      "Jan-25": 24, "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": ""
+      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
     }
   ]);
 
@@ -142,6 +147,106 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     toast({
       title: "Data Saved",
       description: "Finance analytics data has been saved successfully.",
+    });
+  };
+
+  const handleExcelImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Convert Excel data to our format
+        if (jsonData.length > 1) {
+          const headers = jsonData[0] as string[];
+          const rows = jsonData.slice(1) as any[][];
+          
+          const newData: FinanceData[] = rows.map((row, index) => {
+            const rowData: FinanceData = {
+              id: (index + 1).toString(),
+              category: row[0] || "",
+              type: row[1] || "",
+            };
+            
+            // Map remaining columns to month headers
+            headers.slice(2).forEach((header, colIndex) => {
+              rowData[header] = row[colIndex + 2] || "";
+            });
+            
+            return rowData;
+          });
+
+          setFinanceData(newData);
+          toast({
+            title: "Excel Import Successful",
+            description: `Imported ${newData.length} rows from Excel file.`,
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Import Error",
+          description: "Failed to import Excel file. Please check the format.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsBinaryString(file);
+    
+    // Reset input
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
+  const loadSampleData = () => {
+    const sampleData: FinanceData[] = [
+      {
+        id: "1",
+        category: "External",
+        type: "Actual MTD",
+        "Jan-23": 250, "Feb-23": 278, "Mar-23": 284, "Apr-23": 211, "May-23": 151, "Jun-23": 206,
+        "Jul-23": 419, "Aug-23": 181, "Sep-23": 250, "Oct-23": 455, "Nov-23": 192, "Dec-23": 340,
+        "Jan-24": 187, "Feb-24": 248, "Mar-24": 321, "Apr-24": 365, "May-24": 405, "Jun-24": 403,
+        "Jul-24": 195, "Aug-24": 307, "Sep-24": 428, "Oct-24": 337, "Nov-24": 282, "Dec-24": 337,
+        "Jan-25": 350, "Feb-25": 350, "Mar-25": 136, "Apr-25": 583, "May-25": 341, "Jun-25": 166
+      },
+      {
+        id: "2",
+        category: "AlBatal",
+        type: "",
+        "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+        "Jul-23": "", "Aug-23": 77, "Sep-23": 161, "Oct-23": 148, "Nov-23": 124, "Dec-23": 165,
+        "Jan-24": 153, "Feb-24": 163, "Mar-24": 111, "Apr-24": 138, "May-24": 151, "Jun-24": 94,
+        "Jul-24": 117, "Aug-24": 105, "Sep-24": 115, "Oct-24": 28, "Nov-24": 88, "Dec-24": 95,
+        "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": ""
+      },
+      {
+        id: "3",
+        category: "Ibn Rushd",
+        type: "",
+        "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+        "Jul-23": "", "Aug-23": 62, "Sep-23": 68, "Oct-23": 92, "Nov-23": 26, "Dec-23": 92,
+        "Jan-24": 24, "Feb-24": 46, "Mar-24": 59, "Apr-24": 47, "May-24": 127, "Jun-24": 146,
+        "Jul-24": 50, "Aug-24": 68, "Sep-24": 96, "Oct-24": 39, "Nov-24": 23, "Dec-24": 82,
+        "Jan-25": 24, "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": ""
+      }
+    ];
+    
+    setFinanceData(sampleData);
+    toast({
+      title: "Sample Data Loaded",
+      description: "Loaded sample finance data for testing.",
     });
   };
 
