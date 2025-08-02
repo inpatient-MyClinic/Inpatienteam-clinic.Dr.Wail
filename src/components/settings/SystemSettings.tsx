@@ -45,31 +45,36 @@ const defaultCapabilities: SystemCapability[] = [
     id: "1",
     name: "Add Users",
     description: "Add users with email validation and automatic role-based permissions",
-    status: "Active"
+    status: "Active",
+    details: "Complete user registration system with email validation, automatic role assignment based on email domain, and instant activation for authorized users."
   },
   {
     id: "2", 
     name: "Field Permissions",
     description: "Granular field-level permissions for each user category",
-    status: "Active"
+    status: "Active",
+    details: "Advanced permission system allowing fine-grained control over what data fields each user role can view, edit, or delete across the entire platform."
   },
   {
     id: "3",
     name: "Advanced Filtering", 
     description: "Filter by category, specialty, status with real-time search",
-    status: "Active"
+    status: "Active",
+    details: "Powerful filtering engine with real-time search capabilities, multi-criteria filtering, and instant results across all user management interfaces."
   },
   {
     id: "4",
     name: "Excel Integration",
     description: "Import users from Excel and export filtered data to CSV", 
-    status: "Active"
+    status: "Active",
+    details: "Full Excel integration supporting bulk user import with validation, template downloads, duplicate detection, and comprehensive data export capabilities."
   },
   {
     id: "5",
     name: "Persistent Storage",
     description: "All data automatically saved to localStorage with backup capabilities",
-    status: "Active"
+    status: "Active",
+    details: "Automatic data persistence with local storage backup, real-time synchronization, and data recovery features ensuring no data loss."
   }
 ];
 
@@ -361,7 +366,7 @@ const SystemSettings = () => {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>System Capabilities</CardTitle>
-              <CardDescription>Manage and configure system features</CardDescription>
+              <CardDescription>Complete user management functionality with enterprise-grade features - Click any feature to see details</CardDescription>
             </div>
             <Dialog>
               <DialogTrigger asChild>
@@ -423,95 +428,145 @@ const SystemSettings = () => {
         <CardContent>
           <div className="space-y-4">
             {capabilities.map((capability) => (
-              <div key={capability.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="font-medium">{capability.name}</h3>
+              <Dialog key={capability.id}>
+                <DialogTrigger asChild>
+                  <div className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="font-medium">{capability.name}</h3>
+                          <Badge variant={capability.status === "Active" ? "default" : "secondary"}>
+                            {capability.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{capability.description}</p>
+                      </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <Switch
+                          checked={capability.status === "Active"}
+                          onCheckedChange={(checked) => {
+                            handleToggleStatus(capability.id);
+                          }}
+                        />
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingCapability(capability);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent onClick={(e) => e.stopPropagation()}>
+                            <DialogHeader>
+                              <DialogTitle>Edit System Capability</DialogTitle>
+                            </DialogHeader>
+                            {editingCapability && (
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="edit-name">Name</Label>
+                                  <Input
+                                    id="edit-name"
+                                    value={editingCapability.name}
+                                    onChange={(e) => setEditingCapability({...editingCapability, name: e.target.value})}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-description">Description</Label>
+                                  <Textarea
+                                    id="edit-description"
+                                    value={editingCapability.description}
+                                    onChange={(e) => setEditingCapability({...editingCapability, description: e.target.value})}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-details">Details</Label>
+                                  <Textarea
+                                    id="edit-details"
+                                    value={editingCapability.details || ""}
+                                    onChange={(e) => setEditingCapability({...editingCapability, details: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            <DialogFooter>
+                              <Button onClick={() => editingCapability && handleEditCapability(editingCapability)}>
+                                Save Changes
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Capability</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{capability.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteCapability(capability.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{capability.name}</DialogTitle>
+                    <DialogDescription>Detailed information about this system capability</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Status</h4>
                       <Badge variant={capability.status === "Active" ? "default" : "secondary"}>
                         {capability.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{capability.description}</p>
+                    <div>
+                      <h4 className="font-medium mb-2">Description</h4>
+                      <p className="text-sm text-muted-foreground">{capability.description}</p>
+                    </div>
                     {capability.details && (
-                      <p className="text-xs text-muted-foreground">{capability.details}</p>
+                      <div>
+                        <h4 className="font-medium mb-2">Details</h4>
+                        <p className="text-sm text-muted-foreground">{capability.details}</p>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={capability.status === "Active"}
-                      onCheckedChange={() => handleToggleStatus(capability.id)}
-                    />
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setEditingCapability(capability)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit System Capability</DialogTitle>
-                        </DialogHeader>
-                        {editingCapability && (
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="edit-name">Name</Label>
-                              <Input
-                                id="edit-name"
-                                value={editingCapability.name}
-                                onChange={(e) => setEditingCapability({...editingCapability, name: e.target.value})}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-description">Description</Label>
-                              <Textarea
-                                id="edit-description"
-                                value={editingCapability.description}
-                                onChange={(e) => setEditingCapability({...editingCapability, description: e.target.value})}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-details">Details</Label>
-                              <Textarea
-                                id="edit-details"
-                                value={editingCapability.details || ""}
-                                onChange={(e) => setEditingCapability({...editingCapability, details: e.target.value})}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        <DialogFooter>
-                          <Button onClick={() => editingCapability && handleEditCapability(editingCapability)}>
-                            Save Changes
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Capability</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{capability.name}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteCapability(capability.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </div>
+                  <DialogFooter>
+                    <Button variant="outline">Close</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             ))}
+            
+            {/* All Systems Operational Status */}
+            <div className="mt-6 p-4 bg-muted/30 rounded-lg border">
+              <h3 className="font-medium text-primary mb-2">All Systems Operational</h3>
+              <p className="text-sm text-muted-foreground">
+                All {capabilities.filter(cap => cap.status === "Active").length} core system capabilities are fully functional and actively managing your user data. 
+                Click any feature above to see detailed information about its current status and capabilities.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
