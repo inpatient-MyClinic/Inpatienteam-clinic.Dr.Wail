@@ -3,7 +3,7 @@ export const validateEmail = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@myclinic.com.sa"
+    "inpatienteam@gmail.com"
   ];
   
   const cleanEmail = email.toLowerCase().trim();
@@ -78,7 +78,7 @@ export const getUserRole = (email: string) => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@myclinic.com.sa"
+    "inpatienteam@gmail.com"
   ];
   
   console.log("Checking role for email:", email);
@@ -107,7 +107,7 @@ export const isUserAuthorized = (email: string): boolean => {
   const adminEmails = [
     "admin@myclinic.com.sa",
     "wail.ahmed@myclinic.com.sa",
-    "inpatienteam@myclinic.com.sa"
+    "inpatienteam@gmail.com"
   ];
   
   // Admin emails are always authorized

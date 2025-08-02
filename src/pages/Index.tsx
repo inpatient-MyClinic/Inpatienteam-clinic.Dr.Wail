@@ -69,7 +69,7 @@ export default function Index() {
             
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
-                Authorized staff only • Access restricted to @myclinic.com.sa
+                Authorized staff only • Access restricted to approved email addresses
               </p>
             </div>
           </CardContent>
