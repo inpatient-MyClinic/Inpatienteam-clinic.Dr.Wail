@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { LoginAttemptService } from "@/services/loginAttemptService";
+import { supabase } from "@/integrations/supabase/client";
 import NewUserRequests from "./NewUserRequests";
 
 interface AdminFeatureButtonsProps {
@@ -31,14 +31,27 @@ export default function AdminFeatureButtons({
 
   useEffect(() => {
     updatePendingCount();
-    const handleNewAttempt = () => updatePendingCount();
-    window.addEventListener('newLoginAttempt', handleNewAttempt);
-    return () => window.removeEventListener('newLoginAttempt', handleNewAttempt);
+    // Poll for updates every 30 seconds
+    const interval = setInterval(updatePendingCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const updatePendingCount = () => {
-    const pending = LoginAttemptService.getPendingAttempts();
-    setPendingCount(pending.length);
+  const updatePendingCount = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('status', 'pending');
+      
+      if (error) {
+        console.error('Error fetching pending users:', error);
+        return;
+      }
+      
+      setPendingCount(data?.length || 0);
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+    }
   };
 
   return (

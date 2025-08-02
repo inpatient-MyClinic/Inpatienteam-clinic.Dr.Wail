@@ -81,11 +81,6 @@ export default function AdminMainContent({
         </div>
       )}
 
-      {/* User Approval Section - Always visible for admins */}
-      <div className="mb-6">
-        <UserApproval />
-      </div>
-
       {/* Analytics Section */}
       {showAnalytics && (
         <div>
