@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Download, Upload, Save, Edit3 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Plus, Download, Upload, Save, Edit3, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface FinanceData {
@@ -20,6 +22,7 @@ interface FinanceAnalyticsTableProps {
 export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalyticsTableProps) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedYears, setSelectedYears] = useState<string[]>(["2023", "2024", "2025"]);
   
   // Initialize with sample data structure similar to user's request
   const [financeData, setFinanceData] = useState<FinanceData[]>([
@@ -55,10 +58,39 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     }
   ]);
 
-  // Get all month columns dynamically
-  const monthColumns = Object.keys(financeData[0] || {}).filter(key => 
+  // Get all available years from data
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    Object.keys(financeData[0] || {}).forEach(key => {
+      if (key !== 'id' && key !== 'category' && key !== 'type') {
+        const year = key.split('-')[1];
+        if (year) years.add(`20${year}`);
+      }
+    });
+    return Array.from(years).sort();
+  }, [financeData]);
+
+  // Get filtered month columns based on selected years
+  const filteredMonthColumns = useMemo(() => {
+    return Object.keys(financeData[0] || {}).filter(key => {
+      if (key === 'id' || key === 'category' || key === 'type') return false;
+      const year = key.split('-')[1];
+      return year && selectedYears.includes(`20${year}`);
+    });
+  }, [financeData, selectedYears]);
+
+  // Get all month columns for adding new columns
+  const allMonthColumns = Object.keys(financeData[0] || {}).filter(key => 
     key !== 'id' && key !== 'category' && key !== 'type'
   );
+
+  const handleYearToggle = (year: string) => {
+    setSelectedYears(prev => 
+      prev.includes(year) 
+        ? prev.filter(y => y !== year)
+        : [...prev, year].sort()
+    );
+  };
 
   const handleCellChange = useCallback((rowId: string, column: string, value: string) => {
     setFinanceData(prev => prev.map(row => 
@@ -73,14 +105,14 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
       id: Date.now().toString(),
       category: "New Category",
       type: "New Type",
-      ...monthColumns.reduce((acc, month) => ({ ...acc, [month]: "" }), {})
+      ...allMonthColumns.reduce((acc, month) => ({ ...acc, [month]: "" }), {})
     };
     setFinanceData(prev => [...prev, newRow]);
   };
 
   const addColumn = () => {
     const newMonth = prompt("Enter new month (e.g., Jul-25):");
-    if (newMonth && !monthColumns.includes(newMonth)) {
+    if (newMonth && !allMonthColumns.includes(newMonth)) {
       setFinanceData(prev => prev.map(row => ({ ...row, [newMonth]: "" })));
       toast({
         title: "Column Added",
@@ -189,6 +221,34 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
       </CardHeader>
       
       <CardContent>
+        {/* Year Filter Section */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-gray-600" />
+            <Label className="font-semibold text-gray-700">Filter by Year:</Label>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {availableYears.map(year => (
+              <div key={year} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`year-${year}`}
+                  checked={selectedYears.includes(year)}
+                  onCheckedChange={() => handleYearToggle(year)}
+                />
+                <Label 
+                  htmlFor={`year-${year}`}
+                  className="text-sm font-medium cursor-pointer hover:text-primary"
+                >
+                  {year}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            Showing {filteredMonthColumns.length} months from {selectedYears.length} selected year(s)
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <div className="min-w-full">
             <table className="w-full border-collapse border border-gray-300">
@@ -196,7 +256,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                 <tr className="bg-gray-50">
                   <th className="border border-gray-300 p-2 text-left font-semibold">Category</th>
                   <th className="border border-gray-300 p-2 text-left font-semibold">Type</th>
-                  {monthColumns.map(month => (
+                  {filteredMonthColumns.map(month => (
                     <th key={month} className="border border-gray-300 p-2 text-center font-semibold min-w-[80px]">
                       {month}
                     </th>
@@ -240,7 +300,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                         <span className="text-sm">{row.type}</span>
                       )}
                     </td>
-                    {monthColumns.map(month => (
+                     {filteredMonthColumns.map(month => (
                       <td key={month} className="border border-gray-300 p-2 text-center">
                         {isEditing ? (
                           <Input
@@ -265,7 +325,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   <td className="border border-gray-300 p-2" colSpan={2}>
                     <Badge variant="secondary">Total</Badge>
                   </td>
-                  {monthColumns.map(month => (
+                  {filteredMonthColumns.map(month => (
                     <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm">
                       {calculateTotal(month) || ''}
                     </td>
@@ -296,21 +356,18 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
             <div>
               <span className="text-blue-700">Latest Month Total:</span>
               <span className="ml-2 font-mono font-bold">
-                {calculateTotal(monthColumns[monthColumns.length - 1] || '')}
+                {filteredMonthColumns.length > 0 ? calculateTotal(filteredMonthColumns[filteredMonthColumns.length - 1]) : 0}
               </span>
             </div>
             <div>
-              <span className="text-blue-700">YTD Total (2025):</span>
+              <span className="text-blue-700">Selected Years Total:</span>
               <span className="ml-2 font-mono font-bold">
-                {monthColumns
-                  .filter(month => month.includes('25'))
-                  .reduce((sum, month) => sum + calculateTotal(month), 0)
-                }
+                {filteredMonthColumns.reduce((sum, month) => sum + calculateTotal(month), 0)}
               </span>
             </div>
             <div>
-              <span className="text-blue-700">Total Entries:</span>
-              <span className="ml-2 font-mono font-bold">{financeData.length}</span>
+              <span className="text-blue-700">Filtered Columns:</span>
+              <span className="ml-2 font-mono font-bold">{filteredMonthColumns.length}</span>
             </div>
           </div>
         </div>
