@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminAnalyticsFilters from "./analytics/AdminAnalyticsFilters";
+import FinanceAnalyticsTable from "./analytics/FinanceAnalyticsTable";
 
 import AdminMetricsCards from "./analytics/AdminMetricsCards";
 import AdminTopCharts from "./analytics/AdminTopCharts";
@@ -28,6 +30,7 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [selectedHospital, setSelectedHospital] = useState<string>("all");
   const [selectedDoctor, setSelectedDoctor] = useState<string>("all");
   const [selectedCoordinator, setSelectedCoordinator] = useState<string>("all");
+  const [financeData, setFinanceData] = useState<any[]>([]);
 
   // Calculate conversion rate (completed requests / total requests)
   const totalRequests = data.length;
@@ -147,8 +150,15 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
 
   return (
     <div className="space-y-6 mb-6">
-      {/* Filters */}
-      <AdminAnalyticsFilters
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="analytics">Standard Analytics</TabsTrigger>
+          <TabsTrigger value="finance">Finance Analytics Table</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Filters */}
+          <AdminAnalyticsFilters
         filterBy={filterBy}
         selectedSpecialty={selectedSpecialty}
         selectedHospital={selectedHospital}
@@ -215,8 +225,20 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
       {/* Loss Tree Analysis - updated style */}
       <AdminLossTreeChart lossTreeData={lossTreeData} />
 
-      {/* Status Distribution - updated with cancelled/rejected */}
-      <AdminStatusDistribution statusData={statusData} colors={COLORS} />
+          {/* Status Distribution - updated with cancelled/rejected */}
+          <AdminStatusDistribution statusData={statusData} colors={COLORS} />
+        </TabsContent>
+        
+        <TabsContent value="finance" className="space-y-6">
+          <FinanceAnalyticsTable 
+            onDataChange={(data) => {
+              setFinanceData(data);
+              // Save finance data to localStorage for SIA integration
+              localStorage.setItem('siaFinanceData', JSON.stringify(data));
+            }}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

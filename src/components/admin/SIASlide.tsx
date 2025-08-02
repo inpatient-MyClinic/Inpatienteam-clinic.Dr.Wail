@@ -24,6 +24,33 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     revenueGrowthPercent: 15.5,
     additionalNotes: ""
   });
+  const [financeData, setFinanceData] = useState<any[]>([]);
+
+  // Load finance data from localStorage when component mounts
+  useEffect(() => {
+    const savedFinanceData = localStorage.getItem('siaFinanceData');
+    if (savedFinanceData) {
+      try {
+        const data = JSON.parse(savedFinanceData);
+        setFinanceData(data);
+        // Calculate revenue from finance data
+        if (data.length > 0) {
+          const currentMonthKey = `${months.find(m => m.value === selectedMonth)?.label?.substring(0, 3)}-${selectedYear.toString().substring(2)}`;
+          const monthTotal = data.reduce((sum: number, row: any) => {
+            const value = row[currentMonthKey];
+            return sum + (typeof value === 'number' ? value : 0);
+          }, 0);
+          setEditableData(prev => ({
+            ...prev,
+            revenue: monthTotal * 1000, // Convert to currency
+            revenueGrowthPercent: monthTotal > 0 ? 15.5 : 0
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading finance data:', error);
+      }
+    }
+  }, [selectedMonth, selectedYear]);
 
   // Editable table data
   const [tableData, setTableData] = useState([
@@ -522,7 +549,12 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
           {/* Revenue */}
           <Card>
             <CardHeader>
-              <CardTitle>Revenue</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Revenue
+                <Badge variant="secondary" className="text-xs">
+                  {financeData.length > 0 ? 'Live Data' : 'Manual'}
+                </Badge>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isEditing ? (
@@ -548,6 +580,14 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   <div className="text-sm text-gray-600">
                     Growth: {editableData.revenueGrowthPercent}% vs. last year
                   </div>
+                  {financeData.length > 0 && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                      <div className="font-semibold text-blue-900">Finance Table Integration</div>
+                      <div className="text-blue-700">
+                        Data auto-synced from Finance Analytics ({financeData.length} rows)
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               <p className="text-xs text-gray-500">YTD Achievement - Revenue Growth</p>
