@@ -12,6 +12,7 @@ export function useAdminDashboardState() {
   const [showTeamMonitoring, setShowTeamMonitoring] = useState(false);
   const [showGeneralReport, setShowGeneralReport] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showFinanceAnalytics, setShowFinanceAnalytics] = useState(false);
   const { toast } = useToast();
 
   const handleStatusFilter = (status: string | null) => {
@@ -49,6 +50,10 @@ export function useAdminDashboardState() {
     setShowGeneralReport(true);
   };
 
+  const handleShowFinanceAnalytics = () => {
+    setShowFinanceAnalytics(true);
+  };
+
   return {
     activeFilter,
     selectedDates,
@@ -59,12 +64,14 @@ export function useAdminDashboardState() {
     showTeamMonitoring,
     showGeneralReport,
     showAIAssistant,
+    showFinanceAnalytics,
     setSelectedDates,
     setSelectedWeeks,
     setSelectedMonths,
     setShowPrivilegesSearch,
     setShowTeamMonitoring,
     setShowAIAssistant,
+    setShowFinanceAnalytics,
     handleStatusFilter,
     handleClearAllDateFilters,
     handleExcelUpload,
@@ -72,5 +79,6 @@ export function useAdminDashboardState() {
     handlePrint,
     handleToggleAnalytics,
     handleShowGeneralReport,
+    handleShowFinanceAnalytics,
   };
 }

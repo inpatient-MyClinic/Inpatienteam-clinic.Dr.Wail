@@ -13,6 +13,7 @@ export function useAdminDashboard() {
   const [showGeneralReport, setShowGeneralReport] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSIASlide, setShowSIASlide] = useState(false);
+  const [showFinanceAnalytics, setShowFinanceAnalytics] = useState(false);
   const { toast } = useToast();
 
   const handleStatusFilter = (status: string | null) => {
@@ -66,6 +67,10 @@ export function useAdminDashboard() {
     setShowSIASlide(!showSIASlide);
   };
 
+  const handleShowFinanceAnalytics = () => {
+    setShowFinanceAnalytics(true);
+  };
+
   return {
     // State
     activeFilter,
@@ -78,6 +83,7 @@ export function useAdminDashboard() {
     showGeneralReport,
     showAIAssistant,
     showSIASlide,
+    showFinanceAnalytics,
     // Setters
     setSelectedDates,
     setSelectedWeeks,
@@ -94,5 +100,6 @@ export function useAdminDashboard() {
     handleToggleTeamMonitoring,
     handleToggleAIAssistant,
     handleToggleSIASlide,
+    handleShowFinanceAnalytics,
   };
 }

@@ -17,6 +17,7 @@ interface AdminDashboardLayoutProps {
   showGeneralReport: boolean;
   showAIAssistant: boolean;
   showSIASlide: boolean;
+  showFinanceAnalytics: boolean;
   adminData: any[];
   filteredData: any[];
   unreadCount: number;
@@ -35,6 +36,7 @@ interface AdminDashboardLayoutProps {
   onToggleSIASlide: () => void;
   onShowGeneralReport: () => void;
   onShowChart: () => void;
+  onShowFinanceAnalytics: () => void;
 }
 
 export default function AdminDashboardLayout({
@@ -48,6 +50,7 @@ export default function AdminDashboardLayout({
   showGeneralReport,
   showAIAssistant,
   showSIASlide,
+  showFinanceAnalytics,
   adminData,
   filteredData,
   unreadCount,
@@ -66,6 +69,7 @@ export default function AdminDashboardLayout({
   onToggleSIASlide,
   onShowGeneralReport,
   onShowChart,
+  onShowFinanceAnalytics,
 }: AdminDashboardLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
@@ -116,12 +120,14 @@ export default function AdminDashboardLayout({
               showTeamMonitoring={showTeamMonitoring}
               showGeneralReport={showGeneralReport}
               showAIAssistant={showAIAssistant}
+              showFinanceAnalytics={showFinanceAnalytics}
               adminData={adminData}
               filteredData={filteredData}
               selectedDates={selectedDates}
               selectedWeeks={selectedWeeks}
               selectedMonths={selectedMonths}
               onShowGeneralReport={onShowGeneralReport}
+              onShowFinanceAnalytics={onShowFinanceAnalytics}
             />
           </div>
         </ScrollArea>

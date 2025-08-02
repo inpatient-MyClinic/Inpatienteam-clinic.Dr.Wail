@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, FileText, Settings, BarChart3 } from "lucide-react";
+import { Plus, Users, FileText, Settings, BarChart3, Calculator } from "lucide-react";
 import AdminRequestsUpload from "./AdminRequestsUpload";
 import DataBackupManager from "./DataBackupManager";
 import { useToast } from "@/hooks/use-toast";
@@ -10,9 +10,10 @@ import { useNavigate } from "react-router-dom";
 
 interface AdminQuickActionsProps {
   onShowGeneralReport?: () => void;
+  onShowFinanceAnalytics?: () => void;
 }
 
-export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickActionsProps) {
+export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAnalytics }: AdminQuickActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -66,13 +67,25 @@ export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickAct
     });
   };
 
+  const handleFinanceAnalytics = () => {
+    console.log("Finance Analytics clicked");
+    if (onShowFinanceAnalytics) {
+      onShowFinanceAnalytics();
+    } else {
+      toast({
+        title: "Finance Analytics",
+        description: "Opening finance analytics table.",
+      });
+    }
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
         <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-4">
           <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleAddTask}>
             <Plus className="w-5 h-5" />
             <span className="text-xs">Add Task</span>
@@ -90,6 +103,11 @@ export default function AdminQuickActions({ onShowGeneralReport }: AdminQuickAct
           <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleGenerateReport}>
             <FileText className="w-5 h-5" />
             <span className="text-xs">Generate Report</span>
+          </Button>
+          
+          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleFinanceAnalytics}>
+            <Calculator className="w-5 h-5" />
+            <span className="text-xs">Finance Analytics</span>
           </Button>
           
           <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleSystemSettings}>

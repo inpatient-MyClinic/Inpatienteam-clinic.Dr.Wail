@@ -15,12 +15,14 @@ interface AdminMainContentProps {
   showTeamMonitoring: boolean;
   showGeneralReport: boolean;
   showAIAssistant: boolean;
+  showFinanceAnalytics: boolean;
   adminData: any[];
   filteredData: any[];
   selectedDates: Date[];
   selectedWeeks: string[];
   selectedMonths: string[];
   onShowGeneralReport: () => void;
+  onShowFinanceAnalytics: () => void;
 }
 
 export default function AdminMainContent({
@@ -29,12 +31,14 @@ export default function AdminMainContent({
   showTeamMonitoring,
   showGeneralReport,
   showAIAssistant,
+  showFinanceAnalytics,
   adminData,
   filteredData,
   selectedDates,
   selectedWeeks,
   selectedMonths,
   onShowGeneralReport,
+  onShowFinanceAnalytics,
 }: AdminMainContentProps) {
   return (
     <>
@@ -63,6 +67,19 @@ export default function AdminMainContent({
         </div>
       )}
 
+      {/* Finance Analytics Section */}
+      {showFinanceAnalytics && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Finance Analytics Table</h3>
+          <AdminAnalytics 
+            data={adminData}
+            selectedDates={selectedDates}
+            selectedWeeks={selectedWeeks}
+            selectedMonths={selectedMonths}
+          />
+        </div>
+      )}
+
       {/* Analytics Section */}
       {showAnalytics && (
         <div>
@@ -77,7 +94,10 @@ export default function AdminMainContent({
       )}
 
       {/* Quick Actions */}
-      <AdminQuickActions onShowGeneralReport={onShowGeneralReport} />
+      <AdminQuickActions 
+        onShowGeneralReport={onShowGeneralReport}
+        onShowFinanceAnalytics={onShowFinanceAnalytics}
+      />
 
       {/* Admin Tasks Table */}
       <AdminTasksTable filteredData={filteredData} />
