@@ -22,6 +22,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     revenue: 250000,
     ytdRevenue: 12000000,
     revenueGrowthPercent: 15.5,
+    achievement: 0,
+    ytdGrowth: 0,
+    mtdGrowth: 0,
     additionalNotes: ""
   });
   const [financeData, setFinanceData] = useState<any[]>([]);
@@ -33,17 +36,76 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       try {
         const data = JSON.parse(savedFinanceData);
         setFinanceData(data);
-        // Calculate revenue from finance data
+        // Calculate revenue and metrics from finance data
         if (data.length > 0) {
           const currentMonthKey = `${months.find(m => m.value === selectedMonth)?.label?.substring(0, 3)}-${selectedYear.toString().substring(2)}`;
+          
+          // Calculate total revenue
           const monthTotal = data.reduce((sum: number, row: any) => {
             const value = row[currentMonthKey];
             return sum + (typeof value === 'number' ? value : 0);
           }, 0);
+
+          // Calculate Achievement (Actual vs Forecast)
+          const actualRow = data.find((row: any) => row.type === "Actual MTD");
+          const forecastRow = data.find((row: any) => row.type === "Forecast MTD");
+          let achievement = 0;
+          if (actualRow && forecastRow) {
+            const actual = typeof actualRow[currentMonthKey] === 'number' ? actualRow[currentMonthKey] : 0;
+            const forecast = typeof forecastRow[currentMonthKey] === 'number' ? forecastRow[currentMonthKey] : 0;
+            achievement = forecast > 0 ? Math.round((actual / forecast) * 100) : 0;
+          }
+
+          // Calculate YTD Growth
+          const currentYear = selectedYear.toString().substring(2);
+          const prevYear = (selectedYear - 1).toString().substring(2);
+          const currentYearMonths = Object.keys(data[0] || {}).filter(key => 
+            key !== 'id' && key !== 'category' && key !== 'type' && 
+            key.split('-')[1] === currentYear &&
+            getMonthIndex(key.split('-')[0]) <= selectedMonth - 1
+          );
+          const prevYearMonths = Object.keys(data[0] || {}).filter(key => 
+            key !== 'id' && key !== 'category' && key !== 'type' && 
+            key.split('-')[1] === prevYear &&
+            getMonthIndex(key.split('-')[0]) <= selectedMonth - 1
+          );
+          
+          const currentYearTotal = currentYearMonths.reduce((sum, month) => {
+            return sum + data.reduce((monthSum: number, row: any) => {
+              const value = row[month];
+              return monthSum + (typeof value === 'number' ? value : 0);
+            }, 0);
+          }, 0);
+          
+          const prevYearTotal = prevYearMonths.reduce((sum, month) => {
+            return sum + data.reduce((monthSum: number, row: any) => {
+              const value = row[month];
+              return monthSum + (typeof value === 'number' ? value : 0);
+            }, 0);
+          }, 0);
+          
+          const ytdGrowth = prevYearTotal > 0 ? Math.round(((currentYearTotal - prevYearTotal) / prevYearTotal) * 100) : 0;
+
+          // Calculate MTD Growth (vs previous month)
+          const monthIndex = selectedMonth - 1;
+          const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
+          const prevMonthYear = monthIndex === 0 ? (selectedYear - 1).toString().substring(2) : currentYear;
+          const prevMonthKey = `${months[prevMonthIndex].label.substring(0, 3)}-${prevMonthYear}`;
+          
+          const prevMonthTotal = data.reduce((sum: number, row: any) => {
+            const value = row[prevMonthKey];
+            return sum + (typeof value === 'number' ? value : 0);
+          }, 0);
+          
+          const mtdGrowth = prevMonthTotal > 0 ? Math.round(((monthTotal - prevMonthTotal) / prevMonthTotal) * 100) : 0;
+
           setEditableData(prev => ({
             ...prev,
             revenue: monthTotal * 1000, // Convert to currency
-            revenueGrowthPercent: monthTotal > 0 ? 15.5 : 0
+            revenueGrowthPercent: monthTotal > 0 ? 15.5 : 0,
+            achievement,
+            ytdGrowth,
+            mtdGrowth
           }));
         }
       } catch (error) {
@@ -51,6 +113,15 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       }
     }
   }, [selectedMonth, selectedYear]);
+
+  // Helper function to get month index
+  const getMonthIndex = (month: string) => {
+    const monthMap: { [key: string]: number } = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+    return monthMap[month] || 0;
+  };
 
   // Editable table data
   const [tableData, setTableData] = useState([
@@ -550,7 +621,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Revenue
+                Revenue & Performance
                 <Badge variant="secondary" className="text-xs">
                   {financeData.length > 0 ? 'Live Data' : 'Manual'}
                 </Badge>
@@ -573,24 +644,51 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   />
                 </div>
               ) : (
-                <div>
+                <div className="space-y-3">
                   <div className="text-lg font-bold text-green-600">
                     YTD: ${editableData.ytdRevenue.toLocaleString()}
                   </div>
                   <div className="text-sm text-gray-600">
                     Growth: {editableData.revenueGrowthPercent}% vs. last year
                   </div>
+                  
+                  {/* Finance Analytics Metrics */}
                   {financeData.length > 0 && (
-                    <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
-                      <div className="font-semibold text-blue-900">Finance Table Integration</div>
-                      <div className="text-blue-700">
-                        Data auto-synced from Finance Analytics ({financeData.length} rows)
+                    <div className="grid grid-cols-3 gap-2 mt-3 p-3 bg-blue-50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">
+                          {editableData.achievement}%
+                        </div>
+                        <div className="text-xs text-gray-600">Achievement</div>
                       </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-green-600">
+                          {editableData.ytdGrowth > 0 ? '+' : ''}{editableData.ytdGrowth}%
+                        </div>
+                        <div className="text-xs text-gray-600">YTD Growth</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-purple-600">
+                          {editableData.mtdGrowth > 0 ? '+' : ''}{editableData.mtdGrowth}%
+                        </div>
+                        <div className="text-xs text-gray-600">MTD Growth</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {financeData.length > 0 && (
+                    <div className="mt-2 p-2 bg-green-50 rounded text-xs">
+                      <strong>📊 Live Finance Data:</strong> Metrics auto-calculated from Finance Analytics Table for {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
                     </div>
                   )}
                 </div>
               )}
-              <p className="text-xs text-gray-500">YTD Achievement - Revenue Growth</p>
+              <p className="text-xs text-gray-500 mt-2">
+                {financeData.length > 0 ? 
+                  'Achievement (Actual vs Forecast) • YTD Growth (vs Previous Year) • MTD Growth (vs Previous Month)' : 
+                  'YTD Achievement - Revenue Growth'
+                }
+              </p>
             </CardContent>
           </Card>
 
