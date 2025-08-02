@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LoginForm from "@/components/auth/LoginForm";
 import PasswordCreationForm from "@/components/auth/PasswordCreationForm";
+import OTPLoginForm from "@/components/auth/OTPLoginForm";
 import Footer from "@/components/Footer";
 import { useAuthLogic } from "@/hooks/useAuthLogic";
 import { getCurrentUserRole } from "@/utils/auth";
@@ -22,9 +23,13 @@ const Login = () => {
     rememberMe,
     setRememberMe,
     isFirstTimeLogin,
+    showOTPLogin,
     handlePasswordCreation,
     handleLogin,
-    handleBackToLogin
+    handleBackToLogin,
+    handleOTPSuccess,
+    handleBackFromOTP,
+    handleSuccessfulLogin
   } = useAuthLogic();
 
   // Redirect authenticated users to their dashboard
@@ -87,7 +92,13 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {!isFirstTimeLogin ? (
+              {showOTPLogin ? (
+                <OTPLoginForm
+                  email={email}
+                  onSuccess={handleOTPSuccess}
+                  onBack={handleBackFromOTP}
+                />
+              ) : !isFirstTimeLogin ? (
                 <LoginForm
                   email={email}
                   setEmail={setEmail}

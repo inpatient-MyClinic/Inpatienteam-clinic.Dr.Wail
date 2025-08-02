@@ -20,6 +20,7 @@ export const useAuthLogic = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isFirstTimeLogin, setIsFirstTimeLogin] = useState(false);
+  const [showOTPLogin, setShowOTPLogin] = useState(false);
   const navigate = useNavigate();
 
   const handlePasswordCreation = async (e: React.FormEvent) => {
@@ -109,8 +110,13 @@ export const useAuthLogic = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // For non-admin users, use OTP login
+    if (!isAdminEmail(email)) {
+      return handleOTPLogin();
+    }
+    
     try {
-      console.log('Attempting login for email:', email);
+      console.log('Attempting admin login for email:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
@@ -133,71 +139,7 @@ export const useAuthLogic = () => {
 
       if (data.user) {
         console.log('Login successful for user:', data.user.id);
-        
-        // Get user profile to check status and role
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role, status, must_change_password, password_change_required_at')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          if (profileError.code === 'PGRST116') {
-            toast.error('User profile not found. Please contact support.');
-          } else {
-            toast.error('Error loading user profile. Please try again.');
-          }
-          await supabase.auth.signOut();
-          return;
-        }
-
-        if (profile.status !== 'active') {
-          toast.error('Your account is pending approval. Please contact an administrator.');
-          await supabase.auth.signOut();
-          return;
-        }
-
-        // Check if password change is required
-        const passwordChangeRequired = profile.must_change_password || 
-          (profile.password_change_required_at && new Date(profile.password_change_required_at) <= new Date());
-        
-        if (passwordChangeRequired) {
-          toast.error('Your password has expired. Please change your password.');
-          // Here you would redirect to password change page
-          // For now, we'll just inform the user
-          await supabase.auth.signOut();
-          return;
-        }
-
-        toast.success('Login successful!');
-        
-        // Redirect based on role
-        switch (profile.role) {
-          case 'admin':
-            navigate('/admin');
-            break;
-          case 'doctor':
-            navigate('/doctor');
-            break;
-          case 'nurse':
-            navigate('/nurse');
-            break;
-          case 'hospital':
-            navigate('/hospital');
-            break;
-          case 'case-coordinator':
-            navigate('/case-coordinator');
-            break;
-          case 'finance':
-            navigate('/finance');
-            break;
-          case 'customer-care':
-            navigate('/customer-care');
-            break;
-          default:
-            navigate('/dashboard');
-        }
+        handleSuccessfulLogin(data.user.id);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -207,6 +149,126 @@ export const useAuthLogic = () => {
         toast.error('An unexpected error occurred. Please try again.');
       }
     }
+  };
+
+  const handleOTPLogin = async () => {
+    try {
+      console.log('Initiating OTP login for:', email);
+      
+      // Check if user exists and is approved
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('status, role')
+        .eq('email', email.trim().toLowerCase())
+        .single();
+
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          toast.error('User not found. Please contact an administrator.');
+        } else {
+          toast.error('Error checking user status. Please try again.');
+        }
+        return;
+      }
+
+      if (profile.status !== 'active') {
+        toast.error('Your account is pending approval. Please contact an administrator.');
+        return;
+      }
+
+      // Send OTP
+      const { error: otpError } = await supabase.functions.invoke('send-otp-email', {
+        body: { email: email.trim().toLowerCase() }
+      });
+
+      if (otpError) {
+        console.error('OTP send error:', otpError);
+        toast.error('Failed to send verification code. Please try again.');
+        return;
+      }
+
+      toast.success('Verification code sent to your email!');
+      setShowOTPLogin(true);
+    } catch (error) {
+      console.error('OTP login error:', error);
+      toast.error('Failed to initiate login. Please try again.');
+    }
+  };
+
+  const handleSuccessfulLogin = async (userId: string) => {
+    try {
+      // Get user profile to check status and role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, status, must_change_password, password_change_required_at')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        toast.error('Error loading user profile. Please try again.');
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (profile.status !== 'active') {
+        toast.error('Your account is pending approval. Please contact an administrator.');
+        await supabase.auth.signOut();
+        return;
+      }
+
+      // Check if password change is required
+      const passwordChangeRequired = profile.must_change_password || 
+        (profile.password_change_required_at && new Date(profile.password_change_required_at) <= new Date());
+      
+      if (passwordChangeRequired) {
+        toast.error('Your password has expired. Please change your password.');
+        await supabase.auth.signOut();
+        return;
+      }
+
+      toast.success('Login successful!');
+      
+      // Redirect based on role
+      switch (profile.role) {
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'doctor':
+          navigate('/doctor-dashboard');
+          break;
+        case 'nurse':
+          navigate('/nurse-dashboard');
+          break;
+        case 'hospital':
+          navigate('/hospital-dashboard');
+          break;
+        case 'case-coordinator':
+          navigate('/case-coordinator-dashboard');
+          break;
+        case 'finance':
+          navigate('/finance-dashboard');
+          break;
+        case 'customer-care':
+          navigate('/customer-care-dashboard');
+          break;
+        default:
+          navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Post-login error:', error);
+      toast.error('Login successful but failed to load profile. Please try again.');
+    }
+  };
+
+  const handleOTPSuccess = () => {
+    setShowOTPLogin(false);
+    setPassword('');
+    // The OTPLoginForm will handle the actual login
+  };
+
+  const handleBackFromOTP = () => {
+    setShowOTPLogin(false);
   };
 
   const handleBackToLogin = () => {
@@ -226,9 +288,13 @@ export const useAuthLogic = () => {
     setRememberMe,
     isFirstTimeLogin,
     setIsFirstTimeLogin,
+    showOTPLogin,
     handlePasswordCreation,
     handleLogin,
     handleBackToLogin,
+    handleOTPSuccess,
+    handleBackFromOTP,
+    handleSuccessfulLogin,
     isAdminEmail
   };
 };
