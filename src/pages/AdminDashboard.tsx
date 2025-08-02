@@ -25,6 +25,7 @@ export default function AdminDashboard() {
     showAIAssistant,
     showSIASlide,
     showFinanceAnalytics,
+    showNewUserRequests,
     setSelectedDates,
     setSelectedWeeks,
     setSelectedMonths,
@@ -40,6 +41,8 @@ export default function AdminDashboard() {
     handleToggleAIAssistant,
     handleToggleSIASlide,
     handleShowFinanceAnalytics,
+    handleCloseFinanceAnalytics,
+    handleToggleNewUserRequests,
   } = useAdminDashboard();
 
   // Load request data from centralized storage
@@ -154,6 +157,7 @@ export default function AdminDashboard() {
       showAIAssistant={showAIAssistant}
       showSIASlide={showSIASlide}
       showFinanceAnalytics={showFinanceAnalytics}
+      showNewUserRequests={showNewUserRequests}
       adminData={allRequestsData}
       filteredData={filteredData}
       unreadCount={unreadCount}
@@ -173,6 +177,8 @@ export default function AdminDashboard() {
       onShowGeneralReport={handleShowGeneralReport}
       onShowChart={() => setShowChart(true)}
       onShowFinanceAnalytics={handleShowFinanceAnalytics}
+      onToggleNewUserRequests={handleToggleNewUserRequests}
+      onCloseFinanceAnalytics={handleCloseFinanceAnalytics}
     />
   );
 }

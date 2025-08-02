@@ -18,6 +18,7 @@ interface AdminDashboardLayoutProps {
   showAIAssistant: boolean;
   showSIASlide: boolean;
   showFinanceAnalytics: boolean;
+  showNewUserRequests: boolean;
   adminData: any[];
   filteredData: any[];
   unreadCount: number;
@@ -37,6 +38,8 @@ interface AdminDashboardLayoutProps {
   onShowGeneralReport: () => void;
   onShowChart: () => void;
   onShowFinanceAnalytics: () => void;
+  onToggleNewUserRequests: () => void;
+  onCloseFinanceAnalytics: () => void;
 }
 
 export default function AdminDashboardLayout({
@@ -51,6 +54,7 @@ export default function AdminDashboardLayout({
   showAIAssistant,
   showSIASlide,
   showFinanceAnalytics,
+  showNewUserRequests,
   adminData,
   filteredData,
   unreadCount,
@@ -70,6 +74,8 @@ export default function AdminDashboardLayout({
   onShowGeneralReport,
   onShowChart,
   onShowFinanceAnalytics,
+  onToggleNewUserRequests,
+  onCloseFinanceAnalytics,
 }: AdminDashboardLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
@@ -121,6 +127,7 @@ export default function AdminDashboardLayout({
               showGeneralReport={showGeneralReport}
               showAIAssistant={showAIAssistant}
               showFinanceAnalytics={showFinanceAnalytics}
+              showNewUserRequests={showNewUserRequests}
               adminData={adminData}
               filteredData={filteredData}
               selectedDates={selectedDates}
@@ -128,6 +135,8 @@ export default function AdminDashboardLayout({
               selectedMonths={selectedMonths}
               onShowGeneralReport={onShowGeneralReport}
               onShowFinanceAnalytics={onShowFinanceAnalytics}
+              onToggleNewUserRequests={onToggleNewUserRequests}
+              onCloseFinanceAnalytics={onCloseFinanceAnalytics}
             />
           </div>
         </ScrollArea>

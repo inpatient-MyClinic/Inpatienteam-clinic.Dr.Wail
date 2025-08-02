@@ -55,7 +55,7 @@ export default function AdminMainContent({
       {/* New User Requests */}
       {showNewUserRequests && (
         <div className="mb-6">
-          <NewUserRequests />
+          <NewUserRequests onClose={onToggleNewUserRequests} />
         </div>
       )}
 
