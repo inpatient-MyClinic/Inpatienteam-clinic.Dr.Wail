@@ -82,7 +82,7 @@ export const useAuthLogic = () => {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
           
         if (profileError) {
           console.error('Profile creation error:', profileError);
