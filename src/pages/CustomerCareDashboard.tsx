@@ -50,6 +50,13 @@ export default function CustomerCareDashboard() {
     }
     return [];
   });
+
+  // Save to localStorage whenever requests change
+  useEffect(() => {
+    if (requests.length > 0) {
+      localStorage.setItem('customerCareData', JSON.stringify(requests));
+    }
+  }, [requests]);
   const [showSettings, setShowSettings] = useState(false);
   const [npsTargets, setNpsTargets] = useState({ customerCare: 75, inPatient: 80, overall: 70, quarterly: 72 });
   const [dateFilters, setDateFilters] = useState<{
@@ -195,82 +202,21 @@ export default function CustomerCareDashboard() {
     console.log("Sending WhatsApp survey to patient for request:", requestId);
   };
 
-  const handleSurveyResponseUpload = (responses: { 
-    id: string; 
-    responded: boolean; 
-    npsScore?: number;
-    hospitalName?: string;
-    completionDate?: string;
-    complaint?: string;
-  }[]) => {
+  const handleSurveyResponseUpload = (responses: any[]) => {
     console.log('Received survey responses:', responses);
     
-    // Get existing requests from localStorage to fill missing data
-    const existingRequests = JSON.parse(localStorage.getItem('medicalRequests') || '[]');
+    // Save the responses directly - they already contain all Excel data
+    setRequests(responses);
     
-    // Create new requests from uploaded data or update existing ones
-    const newRequests = [...requests];
+    // Save to localStorage
+    localStorage.setItem('customerCareData', JSON.stringify(responses));
     
-    responses.forEach(response => {
-      const existingIndex = newRequests.findIndex(req => req.id === response.id);
-      
-      if (existingIndex >= 0) {
-        // Update existing request
-        newRequests[existingIndex] = {
-          ...newRequests[existingIndex],
-          surveySent: true,
-          surveyResponded: response.responded,
-          npsScore: response.npsScore,
-          hospitalName: response.hospitalName || newRequests[existingIndex].hospitalName,
-          completionDate: response.completionDate || newRequests[existingIndex].completionDate,
-          complaintText: response.complaint
-        };
-      } else {
-        // Try to find request in existing requests by ID or patient MRN
-        const masterRequest = existingRequests.find((req: any) => 
-          req.id === response.id || 
-          req.patientId === response.id ||
-          req.hospitalMRN === response.id
-        );
-        
-        // Replace hospital MRN with myclinic MRN format
-        const hospitalName = response.hospitalName || 'Unknown Hospital';
-        let myclinicMRN = response.id;
-        if (hospitalName.toLowerCase().includes('my clinic') || hospitalName.toLowerCase().includes('myclinic')) {
-          myclinicMRN = response.id; // Keep as is for My Clinic
-        }
-
-        // Create new request from uploaded data
-        newRequests.push({
-          id: response.id,
-          patientName: masterRequest?.patientName || `Patient ${response.id}`,
-          idNumber: masterRequest?.patientId || "N/A",
-          phone: masterRequest?.phone || masterRequest?.patientPhone || "N/A", 
-          hospitalMRN: masterRequest?.hospitalMRN || "N/A",
-          myclinicMRN: myclinicMRN,
-          hospitalName: response.hospitalName || masterRequest?.hospitalName || "N/A",
-          procedure: masterRequest?.procedure || masterRequest?.medicalCondition || "N/A",
-          treatingDoctor: masterRequest?.treatingDoctor || masterRequest?.assignedTo || "N/A",
-          surveySent: true,
-          surveyResponded: response.responded,
-          npsScore: response.npsScore,
-          completionDate: response.completionDate || new Date().toISOString().split('T')[0],
-          status: "done",
-          complaintStatus: response.complaint ? 'open' : null,
-          complaintText: response.complaint || null,
-          complaintCreatedAt: response.complaint ? new Date().toISOString() : null,
-          complaintLeadTimeHours: undefined,
-          complaintClosedAt: undefined
-        });
-      }
+    toast({
+      title: "Excel upload successful",
+      description: `Updated survey responses for ${responses.length} requests`,
     });
     
-    setRequests(newRequests);
-    
-    // Update localStorage to persist the changes
-    localStorage.setItem('customerCareData', JSON.stringify(newRequests));
-    
-    console.log('Updated requests:', newRequests);
+    console.log('Updated requests:', responses);
   };
 
   const handleComplaintUpload = (complaints: { id: string; status: 'open' | 'closed' }[]) => {
