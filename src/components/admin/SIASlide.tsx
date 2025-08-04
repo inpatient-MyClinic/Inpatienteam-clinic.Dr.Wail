@@ -29,104 +29,11 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   });
   const [financeData, setFinanceData] = useState<any[]>([]);
 
-  // Load finance data from localStorage when component mounts
+  // Clear finance data from localStorage when component mounts
   useEffect(() => {
-    const savedFinanceData = localStorage.getItem('financeAnalyticsData');
-    if (savedFinanceData) {
-      try {
-        const data = JSON.parse(savedFinanceData);
-        setFinanceData(data);
-        // Calculate revenue and metrics from finance data
-        if (data.length > 0) {
-          const currentMonthKey = `${months.find(m => m.value === selectedMonth)?.label?.substring(0, 3)}-${selectedYear.toString().substring(2)}`;
-          
-          // Find relevant rows
-          const actualRow = data.find((row: any) => row.type === "Actual MTD");
-          const albatalRow = data.find((row: any) => row.category === "AlBatal");
-          const ibnRushdRow = data.find((row: any) => row.category === "Ibn Rushd");
-          const forecastRow = data.find((row: any) => row.type === "Forecast MTD");
-
-          // Calculate current month total (Actual + AlBatal + Ibn Rushd)
-          const currentActual = actualRow && typeof actualRow[currentMonthKey] === 'number' ? actualRow[currentMonthKey] : 0;
-          const currentAlbatal = albatalRow && typeof albatalRow[currentMonthKey] === 'number' ? albatalRow[currentMonthKey] : 0;
-          const currentIbnRushd = ibnRushdRow && typeof ibnRushdRow[currentMonthKey] === 'number' ? ibnRushdRow[currentMonthKey] : 0;
-          const monthTotal = currentActual + currentAlbatal + currentIbnRushd;
-
-          // Calculate Achievement (Actual vs Forecast)
-          let achievement = 0;
-          if (actualRow && forecastRow) {
-            const actual = typeof actualRow[currentMonthKey] === 'number' ? actualRow[currentMonthKey] : 0;
-            const forecast = typeof forecastRow[currentMonthKey] === 'number' ? forecastRow[currentMonthKey] : 0;
-            achievement = forecast > 0 ? Math.round((actual / forecast) * 100) : 0;
-          }
-
-          // Calculate YTD Growth (only Actual MTD)
-          const currentYear = selectedYear.toString().substring(2);
-          const prevYear = (selectedYear - 1).toString().substring(2);
-          
-          // Get all months up to selected month for current year
-          const currentYearMonths = Object.keys(data[0] || {}).filter(key => 
-            key !== 'id' && key !== 'category' && key !== 'type' && 
-            key.split('-')[1] === currentYear &&
-            getMonthIndex(key.split('-')[0]) <= selectedMonth - 1
-          );
-          
-          // Get all months up to selected month for previous year
-          const prevYearMonths = Object.keys(data[0] || {}).filter(key => 
-            key !== 'id' && key !== 'category' && key !== 'type' && 
-            key.split('-')[1] === prevYear &&
-            getMonthIndex(key.split('-')[0]) <= selectedMonth - 1
-          );
-          
-          // Calculate YTD Growth with Optha (Actual + AlBatal + Ibn Rushd)
-          const currentYearTotalWithOptha = currentYearMonths.reduce((sum, month) => {
-            const actual = actualRow && typeof actualRow[month] === 'number' ? actualRow[month] : 0;
-            const albatal = albatalRow && typeof albatalRow[month] === 'number' ? albatalRow[month] : 0;
-            const ibnRushd = ibnRushdRow && typeof ibnRushdRow[month] === 'number' ? ibnRushdRow[month] : 0;
-            return sum + actual + albatal + ibnRushd;
-          }, 0);
-          
-          const prevYearTotalWithOptha = prevYearMonths.reduce((sum, month) => {
-            const actual = actualRow && typeof actualRow[month] === 'number' ? actualRow[month] : 0;
-            const albatal = albatalRow && typeof albatalRow[month] === 'number' ? albatalRow[month] : 0;
-            const ibnRushd = ibnRushdRow && typeof ibnRushdRow[month] === 'number' ? ibnRushdRow[month] : 0;
-            return sum + actual + albatal + ibnRushd;
-          }, 0);
-          
-          const ytdGrowthWithOptha = prevYearTotalWithOptha > 0 ? Math.round(((currentYearTotalWithOptha - prevYearTotalWithOptha) / prevYearTotalWithOptha) * 100) : 0;
-
-          // Calculate MTD Growth (current month Actual vs previous month Actual)
-          const monthIndex = selectedMonth - 1;
-          const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
-          const prevMonthYear = monthIndex === 0 ? (selectedYear - 1).toString().substring(2) : currentYear;
-          const prevMonthKey = `${months[prevMonthIndex].label.substring(0, 3)}-${prevMonthYear}`;
-          
-          const prevMonthActual = actualRow && typeof actualRow[prevMonthKey] === 'number' ? actualRow[prevMonthKey] : 0;
-          const mtdGrowth = prevMonthActual > 0 ? Math.round(((currentActual - prevMonthActual) / prevMonthActual) * 100) : 0;
-
-          // Calculate YTD Revenue with Optha (Actual + AlBatal + Ibn Rushd for all months YTD)
-          const ytdRevenueWithOptha = currentYearMonths.reduce((sum, month) => {
-            const actual = actualRow && typeof actualRow[month] === 'number' ? actualRow[month] : 0;
-            const albatal = albatalRow && typeof albatalRow[month] === 'number' ? albatalRow[month] : 0;
-            const ibnRushd = ibnRushdRow && typeof ibnRushdRow[month] === 'number' ? ibnRushdRow[month] : 0;
-            return sum + actual + albatal + ibnRushd;
-          }, 0);
-
-          setEditableData(prev => ({
-            ...prev,
-            revenue: monthTotal * 1000, // Convert to display currency
-            ytdRevenue: ytdRevenueWithOptha * 1000, // YTD Revenue with Optha
-            revenueGrowthPercent: ytdGrowthWithOptha, // Use YTD Growth with Optha as main growth metric
-            achievement,
-            ytdGrowth: ytdGrowthWithOptha,
-            mtdGrowth
-          }));
-        }
-      } catch (error) {
-        console.error('Error loading finance data:', error);
-      }
-    }
-  }, [selectedMonth, selectedYear]);
+    localStorage.removeItem('financeAnalyticsData');
+    setFinanceData([]);
+  }, []);
 
   // Helper function to get month index
   const getMonthIndex = (month: string) => {
