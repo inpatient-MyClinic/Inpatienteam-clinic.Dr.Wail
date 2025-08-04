@@ -78,18 +78,22 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             getMonthIndex(key.split('-')[0]) <= selectedMonth - 1
           );
           
-          // Calculate YTD totals for Actual MTD only
-          const currentYearTotal = actualRow ? currentYearMonths.reduce((sum, month) => {
-            const value = typeof actualRow[month] === 'number' ? actualRow[month] : 0;
-            return sum + value;
-          }, 0) : 0;
+          // Calculate YTD Growth with Optha (Actual + AlBatal + Ibn Rushd)
+          const currentYearTotalWithOptha = currentYearMonths.reduce((sum, month) => {
+            const actual = actualRow && typeof actualRow[month] === 'number' ? actualRow[month] : 0;
+            const albatal = albatalRow && typeof albatalRow[month] === 'number' ? albatalRow[month] : 0;
+            const ibnRushd = ibnRushdRow && typeof ibnRushdRow[month] === 'number' ? ibnRushdRow[month] : 0;
+            return sum + actual + albatal + ibnRushd;
+          }, 0);
           
-          const prevYearTotal = actualRow ? prevYearMonths.reduce((sum, month) => {
-            const value = typeof actualRow[month] === 'number' ? actualRow[month] : 0;
-            return sum + value;
-          }, 0) : 0;
+          const prevYearTotalWithOptha = prevYearMonths.reduce((sum, month) => {
+            const actual = actualRow && typeof actualRow[month] === 'number' ? actualRow[month] : 0;
+            const albatal = albatalRow && typeof albatalRow[month] === 'number' ? albatalRow[month] : 0;
+            const ibnRushd = ibnRushdRow && typeof ibnRushdRow[month] === 'number' ? ibnRushdRow[month] : 0;
+            return sum + actual + albatal + ibnRushd;
+          }, 0);
           
-          const ytdGrowth = prevYearTotal > 0 ? Math.round(((currentYearTotal - prevYearTotal) / prevYearTotal) * 100) : 0;
+          const ytdGrowthWithOptha = prevYearTotalWithOptha > 0 ? Math.round(((currentYearTotalWithOptha - prevYearTotalWithOptha) / prevYearTotalWithOptha) * 100) : 0;
 
           // Calculate MTD Growth (current month Actual vs previous month Actual)
           const monthIndex = selectedMonth - 1;
@@ -112,9 +116,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             ...prev,
             revenue: monthTotal * 1000, // Convert to display currency
             ytdRevenue: ytdRevenueWithOptha * 1000, // YTD Revenue with Optha
-            revenueGrowthPercent: ytdGrowth, // Use YTD Growth as main growth metric
+            revenueGrowthPercent: ytdGrowthWithOptha, // Use YTD Growth with Optha as main growth metric
             achievement,
-            ytdGrowth,
+            ytdGrowth: ytdGrowthWithOptha,
             mtdGrowth
           }));
         }
