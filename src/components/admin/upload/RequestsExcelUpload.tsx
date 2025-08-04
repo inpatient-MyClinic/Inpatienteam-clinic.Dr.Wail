@@ -277,6 +277,13 @@ export default function RequestsExcelUpload() {
       requestStorage.saveRequest(requestData, "Excel Import");
     });
 
+    // Clear the sample data cleared flag to ensure uploaded data is visible
+    localStorage.removeItem('sample_data_cleared');
+    
+    // Manually trigger storage events to notify all components
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
+
     toast({
       title: "Import Complete",
       description: `${uploadResult.success} requests imported successfully.`
