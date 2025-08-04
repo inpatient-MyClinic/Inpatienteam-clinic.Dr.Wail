@@ -39,16 +39,56 @@ export default function SurveyResponseUpload({ onUpdateResponses }: SurveyRespon
 
       // Extract responses from the Excel sheet
       const responses: { id: string; responded: boolean; npsScore?: number }[] = [];
-      jsonData.forEach((row: any) => {
-        const id = row['ID'] || row['id'] || row['Unified ID'] || row['Request ID'];
-        const responded = row['Responded'] === 'Yes' || row['responded'] === true;
-        const npsScore = row['NPS Score'] || row['nps_score'] || row['Score'];
+      
+      // Get column headers from first row to find the right columns
+      const headers = Object.keys(jsonData[0] || {});
+      console.log('Excel columns found:', headers);
+      
+      jsonData.forEach((row: any, index: number) => {
+        // More flexible column matching - look for any column containing these keywords
+        const idColumn = headers.find(h => 
+          h.toLowerCase().includes('id') || 
+          h.toLowerCase().includes('unified') ||
+          h.toLowerCase().includes('transaction') ||
+          h.toLowerCase().includes('txn')
+        );
+        
+        const respondedColumn = headers.find(h => 
+          h.toLowerCase().includes('respond') || 
+          h.toLowerCase().includes('survey') ||
+          h.toLowerCase().includes('sent')
+        );
+        
+        const npsColumn = headers.find(h => 
+          h.toLowerCase().includes('nps') || 
+          h.toLowerCase().includes('score') ||
+          h.toLowerCase().includes('rating')
+        );
+        
+        const complaintColumn = headers.find(h => 
+          h.toLowerCase().includes('complaint') || 
+          h.toLowerCase().includes('issue') ||
+          h.toLowerCase().includes('feedback')
+        );
+        
+        const id = idColumn ? row[idColumn] : null;
         
         if (id) {
+          const responded = respondedColumn ? (
+            String(row[respondedColumn]).toLowerCase().includes('yes') || 
+            String(row[respondedColumn]).toLowerCase().includes('true') ||
+            String(row[respondedColumn]) === '1'
+          ) : false;
+          
+          const npsScore = npsColumn ? Number(row[npsColumn]) : undefined;
+          const hasComplaint = complaintColumn ? Boolean(row[complaintColumn]) : false;
+          
+          console.log(`Row ${index + 1}: ID=${id}, Responded=${responded}, NPS=${npsScore}, Complaint=${hasComplaint}`);
+          
           responses.push({
             id: String(id),
             responded,
-            npsScore: npsScore ? Number(npsScore) : undefined
+            npsScore: npsScore && !isNaN(npsScore) ? npsScore : undefined
           });
         }
       });

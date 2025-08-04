@@ -28,49 +28,10 @@ const stats = [
 ];
 
 // Sample done requests data with survey responses
-const initialDoneRequests = [
-  {
-    id: "TXN001",
-    patientName: "Nora Mohammed",
-    idNumber: "2012345678",
-    phone: "0551234567",
-    hospitalMRN: "MRN001234",
-    hospitalName: "King Abdulaziz Hospital",
-    procedure: "Cardiac Surgery",
-    treatingDoctor: "Dr. Ahmed Al-Rashid",
-    surveySent: true,
-    surveyResponded: true,
-    npsScore: 9,
-    completionDate: "2025-06-15",
-    status: "done"
-  },
-  {
-    id: "TXN002",
-    patientName: "Omar Hassan",
-    idNumber: "2018765432",
-    phone: "0567890123",
-    hospitalMRN: "MRN005678",
-    hospitalName: "Prince Sultan Hospital",
-    procedure: "Orthopedic Surgery",
-    treatingDoctor: "Dr. Sarah Al-Mahmoud",
-    surveySent: true,
-    surveyResponded: false,
-    completionDate: "2025-06-10",
-    status: "done"
-  }
-];
+const initialDoneRequests: any[] = [];
 
 // Add complaint status to the data
-const initialDoneRequestsWithComplaints = initialDoneRequests.map(request => ({
-  ...request,
-  complaintStatus: request.id === "TXN001" ? 'open' : 
-                  request.id === "TXN002" ? 'open' : null,
-  complaintText: request.id === "TXN001" ? "Patient complained about waiting time" : 
-                 request.id === "TXN002" ? "Issue with billing process" : null,
-  complaintCreatedAt: request.id === "TXN001" || request.id === "TXN002" ? request.completionDate : null,
-  complaintLeadTimeHours: undefined as number | undefined,
-  complaintClosedAt: undefined as string | undefined
-}));
+const initialDoneRequestsWithComplaints: any[] = [];
 
 export default function CustomerCareDashboard() {
   const [requests, setRequests] = useState(() => {
