@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { RequestFormData } from "@/types/request";
 import { requestStorage } from "@/services/requestStorage";
+import ClearAllDataButton from "@/components/admin/ClearAllDataButton";
 
 interface ColumnMapping {
   excelColumn: string;
@@ -277,24 +278,35 @@ export default function RequestsExcelUpload() {
   const saveRequests = () => {
     if (!uploadResult?.processedData.length) return;
 
-    // Clear all existing requests first
-    localStorage.removeItem('medicalRequests');
+    // Clear ALL existing data completely
+    localStorage.clear();
     
+    // Clear specific keys that might store request data
+    [
+      'medicalRequests',
+      'enhancedUserManagementUsers', 
+      'enhancedUserManagementUsersBackup',
+      'sample_data_cleared',
+      'adminPaginationSettings'
+    ].forEach(key => localStorage.removeItem(key));
+
     // Save only the uploaded Excel data
     uploadResult.processedData.forEach(requestData => {
       requestStorage.saveRequest(requestData, "Excel Import");
     });
 
-    // Clear the sample data cleared flag to ensure uploaded data is visible
-    localStorage.removeItem('sample_data_cleared');
+    // Set flag to indicate data was cleared and replaced
+    localStorage.setItem('sample_data_cleared', 'true');
+    localStorage.setItem('excel_data_imported', 'true');
     
     // Manually trigger storage events to notify all components
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    window.dispatchEvent(new CustomEvent('adminDataCleared'));
 
     toast({
       title: "Import Complete",
-      description: `${uploadResult.success} requests imported successfully. All other requests have been removed.`
+      description: `${uploadResult.success} requests imported successfully. All previous data has been cleared.`
     });
 
     // Reset form
@@ -317,13 +329,15 @@ export default function RequestsExcelUpload() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
               <Download className="w-4 h-4" />
               Download Template
             </Button>
             
-            <div className="flex-1">
+            <ClearAllDataButton />
+            
+            <div className="flex-1 min-w-48">
               <input
                 type="file"
                 accept=".xlsx,.xls"
