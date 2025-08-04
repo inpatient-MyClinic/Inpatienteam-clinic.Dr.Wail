@@ -26,53 +26,63 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   const [selectedYears, setSelectedYears] = useState<string[]>(["2023", "2024", "2025"]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Initialize with empty structure or sample data
-  const [financeData, setFinanceData] = useState<FinanceData[]>([
-    {
-      id: "1",
-      category: "External",
-      type: "Actual MTD",
-      "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
-      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
-      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
-      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
-      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
-      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
-    },
-    {
-      id: "forecast-1",
-      category: "External",
-      type: "Forecast MTD",
-      "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
-      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
-      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
-      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
-      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
-      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
-    },
-    {
-      id: "2",
-      category: "AlBatal",
-      type: "",
-      "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
-      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
-      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
-      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
-      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
-      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
-    },
-    {
-      id: "3",
-      category: "Ibn Rushd",
-      type: "",
-      "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
-      "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
-      "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
-      "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
-      "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
-      "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
+  // Initialize with empty structure or sample data, load from localStorage if available
+  const [financeData, setFinanceData] = useState<FinanceData[]>(() => {
+    const savedData = localStorage.getItem('financeAnalyticsData');
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
     }
-  ]);
+    return [
+      {
+        id: "1",
+        category: "External",
+        type: "Actual MTD",
+        "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+        "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+        "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+        "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+        "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+        "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
+      },
+      {
+        id: "forecast-1",
+        category: "External",
+        type: "Forecast MTD",
+        "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+        "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+        "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+        "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+        "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+        "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
+      },
+      {
+        id: "2",
+        category: "AlBatal",
+        type: "",
+        "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+        "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+        "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+        "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+        "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+        "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
+      },
+      {
+        id: "3",
+        category: "Ibn Rushd",
+        type: "",
+        "Jan-23": "", "Feb-23": "", "Mar-23": "", "Apr-23": "", "May-23": "", "Jun-23": "",
+        "Jul-23": "", "Aug-23": "", "Sep-23": "", "Oct-23": "", "Nov-23": "", "Dec-23": "",
+        "Jan-24": "", "Feb-24": "", "Mar-24": "", "Apr-24": "", "May-24": "", "Jun-24": "",
+        "Jul-24": "", "Aug-24": "", "Sep-24": "", "Oct-24": "", "Nov-24": "", "Dec-24": "",
+        "Jan-25": "", "Feb-25": "", "Mar-25": "", "Apr-25": "", "May-25": "", "Jun-25": "",
+        "Jul-25": "", "Aug-25": "", "Sep-25": "", "Oct-25": "", "Nov-25": "", "Dec-25": ""
+      }
+    ];
+  });
 
   // Get all available years from data
   const availableYears = useMemo(() => {
@@ -109,12 +119,15 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   };
 
   const handleCellChange = useCallback((rowId: string, column: string, value: string) => {
-    setFinanceData(prev => prev.map(row => 
+    const updatedData = financeData.map(row => 
       row.id === rowId 
         ? { ...row, [column]: value === '' ? '' : (isNaN(Number(value)) ? value : Number(value)) }
         : row
-    ));
-  }, []);
+    );
+    setFinanceData(updatedData);
+    // Save to localStorage immediately
+    localStorage.setItem('financeAnalyticsData', JSON.stringify(updatedData));
+  }, [financeData]);
 
   const addRow = () => {
     const newRow: FinanceData = {
@@ -157,6 +170,26 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     
     if (forecast === 0) return "#DIV/0!";
     return Math.round((actual / forecast) * 100) + "%";
+  };
+
+  // Calculate Achievement with Optha (Actual MTD + AlBatal + Ibn Rushd) / Forecast
+  const calculateAchievementWithOptha = (column: string) => {
+    const actualRow = financeData.find(row => row.type === "Actual MTD");
+    const albatalRow = financeData.find(row => row.category === "AlBatal");
+    const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
+    const forecastRow = financeData.find(row => row.type === "Forecast MTD");
+    
+    if (!actualRow || !forecastRow) return "";
+    
+    const actual = typeof actualRow[column] === 'number' ? actualRow[column] as number : 0;
+    const albatal = albatalRow && typeof albatalRow[column] === 'number' ? albatalRow[column] as number : 0;
+    const ibnRushd = ibnRushdRow && typeof ibnRushdRow[column] === 'number' ? ibnRushdRow[column] as number : 0;
+    const forecast = typeof forecastRow[column] === 'number' ? forecastRow[column] as number : 0;
+    
+    const totalWithOptha = actual + albatal + ibnRushd;
+    
+    if (forecast === 0) return "#DIV/0!";
+    return Math.round((totalWithOptha / forecast) * 100) + "%";
   };
 
   // Calculate YTD Growth
@@ -553,6 +586,19 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   {filteredMonthColumns.map(month => (
                     <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-green-700">
                       {calculateAchievement(month)}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
+                {/* Achievement with Optha Row */}
+                <tr className="bg-teal-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-teal-700 border-teal-300">Achievement with Optha</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-teal-700">
+                      {calculateAchievementWithOptha(month)}
                     </td>
                   ))}
                   {isEditing && <td className="border border-gray-300 p-2"></td>}
