@@ -277,6 +277,10 @@ export default function RequestsExcelUpload() {
   const saveRequests = () => {
     if (!uploadResult?.processedData.length) return;
 
+    // Clear all existing requests first
+    localStorage.removeItem('medicalRequests');
+    
+    // Save only the uploaded Excel data
     uploadResult.processedData.forEach(requestData => {
       requestStorage.saveRequest(requestData, "Excel Import");
     });
@@ -290,7 +294,7 @@ export default function RequestsExcelUpload() {
 
     toast({
       title: "Import Complete",
-      description: `${uploadResult.success} requests imported successfully.`
+      description: `${uploadResult.success} requests imported successfully. All other requests have been removed.`
     });
 
     // Reset form
