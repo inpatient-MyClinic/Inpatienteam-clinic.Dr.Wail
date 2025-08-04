@@ -536,6 +536,7 @@ export default function CustomerCareDashboard() {
                   <TableHead className="min-w-32">On a scale of 1-5, how would you rate your overall experience?</TableHead>
                   <TableHead className="min-w-32">On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)</TableHead>
                   <TableHead className="min-w-40">Comments/Suggestions</TableHead>
+                  <TableHead>Hospital</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -614,21 +615,42 @@ export default function CustomerCareDashboard() {
                         {req.npsScore || req.__EMPTY_7 || "-"}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-xs">
                       {req.__EMPTY_8 && req.__EMPTY_8 !== "No Comment" ? (
-                        <CommentViewDialog 
-                          comment={req.__EMPTY_8}
-                          patientId={req.id || req.__EMPTY_1}
-                          npsScore={req.npsScore || req.__EMPTY_7}
-                          coordinatorName={req.assignedCoordinator || req.caseCoordinator}
-                          onSendCompliment={sendComplimentToCoordinator}
-                          onSubmitRecovery={submitForRecovery}
-                          requestId={req.id}
-                        />
+                        req.__EMPTY_8.length > 50 ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600 truncate">
+                              {req.__EMPTY_8.substring(0, 50)}...
+                            </span>
+                            <CommentViewDialog 
+                              comment={req.__EMPTY_8}
+                              patientId={req.id || req.__EMPTY_1}
+                              npsScore={req.npsScore || req.__EMPTY_7}
+                              coordinatorName={req.assignedCoordinator || req.caseCoordinator}
+                              onSendCompliment={sendComplimentToCoordinator}
+                              onSubmitRecovery={submitForRecovery}
+                              requestId={req.id}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs">{req.__EMPTY_8}</span>
+                            <CommentViewDialog 
+                              comment={req.__EMPTY_8}
+                              patientId={req.id || req.__EMPTY_1}
+                              npsScore={req.npsScore || req.__EMPTY_7}
+                              coordinatorName={req.assignedCoordinator || req.caseCoordinator}
+                              onSendCompliment={sendComplimentToCoordinator}
+                              onSubmitRecovery={submitForRecovery}
+                              requestId={req.id}
+                            />
+                          </div>
+                        )
                       ) : (
                         <span className="text-gray-400 text-xs">No Comment</span>
                       )}
                     </TableCell>
+                    <TableCell>{req.hospitalName || req.__EMPTY_9 || "-"}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         {!req.surveySent ? (
