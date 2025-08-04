@@ -14,23 +14,56 @@ interface ColumnMapping {
 }
 
 const defaultColumnMappings: ColumnMapping[] = [
-  { excelColumn: "Patient Name", requestField: "patientName", required: true },
-  { excelColumn: "National ID", requestField: "patientNationalId", required: true },
-  { excelColumn: "Mobile Number", requestField: "patientMobileNo", required: true },
+  // Core patient information
+  { excelColumn: "Patient's Name:", requestField: "patientName", required: true },
+  { excelColumn: "Patient's MRN:", requestField: "patientMRN", required: true },
+  { excelColumn: "Patient's National ID:", requestField: "patientNationalId", required: true },
+  { excelColumn: "Patient's Mobile No.:", requestField: "patientMobileNo", required: true },
+  { excelColumn: "Patient's Phone", requestField: "patientPhone", required: false },
+  { excelColumn: "Email", requestField: "email", required: false },
+  
+  // Medical information
   { excelColumn: "Specialty", requestField: "specialty", required: true },
-  { excelColumn: "Doctor Name", requestField: "doctorName", required: true },
-  { excelColumn: "Hospital Name", requestField: "hospitalName", required: true },
-  { excelColumn: "Hospital MRN", requestField: "hospitalMRN", required: true },
-  { excelColumn: "Service Description", requestField: "serviceDescription", required: true },
-  { excelColumn: "Expected Surgery Date", requestField: "expectedSurgeryDate", required: true },
-  { excelColumn: "Referred From", requestField: "referredFrom", required: false },
-  { excelColumn: "Referred To Hospital", requestField: "referredToHospital", required: false },
-  { excelColumn: "Admission Type", requestField: "admissionType", required: false },
-  { excelColumn: "History", requestField: "history", required: false },
-  { excelColumn: "Notes", requestField: "notes", required: false },
-  { excelColumn: "Status", requestField: "status", required: false },
-  { excelColumn: "Date Created", requestField: "dateCreated", required: false },
-  { excelColumn: "Time Created", requestField: "timeCreated", required: false }
+  { excelColumn: "Treating Doctor's Name", requestField: "doctorName", required: true },
+  { excelColumn: "Service Description of referred service", requestField: "serviceDescription", required: true },
+  { excelColumn: "Expected date of Surgery", requestField: "expectedSurgeryDate", required: false },
+  { excelColumn: "Type of Admission", requestField: "admissionType", required: false },
+  { excelColumn: "Notes: if you want to add", requestField: "notes", required: false },
+  
+  // Hospital information
+  { excelColumn: "Referred Hospital", requestField: "hospitalName", required: true },
+  { excelColumn: "My Clinic Branch", requestField: "clinicBranch", required: false },
+  { excelColumn: "Hospital File Number", requestField: "hospitalFileNumber", required: false },
+  
+  // Case management
+  { excelColumn: "Case Manager", requestField: "caseManager", required: false },
+  { excelColumn: "Received Referral Documents / Email", requestField: "receivedDocuments", required: false },
+  { excelColumn: "SMS Introduction", requestField: "smsIntroduction", required: false },
+  { excelColumn: "Patient Contacted", requestField: "patientContacted", required: false },
+  { excelColumn: "Preferred way of communication", requestField: "preferredCommunication", required: false },
+  
+  // Financial information
+  { excelColumn: "Insurance/Cash", requestField: "insuranceType", required: false },
+  { excelColumn: "Insurance Number", requestField: "insuranceNumber", required: false },
+  
+  // Dates and scheduling
+  { excelColumn: "Start time", requestField: "startTime", required: false },
+  { excelColumn: "Completion time", requestField: "completionTime", required: false },
+  { excelColumn: "Date of Request:", requestField: "dateCreated", required: false },
+  { excelColumn: "Date of File Opening", requestField: "fileOpeningDate", required: false },
+  { excelColumn: "Date of Order Submission by Doctor", requestField: "orderSubmissionDate", required: false },
+  { excelColumn: "Agreed - Booked - OR date(mm/dd/yyyy)", requestField: "agreedBookingDate", required: false },
+  
+  // Order and approval information
+  { excelColumn: "Order Submission by Doctor", requestField: "orderSubmission", required: false },
+  { excelColumn: "Approval Number", requestField: "approvalNumber", required: false },
+  { excelColumn: "Approval Status", requestField: "approvalStatus", required: false },
+  { excelColumn: "Preoperative assessment status", requestField: "preOpStatus", required: false },
+  
+  // Status and outcome
+  { excelColumn: "Status of operation", requestField: "operationStatus", required: false },
+  { excelColumn: "Reason of pending or cancellation", requestField: "reasonPendingCancellation", required: false },
+  { excelColumn: "Category of Failure", requestField: "categoryOfFailure", required: false }
 ];
 
 interface UploadResult {
@@ -52,42 +85,43 @@ export default function RequestsExcelUpload() {
   const downloadTemplate = () => {
     const templateData = [
       {
-        "Patient Name": "Ahmed Hassan",
-        "National ID": "1234567890",
-        "Mobile Number": "0554447777",
+        "Start time": "2024-01-15 09:00",
+        "Completion time": "2024-01-15 17:00",
+        "Email": "patient1@example.com",
+        "Name": "Ahmed Hassan",
+        "Last modified time": "2024-01-15 18:00",
+        "Date of Request:": "2024-01-15",
+        "My Clinic Branch": "Main Branch",
+        "Patient's MRN:": "P001",
+        "Patient's Name:": "Ahmed Hassan",
+        "Patient's National ID:": "1234567890",
+        "Patient's Mobile No.:": "0554447777",
         "Specialty": "cardiology",
-        "Doctor Name": "Dr. Ahmed Salem",
-        "Hospital Name": "DSAH",
-        "Hospital MRN": "MRN-001",
-        "Service Description": "Cardiac Surgery - Valve Replacement",
-        "Expected Surgery Date": "2024-02-01",
-        "Referred From": "Emergency",
-        "Referred To Hospital": "DSAH",
-        "Admission Type": "Emergency",
-        "History": "Patient history",
-        "Notes": "Additional notes",
-        "Status": "Approved",
-        "Date Created": "2024-01-15",
-        "Time Created": "10:30"
-      },
-      {
-        "Patient Name": "Sara Ali",
-        "National ID": "2345678901",
-        "Mobile Number": "0555558888",
-        "Specialty": "orthopedics",
-        "Doctor Name": "Dr. Mohammed Khalil",
-        "Hospital Name": "DSFH (main)",
-        "Hospital MRN": "MRN-002",
-        "Service Description": "Orthopedic Surgery - Knee Replacement",
-        "Expected Surgery Date": "2024-02-10",
-        "Referred From": "Outpatient",
-        "Referred To Hospital": "DSFH (main)",
-        "Admission Type": "Elective",
-        "History": "Knee pain for 2 years",
-        "Notes": "Requires pre-operative assessment",
-        "Status": "Pending",
-        "Date Created": "2024-01-16",
-        "Time Created": "14:20"
+        "Type of Admission": "Emergency",
+        "Referred Hospital": "DSAH",
+        "Service Description of referred service": "Cardiac Surgery - Valve Replacement",
+        "Treating Doctor's Name": "Dr. Ahmed Salem",
+        "Expected date of Surgery": "2024-02-01",
+        "Notes: if you want to add": "Additional notes",
+        "Case Manager": "Manager 1",
+        "Received Referral Documents / Email": "Yes",
+        "Patient's Phone": "0554447777",
+        "SMS Introduction": "Sent",
+        "Patient Contacted": "Yes",
+        "Preferred way of communication": "Phone",
+        "Insurance/Cash": "Insurance",
+        "Insurance Number": "INS001",
+        "Date of File Opening": "2024-01-15",
+        "Hospital File Number": "HF001",
+        "Order Submission by Doctor": "Submitted",
+        "Date of Order Submission by Doctor": "2024-01-16",
+        "Approval Number": "APR001",
+        "Approval Status": "Approved",
+        "Preoperative assessment status": "Completed",
+        "Agreed - Booked - OR date(mm/dd/yyyy)": "02/01/2024",
+        "Status of operation": "Scheduled",
+        "Reason of pending or cancellation": "",
+        "Category of Failure": ""
       }
     ];
 
@@ -191,6 +225,18 @@ export default function RequestsExcelUpload() {
         }
         if (!requestData.admissionType) {
           requestData.admissionType = "Elective";
+        }
+        if (!requestData.hospitalMRN && requestData.patientMRN) {
+          requestData.hospitalMRN = requestData.patientMRN;
+        }
+        if (!requestData.referredFrom) {
+          requestData.referredFrom = "Excel Import";
+        }
+        if (!requestData.referredToHospital && requestData.hospitalName) {
+          requestData.referredToHospital = requestData.hospitalName;
+        }
+        if (!requestData.history) {
+          requestData.history = "Imported from Excel";
         }
 
         // Validate required fields

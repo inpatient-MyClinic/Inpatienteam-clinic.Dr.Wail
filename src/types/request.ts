@@ -3,11 +3,16 @@ export interface RequestFormData {
   // Auto-captured fields
   dateCreated: string;
   timeCreated: string;
+  startTime?: string;
+  completionTime?: string;
   
   // Patient Information
   patientName: string;
+  patientMRN?: string;
   patientNationalId: string;
   patientMobileNo: string;
+  patientPhone?: string;
+  email?: string;
   
   // Medical Information - moved up
   specialty: string;
@@ -18,9 +23,38 @@ export interface RequestFormData {
   // Hospital Information
   hospitalMRN: string;
   hospitalName: string;
+  clinicBranch?: string;
+  hospitalFileNumber?: string;
   
   // Service Information
   serviceDescription: string;
+  
+  // Case Management
+  caseManager?: string;
+  receivedDocuments?: string;
+  smsIntroduction?: string;
+  patientContacted?: string;
+  preferredCommunication?: string;
+  
+  // Financial Information
+  insuranceType?: string;
+  insuranceNumber?: string;
+  
+  // Dates and Scheduling
+  fileOpeningDate?: string;
+  orderSubmissionDate?: string;
+  agreedBookingDate?: string;
+  
+  // Order and Approval
+  orderSubmission?: string;
+  approvalNumber?: string;
+  approvalStatus?: string;
+  preOpStatus?: string;
+  
+  // Status and Outcome
+  operationStatus?: string;
+  reasonPendingCancellation?: string;
+  categoryOfFailure?: string;
   
   // Specialty-specific fields
   requiredImplant?: string; // For Orthopedics
