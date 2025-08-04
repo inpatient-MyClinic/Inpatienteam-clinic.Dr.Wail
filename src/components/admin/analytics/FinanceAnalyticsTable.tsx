@@ -545,38 +545,6 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   {isEditing && <td className="border border-gray-300 p-2"></td>}
                 </tr>
 
-                {/* Forecast MTD Row */}
-                <tr className="bg-indigo-50 font-semibold">
-                  <td className="border border-gray-300 p-2" colSpan={2}>
-                    <Badge variant="outline" className="text-indigo-700 border-indigo-300">Forecast MTD</Badge>
-                  </td>
-                  {filteredMonthColumns.map(month => {
-                    const forecastRow = financeData.find(row => row.type === "Forecast MTD");
-                    const forecastValue = forecastRow ? forecastRow[month] : "";
-                    console.log('Forecast row found:', forecastRow ? 'yes' : 'no', 'for month:', month);
-                    return (
-                      <td key={month} className="border border-gray-300 p-2 text-center">
-                        {isEditing && forecastRow ? (
-                          <Input
-                            value={forecastValue?.toString() || ''}
-                            onChange={(e) => {
-                              console.log('Forecast value changing:', e.target.value, 'for month:', month);
-                              handleCellChange(forecastRow.id, month, e.target.value);
-                            }}
-                            className="border-0 bg-transparent p-1 text-center text-indigo-700 font-mono text-sm"
-                            type="text"
-                          />
-                        ) : (
-                          <span className="font-mono text-sm text-indigo-700">
-                            {forecastValue || ''}
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
-                  {isEditing && <td className="border border-gray-300 p-2"></td>}
-                </tr>
-
                 {/* Achievement Row */}
                 <tr className="bg-green-50 font-semibold">
                   <td className="border border-gray-300 p-2" colSpan={2}>
