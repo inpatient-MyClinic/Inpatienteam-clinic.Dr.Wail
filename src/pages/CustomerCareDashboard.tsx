@@ -38,10 +38,14 @@ const initialDoneRequests: any[] = [];
 const initialDoneRequestsWithComplaints: any[] = [];
 
 export default function CustomerCareDashboard() {
+  // Clear existing data for fresh upload
   const [requests, setRequests] = useState(() => {
-    // Save to localStorage for other components to access
-    localStorage.setItem('customerCareData', JSON.stringify(initialDoneRequestsWithComplaints));
-    return initialDoneRequestsWithComplaints;
+    // Clear all related data
+    localStorage.removeItem('customerCareData');
+    localStorage.removeItem('coordinatorMessages');
+    localStorage.removeItem('adminCoordinatorMetrics');
+    localStorage.removeItem('recoveryCases');
+    return [];
   });
   const [showSettings, setShowSettings] = useState(false);
   const [npsTargets, setNpsTargets] = useState({ customerCare: 75, inPatient: 80, overall: 70, quarterly: 72 });
