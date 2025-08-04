@@ -151,10 +151,13 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   };
 
   const calculateTotal = (column: string) => {
-    const total = financeData.reduce((sum, row) => {
-      const value = row[column];
-      return sum + (typeof value === 'number' ? value : 0);
-    }, 0);
+    // Only sum Actual MTD, AlBatal, and Ibn Rushd (exclude Forecast MTD)
+    const total = financeData
+      .filter(row => row.type === "Actual MTD" || row.category === "AlBatal" || row.category === "Ibn Rushd")
+      .reduce((sum, row) => {
+        const value = row[column];
+        return sum + (typeof value === 'number' ? value : 0);
+      }, 0);
     return total;
   };
 
