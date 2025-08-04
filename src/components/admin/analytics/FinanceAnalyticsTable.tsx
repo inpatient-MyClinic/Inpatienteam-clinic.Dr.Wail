@@ -543,8 +543,19 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                     const forecastRow = financeData.find(row => row.type === "Forecast MTD");
                     const forecastValue = forecastRow ? forecastRow[month] : "";
                     return (
-                      <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-indigo-700">
-                        {forecastValue || ''}
+                      <td key={month} className="border border-gray-300 p-2 text-center">
+                        {isEditing && forecastRow ? (
+                          <Input
+                            value={forecastValue?.toString() || ''}
+                            onChange={(e) => handleCellChange(forecastRow.id, month, e.target.value)}
+                            className="border-0 bg-transparent p-1 text-center text-indigo-700 font-mono text-sm"
+                            type="text"
+                          />
+                        ) : (
+                          <span className="font-mono text-sm text-indigo-700">
+                            {forecastValue || ''}
+                          </span>
+                        )}
                       </td>
                     );
                   })}
