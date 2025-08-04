@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Plus, Download, Upload, Save, Edit3, Filter, FileSpreadsheet } from "lucide-react";
+import { Plus, Download, Upload, Save, Edit3, Filter, FileSpreadsheet, BarChart3, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import FinanceChartsDialog from "./FinanceChartsDialog";
 
 interface FinanceData {
   id: string;
@@ -24,6 +25,8 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYears, setSelectedYears] = useState<string[]>(["2023", "2024", "2025"]);
+  const [chartDialogOpen, setChartDialogOpen] = useState(false);
+  const [chartType, setChartType] = useState<"achievement" | "growth-ytd">("achievement");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Initialize with empty structure or sample data, load from localStorage if available
@@ -498,6 +501,32 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
             <Button
               variant="outline"
               size="sm"
+              onClick={() => {
+                setChartType("achievement");
+                setChartDialogOpen(true);
+              }}
+              className="flex items-center gap-2"
+              title="View Achievement Chart"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Achievement Chart
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setChartType("growth-ytd");
+                setChartDialogOpen(true);
+              }}
+              className="flex items-center gap-2"
+              title="View Growth YTD Chart"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Growth YTD Chart
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditing(!isEditing)}
               className="flex items-center gap-2"
             >
@@ -779,6 +808,14 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
           </div>
         </div>
       </CardContent>
+
+      <FinanceChartsDialog
+        open={chartDialogOpen}
+        onOpenChange={setChartDialogOpen}
+        chartType={chartType}
+        data={financeData}
+        selectedYears={selectedYears}
+      />
     </Card>
   );
 }
