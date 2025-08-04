@@ -5,6 +5,7 @@ import { Users, Settings, FileText, BarChart3, ArrowLeft, Plus, LogOut, UserChec
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import LogoutButton from "@/components/auth/LogoutButton";
+import ComplaintManager from "@/components/complaints/ComplaintManager";
 
 interface AdminSidebarProps {
   activeFilter: string | null;
@@ -172,6 +173,14 @@ export default function AdminSidebar({
           <HeartHandshake className="w-4 h-4 mr-2" />
           Customer Care
         </Button>
+      </div>
+
+      {/* Complaints Management */}
+      <div className="w-full mb-4">
+        <ComplaintManager 
+          currentUserRole="admin" 
+          currentUserName="Admin User" 
+        />
       </div>
 
       <div className="mt-auto flex flex-col gap-2 w-full">

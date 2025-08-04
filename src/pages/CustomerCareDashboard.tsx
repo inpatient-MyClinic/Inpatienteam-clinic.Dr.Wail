@@ -28,13 +28,56 @@ const stats = [
 ];
 
 // Sample done requests data with survey responses
-const initialDoneRequests: any[] = [];
+const initialDoneRequests = [
+  {
+    id: "TXN001",
+    patientName: "Nora Mohammed",
+    idNumber: "2012345678",
+    phone: "0551234567",
+    hospitalMRN: "MRN001234",
+    hospitalName: "King Abdulaziz Hospital",
+    procedure: "Cardiac Surgery",
+    treatingDoctor: "Dr. Ahmed Al-Rashid",
+    surveySent: true,
+    surveyResponded: true,
+    npsScore: 9,
+    completionDate: "2025-06-15",
+    status: "done"
+  },
+  {
+    id: "TXN002",
+    patientName: "Omar Hassan",
+    idNumber: "2018765432",
+    phone: "0567890123",
+    hospitalMRN: "MRN005678",
+    hospitalName: "Prince Sultan Hospital",
+    procedure: "Orthopedic Surgery",
+    treatingDoctor: "Dr. Sarah Al-Mahmoud",
+    surveySent: true,
+    surveyResponded: false,
+    completionDate: "2025-06-10",
+    status: "done"
+  }
+];
 
 // Add complaint status to the data
-const initialDoneRequestsWithComplaints = initialDoneRequests;
+const initialDoneRequestsWithComplaints = initialDoneRequests.map(request => ({
+  ...request,
+  complaintStatus: request.id === "TXN001" ? 'open' : 
+                  request.id === "TXN002" ? 'open' : null,
+  complaintText: request.id === "TXN001" ? "Patient complained about waiting time" : 
+                 request.id === "TXN002" ? "Issue with billing process" : null,
+  complaintCreatedAt: request.id === "TXN001" || request.id === "TXN002" ? request.completionDate : null,
+  complaintLeadTimeHours: undefined as number | undefined,
+  complaintClosedAt: undefined as string | undefined
+}));
 
 export default function CustomerCareDashboard() {
-  const [requests, setRequests] = useState(initialDoneRequestsWithComplaints);
+  const [requests, setRequests] = useState(() => {
+    // Save to localStorage for other components to access
+    localStorage.setItem('customerCareData', JSON.stringify(initialDoneRequestsWithComplaints));
+    return initialDoneRequestsWithComplaints;
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [npsTargets, setNpsTargets] = useState({ customerCare: 75, inPatient: 80, overall: 70, quarterly: 72 });
   const [dateFilters, setDateFilters] = useState<{
@@ -211,6 +254,57 @@ export default function CustomerCareDashboard() {
     );
   };
 
+  const closeComplaint = (requestId: string) => {
+    const closedAt = new Date().toISOString();
+    const requestToUpdate = requests.find(r => r.id === requestId);
+    
+    if (requestToUpdate) {
+      const leadTimeHours = Math.floor(
+        (new Date(closedAt).getTime() - new Date(requestToUpdate.complaintCreatedAt || requestToUpdate.completionDate).getTime()) / (1000 * 60 * 60)
+      );
+
+      setRequests(prev =>
+        prev.map(req =>
+          req.id === requestId 
+            ? { 
+                ...req, 
+                complaintStatus: 'closed' as const,
+                complaintClosedAt: closedAt,
+                complaintLeadTimeHours: leadTimeHours
+              } 
+            : req
+        )
+      );
+
+      // Update localStorage to persist changes
+      const customerCareData = localStorage.getItem('customerCareData');
+      if (customerCareData) {
+        try {
+          const data = JSON.parse(customerCareData);
+          const updatedData = data.map((req: any) => {
+            if (req.id === requestId) {
+              return {
+                ...req,
+                complaintStatus: 'closed',
+                complaintClosedAt: closedAt,
+                complaintLeadTimeHours: leadTimeHours
+              };
+            }
+            return req;
+          });
+          localStorage.setItem('customerCareData', JSON.stringify(updatedData));
+        } catch (error) {
+          console.error('Error updating complaint in storage:', error);
+        }
+      }
+
+      toast({
+        title: "Complaint closed",
+        description: `Complaint closed with ${leadTimeHours} hours lead time.`,
+      });
+    }
+  };
+
   const exportToExcel = () => {
     console.log("Exporting customer care data to Excel with current filters", { dateFilters, complaintFilter });
   };
@@ -384,11 +478,32 @@ export default function CustomerCareDashboard() {
                     </TableCell>
                     <TableCell>
                       {req.complaintStatus ? (
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          req.complaintStatus === 'open' ? "bg-orange-100 text-orange-800" : "bg-green-100 text-green-800"
-                        }`}>
-                          {req.complaintStatus === 'open' ? "Open" : "Closed"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            req.complaintStatus === 'open' ? "bg-orange-100 text-orange-800" : 
+                            req.complaintStatus === 'in-progress' ? "bg-yellow-100 text-yellow-800" :
+                            "bg-green-100 text-green-800"
+                          }`}>
+                            {req.complaintStatus === 'open' ? "Open" : 
+                             req.complaintStatus === 'in-progress' ? "In Progress" :
+                             "Closed"}
+                          </span>
+                          {req.complaintStatus !== 'closed' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => closeComplaint(req.id)}
+                              className="text-xs px-2 py-1"
+                            >
+                              Close
+                            </Button>
+                          )}
+                          {req.complaintLeadTimeHours && (
+                            <span className="text-xs text-gray-500">
+                              ({req.complaintLeadTimeHours}h)
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-gray-400 text-xs">-</span>
                       )}
