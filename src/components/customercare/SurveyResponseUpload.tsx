@@ -44,19 +44,27 @@ export default function SurveyResponseUpload({ onUpdateResponses }: SurveyRespon
       const headers = Object.keys(jsonData[0] || {});
       console.log('Excel columns found:', headers);
       
+      // Show user what columns were found
+      toast({
+        title: "Excel file loaded",
+        description: `Found ${jsonData.length} rows with columns: ${headers.join(', ')}`,
+      });
+      
       jsonData.forEach((row: any, index: number) => {
         // More flexible column matching - look for any column containing these keywords
         const idColumn = headers.find(h => 
           h.toLowerCase().includes('id') || 
           h.toLowerCase().includes('unified') ||
           h.toLowerCase().includes('transaction') ||
-          h.toLowerCase().includes('txn')
+          h.toLowerCase().includes('txn') ||
+          h.toLowerCase().includes('request')
         );
         
         const respondedColumn = headers.find(h => 
           h.toLowerCase().includes('respond') || 
           h.toLowerCase().includes('survey') ||
-          h.toLowerCase().includes('sent')
+          h.toLowerCase().includes('sent') ||
+          h.toLowerCase().includes('completed')
         );
         
         const npsColumn = headers.find(h => 
@@ -68,46 +76,56 @@ export default function SurveyResponseUpload({ onUpdateResponses }: SurveyRespon
         const complaintColumn = headers.find(h => 
           h.toLowerCase().includes('complaint') || 
           h.toLowerCase().includes('issue') ||
-          h.toLowerCase().includes('feedback')
+          h.toLowerCase().includes('feedback') ||
+          h.toLowerCase().includes('problem')
         );
         
-        const id = idColumn ? row[idColumn] : null;
+        // Try to get ID from any column if not found with keywords
+        const id = idColumn ? row[idColumn] : 
+                  row[headers[0]] || // First column as fallback
+                  Object.values(row)[0]; // Any first value
         
-        if (id) {
+        if (id && String(id).trim()) {
           const responded = respondedColumn ? (
             String(row[respondedColumn]).toLowerCase().includes('yes') || 
             String(row[respondedColumn]).toLowerCase().includes('true') ||
+            String(row[respondedColumn]).toLowerCase().includes('responded') ||
             String(row[respondedColumn]) === '1'
           ) : false;
           
           const npsScore = npsColumn ? Number(row[npsColumn]) : undefined;
-          const hasComplaint = complaintColumn ? Boolean(row[complaintColumn]) : false;
+          const hasComplaint = complaintColumn ? Boolean(row[complaintColumn] && String(row[complaintColumn]).trim()) : false;
           
           console.log(`Row ${index + 1}: ID=${id}, Responded=${responded}, NPS=${npsScore}, Complaint=${hasComplaint}`);
+          console.log('Raw row data:', row);
           
           responses.push({
-            id: String(id),
+            id: String(id).trim(),
             responded,
             npsScore: npsScore && !isNaN(npsScore) ? npsScore : undefined
           });
+        } else {
+          console.log(`Row ${index + 1}: Skipped - no ID found`);
         }
       });
 
       if (responses.length === 0) {
         toast({
           title: "No responses found",
-          description: "Could not find any survey responses in the Excel file.",
+          description: `Could not find any survey responses. Expected columns with keywords like: ID, Responded, NPS Score. Found columns: ${headers.join(', ')}`,
           variant: "destructive",
         });
         return;
       }
 
+      console.log('Processed responses:', responses);
       onUpdateResponses(responses);
       
       toast({
         title: "Excel upload successful",
         description: `Updated survey responses for ${responses.length} requests`,
       });
+
 
     } catch (error) {
       console.error('Error processing Excel file:', error);
