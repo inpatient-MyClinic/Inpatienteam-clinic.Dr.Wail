@@ -28,57 +28,10 @@ const stats = [
 ];
 
 // Sample done requests data with survey responses
-const initialDoneRequests = [
-  {
-    id: "TXN001",
-    patientName: "Nora Mohammed",
-    idNumber: "2012345678",
-    phone: "0551234567",
-    hospitalMRN: "MRN001234",
-    hospitalName: "King Abdulaziz Hospital",
-    procedure: "Cardiac Surgery",
-    treatingDoctor: "Dr. Ahmed Al-Rashid",
-    surveySent: true,
-    surveyResponded: true,
-    npsScore: 9,
-    completionDate: "2025-06-15",
-    status: "done"
-  },
-  {
-    id: "TXN002",
-    patientName: "Omar Hassan",
-    idNumber: "2018765432",
-    phone: "0567890123",
-    hospitalMRN: "MRN005678",
-    hospitalName: "Prince Sultan Hospital",
-    procedure: "Orthopedic Surgery",
-    treatingDoctor: "Dr. Sarah Al-Mahmoud",
-    surveySent: true,
-    surveyResponded: false,
-    completionDate: "2025-06-10",
-    status: "done"
-  },
-  {
-    id: "TXN003",
-    patientName: "Fatima Ali",
-    idNumber: "2019876543",
-    phone: "0512345678",
-    hospitalMRN: "MRN009876",
-    hospitalName: "Medical Center",
-    procedure: "General Surgery",
-    treatingDoctor: "Dr. Mohammed Hassan",
-    surveySent: false,
-    surveyResponded: false,
-    completionDate: "2025-06-20",
-    status: "done"
-  },
-];
+const initialDoneRequests: any[] = [];
 
 // Add complaint status to the data
-const initialDoneRequestsWithComplaints = initialDoneRequests.map(request => ({
-  ...request,
-  complaintStatus: Math.random() > 0.7 ? (Math.random() > 0.5 ? 'open' : 'closed') : null
-}));
+const initialDoneRequestsWithComplaints = initialDoneRequests;
 
 export default function CustomerCareDashboard() {
   const [requests, setRequests] = useState(initialDoneRequestsWithComplaints);
