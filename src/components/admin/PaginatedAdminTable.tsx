@@ -56,7 +56,7 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
     localStorage.setItem('adminPaginationSettings', JSON.stringify(paginationSettings));
   }, [paginationSettings]);
 
-  // Convert AdminTask to request format for ViewRequestDialog
+  // Convert AdminTask to request format for ViewRequestDialog - using actual Excel data
   const convertToRequest = (task: AdminTask) => {
     const getValidDateString = (date: Date | null) => {
       if (!date || isNaN(date.getTime())) {
@@ -65,35 +65,75 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
       return date.toISOString();
     };
 
+    // Get the original request data from storage to access all Excel fields
+    const requests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
+    const originalRequest = requests.find((req: any) => 
+      req.patientMRN === task.patientMRN || 
+      req.id === parseInt(task.id.replace('REQ', ''))
+    );
+
+    // If we found the original request, use its data; otherwise use task data
+    const requestData = originalRequest || {};
+
     return {
-      id: parseInt(task.id) || 1,
-      patientName: `Patient for ${task.description}`,
-      mrn: `MRN-${task.id}`,
-      serviceDescription: task.description,
-      doctorName: task.user,
-      hospital: task.hospital,
-      specialty: task.specialty,
-      status: task.status,
-      createdAt: getValidDateString(task.requestDate),
-      assignedCoordinator: task.caseCoordinator,
-      phone: "",
-      idNumber: "",
-      age: "",
-      gender: "",
-      nationality: "",
-      diagnosis: "",
-      urgency: "Normal",
-      expectedSurgeryDate: "",
-      medicalHistory: "",
-      currentMedications: "",
-      allergies: "",
-      insuranceCompany: "",
-      policyNumber: "",
-      contactPerson: "",
-      contactPhone: "",
-      contactEmail: "",
-      notes: "",
-      rejectionReason: ""
+      id: parseInt(task.id.replace('REQ', '')) || 1,
+      patientName: requestData.patientName || `Patient ${task.patientMRN}`,
+      mrn: task.patientMRN || requestData.patientMRN || `MRN-${task.id}`,
+      serviceDescription: requestData.serviceDescription || task.description,
+      doctorName: requestData.doctorName || task.user,
+      hospital: requestData.hospitalName || requestData.referredToHospital || task.hospital,
+      specialty: requestData.specialty || task.specialty,
+      status: requestData.operationStatus || requestData.status || task.status,
+      createdAt: requestData.dateCreated ? `${requestData.dateCreated}T${requestData.timeCreated || '00:00'}:00Z` : getValidDateString(task.requestDate),
+      assignedCoordinator: requestData.assignedCoordinator || task.caseCoordinator,
+      
+      // Patient contact information from Excel
+      phone: requestData.patientMobileNo || requestData.patientPhone || "",
+      idNumber: requestData.patientNationalId || "",
+      age: requestData.age || "",
+      gender: requestData.gender || "",
+      nationality: requestData.nationality || "",
+      
+      // Medical information from Excel
+      diagnosis: requestData.diagnosis || requestData.history || "",
+      urgency: requestData.urgency || "Normal",
+      expectedSurgeryDate: requestData.expectedSurgeryDate || requestData.agreedBookingDate || "",
+      medicalHistory: requestData.history || "",
+      currentMedications: requestData.currentMedications || "",
+      allergies: requestData.allergies || "",
+      
+      // Insurance information from Excel
+      insuranceCompany: requestData.insuranceType || "",
+      policyNumber: requestData.insuranceNumber || "",
+      contactPerson: requestData.caseManager || "",
+      contactPhone: requestData.patientMobileNo || "",
+      contactEmail: requestData.email || "",
+      
+      // Additional Excel fields
+      notes: requestData.notes || "",
+      rejectionReason: requestData.reasonPendingCancellation || "",
+      
+      // Hospital specific data
+      hospitalMRN: requestData.hospitalMRN || "",
+      hospitalFileNumber: requestData.hospitalFileNumber || "",
+      clinicBranch: requestData.clinicBranch || "",
+      
+      // Case management data
+      receivedDocuments: requestData.receivedDocuments || "",
+      smsIntroduction: requestData.smsIntroduction || "",
+      patientContacted: requestData.patientContacted || "",
+      
+      // Financial data
+      orderSubmission: requestData.orderSubmission || "",
+      approvalNumber: requestData.approvalNumber || "",
+      approvalStatus: requestData.approvalStatus || "",
+      preOpStatus: requestData.preOpStatus || "",
+      
+      // Specialty specific fields
+      requiredImplant: requestData.requiredImplant || "",
+      lastMenstrualPeriod: requestData.lastMenstrualPeriod || "",
+      estimatedDueDate: requestData.estimatedDueDate || "",
+      opdBookingDate: requestData.opdBookingDate || ""
     };
   };
 
