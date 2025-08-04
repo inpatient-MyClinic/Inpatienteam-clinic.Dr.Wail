@@ -51,58 +51,35 @@ export default function SurveyResponseUpload({ onUpdateResponses }: SurveyRespon
       });
       
       jsonData.forEach((row: any, index: number) => {
-        // More flexible column matching - look for any column containing these keywords
-        const idColumn = headers.find(h => 
-          h.toLowerCase().includes('id') || 
-          h.toLowerCase().includes('unified') ||
-          h.toLowerCase().includes('transaction') ||
-          h.toLowerCase().includes('txn') ||
-          h.toLowerCase().includes('request')
-        );
+        // Handle your specific Excel format
+        let id = null;
+        let responded = false;
+        let npsScore = undefined;
         
-        const respondedColumn = headers.find(h => 
-          h.toLowerCase().includes('respond') || 
-          h.toLowerCase().includes('survey') ||
-          h.toLowerCase().includes('sent') ||
-          h.toLowerCase().includes('completed')
-        );
+        // Look for ID in various possible locations
+        id = row['__EMPTY_1'] || // Based on your data structure
+             row['ID'] || row['id'] || row['Request ID'] || row['Unified ID'] ||
+             Object.values(row).find(val => typeof val === 'string' && val.includes('NC02-'));
         
-        const npsColumn = headers.find(h => 
-          h.toLowerCase().includes('nps') || 
-          h.toLowerCase().includes('score') ||
-          h.toLowerCase().includes('rating')
-        );
+        // Look for response indicators
+        const responseValues = Object.values(row).join(' ').toLowerCase();
+        responded = responseValues.includes('yes') || responseValues.includes('نعم') || 
+                   responseValues.includes('answered') || responseValues.includes('responded');
         
-        const complaintColumn = headers.find(h => 
-          h.toLowerCase().includes('complaint') || 
-          h.toLowerCase().includes('issue') ||
-          h.toLowerCase().includes('feedback') ||
-          h.toLowerCase().includes('problem')
-        );
-        
-        // Try to get ID from any column if not found with keywords
-        const id = idColumn ? row[idColumn] : 
-                  row[headers[0]] || // First column as fallback
-                  Object.values(row)[0]; // Any first value
+        // Look for NPS score in numeric columns
+        const numericValues = Object.values(row).filter(val => typeof val === 'number' && val >= 0 && val <= 10);
+        if (numericValues.length > 0) {
+          npsScore = Math.max(...numericValues as number[]);
+        }
         
         if (id && String(id).trim()) {
-          const responded = respondedColumn ? (
-            String(row[respondedColumn]).toLowerCase().includes('yes') || 
-            String(row[respondedColumn]).toLowerCase().includes('true') ||
-            String(row[respondedColumn]).toLowerCase().includes('responded') ||
-            String(row[respondedColumn]) === '1'
-          ) : false;
-          
-          const npsScore = npsColumn ? Number(row[npsColumn]) : undefined;
-          const hasComplaint = complaintColumn ? Boolean(row[complaintColumn] && String(row[complaintColumn]).trim()) : false;
-          
-          console.log(`Row ${index + 1}: ID=${id}, Responded=${responded}, NPS=${npsScore}, Complaint=${hasComplaint}`);
+          console.log(`Row ${index + 1}: ID=${id}, Responded=${responded}, NPS=${npsScore}`);
           console.log('Raw row data:', row);
           
           responses.push({
             id: String(id).trim(),
             responded,
-            npsScore: npsScore && !isNaN(npsScore) ? npsScore : undefined
+            npsScore: npsScore && npsScore >= 0 && npsScore <= 10 ? npsScore : undefined
           });
         } else {
           console.log(`Row ${index + 1}: Skipped - no ID found`);

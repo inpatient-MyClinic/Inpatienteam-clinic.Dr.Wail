@@ -185,19 +185,53 @@ export default function CustomerCareDashboard() {
   };
 
   const handleSurveyResponseUpload = (responses: { id: string; responded: boolean; npsScore?: number }[]) => {
-    setRequests(prev =>
-      prev.map(request => {
-        const response = responses.find(r => r.id === request.id);
-        if (response) {
-          return {
-            ...request,
-            surveyResponded: response.responded,
-            npsScore: response.npsScore
-          };
-        }
-        return request;
-      })
-    );
+    console.log('Received survey responses:', responses);
+    
+    // Create new requests from uploaded data or update existing ones
+    const newRequests = [...requests];
+    
+    responses.forEach(response => {
+      const existingIndex = newRequests.findIndex(req => req.id === response.id);
+      
+      if (existingIndex >= 0) {
+        // Update existing request
+        newRequests[existingIndex] = {
+          ...newRequests[existingIndex],
+          surveySent: true,
+          surveyResponded: response.responded,
+          npsScore: response.npsScore
+        };
+      } else {
+        // Create new request from uploaded data
+        newRequests.push({
+          id: response.id,
+          patientName: `Patient ${response.id}`,
+          idNumber: "N/A",
+          phone: "N/A", 
+          hospitalMRN: "N/A",
+          hospitalName: "N/A",
+          procedure: "N/A",
+          treatingDoctor: "N/A",
+          surveySent: true,
+          surveyResponded: response.responded,
+          npsScore: response.npsScore,
+          completionDate: new Date().toISOString().split('T')[0],
+          status: "done",
+          complaintStatus: null,
+          complaintText: null,
+          complaintCreatedAt: null,
+          complaintLeadTimeHours: undefined,
+          complaintClosedAt: undefined
+        });
+      }
+    });
+    
+    setRequests(newRequests);
+    
+    // Update localStorage to persist the changes
+    localStorage.setItem('customerCareData', JSON.stringify(newRequests));
+    
+    console.log('Updated requests:', newRequests);
   };
 
   const handleComplaintUpload = (complaints: { id: string; status: 'open' | 'closed' }[]) => {
