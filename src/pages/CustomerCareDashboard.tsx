@@ -22,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -423,7 +425,10 @@ export default function CustomerCareDashboard() {
 
   const monthlyNPS = calculateNPS(filteredRequests);
   const ytdNPS = calculateNPS(requests);
-  const monthlyNPSBreakdown = calculateNPSByMonth(requests);
+  const [monthlyNPSBreakdown, setMonthlyNPSBreakdown] = useState(() => {
+    const stored = localStorage.getItem('monthlyNPSBreakdown');
+    return stored ? JSON.parse(stored) : calculateNPSByMonth(requests);
+  });
   const { complaintsOpen, complaintsClosed, averageLeadTime } = calculateComplaintMetrics(requests);
   const targetNPS = npsTargets.customerCare;
 
@@ -780,6 +785,58 @@ export default function CustomerCareDashboard() {
               </Button>
             </div>
           </div>
+
+          {/* Monthly NPS Score Management */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                NPS Score by Month
+                <Badge variant="secondary">2025</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-6 gap-4 md:grid-cols-12">
+                {Array.from({ length: 12 }, (_, i) => {
+                  const month = i + 1;
+                  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  const monthName = monthNames[i];
+                  const currentScore = monthlyNPSBreakdown[month] || '';
+                  
+                  return (
+                    <Card key={month} className="p-3 text-center">
+                      <div className="text-sm font-medium text-gray-600 mb-2">{monthName}</div>
+                       <Input
+                         type="number"
+                         value={currentScore}
+                         onChange={(e) => {
+                           const newValue = e.target.value;
+                           const updatedBreakdown = { ...monthlyNPSBreakdown, [month]: newValue };
+                           setMonthlyNPSBreakdown(updatedBreakdown);
+                           
+                           // Save to localStorage
+                           localStorage.setItem('monthlyNPSBreakdown', JSON.stringify(updatedBreakdown));
+                         }}
+                        placeholder="-"
+                        className="text-center h-8 text-sm"
+                        min="-100"
+                        max="100"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        {currentScore && !isNaN(parseInt(currentScore)) && (
+                          <span className={`font-medium ${parseInt(currentScore) >= targetNPS ? 'text-green-600' : 'text-red-600'}`}>
+                            {parseInt(currentScore) >= targetNPS ? '✓' : '✗'}
+                          </span>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+              <div className="mt-4 text-xs text-gray-500 text-center">
+                Enter NPS scores for each month. Green checkmark (✓) indicates target achievement ({targetNPS}), red X (✗) indicates below target.
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Analytics */}
           <CustomerCareAnalytics
