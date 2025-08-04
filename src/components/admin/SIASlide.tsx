@@ -40,13 +40,14 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     const currentMonthNPS = calculateNPSScore(customerCareRequests, selectedMonth, selectedYear);
     
     // Load monthly NPS data from localStorage
-    const storedMonthlyNPS = JSON.parse(localStorage.getItem('monthlyNPSScores') || '{}');
+    const storedMonthlyNPS = JSON.parse(localStorage.getItem('monthlyNPSBreakdown') || '{}');
     setMonthlyNPS(storedMonthlyNPS);
     
-    // Update editable data with current month's NPS
-    if (currentMonthNPS !== null) {
-      setEditableData(prev => ({ ...prev, npsScore: currentMonthNPS }));
-    }
+    // Update editable data with current month's NPS - prioritize stored manual entry, fallback to calculated
+    const manualNPS = storedMonthlyNPS[selectedMonth];
+    const finalNPS = manualNPS && !isNaN(parseInt(manualNPS)) ? parseInt(manualNPS) : currentMonthNPS || 85;
+    
+    setEditableData(prev => ({ ...prev, npsScore: finalNPS }));
   }, [selectedMonth, selectedYear]);
 
   // Function to calculate NPS score for a specific month
@@ -526,14 +527,27 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                       {Array.from({ length: 12 }, (_, i) => {
                         const month = i + 1;
                         const monthName = months.find(m => m.value === month)?.label.slice(0, 3);
-                        const score = monthlyNPS[month] || calculateNPSScore(JSON.parse(localStorage.getItem('customerCareRequests') || '[]'), month, selectedYear);
+                        const storedScore = monthlyNPS[month];
+                        const calculatedScore = calculateNPSScore(JSON.parse(localStorage.getItem('customerCareRequests') || '[]'), month, selectedYear);
+                        const score = storedScore && !isNaN(parseInt(storedScore.toString())) ? parseInt(storedScore.toString()) : calculatedScore;
+                        
                         return (
                           <div 
                             key={month} 
-                            className={`p-1 rounded text-center ${month === selectedMonth ? 'bg-green-200' : 'bg-gray-100'}`}
+                            className={`p-1 rounded text-center transition-colors ${
+                              month === selectedMonth 
+                                ? 'bg-primary text-primary-foreground ring-2 ring-primary/50' 
+                                : 'bg-muted hover:bg-muted/80'
+                            }`}
                           >
                             <div className="font-medium">{monthName}</div>
-                            <div className="text-xs">{score !== null ? score : '-'}</div>
+                            <div className={`text-xs font-bold ${
+                              month === selectedMonth ? 'text-primary-foreground' : 
+                              score !== null && score >= 70 ? 'text-green-600' :
+                              score !== null && score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {score !== null ? score : '-'}
+                            </div>
                           </div>
                         );
                       })}
