@@ -50,17 +50,20 @@ export default function AdminDashboard() {
     requestStorage.initializeSampleData();
     
     const loadAllData = () => {
-      // Check if data was cleared
+      // Check if Excel data was imported
+      const excelDataImported = localStorage.getItem('excel_data_imported') === 'true';
       const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
-      
-      if (dataCleared) {
-        // If data was cleared, show empty data
-        setAllRequestsData([]);
-        return;
-      }
       
       const requests = requestStorage.getAllRequests();
       console.log('Admin Dashboard - All stored requests:', requests);
+      console.log('Excel data imported:', excelDataImported);
+      console.log('Sample data cleared:', dataCleared);
+      
+      if (requests.length === 0) {
+        console.log('No requests found in storage');
+        setAllRequestsData([]);
+        return;
+      }
       
       // Convert requests to admin format
       const requestAdminData = requests.map(req => ({
@@ -79,8 +82,7 @@ export default function AdminDashboard() {
         serviceDescription: req.serviceDescription || "Unknown Service"
       }));
       
-      console.log(`Loading ${requestAdminData.length} requests from Excel data`);
-      // Show only uploaded Excel data (don't combine with sample adminData)
+      console.log(`Loading ${requestAdminData.length} requests from storage`);
       setAllRequestsData(requestAdminData);
     };
 
