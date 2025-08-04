@@ -237,6 +237,77 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     return Math.round(((currentValue - prevValue) / prevValue) * 100) + "%";
   };
 
+  // Calculate YTD Growth with Optha
+  const calculateYTDGrowthWithOptha = (column: string) => {
+    const year = column.split('-')[1];
+    const month = column.split('-')[0];
+    
+    // Get current year total up to this month (including Optha)
+    const currentYearMonths = filteredMonthColumns.filter(col => 
+      col.split('-')[1] === year && 
+      getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
+    );
+    
+    const currentYearTotal = currentYearMonths.reduce((sum, col) => {
+      const actualRow = financeData.find(row => row.type === "Actual MTD");
+      const albatalRow = financeData.find(row => row.category === "AlBatal");
+      const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
+      
+      const actual = actualRow && typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
+      const albatal = albatalRow && typeof albatalRow[col] === 'number' ? albatalRow[col] as number : 0;
+      const ibnRushd = ibnRushdRow && typeof ibnRushdRow[col] === 'number' ? ibnRushdRow[col] as number : 0;
+      
+      return sum + actual + albatal + ibnRushd;
+    }, 0);
+    
+    // Get previous year total for same period (including Optha)
+    const prevYear = String(parseInt(`20${year}`) - 1).slice(-2);
+    const prevYearMonths = allMonthColumns.filter(col => 
+      col.split('-')[1] === prevYear && 
+      getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
+    );
+    
+    const prevYearTotal = prevYearMonths.reduce((sum, col) => {
+      const actualRow = financeData.find(row => row.type === "Actual MTD");
+      const albatalRow = financeData.find(row => row.category === "AlBatal");
+      const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
+      
+      const actual = actualRow && typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
+      const albatal = albatalRow && typeof albatalRow[col] === 'number' ? albatalRow[col] as number : 0;
+      const ibnRushd = ibnRushdRow && typeof ibnRushdRow[col] === 'number' ? ibnRushdRow[col] as number : 0;
+      
+      return sum + actual + albatal + ibnRushd;
+    }, 0);
+    
+    if (prevYearTotal === 0) return "";
+    return Math.round(((currentYearTotal - prevYearTotal) / prevYearTotal) * 100) + "%";
+  };
+
+  // Calculate MTD Growth with Optha
+  const calculateMTDGrowthWithOptha = (column: string) => {
+    const actualRow = financeData.find(row => row.type === "Actual MTD");
+    const albatalRow = financeData.find(row => row.category === "AlBatal");
+    const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
+    
+    if (!actualRow) return "";
+    
+    const currentActual = typeof actualRow[column] === 'number' ? actualRow[column] as number : 0;
+    const currentAlbatal = albatalRow && typeof albatalRow[column] === 'number' ? albatalRow[column] as number : 0;
+    const currentIbnRushd = ibnRushdRow && typeof ibnRushdRow[column] === 'number' ? ibnRushdRow[column] as number : 0;
+    const currentTotal = currentActual + currentAlbatal + currentIbnRushd;
+    
+    const prevMonth = getPreviousMonth(column);
+    if (!prevMonth) return "";
+    
+    const prevActual = typeof actualRow[prevMonth] === 'number' ? actualRow[prevMonth] as number : 0;
+    const prevAlbatal = albatalRow && typeof albatalRow[prevMonth] === 'number' ? albatalRow[prevMonth] as number : 0;
+    const prevIbnRushd = ibnRushdRow && typeof ibnRushdRow[prevMonth] === 'number' ? ibnRushdRow[prevMonth] as number : 0;
+    const prevTotal = prevActual + prevAlbatal + prevIbnRushd;
+    
+    if (prevTotal === 0) return "";
+    return Math.round(((currentTotal - prevTotal) / prevTotal) * 100) + "%";
+  };
+
   // Calculate % Change vs Last Year
   const calculateYearOverYearChange = (column: string) => {
     const year = column.split('-')[1];
@@ -620,6 +691,19 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   {isEditing && <td className="border border-gray-300 p-2"></td>}
                 </tr>
 
+                {/* YTD Growth with Optha Row */}
+                <tr className="bg-indigo-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-indigo-700 border-indigo-300">YTD Growth with Optha</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-indigo-700">
+                      {calculateYTDGrowthWithOptha(month)}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
                 {/* MTD Growth Row */}
                 <tr className="bg-purple-50 font-semibold">
                   <td className="border border-gray-300 p-2" colSpan={2}>
@@ -628,6 +712,19 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   {filteredMonthColumns.map(month => (
                     <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-purple-700">
                       {calculateMTDGrowth(month)}
+                    </td>
+                  ))}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
+                {/* MTD Growth with Optha Row */}
+                <tr className="bg-pink-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-pink-700 border-pink-300">MTD Growth with Optha</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => (
+                    <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-pink-700">
+                      {calculateMTDGrowthWithOptha(month)}
                     </td>
                   ))}
                   {isEditing && <td className="border border-gray-300 p-2"></td>}
