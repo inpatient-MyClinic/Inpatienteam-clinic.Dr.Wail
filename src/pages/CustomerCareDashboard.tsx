@@ -543,20 +543,20 @@ export default function CustomerCareDashboard() {
               <TableBody>
                 {filteredRequests.map((req, index) => (
                   <TableRow key={req.id}>
-                    <TableCell>{req.completionDate || req.__EMPTY}</TableCell>
-                    <TableCell className="font-mono text-sm">{req.id || req.__EMPTY_1}</TableCell>
+                    <TableCell>{req.__EMPTY || "-"}</TableCell>
+                    <TableCell className="font-mono text-sm">{req.__EMPTY_1 || "-"}</TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req["Answered: 24"] === "Yes - نعم" ? "bg-green-100 text-green-800" : 
-                        req["Answered: 24"] === "No - لا" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req["Answered: 24"] === "Yes - نعم" || req["Answered: 24"] === "Yes" ? "bg-green-100 text-green-800" : 
+                        req["Answered: 24"] === "No - لا" || req["Answered: 24"] === "No" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
                         {req["Answered: 24"] || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_2 === "Yes - نعم" ? "bg-green-100 text-green-800" : 
-                        req.__EMPTY_2 === "No - لا" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_2 === "Yes - نعم" || req.__EMPTY_2 === "Yes" ? "bg-green-100 text-green-800" : 
+                        req.__EMPTY_2 === "No - لا" || req.__EMPTY_2 === "No" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_2 || "-"}
                       </span>
@@ -565,15 +565,15 @@ export default function CustomerCareDashboard() {
                       <span className={`px-2 py-1 rounded text-xs ${
                         req.__EMPTY_3 >= 4 ? "bg-green-100 text-green-800" :
                         req.__EMPTY_3 >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        req.__EMPTY_3 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_3 && req.__EMPTY_3 > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_3 || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Satisfactory") ? "bg-green-100 text-green-800" :
-                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Unsatisfactory") ? "bg-red-100 text-red-800" :
+                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Satisfactory") || (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Unsatisfactory") || (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                         "bg-gray-100 text-gray-800"
                       }`}>
                         {req["Response Rate: 31%"] || req.__EMPTY_4 || "-"}
@@ -581,8 +581,8 @@ export default function CustomerCareDashboard() {
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_5?.includes("Satisfactory") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_5?.includes("Unsatisfactory") ? "bg-red-100 text-red-800" :
+                        req.__EMPTY_5?.includes("Satisfactory") || req.__EMPTY_5?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_5?.includes("Unsatisfactory") || req.__EMPTY_5?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                         "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_5 || "-"}
@@ -590,18 +590,22 @@ export default function CustomerCareDashboard() {
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
+                        req.__EMPTY_6?.includes("Satisfactory") || req.__EMPTY_6?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_6?.includes("Unsatisfactory") || req.__EMPTY_6?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                         req.__EMPTY_6 >= 4 ? "bg-green-100 text-green-800" :
                         req.__EMPTY_6 >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        req.__EMPTY_6 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_6 && req.__EMPTY_6 > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_6 || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
+                        req.__EMPTY_6?.includes("Satisfactory") || req.__EMPTY_6?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_6?.includes("Unsatisfactory") || req.__EMPTY_6?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                         req.__EMPTY_6 >= 4 ? "bg-green-100 text-green-800" :
                         req.__EMPTY_6 >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        req.__EMPTY_6 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_6 && req.__EMPTY_6 > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_6 || "-"}
                       </span>
