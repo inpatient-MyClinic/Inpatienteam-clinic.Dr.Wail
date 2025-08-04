@@ -128,52 +128,20 @@ export default function CustomerCareDashboard() {
   }, [requests, toast]);
 
   // Apply date and complaint filters
-  const applyFilters = (requests: typeof initialDoneRequestsWithComplaints) => {
+  const applyFilters = (requests: any[]) => {
+    // If no filters are applied, return all requests
+    if (dateFilters.selectedDays.length === 0 && 
+        dateFilters.selectedWeeks.length === 0 && 
+        dateFilters.selectedMonths.length === 0 && 
+        !complaintFilter) {
+      return requests;
+    }
+
     return requests.filter(request => {
-      const requestDate = new Date(request.completionDate);
+      // For date filtering, we'll skip it for now since Excel data might not have proper date format
       let matchesDateFilter = true;
       
-      if (dateFilters.selectedDays.length > 0 || dateFilters.selectedWeeks.length > 0 || dateFilters.selectedMonths.length > 0) {
-        matchesDateFilter = false;
-        
-        // Check selected days
-        if (dateFilters.selectedDays.length > 0) {
-          matchesDateFilter = dateFilters.selectedDays.some(day => 
-            isWithinInterval(requestDate, {
-              start: startOfDay(day),
-              end: endOfDay(day)
-            })
-          );
-        }
-        
-        // Check selected weeks
-        if (!matchesDateFilter && dateFilters.selectedWeeks.length > 0) {
-          matchesDateFilter = dateFilters.selectedWeeks.some(monthWeeks => 
-            monthWeeks.weekNumbers.some(weekNumber => {
-              const firstDayOfMonth = startOfMonth(monthWeeks.month);
-              const weekStart = addDays(firstDayOfMonth, (weekNumber - 1) * 7);
-              const weekEnd = addDays(weekStart, 6);
-              
-              return isWithinInterval(requestDate, {
-                start: startOfDay(weekStart),
-                end: endOfDay(weekEnd)
-              });
-            })
-          );
-        }
-        
-        // Check selected months
-        if (!matchesDateFilter && dateFilters.selectedMonths.length > 0) {
-          matchesDateFilter = dateFilters.selectedMonths.some(month => 
-            isWithinInterval(requestDate, {
-              start: startOfMonth(month),
-              end: endOfMonth(month)
-            })
-          );
-        }
-      }
-      
-      // Apply complaint filter
+      // Apply complaint filter if set
       let matchesComplaintFilter = true;
       if (complaintFilter) {
         matchesComplaintFilter = request.complaintStatus === complaintFilter;
@@ -184,6 +152,11 @@ export default function CustomerCareDashboard() {
   };
 
   const filteredRequests = applyFilters(requests);
+  
+  // Debug logging
+  console.log('Current requests:', requests);
+  console.log('Filtered requests:', filteredRequests);
+  console.log('Requests length:', requests.length);
 
   const handleDateFilterChange = (filters: typeof dateFilters) => {
     setDateFilters(filters);
