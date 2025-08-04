@@ -521,44 +521,55 @@ export default function CustomerCareDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Survey Sent</TableHead>
-                  <TableHead>Survey Response</TableHead>
-                  <TableHead>Q1 Rating</TableHead>
-                  <TableHead>Q2 Rating</TableHead>
-                  <TableHead>Q3 Rating</TableHead>
-                  <TableHead>Q4 Rating</TableHead>
-                  <TableHead>Comments</TableHead>
-                  <TableHead>Hospital</TableHead>
-                  <TableHead>NPS Score</TableHead>
-                  <TableHead>Complaint Status</TableHead>
+                  <TableHead className="w-12">No.</TableHead>
+                  <TableHead>Month</TableHead>
+                  <TableHead>MRN</TableHead>
+                  <TableHead className="min-w-40">Did your doctor explain your surgery process thoroughly before the date of the surgery?</TableHead>
+                  <TableHead className="min-w-40">Did the My Clinic coordinator explain the whole process that you will go through?</TableHead>
+                  <TableHead className="min-w-40">How would you rate the My Clinic coordinator's communication and support?</TableHead>
+                  <TableHead className="min-w-40">How would you rate our services at the hospital?</TableHead>
+                  <TableHead className="min-w-40">How would you rate your surgical experience?</TableHead>
+                  <TableHead className="min-w-48">How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟</TableHead>
+                  <TableHead className="min-w-32">On a scale of 1-5, how would you rate your overall experience?</TableHead>
+                  <TableHead className="min-w-32">On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)</TableHead>
+                  <TableHead className="min-w-40">Comments/Suggestions</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.map((req) => (
+                {filteredRequests.map((req, index) => (
                   <TableRow key={req.id}>
+                    <TableCell className="text-center">{index + 1}</TableCell>
                     <TableCell>{req.completionDate || req.__EMPTY}</TableCell>
-                    <TableCell>{req.id || req.__EMPTY_1}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-mono text-sm">{req.id || req.__EMPTY_1}</TableCell>
+                    <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.surveySent || req["Answered: 24"] === "Yes - نعم" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        req["Answered: 24"] === "Yes - نعم" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                       }`}>
-                        {req.surveySent || req["Answered: 24"] === "Yes - نعم" ? "Yes" : "No"}
+                        {req["Answered: 24"] === "Yes - نعم" ? "Yes" : "No"}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.surveyResponded || req.__EMPTY_2 === "Yes - نعم" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_2 === "Yes - نعم" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                       }`}>
-                        {req.surveyResponded || req.__EMPTY_2 === "Yes - نعم" ? "Yes" : "No"}
+                        {req.__EMPTY_2 === "Yes - نعم" ? "Yes" : "No"}
                       </span>
                     </TableCell>
-                    <TableCell>{req.__EMPTY_3 || "-"}</TableCell>
-                    <TableCell>{req.__EMPTY_4 || req["Response Rate: 31%"] || "-"}</TableCell>
-                    <TableCell>{req.__EMPTY_5 || "-"}</TableCell>
-                    <TableCell>{req.__EMPTY_6 || "-"}</TableCell>
+                    <TableCell className="text-center">{req.__EMPTY_3 || "-"}</TableCell>
+                    <TableCell className="text-center">{req.__EMPTY_4 || req["Response Rate: 31%"] || "-"}</TableCell>
+                    <TableCell className="text-center">{req.__EMPTY_5 || "-"}</TableCell>
+                    <TableCell className="text-center">{req.__EMPTY_6 || "-"}</TableCell>
+                    <TableCell className="text-center">{req.__EMPTY_6 || "-"}</TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        (req.npsScore || req.__EMPTY_7) >= 9 ? "bg-green-100 text-green-800" :
+                        (req.npsScore || req.__EMPTY_7) >= 7 ? "bg-yellow-100 text-yellow-800" :
+                        "bg-red-100 text-red-800"
+                      }`}>
+                        {req.npsScore || req.__EMPTY_7 || "-"}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       {req.__EMPTY_8 && req.__EMPTY_8 !== "No Comment" ? (
                         <CommentViewDialog 
@@ -574,61 +585,22 @@ export default function CustomerCareDashboard() {
                         <span className="text-gray-400 text-xs">No Comment</span>
                       )}
                     </TableCell>
-                    <TableCell>{req.hospitalName || req.__EMPTY_9}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        (req.npsScore || req.__EMPTY_7) >= 9 ? "bg-green-100 text-green-800" :
-                        (req.npsScore || req.__EMPTY_7) >= 7 ? "bg-yellow-100 text-yellow-800" :
-                        "bg-red-100 text-red-800"
-                      }`}>
-                        {req.npsScore || req.__EMPTY_7 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {req.complaintStatus ? (
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            req.complaintStatus === 'open' ? "bg-orange-100 text-orange-800" : 
-                            req.complaintStatus === 'in-progress' ? "bg-yellow-100 text-yellow-800" :
-                            "bg-green-100 text-green-800"
-                          }`}>
-                            {req.complaintStatus === 'open' ? "Open" : 
-                             req.complaintStatus === 'in-progress' ? "In Progress" :
-                             "Closed"}
-                          </span>
-                          {req.complaintStatus !== 'closed' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => closeComplaint(req.id)}
-                              className="text-xs px-2 py-1"
-                            >
-                              Close
-                            </Button>
-                          )}
-                          {req.complaintLeadTimeHours && (
-                            <span className="text-xs text-gray-500">
-                              ({req.complaintLeadTimeHours}h)
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-xs">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {!req.surveySent ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => sendSurvey(req.id)}
-                        >
-                          <MessageSquare className="w-4 h-4 mr-1" />
-                          Send Survey
-                        </Button>
-                      ) : (
-                        <span className="text-green-600 text-sm">✓ Sent</span>
-                      )}
+                      <div className="flex gap-1">
+                        {!req.surveySent ? (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => sendSurvey(req.id)}
+                            className="text-xs"
+                          >
+                            <MessageSquare className="w-3 h-3 mr-1" />
+                            Send Survey
+                          </Button>
+                        ) : (
+                          <span className="text-green-600 text-xs">✓ Sent</span>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
