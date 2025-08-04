@@ -27,13 +27,48 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     mtdGrowth: 0,
     additionalNotes: ""
   });
+  const [monthlyNPS, setMonthlyNPS] = useState<Record<number, number>>({});
   const [financeData, setFinanceData] = useState<any[]>([]);
 
-  // Clear finance data from localStorage when component mounts
+  // Clear finance data from localStorage when component mounts and load NPS data
   useEffect(() => {
     localStorage.removeItem('financeAnalyticsData');
     setFinanceData([]);
-  }, []);
+    
+    // Load Customer Care NPS data
+    const customerCareRequests = JSON.parse(localStorage.getItem('customerCareRequests') || '[]');
+    const currentMonthNPS = calculateNPSScore(customerCareRequests, selectedMonth, selectedYear);
+    
+    // Load monthly NPS data from localStorage
+    const storedMonthlyNPS = JSON.parse(localStorage.getItem('monthlyNPSScores') || '{}');
+    setMonthlyNPS(storedMonthlyNPS);
+    
+    // Update editable data with current month's NPS
+    if (currentMonthNPS !== null) {
+      setEditableData(prev => ({ ...prev, npsScore: currentMonthNPS }));
+    }
+  }, [selectedMonth, selectedYear]);
+
+  // Function to calculate NPS score for a specific month
+  const calculateNPSScore = (requests: any[], month: number, year: number) => {
+    const monthRequests = requests.filter((req: any) => {
+      const reqDate = new Date(req.date);
+      return reqDate.getMonth() + 1 === month && reqDate.getFullYear() === year;
+    });
+
+    if (monthRequests.length === 0) return null;
+
+    const scores = monthRequests
+      .map((req: any) => parseInt(req.npsScore))
+      .filter((score: number) => !isNaN(score) && score >= 0 && score <= 10);
+
+    if (scores.length === 0) return null;
+
+    const promoters = scores.filter(score => score >= 9).length;
+    const detractors = scores.filter(score => score <= 6).length;
+    
+    return Math.round(((promoters - detractors) / scores.length) * 100);
+  };
 
   // Helper function to get month index
   const getMonthIndex = (month: string) => {
@@ -486,12 +521,27 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               ) : (
                 <div>
                   <div className="text-3xl font-bold text-green-600">{editableData.npsScore}</div>
-                  <div className="mt-2 h-20 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
-                    Chart can be added here
+                  <div className="mt-2">
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const month = i + 1;
+                        const monthName = months.find(m => m.value === month)?.label.slice(0, 3);
+                        const score = monthlyNPS[month] || calculateNPSScore(JSON.parse(localStorage.getItem('customerCareRequests') || '[]'), month, selectedYear);
+                        return (
+                          <div 
+                            key={month} 
+                            className={`p-1 rounded text-center ${month === selectedMonth ? 'bg-green-200' : 'bg-gray-100'}`}
+                          >
+                            <div className="font-medium">{monthName}</div>
+                            <div className="text-xs">{score !== null ? score : '-'}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
-              <p className="text-xs text-gray-500">Net Promoter Score</p>
+              <p className="text-xs text-gray-500">Net Promoter Score - 12 Month View</p>
             </CardContent>
           </Card>
 
