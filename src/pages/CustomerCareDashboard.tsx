@@ -541,135 +541,146 @@ export default function CustomerCareDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.map((req, index) => (
-                  <TableRow key={req.id}>
-                    <TableCell>{req.__EMPTY || "-"}</TableCell>
-                    <TableCell className="font-mono text-sm">{req.__EMPTY_1 || "-"}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req["Answered: 24"] === "Yes - نعم" || req["Answered: 24"] === "Yes" ? "bg-green-100 text-green-800" : 
-                        req["Answered: 24"] === "No - لا" || req["Answered: 24"] === "No" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req["Answered: 24"] || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_2 === "Yes - نعم" || req.__EMPTY_2 === "Yes" ? "bg-green-100 text-green-800" : 
-                        req.__EMPTY_2 === "No - لا" || req.__EMPTY_2 === "No" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req.__EMPTY_2 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_3 >= 4 ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_3 >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        req.__EMPTY_3 && req.__EMPTY_3 > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req.__EMPTY_3 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        parseInt(req["Response Rate: 31%"]) >= 4 ? "bg-green-100 text-green-800" :
-                        parseInt(req["Response Rate: 31%"]) >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        parseInt(req["Response Rate: 31%"]) >= 1 ? "bg-red-100 text-red-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req["Response Rate: 31%"] || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_5?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_5?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req.__EMPTY_5 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_6?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_6?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req.__EMPTY_6 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_7?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_7?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
-                        {req.__EMPTY_7 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        (req.npsScore || req.__EMPTY_7) >= 9 ? "bg-green-100 text-green-800" :
-                        (req.npsScore || req.__EMPTY_7) >= 7 ? "bg-yellow-100 text-yellow-800" :
-                        "bg-red-100 text-red-800"
-                      }`}>
-                        {req.npsScore || req.__EMPTY_7 || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      {req.__EMPTY_8 && req.__EMPTY_8 !== "No Comment" ? (
-                        req.__EMPTY_8.length > 50 ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-600 truncate">
-                              {req.__EMPTY_8.substring(0, 50)}...
-                            </span>
-                            <CommentViewDialog 
-                              comment={req.__EMPTY_8}
-                              patientId={req.id || req.__EMPTY_1}
-                              npsScore={req.npsScore || req.__EMPTY_7}
-                              coordinatorName={req.assignedCoordinator || req.caseCoordinator}
-                              onSendCompliment={sendComplimentToCoordinator}
-                              onSubmitRecovery={submitForRecovery}
-                              requestId={req.id}
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs">{req.__EMPTY_8}</span>
-                            <CommentViewDialog 
-                              comment={req.__EMPTY_8}
-                              patientId={req.id || req.__EMPTY_1}
-                              npsScore={req.npsScore || req.__EMPTY_7}
-                              coordinatorName={req.assignedCoordinator || req.caseCoordinator}
-                              onSendCompliment={sendComplimentToCoordinator}
-                              onSubmitRecovery={submitForRecovery}
-                              requestId={req.id}
-                            />
-                          </div>
-                        )
-                      ) : (
-                        <span className="text-gray-400 text-xs">No Comment</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{req.hospitalName || req.__EMPTY_9 || "-"}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {!req.surveySent ? (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => sendSurvey(req.id)}
-                            className="text-xs"
-                          >
-                            <MessageSquare className="w-3 h-3 mr-1" />
-                            Send Survey
-                          </Button>
-                        ) : (
-                          <span className="text-green-600 text-xs">✓ Sent</span>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                 {filteredRequests.map((req, index) => (
+                   <TableRow key={req.id || index}>
+                     <TableCell>{req.__EMPTY || "-"}</TableCell>
+                     <TableCell className="font-mono text-sm">{req.__EMPTY_1 || "-"}</TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         req["Answered: 24"]?.toLowerCase() === "yes" || req["Answered: 24"]?.includes("نعم") ? "bg-green-100 text-green-800" : 
+                         req["Answered: 24"]?.toLowerCase() === "no" || req["Answered: 24"]?.includes("لا") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req["Answered: 24"] || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         req.__EMPTY_2?.toLowerCase() === "yes" || req.__EMPTY_2?.includes("نعم") ? "bg-green-100 text-green-800" : 
+                         req.__EMPTY_2?.toLowerCase() === "no" || req.__EMPTY_2?.includes("لا") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_2 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         parseInt(req.__EMPTY_3) >= 4 ? "bg-green-100 text-green-800" :
+                         parseInt(req.__EMPTY_3) >= 3 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req.__EMPTY_3) >= 1 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_3 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         parseInt(req["Response Rate: 31%"]) >= 4 ? "bg-green-100 text-green-800" :
+                         parseInt(req["Response Rate: 31%"]) >= 3 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req["Response Rate: 31%"]) >= 1 ? "bg-red-100 text-red-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req["Response Rate: 31%"] || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         req.__EMPTY_4?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
+                         req.__EMPTY_4?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_4 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         req.__EMPTY_5?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
+                         req.__EMPTY_5?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_5 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         req.__EMPTY_6?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
+                         req.__EMPTY_6?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_6 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs ${
+                         parseInt(req.__EMPTY_7) >= 4 ? "bg-green-100 text-green-800" :
+                         parseInt(req.__EMPTY_7) >= 3 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req.__EMPTY_7) >= 1 ? "bg-red-100 text-red-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_7 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="text-center">
+                       <span className={`px-2 py-1 rounded text-xs font-medium ${
+                         parseInt(req.__EMPTY_8) >= 9 ? "bg-green-100 text-green-800" :
+                         parseInt(req.__EMPTY_8) >= 7 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req.__EMPTY_8) >= 1 ? "bg-red-100 text-red-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}>
+                         {req.__EMPTY_8 || "-"}
+                       </span>
+                     </TableCell>
+                     <TableCell className="max-w-xs">
+                       {req.__EMPTY_9 && req.__EMPTY_9 !== "No Comment" ? (
+                         req.__EMPTY_9.length > 50 ? (
+                           <div className="flex items-center gap-2">
+                             <span className="text-xs text-gray-600 truncate">
+                               {req.__EMPTY_9.substring(0, 50)}...
+                             </span>
+                             <CommentViewDialog 
+                               comment={req.__EMPTY_9}
+                               patientId={req.__EMPTY_1 || `patient-${index}`}
+                               npsScore={req.__EMPTY_8}
+                               coordinatorName={req.assignedCoordinator || "Not Assigned"}
+                               onSendCompliment={sendComplimentToCoordinator}
+                               onSubmitRecovery={submitForRecovery}
+                               requestId={req.__EMPTY_1 || `request-${index}`}
+                             />
+                           </div>
+                         ) : (
+                           <div className="flex items-center gap-2">
+                             <span className="text-xs">{req.__EMPTY_9}</span>
+                             <CommentViewDialog 
+                               comment={req.__EMPTY_9}
+                               patientId={req.__EMPTY_1 || `patient-${index}`}
+                               npsScore={req.__EMPTY_8}
+                               coordinatorName={req.assignedCoordinator || "Not Assigned"}
+                               onSendCompliment={sendComplimentToCoordinator}
+                               onSubmitRecovery={submitForRecovery}
+                               requestId={req.__EMPTY_1 || `request-${index}`}
+                             />
+                           </div>
+                         )
+                       ) : (
+                         <span className="text-gray-400 text-xs">No Comment</span>
+                       )}
+                     </TableCell>
+                     <TableCell>{req.hospitalName || req.__EMPTY_10 || "-"}</TableCell>
+                     <TableCell>
+                       <div className="flex gap-1">
+                         {!req.surveySent ? (
+                           <Button 
+                             size="sm" 
+                             variant="outline"
+                             onClick={() => sendSurvey(req.id || `request-${index}`)}
+                             className="text-xs"
+                           >
+                             <MessageSquare className="w-3 h-3 mr-1" />
+                             Send Survey
+                           </Button>
+                         ) : (
+                           <span className="text-green-600 text-xs">✓ Sent</span>
+                         )}
+                       </div>
+                     </TableCell>
+                   </TableRow>
                 ))}
               </TableBody>
             </Table>
