@@ -32,13 +32,17 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   // Initialize with empty structure or sample data, load from localStorage if available
   const [financeData, setFinanceData] = useState<FinanceData[]>(() => {
     const savedData = localStorage.getItem('financeAnalyticsData');
+    console.log('Loading data from localStorage:', savedData); // Debug log
     if (savedData) {
       try {
-        return JSON.parse(savedData);
+        const parsedData = JSON.parse(savedData);
+        console.log('Parsed data:', parsedData); // Debug log
+        return parsedData;
       } catch (error) {
         console.error('Error loading saved data:', error);
       }
     }
+    console.log('Using default data'); // Debug log
     return [
       {
         id: "1",
@@ -122,14 +126,17 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   };
 
   const handleCellChange = useCallback((rowId: string, column: string, value: string) => {
+    console.log('Cell change:', { rowId, column, value }); // Debug log
     const updatedData = financeData.map(row => 
       row.id === rowId 
         ? { ...row, [column]: value === '' ? '' : (isNaN(Number(value)) ? value : Number(value)) }
         : row
     );
+    console.log('Updated data:', updatedData); // Debug log
     setFinanceData(updatedData);
     // Save to localStorage immediately
     localStorage.setItem('financeAnalyticsData', JSON.stringify(updatedData));
+    console.log('Data saved to localStorage:', localStorage.getItem('financeAnalyticsData')); // Debug log
   }, [financeData]);
 
   const addRow = () => {

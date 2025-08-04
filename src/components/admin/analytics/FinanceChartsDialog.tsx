@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -202,6 +202,9 @@ export default function FinanceChartsDialog({
               Download Chart
             </Button>
           </div>
+          <DialogDescription>
+            View and download {chartType === "achievement" ? "achievement vs forecast" : "year-to-date growth"} analytics data.
+          </DialogDescription>
         </DialogHeader>
         
         <div ref={chartRef} className="w-full h-96">
