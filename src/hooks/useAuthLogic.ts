@@ -197,10 +197,10 @@ export const useAuthLogic = () => {
 
   const handleSuccessfulLogin = async (userId: string) => {
     try {
-      // Get user profile to check status and role
+      // Get user profile and email
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, status, must_change_password, password_change_required_at')
+        .select('role, status, must_change_password, password_change_required_at, email')
         .eq('id', userId)
         .single();
 
@@ -226,6 +226,15 @@ export const useAuthLogic = () => {
         await supabase.auth.signOut();
         return;
       }
+
+      // Store user data in localStorage for app authentication system
+      const userData = {
+        email: profile.email,
+        role: profile.role,
+        status: profile.status,
+        id: userId
+      };
+      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
 
       toast.success('Login successful!');
       
