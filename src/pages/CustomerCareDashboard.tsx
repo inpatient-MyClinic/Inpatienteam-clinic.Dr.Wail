@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Download, ArrowLeft, Settings } from "lucide-react";
+import { MessageSquare, Download, ArrowLeft, Settings, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
@@ -456,16 +457,16 @@ export default function CustomerCareDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient Name</TableHead>
-                  <TableHead>ID Number</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Hospital MRN</TableHead>
-                  <TableHead>Hospital Name</TableHead>
-                  <TableHead>Procedure</TableHead>
-                  <TableHead>Treating Doctor</TableHead>
-                  <TableHead>Completion Date</TableHead>
-                  <TableHead>Survey Status</TableHead>
-                  <TableHead>Response Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Survey Sent</TableHead>
+                  <TableHead>Survey Response</TableHead>
+                  <TableHead>Q1 Rating</TableHead>
+                  <TableHead>Q2 Rating</TableHead>
+                  <TableHead>Q3 Rating</TableHead>
+                  <TableHead>Q4 Rating</TableHead>
+                  <TableHead>Comments</TableHead>
+                  <TableHead>Hospital</TableHead>
                   <TableHead>NPS Score</TableHead>
                   <TableHead>Complaint Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -474,30 +475,60 @@ export default function CustomerCareDashboard() {
               <TableBody>
                 {filteredRequests.map((req) => (
                   <TableRow key={req.id}>
-                    <TableCell>{req.patientName}</TableCell>
-                    <TableCell>{req.idNumber}</TableCell>
-                    <TableCell>{req.phone}</TableCell>
-                    <TableCell>{req.hospitalMRN}</TableCell>
-                    <TableCell>{req.hospitalName}</TableCell>
-                    <TableCell>{req.procedure}</TableCell>
-                    <TableCell>{req.treatingDoctor}</TableCell>
-                    <TableCell>{req.completionDate}</TableCell>
+                    <TableCell>{req.completionDate || req.__EMPTY}</TableCell>
+                    <TableCell>{req.id || req.__EMPTY_1}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.surveySent ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        req.surveySent || req["Answered: 24"] === "Yes - نعم" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
                       }`}>
-                        {req.surveySent ? "Survey Sent" : "Pending"}
+                        {req.surveySent || req["Answered: 24"] === "Yes - نعم" ? "Yes" : "No"}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.surveyResponded ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+                        req.surveyResponded || req.__EMPTY_2 === "Yes - نعم" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
                       }`}>
-                        {req.surveyResponded ? "Responded" : "No Response"}
+                        {req.surveyResponded || req.__EMPTY_2 === "Yes - نعم" ? "Yes" : "No"}
                       </span>
                     </TableCell>
+                    <TableCell>{req.__EMPTY_3 || "-"}</TableCell>
+                    <TableCell>{req.__EMPTY_4 || req["Response Rate: 31%"] || "-"}</TableCell>
+                    <TableCell>{req.__EMPTY_5 || "-"}</TableCell>
+                    <TableCell>{req.__EMPTY_6 || "-"}</TableCell>
                     <TableCell>
-                      {req.npsScore !== undefined ? req.npsScore : "-"}
+                      {req.__EMPTY_8 && req.__EMPTY_8 !== "No Comment" ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Patient Comments</DialogTitle>
+                            </DialogHeader>
+                            <div className="p-4">
+                              <p className="text-sm text-gray-600 mb-2">Patient ID: {req.id || req.__EMPTY_1}</p>
+                              <div className="bg-gray-50 p-3 rounded-lg">
+                                <p className="whitespace-pre-wrap">{req.__EMPTY_8}</p>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No Comment</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{req.hospitalName || req.__EMPTY_9}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        (req.npsScore || req.__EMPTY_7) >= 9 ? "bg-green-100 text-green-800" :
+                        (req.npsScore || req.__EMPTY_7) >= 7 ? "bg-yellow-100 text-yellow-800" :
+                        "bg-red-100 text-red-800"
+                      }`}>
+                        {req.npsScore || req.__EMPTY_7 || "-"}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {req.complaintStatus ? (
