@@ -525,18 +525,18 @@ export default function CustomerCareDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead>MRN</TableHead>
-                  <TableHead className="min-w-40">Did your doctor explain your surgery process thoroughly before the date of the surgery?</TableHead>
-                  <TableHead className="min-w-40">Did the My Clinic coordinator explain the whole process that you will go through?</TableHead>
-                  <TableHead className="min-w-40">How would you rate the My Clinic coordinator's communication and support?</TableHead>
-                  <TableHead className="min-w-40">How would you rate our services at the hospital?</TableHead>
-                  <TableHead className="min-w-40">How would you rate your surgical experience?</TableHead>
-                  <TableHead className="min-w-48">How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟</TableHead>
-                  <TableHead className="min-w-32">On a scale of 1-5, how would you rate your overall experience?</TableHead>
-                  <TableHead className="min-w-32">On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)</TableHead>
-                  <TableHead className="min-w-40">Comments/Suggestions</TableHead>
-                  <TableHead>Hospital</TableHead>
+                  <TableHead>__EMPTY</TableHead>
+                  <TableHead>__EMPTY_1</TableHead>
+                  <TableHead>Answered: 24</TableHead>
+                  <TableHead>__EMPTY_2</TableHead>
+                  <TableHead>__EMPTY_3</TableHead>
+                  <TableHead>Response Rate: 31%</TableHead>
+                  <TableHead>__EMPTY_4</TableHead>
+                  <TableHead>__EMPTY_5</TableHead>
+                  <TableHead>__EMPTY_6</TableHead>
+                  <TableHead>__EMPTY_7</TableHead>
+                  <TableHead>__EMPTY_8</TableHead>
+                  <TableHead>__EMPTY_9</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
