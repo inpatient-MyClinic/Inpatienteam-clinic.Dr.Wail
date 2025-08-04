@@ -162,13 +162,15 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
 
   const calculateTotal = (column: string) => {
     // Only sum Actual MTD, AlBatal, and Ibn Rushd (exclude Forecast MTD)
-    const total = financeData
-      .filter(row => row.type === "Actual MTD" || row.category === "AlBatal" || row.category === "Ibn Rushd")
-      .reduce((sum, row) => {
-        const value = row[column];
-        return sum + (typeof value === 'number' ? value : 0);
-      }, 0);
-    return total;
+    const actualRow = financeData.find(row => row.type === "Actual MTD");
+    const albatalRow = financeData.find(row => row.category === "AlBatal");
+    const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
+    
+    const actual = actualRow && typeof actualRow[column] === 'number' ? actualRow[column] as number : 0;
+    const albatal = albatalRow && typeof albatalRow[column] === 'number' ? albatalRow[column] as number : 0;
+    const ibnRushd = ibnRushdRow && typeof ibnRushdRow[column] === 'number' ? ibnRushdRow[column] as number : 0;
+    
+    return actual + albatal + ibnRushd;
   };
 
   // Calculate Achievement (Actual vs Forecast)
@@ -205,27 +207,36 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     return Math.round((totalWithOptha / forecast) * 100) + "%";
   };
 
-  // Calculate YTD Growth
+  // Calculate YTD Growth (Only Actual MTD)
   const calculateYTDGrowth = (column: string) => {
     const year = column.split('-')[1];
     const month = column.split('-')[0];
     
-    // Get current year total up to this month
-    const currentYearMonths = filteredMonthColumns.filter(col => 
+    // Get current year total up to this month (only Actual MTD)
+    const currentYearMonths = allMonthColumns.filter(col => 
       col.split('-')[1] === year && 
       getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
     );
     
-    const currentYearTotal = currentYearMonths.reduce((sum, col) => sum + calculateTotal(col), 0);
+    const actualRow = financeData.find(row => row.type === "Actual MTD");
+    if (!actualRow) return "";
     
-    // Get previous year total for same period
+    const currentYearTotal = currentYearMonths.reduce((sum, col) => {
+      const value = typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
+      return sum + value;
+    }, 0);
+    
+    // Get previous year total for same period (only Actual MTD)
     const prevYear = String(parseInt(`20${year}`) - 1).slice(-2);
     const prevYearMonths = allMonthColumns.filter(col => 
       col.split('-')[1] === prevYear && 
       getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
     );
     
-    const prevYearTotal = prevYearMonths.reduce((sum, col) => sum + calculateTotal(col), 0);
+    const prevYearTotal = prevYearMonths.reduce((sum, col) => {
+      const value = typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
+      return sum + value;
+    }, 0);
     
     if (prevYearTotal === 0) return "";
     return Math.round(((currentYearTotal - prevYearTotal) / prevYearTotal) * 100) + "%";
@@ -244,23 +255,25 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     return Math.round(((currentValue - prevValue) / prevValue) * 100) + "%";
   };
 
-  // Calculate YTD Growth with Optha
+  // Calculate YTD Growth with Optha (Actual MTD + AlBatal + Ibn Rushd)
   const calculateYTDGrowthWithOptha = (column: string) => {
     const year = column.split('-')[1];
     const month = column.split('-')[0];
     
     // Get current year total up to this month (including Optha)
-    const currentYearMonths = filteredMonthColumns.filter(col => 
+    const currentYearMonths = allMonthColumns.filter(col => 
       col.split('-')[1] === year && 
       getMonthIndex(col.split('-')[0]) <= getMonthIndex(month)
     );
     
+    const actualRow = financeData.find(row => row.type === "Actual MTD");
+    const albatalRow = financeData.find(row => row.category === "AlBatal");
+    const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
+    
+    if (!actualRow) return "";
+    
     const currentYearTotal = currentYearMonths.reduce((sum, col) => {
-      const actualRow = financeData.find(row => row.type === "Actual MTD");
-      const albatalRow = financeData.find(row => row.category === "AlBatal");
-      const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
-      
-      const actual = actualRow && typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
+      const actual = typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
       const albatal = albatalRow && typeof albatalRow[col] === 'number' ? albatalRow[col] as number : 0;
       const ibnRushd = ibnRushdRow && typeof ibnRushdRow[col] === 'number' ? ibnRushdRow[col] as number : 0;
       
@@ -275,11 +288,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     );
     
     const prevYearTotal = prevYearMonths.reduce((sum, col) => {
-      const actualRow = financeData.find(row => row.type === "Actual MTD");
-      const albatalRow = financeData.find(row => row.category === "AlBatal");
-      const ibnRushdRow = financeData.find(row => row.category === "Ibn Rushd");
-      
-      const actual = actualRow && typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
+      const actual = typeof actualRow[col] === 'number' ? actualRow[col] as number : 0;
       const albatal = albatalRow && typeof albatalRow[col] === 'number' ? albatalRow[col] as number : 0;
       const ibnRushd = ibnRushdRow && typeof ibnRushdRow[col] === 'number' ? ibnRushdRow[col] as number : 0;
       
