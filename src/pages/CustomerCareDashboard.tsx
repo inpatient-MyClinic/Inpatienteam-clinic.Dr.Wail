@@ -543,118 +543,108 @@ export default function CustomerCareDashboard() {
               <TableBody>
                  {filteredRequests.map((req, index) => (
                    <TableRow key={req.id || index}>
-                     <TableCell>{req.__EMPTY || "-"}</TableCell>
-                     <TableCell className="font-mono text-sm">{req.__EMPTY_1 || "-"}</TableCell>
+                     <TableCell>{req.Month || "-"}</TableCell>
+                     <TableCell className="font-mono text-sm">{req.MRN || "-"}</TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         req["Answered: 24"]?.toLowerCase() === "yes" || req["Answered: 24"]?.includes("نعم") ? "bg-green-100 text-green-800" : 
-                         req["Answered: 24"]?.toLowerCase() === "no" || req["Answered: 24"]?.includes("لا") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                         req["Did your doctor explain your surgery process thoroughly before the date of the surgery?"]?.toLowerCase()?.includes("yes") || req["Did your doctor explain your surgery process thoroughly before the date of the surgery?"]?.includes("نعم") ? "bg-green-100 text-green-800" : 
+                         req["Did your doctor explain your surgery process thoroughly before the date of the surgery?"]?.toLowerCase()?.includes("no") || req["Did your doctor explain your surgery process thoroughly before the date of the surgery?"]?.includes("لا") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                        }`}>
-                         {req["Answered: 24"] || "-"}
+                         {req["Did your doctor explain your surgery process thoroughly before the date of the surgery?"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         req.__EMPTY_2?.toLowerCase() === "yes" || req.__EMPTY_2?.includes("نعم") ? "bg-green-100 text-green-800" : 
-                         req.__EMPTY_2?.toLowerCase() === "no" || req.__EMPTY_2?.includes("لا") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                         req["Did the My Clinic coordinator explain the whole process that you will go through?"]?.toLowerCase()?.includes("yes") || req["Did the My Clinic coordinator explain the whole process that you will go through?"]?.includes("نعم") ? "bg-green-100 text-green-800" : 
+                         req["Did the My Clinic coordinator explain the whole process that you will go through?"]?.toLowerCase()?.includes("no") || req["Did the My Clinic coordinator explain the whole process that you will go through?"]?.includes("لا") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                        }`}>
-                         {req.__EMPTY_2 || "-"}
+                         {req["Did the My Clinic coordinator explain the whole process that you will go through?"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         parseInt(req.__EMPTY_3) >= 4 ? "bg-green-100 text-green-800" :
-                         parseInt(req.__EMPTY_3) >= 3 ? "bg-yellow-100 text-yellow-800" :
-                         parseInt(req.__EMPTY_3) >= 1 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                         parseInt(req["How would you rate the My Clinic coordinator's communication and support?"]) >= 4 ? "bg-green-100 text-green-800" :
+                         parseInt(req["How would you rate the My Clinic coordinator's communication and support?"]) >= 3 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req["How would you rate the My Clinic coordinator's communication and support?"]) >= 1 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                        }`}>
-                         {req.__EMPTY_3 || "-"}
+                         {req["How would you rate the My Clinic coordinator's communication and support?"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         parseInt(req["Response Rate: 31%"]) >= 4 ? "bg-green-100 text-green-800" :
-                         parseInt(req["Response Rate: 31%"]) >= 3 ? "bg-yellow-100 text-yellow-800" :
-                         parseInt(req["Response Rate: 31%"]) >= 1 ? "bg-red-100 text-red-800" :
+                         req["How would you rate our services at the hospital?"]?.toLowerCase()?.includes("satisfactory") || req["How would you rate our services at the hospital?"]?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                         req["How would you rate our services at the hospital?"]?.toLowerCase()?.includes("unsatisfactory") || req["How would you rate our services at the hospital?"]?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                          "bg-gray-100 text-gray-800"
                        }`}>
-                         {req["Response Rate: 31%"] || "-"}
+                         {req["How would you rate our services at the hospital?"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         req.__EMPTY_4?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
-                         req.__EMPTY_4?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                         req["How would you rate your surgical experience?"]?.toLowerCase()?.includes("satisfactory") || req["How would you rate your surgical experience?"]?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                         req["How would you rate your surgical experience?"]?.toLowerCase()?.includes("unsatisfactory") || req["How would you rate your surgical experience?"]?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                          "bg-gray-100 text-gray-800"
                        }`}>
-                         {req.__EMPTY_4 || "-"}
+                         {req["How would you rate your surgical experience?"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         req.__EMPTY_5?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
-                         req.__EMPTY_5?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                         req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.toLowerCase()?.includes("satisfactory") || req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.includes("مرضي") ? "bg-green-100 text-green-800" :
+                         req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.toLowerCase()?.includes("unsatisfactory") || req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
                          "bg-gray-100 text-gray-800"
                        }`}>
-                         {req.__EMPTY_5 || "-"}
+                         {req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
-                         req.__EMPTY_6?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
-                         req.__EMPTY_6?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                         parseInt(req["On a scale of 1-5, how would you rate your overall experience?"]) >= 4 ? "bg-green-100 text-green-800" :
+                         parseInt(req["On a scale of 1-5, how would you rate your overall experience?"]) >= 3 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req["On a scale of 1-5, how would you rate your overall experience?"]) >= 1 ? "bg-red-100 text-red-800" :
                          "bg-gray-100 text-gray-800"
                        }`}>
-                         {req.__EMPTY_6 || "-"}
-                       </span>
-                     </TableCell>
-                     <TableCell className="text-center">
-                       <span className={`px-2 py-1 rounded text-xs ${
-                         parseInt(req.__EMPTY_7) >= 4 ? "bg-green-100 text-green-800" :
-                         parseInt(req.__EMPTY_7) >= 3 ? "bg-yellow-100 text-yellow-800" :
-                         parseInt(req.__EMPTY_7) >= 1 ? "bg-red-100 text-red-800" :
-                         "bg-gray-100 text-gray-800"
-                       }`}>
-                         {req.__EMPTY_7 || "-"}
+                         {req["On a scale of 1-5, how would you rate your overall experience?"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                         parseInt(req.__EMPTY_8) >= 9 ? "bg-green-100 text-green-800" :
-                         parseInt(req.__EMPTY_8) >= 7 ? "bg-yellow-100 text-yellow-800" :
-                         parseInt(req.__EMPTY_8) >= 1 ? "bg-red-100 text-red-800" :
+                         parseInt(req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]) >= 9 ? "bg-green-100 text-green-800" :
+                         parseInt(req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]) >= 7 ? "bg-yellow-100 text-yellow-800" :
+                         parseInt(req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]) >= 1 ? "bg-red-100 text-red-800" :
                          "bg-gray-100 text-gray-800"
                        }`}>
-                         {req.__EMPTY_8 || "-"}
+                         {req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"] || "-"}
                        </span>
                      </TableCell>
                      <TableCell className="max-w-xs">
-                       {req.__EMPTY_9 && req.__EMPTY_9 !== "No Comment" ? (
-                         req.__EMPTY_9.length > 50 ? (
+                       {req["Comments/Suggestions"] && req["Comments/Suggestions"] !== "No Comment" && req["Comments/Suggestions"] !== "No" ? (
+                         req["Comments/Suggestions"].length > 50 ? (
                            <div className="flex items-center gap-2">
                              <span className="text-xs text-gray-600 truncate">
-                               {req.__EMPTY_9.substring(0, 50)}...
+                               {req["Comments/Suggestions"].substring(0, 50)}...
                              </span>
                              <CommentViewDialog 
-                               comment={req.__EMPTY_9}
-                               patientId={req.__EMPTY_1 || `patient-${index}`}
-                               npsScore={req.__EMPTY_8}
+                               comment={req["Comments/Suggestions"]}
+                               patientId={req.MRN || `patient-${index}`}
+                               npsScore={req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]}
                                coordinatorName={req.assignedCoordinator || "Not Assigned"}
                                onSendCompliment={sendComplimentToCoordinator}
                                onSubmitRecovery={submitForRecovery}
-                               requestId={req.__EMPTY_1 || `request-${index}`}
+                               requestId={req.MRN || `request-${index}`}
                              />
                            </div>
                          ) : (
                            <div className="flex items-center gap-2">
-                             <span className="text-xs">{req.__EMPTY_9}</span>
+                             <span className="text-xs">{req["Comments/Suggestions"]}</span>
                              <CommentViewDialog 
-                               comment={req.__EMPTY_9}
-                               patientId={req.__EMPTY_1 || `patient-${index}`}
-                               npsScore={req.__EMPTY_8}
+                               comment={req["Comments/Suggestions"]}
+                               patientId={req.MRN || `patient-${index}`}
+                               npsScore={req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]}
                                coordinatorName={req.assignedCoordinator || "Not Assigned"}
                                onSendCompliment={sendComplimentToCoordinator}
                                onSubmitRecovery={submitForRecovery}
-                               requestId={req.__EMPTY_1 || `request-${index}`}
+                               requestId={req.MRN || `request-${index}`}
                              />
                            </div>
                          )
@@ -662,14 +652,14 @@ export default function CustomerCareDashboard() {
                          <span className="text-gray-400 text-xs">No Comment</span>
                        )}
                      </TableCell>
-                     <TableCell>{req.hospitalName || req.__EMPTY_10 || "-"}</TableCell>
+                     <TableCell>{req.Hospital || "-"}</TableCell>
                      <TableCell>
                        <div className="flex gap-1">
                          {!req.surveySent ? (
                            <Button 
                              size="sm" 
                              variant="outline"
-                             onClick={() => sendSurvey(req.id || `request-${index}`)}
+                             onClick={() => sendSurvey(req.MRN || `request-${index}`)}
                              className="text-xs"
                            >
                              <MessageSquare className="w-3 h-3 mr-1" />
