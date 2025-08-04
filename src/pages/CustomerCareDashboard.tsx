@@ -572,17 +572,18 @@ export default function CustomerCareDashboard() {
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Satisfactory") || (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("مرضي") ? "bg-green-100 text-green-800" :
-                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Unsatisfactory") || (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
+                        parseInt(req["Response Rate: 31%"]) >= 4 ? "bg-green-100 text-green-800" :
+                        parseInt(req["Response Rate: 31%"]) >= 3 ? "bg-yellow-100 text-yellow-800" :
+                        parseInt(req["Response Rate: 31%"]) >= 1 ? "bg-red-100 text-red-800" :
                         "bg-gray-100 text-gray-800"
                       }`}>
-                        {req["Response Rate: 31%"] || req.__EMPTY_4 || "-"}
+                        {req["Response Rate: 31%"] || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_5?.includes("Satisfactory") || req.__EMPTY_5?.includes("مرضي") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_5?.includes("Unsatisfactory") || req.__EMPTY_5?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
+                        req.__EMPTY_5?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_5?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
                         "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_5 || "-"}
@@ -590,24 +591,20 @@ export default function CustomerCareDashboard() {
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_6?.includes("Satisfactory") || req.__EMPTY_6?.includes("مرضي") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_6?.includes("Unsatisfactory") || req.__EMPTY_6?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
-                        req.__EMPTY_6 >= 4 ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_6 >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        req.__EMPTY_6 && req.__EMPTY_6 > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_6?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_6?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                        "bg-gray-100 text-gray-800"
                       }`}>
                         {req.__EMPTY_6 || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_6?.includes("Satisfactory") || req.__EMPTY_6?.includes("مرضي") ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_6?.includes("Unsatisfactory") || req.__EMPTY_6?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
-                        req.__EMPTY_6 >= 4 ? "bg-green-100 text-green-800" :
-                        req.__EMPTY_6 >= 3 ? "bg-yellow-100 text-yellow-800" :
-                        req.__EMPTY_6 && req.__EMPTY_6 > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                        req.__EMPTY_7?.toLowerCase()?.includes("satisfactory") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_7?.toLowerCase()?.includes("unsatisfactory") ? "bg-red-100 text-red-800" :
+                        "bg-gray-100 text-gray-800"
                       }`}>
-                        {req.__EMPTY_6 || "-"}
+                        {req.__EMPTY_7 || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
