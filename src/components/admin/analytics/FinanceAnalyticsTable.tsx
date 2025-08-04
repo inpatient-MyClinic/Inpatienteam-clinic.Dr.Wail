@@ -221,17 +221,14 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     return Math.round(((currentYearTotal - prevYearTotal) / prevYearTotal) * 100) + "%";
   };
 
-  // Calculate MTD Growth (Forecast Month vs Previous Month Forecast)
+  // Calculate MTD Growth (Current Month Total vs Previous Month Total)
   const calculateMTDGrowth = (column: string) => {
-    const forecastRow = financeData.find(row => row.type === "Forecast MTD");
-    if (!forecastRow) return "";
-    
-    const currentValue = typeof forecastRow[column] === 'number' ? forecastRow[column] as number : 0;
+    const currentValue = calculateTotal(column);
     const prevMonth = getPreviousMonth(column);
     
     if (!prevMonth) return "";
     
-    const prevValue = typeof forecastRow[prevMonth] === 'number' ? forecastRow[prevMonth] as number : 0;
+    const prevValue = calculateTotal(prevMonth);
     if (prevValue === 0) return "";
     
     return Math.round(((currentValue - prevValue) / prevValue) * 100) + "%";
