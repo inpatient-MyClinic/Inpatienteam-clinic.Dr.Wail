@@ -72,6 +72,12 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
       req.id === parseInt(task.id.replace('REQ', ''))
     );
 
+    // Debug logging
+    console.log('Converting task to request:');
+    console.log('Task:', task);
+    console.log('Found original request:', originalRequest);
+    console.log('All requests in storage:', requests);
+
     // If we found the original request, use its data; otherwise use task data
     const requestData = originalRequest || {};
 
