@@ -62,7 +62,7 @@ export default function AdminDashboard() {
       const requests = requestStorage.getAllRequests();
       console.log('Admin Dashboard - All stored requests:', requests);
       
-      // Convert requests to admin format and combine with existing admin data
+      // Convert requests to admin format
       const requestAdminData = requests.map(req => ({
         id: `REQ${req.id}`,
         type: "Medical Request",
@@ -79,8 +79,8 @@ export default function AdminDashboard() {
         serviceDescription: req.serviceDescription || "Unknown Service"
       }));
       
-      // Combine with existing admin data only if not cleared
-      setAllRequestsData([...adminData, ...requestAdminData]);
+      // Show only uploaded Excel data (don't combine with sample adminData)
+      setAllRequestsData(requestAdminData);
     };
 
     loadAllData();
