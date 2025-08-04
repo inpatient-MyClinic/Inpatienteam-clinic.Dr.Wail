@@ -8,7 +8,14 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 
 interface SurveyResponseUploadProps {
-  onUpdateResponses: (responses: { id: string; responded: boolean; npsScore?: number }[]) => void;
+  onUpdateResponses: (responses: { 
+    id: string; 
+    responded: boolean; 
+    npsScore?: number;
+    hospitalName?: string;
+    completionDate?: string;
+    complaint?: string;
+  }[]) => void;
 }
 
 export default function SurveyResponseUpload({ onUpdateResponses }: SurveyResponseUploadProps) {
@@ -38,7 +45,14 @@ export default function SurveyResponseUpload({ onUpdateResponses }: SurveyRespon
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
       // Extract responses from the Excel sheet
-      const responses: { id: string; responded: boolean; npsScore?: number }[] = [];
+      const responses: { 
+        id: string; 
+        responded: boolean; 
+        npsScore?: number;
+        hospitalName?: string;
+        completionDate?: string;
+        complaint?: string;
+      }[] = [];
       
       // Get column headers from first row to find the right columns
       const headers = Object.keys(jsonData[0] || {});
@@ -55,34 +69,58 @@ export default function SurveyResponseUpload({ onUpdateResponses }: SurveyRespon
         let id = null;
         let responded = false;
         let npsScore = undefined;
+        let hospitalName = null;
+        let completionDate = null;
+        let complaint = null;
         
-        // Look for ID in various possible locations
-        id = row['__EMPTY_1'] || // Based on your data structure
+        // Look for ID in __EMPTY_1 (column B equivalent)
+        id = row['__EMPTY_1'] || 
              row['ID'] || row['id'] || row['Request ID'] || row['Unified ID'] ||
-             Object.values(row).find(val => typeof val === 'string' && val.includes('NC02-'));
+             Object.values(row).find(val => typeof val === 'string' && (val.includes('NC01-') || val.includes('NC02-') || val.includes('NC03-') || val.includes('NC04-') || val.includes('NC05-') || val.includes('NC06-')));
+        
+        // Get hospital name from column M (__EMPTY_9)
+        hospitalName = row['__EMPTY_9'] || row['Hospital Name'] || row['Hospital'];
+        
+        // Get completion date from column B (__EMPTY - the month column)
+        completionDate = row['__EMPTY'] || row['Month'] || row['Completion Date'];
         
         // Look for response indicators
         const responseValues = Object.values(row).join(' ').toLowerCase();
         responded = responseValues.includes('yes') || responseValues.includes('نعم') || 
                    responseValues.includes('answered') || responseValues.includes('responded');
         
-        // Look for NPS score in numeric columns
-        const numericValues = Object.values(row).filter(val => typeof val === 'number' && val >= 0 && val <= 10);
-        if (numericValues.length > 0) {
-          npsScore = Math.max(...numericValues as number[]);
+        // Look for NPS score in __EMPTY_7 (column H equivalent)
+        npsScore = row['__EMPTY_7'];
+        if (typeof npsScore !== 'number' || npsScore < 0 || npsScore > 10) {
+          // Fallback to looking in other numeric columns
+          const numericValues = Object.values(row).filter(val => typeof val === 'number' && val >= 0 && val <= 10);
+          if (numericValues.length > 0) {
+            npsScore = Math.max(...numericValues as number[]);
+          } else {
+            npsScore = undefined;
+          }
         }
         
-        if (id && String(id).trim()) {
-          console.log(`Row ${index + 1}: ID=${id}, Responded=${responded}, NPS=${npsScore}`);
+        // Look for complaint in __EMPTY_8 (comments column)
+        complaint = row['__EMPTY_8'] || row['Comments'] || row['Complaint'];
+        if (complaint && complaint.toLowerCase().includes('no comment')) {
+          complaint = null;
+        }
+        
+        if (id && String(id).trim() && String(id).trim() !== 'NA') {
+          console.log(`Row ${index + 1}: ID=${id}, Responded=${responded}, NPS=${npsScore}, Hospital=${hospitalName}, Date=${completionDate}`);
           console.log('Raw row data:', row);
           
           responses.push({
             id: String(id).trim(),
             responded,
-            npsScore: npsScore && npsScore >= 0 && npsScore <= 10 ? npsScore : undefined
+            npsScore: npsScore && npsScore >= 0 && npsScore <= 10 ? npsScore : undefined,
+            hospitalName: hospitalName ? String(hospitalName).trim() : undefined,
+            completionDate: completionDate ? String(completionDate).trim() : undefined,
+            complaint: complaint && String(complaint).trim() !== '' ? String(complaint).trim() : undefined
           });
         } else {
-          console.log(`Row ${index + 1}: Skipped - no ID found`);
+          console.log(`Row ${index + 1}: Skipped - no valid ID found (ID was: ${id})`);
         }
       });
 

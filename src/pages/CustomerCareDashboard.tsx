@@ -184,8 +184,18 @@ export default function CustomerCareDashboard() {
     console.log("Sending WhatsApp survey to patient for request:", requestId);
   };
 
-  const handleSurveyResponseUpload = (responses: { id: string; responded: boolean; npsScore?: number }[]) => {
+  const handleSurveyResponseUpload = (responses: { 
+    id: string; 
+    responded: boolean; 
+    npsScore?: number;
+    hospitalName?: string;
+    completionDate?: string;
+    complaint?: string;
+  }[]) => {
     console.log('Received survey responses:', responses);
+    
+    // Get existing requests from localStorage to fill missing data
+    const existingRequests = JSON.parse(localStorage.getItem('medicalRequests') || '[]');
     
     // Create new requests from uploaded data or update existing ones
     const newRequests = [...requests];
@@ -199,27 +209,45 @@ export default function CustomerCareDashboard() {
           ...newRequests[existingIndex],
           surveySent: true,
           surveyResponded: response.responded,
-          npsScore: response.npsScore
+          npsScore: response.npsScore,
+          hospitalName: response.hospitalName || newRequests[existingIndex].hospitalName,
+          completionDate: response.completionDate || newRequests[existingIndex].completionDate,
+          complaintText: response.complaint
         };
       } else {
+        // Try to find request in existing requests by ID or patient MRN
+        const masterRequest = existingRequests.find((req: any) => 
+          req.id === response.id || 
+          req.patientId === response.id ||
+          req.hospitalMRN === response.id
+        );
+        
+        // Replace hospital MRN with myclinic MRN format
+        const hospitalName = response.hospitalName || 'Unknown Hospital';
+        let myclinicMRN = response.id;
+        if (hospitalName.toLowerCase().includes('my clinic') || hospitalName.toLowerCase().includes('myclinic')) {
+          myclinicMRN = response.id; // Keep as is for My Clinic
+        }
+
         // Create new request from uploaded data
         newRequests.push({
           id: response.id,
-          patientName: `Patient ${response.id}`,
-          idNumber: "N/A",
-          phone: "N/A", 
-          hospitalMRN: "N/A",
-          hospitalName: "N/A",
-          procedure: "N/A",
-          treatingDoctor: "N/A",
+          patientName: masterRequest?.patientName || `Patient ${response.id}`,
+          idNumber: masterRequest?.patientId || "N/A",
+          phone: masterRequest?.phone || masterRequest?.patientPhone || "N/A", 
+          hospitalMRN: masterRequest?.hospitalMRN || "N/A",
+          myclinicMRN: myclinicMRN,
+          hospitalName: response.hospitalName || masterRequest?.hospitalName || "N/A",
+          procedure: masterRequest?.procedure || masterRequest?.medicalCondition || "N/A",
+          treatingDoctor: masterRequest?.treatingDoctor || masterRequest?.assignedTo || "N/A",
           surveySent: true,
           surveyResponded: response.responded,
           npsScore: response.npsScore,
-          completionDate: new Date().toISOString().split('T')[0],
+          completionDate: response.completionDate || new Date().toISOString().split('T')[0],
           status: "done",
-          complaintStatus: null,
-          complaintText: null,
-          complaintCreatedAt: null,
+          complaintStatus: response.complaint ? 'open' : null,
+          complaintText: response.complaint || null,
+          complaintCreatedAt: response.complaint ? new Date().toISOString() : null,
           complaintLeadTimeHours: undefined,
           complaintClosedAt: undefined
         });
