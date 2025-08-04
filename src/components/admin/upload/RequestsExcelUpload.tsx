@@ -241,10 +241,14 @@ export default function RequestsExcelUpload() {
 
         // Validate required fields
         const requiredFields = mappings.filter(m => m.required);
-        const missingFields = requiredFields.filter(field => 
-          !requestData[field.requestField] || 
-          String(requestData[field.requestField]).trim() === ''
-        );
+        const missingFields = requiredFields.filter(field => {
+          const value = requestData[field.requestField];
+          // Consider field missing if it's null, undefined, empty string, or only whitespace
+          return value === null || 
+                 value === undefined || 
+                 (typeof value === 'string' && value.trim() === '') ||
+                 value === '';
+        });
 
         if (missingFields.length > 0) {
           result.errors++;
