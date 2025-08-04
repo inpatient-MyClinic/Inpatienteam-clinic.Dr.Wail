@@ -18,7 +18,6 @@ interface AdminTask {
   user: string;
   status: string;
   date: string;
-  priority: string;
   specialty: string;
   hospital: string;
   caseCoordinator: string;
@@ -160,23 +159,13 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
-      case 'rejected':
+      case 'cancelled':
+      case 'canceled':
         return 'bg-red-100 text-red-800';
-      case 'in progress':
+      case 'scheduled':
         return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'high':
+      case 'case canceled':
         return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -282,7 +271,6 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
               <TableHead>Hospital</TableHead>
               <TableHead>Specialty</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -298,11 +286,6 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
                 <TableCell>
                   <Badge className={getStatusColor(item.status)}>
                     {item.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getPriorityColor(item.priority)}>
-                    {item.priority}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">{item.date}</TableCell>

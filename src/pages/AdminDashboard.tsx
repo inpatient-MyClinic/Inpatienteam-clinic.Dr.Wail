@@ -68,9 +68,8 @@ export default function AdminDashboard() {
         type: "Medical Request",
         description: req.serviceDescription || "Medical Request",
         user: req.createdBy || "Unknown",
-        status: req.status || "Pending",
+        status: req.operationStatus || req.status || "Pending", // Use operation status from Excel
         date: req.dateCreated || new Date().toISOString().split('T')[0],
-        priority: "Medium",
         specialty: req.specialty || "General",
         hospital: req.hospitalName || req.referredToHospital || "Unknown Hospital",
         caseCoordinator: req.assignedCoordinator || "Unassigned",
