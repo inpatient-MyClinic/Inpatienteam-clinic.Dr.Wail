@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Download, ArrowLeft, Settings, Eye } from "lucide-react";
+import { MessageSquare, Download, ArrowLeft, Settings, Eye, Send, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
+import CommentViewDialog from "@/components/customercare/CommentViewDialog";
 import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload";
 import ComplaintUpload from "@/components/customercare/ComplaintUpload";
 import NPSTargetSettings from "@/components/settings/NPSTargetSettings";
@@ -329,6 +332,67 @@ export default function CustomerCareDashboard() {
     }
   };
 
+  const sendComplimentToCoordinator = (requestId: string, coordinatorName: string, comment: string) => {
+    const compliment = {
+      id: `COMP-${Date.now()}`,
+      requestId,
+      coordinatorName,
+      comment,
+      patientId: requests.find(r => r.id === requestId)?.id,
+      createdAt: new Date().toISOString(),
+      type: 'compliment'
+    };
+
+    // Save to coordinator messages
+    const coordinatorMessages = JSON.parse(localStorage.getItem('coordinatorMessages') || '[]');
+    coordinatorMessages.push(compliment);
+    localStorage.setItem('coordinatorMessages', JSON.stringify(coordinatorMessages));
+
+    // Update admin metrics
+    const adminMetrics = JSON.parse(localStorage.getItem('adminCoordinatorMetrics') || '{}');
+    if (!adminMetrics[coordinatorName]) {
+      adminMetrics[coordinatorName] = { complaints: 0, compliments: 0 };
+    }
+    adminMetrics[coordinatorName].compliments += 1;
+    localStorage.setItem('adminCoordinatorMetrics', JSON.stringify(adminMetrics));
+
+    toast({
+      title: "Compliment sent",
+      description: `Compliment sent to ${coordinatorName} successfully.`,
+    });
+  };
+
+  const submitForRecovery = (requestId: string, recoveryNote: string) => {
+    const recoveryCase = {
+      id: `REC-${Date.now()}`,
+      requestId,
+      recoveryNote,
+      patientId: requests.find(r => r.id === requestId)?.id,
+      createdAt: new Date().toISOString(),
+      status: 'pending',
+      assignedTo: 'case-coordinator'
+    };
+
+    // Save to recovery cases
+    const recoveryCases = JSON.parse(localStorage.getItem('recoveryCases') || '[]');
+    recoveryCases.push(recoveryCase);
+    localStorage.setItem('recoveryCases', JSON.stringify(recoveryCases));
+
+    // Update request status
+    setRequests(prev =>
+      prev.map(req =>
+        req.id === requestId 
+          ? { ...req, recoverySubmitted: true, recoveryNote } 
+          : req
+      )
+    );
+
+    toast({
+      title: "Recovery case submitted",
+      description: "Case has been submitted to case coordinator for recovery.",
+    });
+  };
+
   const exportToExcel = () => {
     console.log("Exporting customer care data to Excel with current filters", { dateFilters, complaintFilter });
   };
@@ -497,25 +561,15 @@ export default function CustomerCareDashboard() {
                     <TableCell>{req.__EMPTY_6 || "-"}</TableCell>
                     <TableCell>
                       {req.__EMPTY_8 && req.__EMPTY_8 !== "No Comment" ? (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Patient Comments</DialogTitle>
-                            </DialogHeader>
-                            <div className="p-4">
-                              <p className="text-sm text-gray-600 mb-2">Patient ID: {req.id || req.__EMPTY_1}</p>
-                              <div className="bg-gray-50 p-3 rounded-lg">
-                                <p className="whitespace-pre-wrap">{req.__EMPTY_8}</p>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <CommentViewDialog 
+                          comment={req.__EMPTY_8}
+                          patientId={req.id || req.__EMPTY_1}
+                          npsScore={req.npsScore || req.__EMPTY_7}
+                          coordinatorName={req.assignedCoordinator || req.caseCoordinator}
+                          onSendCompliment={sendComplimentToCoordinator}
+                          onSubmitRecovery={submitForRecovery}
+                          requestId={req.id}
+                        />
                       ) : (
                         <span className="text-gray-400 text-xs">No Comment</span>
                       )}
