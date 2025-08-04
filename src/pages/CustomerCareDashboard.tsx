@@ -542,23 +542,65 @@ export default function CustomerCareDashboard() {
                     <TableCell className="font-mono text-sm">{req.id || req.__EMPTY_1}</TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req["Answered: 24"] === "Yes - نعم" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        req["Answered: 24"] === "Yes - نعم" ? "bg-green-100 text-green-800" : 
+                        req["Answered: 24"] === "No - لا" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
-                        {req["Answered: 24"] === "Yes - نعم" ? "Yes" : "No"}
+                        {req["Answered: 24"] || "-"}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        req.__EMPTY_2 === "Yes - نعم" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        req.__EMPTY_2 === "Yes - نعم" ? "bg-green-100 text-green-800" : 
+                        req.__EMPTY_2 === "No - لا" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
                       }`}>
-                        {req.__EMPTY_2 === "Yes - نعم" ? "Yes" : "No"}
+                        {req.__EMPTY_2 || "-"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">{req.__EMPTY_3 || "-"}</TableCell>
-                    <TableCell className="text-center">{req.__EMPTY_4 || req["Response Rate: 31%"] || "-"}</TableCell>
-                    <TableCell className="text-center">{req.__EMPTY_5 || "-"}</TableCell>
-                    <TableCell className="text-center">{req.__EMPTY_6 || "-"}</TableCell>
-                    <TableCell className="text-center">{req.__EMPTY_6 || "-"}</TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        req.__EMPTY_3 >= 4 ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_3 >= 3 ? "bg-yellow-100 text-yellow-800" :
+                        req.__EMPTY_3 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {req.__EMPTY_3 || "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Satisfactory") ? "bg-green-100 text-green-800" :
+                        (req["Response Rate: 31%"] || req.__EMPTY_4)?.includes("Unsatisfactory") ? "bg-red-100 text-red-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}>
+                        {req["Response Rate: 31%"] || req.__EMPTY_4 || "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        req.__EMPTY_5?.includes("Satisfactory") ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_5?.includes("Unsatisfactory") ? "bg-red-100 text-red-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}>
+                        {req.__EMPTY_5 || "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        req.__EMPTY_6 >= 4 ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_6 >= 3 ? "bg-yellow-100 text-yellow-800" :
+                        req.__EMPTY_6 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {req.__EMPTY_6 || "-"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        req.__EMPTY_6 >= 4 ? "bg-green-100 text-green-800" :
+                        req.__EMPTY_6 >= 3 ? "bg-yellow-100 text-yellow-800" :
+                        req.__EMPTY_6 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {req.__EMPTY_6 || "-"}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         (req.npsScore || req.__EMPTY_7) >= 9 ? "bg-green-100 text-green-800" :
