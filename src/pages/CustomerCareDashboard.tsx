@@ -38,13 +38,16 @@ const initialDoneRequests: any[] = [];
 const initialDoneRequestsWithComplaints: any[] = [];
 
 export default function CustomerCareDashboard() {
-  // Clear existing data for fresh upload
+  // Load existing data or start fresh
   const [requests, setRequests] = useState(() => {
-    // Clear all related data
-    localStorage.removeItem('customerCareData');
-    localStorage.removeItem('coordinatorMessages');
-    localStorage.removeItem('adminCoordinatorMetrics');
-    localStorage.removeItem('recoveryCases');
+    const savedData = localStorage.getItem('customerCareData');
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
     return [];
   });
   const [showSettings, setShowSettings] = useState(false);
