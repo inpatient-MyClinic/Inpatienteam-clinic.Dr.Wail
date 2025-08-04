@@ -18,6 +18,14 @@ export default function PatientInfoSection({ localData, onFieldChange }: Patient
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
+          <Label>Patient Name</Label>
+          <Input
+            value={localData.patientName}
+            onChange={(e) => onFieldChange('patientName', e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
           <Label>Hospital MRN</Label>
           <Input
             value={localData.hospitalMRN || localData.mrn}

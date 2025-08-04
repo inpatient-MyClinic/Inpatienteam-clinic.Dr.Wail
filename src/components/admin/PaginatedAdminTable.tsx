@@ -83,7 +83,7 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
 
     return {
       id: parseInt(task.id.replace('REQ', '')) || 1,
-      patientName: requestData.patientName || requestData.__EMPTY_1 || `Patient ${task.patientMRN}`,
+      patientName: requestData.patientName || `Patient for ${requestData.__EMPTY_1 || task.patientMRN}`,
       mrn: requestData.__EMPTY_1 || task.patientMRN || requestData.patientMRN || `MRN-${task.id}`,
       serviceDescription: requestData.serviceDescription || task.description,
       doctorName: requestData.doctorName || task.user,
