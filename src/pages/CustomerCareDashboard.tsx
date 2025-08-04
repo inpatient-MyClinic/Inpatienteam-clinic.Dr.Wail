@@ -209,19 +209,20 @@ export default function CustomerCareDashboard() {
 
   const closeComplaint = (requestId: string) => {
     const closedAt = new Date().toISOString();
-    const requestToUpdate = requests.find(r => r.id === requestId);
+    const requestToUpdate = requests.find(r => r.id === requestId || r.MRN === requestId);
     
     if (requestToUpdate) {
       const leadTimeHours = Math.floor(
-        (new Date(closedAt).getTime() - new Date(requestToUpdate.complaintCreatedAt || requestToUpdate.completionDate).getTime()) / (1000 * 60 * 60)
+        (new Date(closedAt).getTime() - new Date(requestToUpdate.complaintCreatedAt || requestToUpdate.completionDate || Date.now()).getTime()) / (1000 * 60 * 60)
       );
 
       setRequests(prev =>
         prev.map(req =>
-          req.id === requestId 
+          (req.id === requestId || req.MRN === requestId)
             ? { 
                 ...req, 
                 complaintStatus: 'closed' as const,
+                complaintClosed: true,
                 complaintClosedAt: closedAt,
                 complaintLeadTimeHours: leadTimeHours
               } 
@@ -235,10 +236,11 @@ export default function CustomerCareDashboard() {
         try {
           const data = JSON.parse(customerCareData);
           const updatedData = data.map((req: any) => {
-            if (req.id === requestId) {
+            if (req.id === requestId || req.MRN === requestId) {
               return {
                 ...req,
                 complaintStatus: 'closed',
+                complaintClosed: true,
                 complaintClosedAt: closedAt,
                 complaintLeadTimeHours: leadTimeHours
               };
@@ -624,28 +626,34 @@ export default function CustomerCareDashboard() {
                              <span className="text-xs text-gray-600 truncate">
                                {req["Comments/Suggestions"].substring(0, 50)}...
                              </span>
-                             <CommentViewDialog 
-                               comment={req["Comments/Suggestions"]}
-                               patientId={req.MRN || `patient-${index}`}
-                               npsScore={req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]}
-                               coordinatorName={req.assignedCoordinator || "Not Assigned"}
-                               onSendCompliment={sendComplimentToCoordinator}
-                               onSubmitRecovery={submitForRecovery}
-                               requestId={req.MRN || `request-${index}`}
-                             />
-                           </div>
-                         ) : (
-                           <div className="flex items-center gap-2">
-                             <span className="text-xs">{req["Comments/Suggestions"]}</span>
-                             <CommentViewDialog 
-                               comment={req["Comments/Suggestions"]}
-                               patientId={req.MRN || `patient-${index}`}
-                               npsScore={req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]}
-                               coordinatorName={req.assignedCoordinator || "Not Assigned"}
-                               onSendCompliment={sendComplimentToCoordinator}
-                               onSubmitRecovery={submitForRecovery}
-                               requestId={req.MRN || `request-${index}`}
-                             />
+                              <CommentViewDialog 
+                                comment={req["Comments/Suggestions"]}
+                                patientId={req.MRN || `patient-${index}`}
+                                npsScore={req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]}
+                                coordinatorName={req.assignedCoordinator || "Not Assigned"}
+                                recoverySubmitted={req.recoverySubmitted}
+                                complaintClosed={req.complaintClosed}
+                                onSendCompliment={sendComplimentToCoordinator}
+                                onSubmitRecovery={submitForRecovery}
+                                onCloseComplaint={closeComplaint}
+                                requestId={req.MRN || `request-${index}`}
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs">{req["Comments/Suggestions"]}</span>
+                              <CommentViewDialog 
+                                comment={req["Comments/Suggestions"]}
+                                patientId={req.MRN || `patient-${index}`}
+                                npsScore={req["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]}
+                                coordinatorName={req.assignedCoordinator || "Not Assigned"}
+                                recoverySubmitted={req.recoverySubmitted}
+                                complaintClosed={req.complaintClosed}
+                                onSendCompliment={sendComplimentToCoordinator}
+                                onSubmitRecovery={submitForRecovery}
+                                onCloseComplaint={closeComplaint}
+                                requestId={req.MRN || `request-${index}`}
+                              />
                            </div>
                          )
                        ) : (

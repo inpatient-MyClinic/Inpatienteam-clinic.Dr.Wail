@@ -12,8 +12,11 @@ interface CommentViewDialogProps {
   npsScore: number;
   coordinatorName?: string;
   requestId: string;
+  recoverySubmitted?: boolean;
+  complaintClosed?: boolean;
   onSendCompliment: (requestId: string, coordinatorName: string, comment: string) => void;
   onSubmitRecovery: (requestId: string, recoveryNote: string) => void;
+  onCloseComplaint: (requestId: string) => void;
 }
 
 export default function CommentViewDialog({
@@ -22,8 +25,11 @@ export default function CommentViewDialog({
   npsScore,
   coordinatorName,
   requestId,
+  recoverySubmitted,
+  complaintClosed,
   onSendCompliment,
-  onSubmitRecovery
+  onSubmitRecovery,
+  onCloseComplaint
 }: CommentViewDialogProps) {
   const [recoveryNote, setRecoveryNote] = useState("");
   const [showRecoveryForm, setShowRecoveryForm] = useState(false);
@@ -75,8 +81,18 @@ export default function CommentViewDialog({
   };
 
   const handleCloseComplaint = () => {
+    onCloseComplaint(requestId);
     setActionTaken("closed");
   };
+
+  // Initialize state based on props
+  useEffect(() => {
+    if (recoverySubmitted) {
+      setActionTaken("recovery");
+    } else if (complaintClosed) {
+      setActionTaken("closed");
+    }
+  }, [recoverySubmitted, complaintClosed]);
 
   const resetForms = () => {
     setShowRecoveryForm(false);
@@ -121,8 +137,8 @@ export default function CommentViewDialog({
             </div>
           </div>
 
-          {/* Action Options - Available for all comments */}
-          {!actionTaken && (
+          {/* Action Options - Only available if no action has been taken */}
+          {!actionTaken && !recoverySubmitted && !complaintClosed && (
             <div className="grid grid-cols-1 gap-3">
               {/* Send Thanks/Compliment to Coordinator */}
               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
@@ -187,7 +203,7 @@ export default function CommentViewDialog({
                 ) : (
                   <div className="space-y-3">
                     <div>
-                      <Label htmlFor="recoveryNote">Recovery Action Note</Label>
+                      <Label htmlFor="recoveryNote">Recovery Action Note (Required)</Label>
                       <Textarea
                         id="recoveryNote"
                         placeholder="Add notes for the case coordinator about required recovery actions..."
@@ -195,7 +211,11 @@ export default function CommentViewDialog({
                         onChange={(e) => setRecoveryNote(e.target.value)}
                         className="mt-1"
                         rows={3}
+                        required
                       />
+                      {!recoveryNote.trim() && (
+                        <p className="text-sm text-red-600 mt-1">Recovery note is required</p>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -234,8 +254,29 @@ export default function CommentViewDialog({
             </div>
           )}
 
-          {/* Action Taken Confirmation */}
-          {actionTaken && (
+          {/* Show status if action already taken */}
+          {(recoverySubmitted || complaintClosed || actionTaken) && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 text-blue-800">
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-medium">
+                  {recoverySubmitted && "Recovery case has been submitted to case coordinator"}
+                  {complaintClosed && "Complaint has been closed"}
+                  {actionTaken === "compliment" && "Thanks sent to coordinator successfully!"}
+                  {actionTaken === "recovery" && "Recovery case submitted to case coordinator!"}
+                  {actionTaken === "closed" && "Complaint has been closed!"}
+                </span>
+              </div>
+              {(recoverySubmitted || complaintClosed) && (
+                <p className="text-sm text-blue-600 mt-2">
+                  No further actions can be taken on this case.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Action Taken Confirmation (for new actions) */}
+          {actionTaken && !recoverySubmitted && !complaintClosed && (
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <div className="flex items-center gap-2 text-green-800">
                 <CheckCircle className="w-5 h-5" />
