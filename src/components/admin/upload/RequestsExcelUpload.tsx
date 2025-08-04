@@ -25,7 +25,7 @@ const defaultColumnMappings: ColumnMapping[] = [
   // Medical information
   { excelColumn: "Specialty", requestField: "specialty", required: true },
   { excelColumn: "Treating Doctor's Name", requestField: "doctorName", required: true },
-  { excelColumn: "Service Description of referred service", requestField: "serviceDescription", required: true },
+  { excelColumn: "Service Description of referred service", requestField: "serviceDescription", required: false },
   { excelColumn: "Expected date of Surgery", requestField: "expectedSurgeryDate", required: false },
   { excelColumn: "Type of Admission", requestField: "admissionType", required: false },
   { excelColumn: "Notes: if you want to add", requestField: "notes", required: false },
