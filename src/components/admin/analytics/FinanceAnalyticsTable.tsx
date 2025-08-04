@@ -531,6 +531,23 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
                   {isEditing && <td className="border border-gray-300 p-2"></td>}
                 </tr>
 
+                {/* Forecast MTD Row */}
+                <tr className="bg-indigo-50 font-semibold">
+                  <td className="border border-gray-300 p-2" colSpan={2}>
+                    <Badge variant="outline" className="text-indigo-700 border-indigo-300">Forecast MTD</Badge>
+                  </td>
+                  {filteredMonthColumns.map(month => {
+                    const forecastRow = financeData.find(row => row.type === "Forecast MTD");
+                    const forecastValue = forecastRow ? forecastRow[month] : "";
+                    return (
+                      <td key={month} className="border border-gray-300 p-2 text-center font-mono text-sm text-indigo-700">
+                        {forecastValue || ''}
+                      </td>
+                    );
+                  })}
+                  {isEditing && <td className="border border-gray-300 p-2"></td>}
+                </tr>
+
                 {/* Achievement Row */}
                 <tr className="bg-green-50 font-semibold">
                   <td className="border border-gray-300 p-2" colSpan={2}>
