@@ -65,6 +65,7 @@ export default function AdminDashboard() {
       // Convert requests to admin format
       const requestAdminData = requests.map(req => ({
         id: `REQ${req.id}`,
+        patientMRN: req.patientMRN || "Unknown MRN", // Add Patient MRN field
         type: "Medical Request",
         description: req.serviceDescription || "Medical Request",
         user: req.createdBy || "Unknown",
@@ -78,6 +79,7 @@ export default function AdminDashboard() {
         serviceDescription: req.serviceDescription || "Unknown Service"
       }));
       
+      console.log(`Loading ${requestAdminData.length} requests from Excel data`);
       // Show only uploaded Excel data (don't combine with sample adminData)
       setAllRequestsData(requestAdminData);
     };

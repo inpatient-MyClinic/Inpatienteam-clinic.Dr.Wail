@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AdminTask {
   id: string;
+  patientMRN: string;
   type: string;
   description: string;
   user: string;
@@ -101,7 +102,8 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
     item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.hospital.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+    item.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.patientMRN.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Pagination calculations
@@ -265,7 +267,7 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead>Patient MRN</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>User</TableHead>
               <TableHead>Hospital</TableHead>
@@ -278,7 +280,7 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
           <TableBody>
             {currentData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
-                <TableCell className="font-mono text-sm">{item.id}</TableCell>
+                <TableCell className="font-mono text-sm">{item.patientMRN}</TableCell>
                 <TableCell className="max-w-xs truncate">{item.description}</TableCell>
                 <TableCell>{item.user}</TableCell>
                 <TableCell className="max-w-xs truncate">{item.hospital}</TableCell>
