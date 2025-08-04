@@ -5,6 +5,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminFeatureButtons from "@/components/admin/AdminFeatureButtons";
 import AdminMainContent from "@/components/admin/AdminMainContent";
+import PaginatedAdminTable from "@/components/admin/PaginatedAdminTable";
 
 interface AdminDashboardLayoutProps {
   activeFilter: string | null;

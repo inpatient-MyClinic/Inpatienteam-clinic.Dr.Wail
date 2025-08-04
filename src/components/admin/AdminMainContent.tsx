@@ -2,7 +2,7 @@
 import React from "react";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminQuickActions from "@/components/admin/AdminQuickActions";
-import AdminTasksTable from "@/components/admin/AdminTasksTable";
+import PaginatedAdminTable from "@/components/admin/PaginatedAdminTable";
 import HospitalPrivilegesSearch from "@/components/admin/HospitalPrivilegesSearch";
 import LeadTeamMonitoring from "@/components/admin/LeadTeamMonitoring";
 import AdminGeneralReport from "@/components/admin/AdminGeneralReport";
@@ -126,8 +126,8 @@ export default function AdminMainContent({
         onShowFinanceAnalytics={onShowFinanceAnalytics}
       />
 
-      {/* Admin Tasks Table */}
-      <AdminTasksTable filteredData={filteredData} />
+      {/* Admin Requests Table with Pagination */}
+      <PaginatedAdminTable data={filteredData} currentUserRole="admin" />
 
       {/* Footer */}
       <Footer />
