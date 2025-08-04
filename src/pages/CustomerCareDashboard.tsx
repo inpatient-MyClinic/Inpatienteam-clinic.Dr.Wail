@@ -521,7 +521,6 @@ export default function CustomerCareDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">No.</TableHead>
                   <TableHead>Month</TableHead>
                   <TableHead>MRN</TableHead>
                   <TableHead className="min-w-40">Did your doctor explain your surgery process thoroughly before the date of the surgery?</TableHead>
@@ -539,7 +538,6 @@ export default function CustomerCareDashboard() {
               <TableBody>
                 {filteredRequests.map((req, index) => (
                   <TableRow key={req.id}>
-                    <TableCell className="text-center">{index + 1}</TableCell>
                     <TableCell>{req.completionDate || req.__EMPTY}</TableCell>
                     <TableCell className="font-mono text-sm">{req.id || req.__EMPTY_1}</TableCell>
                     <TableCell className="text-center">
