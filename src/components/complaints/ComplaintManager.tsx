@@ -195,61 +195,73 @@ export default function ComplaintManager({ currentUserRole, currentUserName }: C
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <AlertCircle className="w-5 h-5 text-orange-500" />
-        <h3 className="text-lg font-semibold">Complaints Management</h3>
-        <Badge variant="secondary">{complaints.length} Active</Badge>
-      </div>
-
-      {complaints.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-center text-gray-500">
-            No active complaints
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {complaints.map((complaint) => (
-            <Card key={complaint.id} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium">{complaint.patientName}</h4>
-                      <Badge className={getStatusColor(complaint.status)}>
-                        {complaint.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      {complaint.complaintText}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(complaint.createdAt).toLocaleDateString()}
-                      </div>
-                      {complaint.responses.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <MessageCircle className="w-3 h-3" />
-                          {complaint.responses.length} responses
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewComplaint(complaint)}
-                  >
-                    View & Respond
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+    <Dialog>
+      <DialogTrigger asChild>
+        <div className="bg-orange-600 text-white p-3 rounded-lg text-center cursor-pointer transition-all duration-200 hover:opacity-80 w-full">
+          <div className="flex items-center justify-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-xs">Complaints</span>
+          </div>
+          <div className="text-lg font-bold">{complaints.length}</div>
         </div>
-      )}
+      </DialogTrigger>
+      
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-orange-500" />
+            Complaints Management
+            <Badge variant="secondary">{complaints.length} Active</Badge>
+          </DialogTitle>
+        </DialogHeader>
+
+        {complaints.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No active complaints
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {complaints.map((complaint) => (
+              <Card key={complaint.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-medium">{complaint.patientName}</h4>
+                        <Badge className={getStatusColor(complaint.status)}>
+                          {complaint.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {complaint.complaintText}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(complaint.createdAt).toLocaleDateString()}
+                        </div>
+                        {complaint.responses.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <MessageCircle className="w-3 h-3" />
+                            {complaint.responses.length} responses
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewComplaint(complaint)}
+                    >
+                      View & Respond
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </DialogContent>
 
       {/* Complaint Response Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -329,6 +341,6 @@ export default function ComplaintManager({ currentUserRole, currentUserName }: C
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Dialog>
   );
 }
