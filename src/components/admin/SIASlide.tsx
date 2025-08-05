@@ -126,13 +126,21 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   );
   const mcBranchData = [...mcj1Data, ...mcj2Data];
 
-  // Calculate IP Cases - MTD
-  const ipCases = filteredData.filter(item => item.type === "IP" || (item.description && item.description.includes("IP")));
-  
-  // Calculate Done Cases (Done + Scheduled + Planned NVD)
-  const doneCases = filteredData.filter(item => 
-    item.status === "Completed" || item.status === "Scheduled" || item.status === "Planned NVD"
-  );
+   // Calculate IP Cases - MTD (In-Patient cases)
+   const ipCases = filteredData.filter(item => 
+     item.type === "IP" || 
+     item.admissionType === "In-Patient" ||
+     (item.description && item.description.includes("IP"))
+   );
+   
+   // Calculate Done Cases (Completed + Done + Scheduled + Planned)
+   const doneCases = filteredData.filter(item => 
+     item.status === "Completed" || 
+     item.status === "Done" ||
+     item.status === "Scheduled" || 
+     item.status === "Planned NVD" ||
+     item.status === "Planned"
+   );
 
   // Calculate previous month data (Month -25 concept)
   const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;

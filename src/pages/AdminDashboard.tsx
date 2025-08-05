@@ -65,21 +65,25 @@ export default function AdminDashboard() {
         return;
       }
       
-      // Convert requests to admin format
+      // Convert requests to admin format with proper field mapping for analytics
       const requestAdminData = requests.map(req => ({
         id: `REQ${req.id}`,
-        patientMRN: req.patientMRN || "Unknown MRN", // Add Patient MRN field
-        type: "Medical Request",
+        patientMRN: req.patientMRN || req.hospitalMRN || "Unknown MRN",
+        type: req.admissionType === "In-Patient" ? "IP" : "OP", // Map admission type to IP/OP
         description: req.serviceDescription || "Medical Request",
         user: req.createdBy || "Unknown",
-        status: req.operationStatus || req.status || "Pending", // Use operation status from Excel
+        status: req.operationStatus === "Done" ? "Completed" : (req.operationStatus || req.status || "Pending"),
         date: req.dateCreated || new Date().toISOString().split('T')[0],
         specialty: req.specialty || "General",
         hospital: req.hospitalName || req.referredToHospital || "Unknown Hospital",
-        caseCoordinator: req.assignedCoordinator || "Unassigned",
+        caseCoordinator: req.assignedCoordinator || req.caseManager || "Unassigned",
         requestDate: new Date(req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}:00Z` : new Date()),
         completionDate: req.status === "Done" || req.status === "Completed" ? new Date() : null,
-        serviceDescription: req.serviceDescription || "Unknown Service"
+        serviceDescription: req.serviceDescription || "Unknown Service",
+        // Additional fields for SIASlide analytics
+        referredFrom: req.clinicBranch || req.referredFrom || "Unknown",
+        admissionType: req.admissionType || "Unknown",
+        clinicBranch: req.clinicBranch || "Unknown"
       }));
       
       console.log(`Loading ${requestAdminData.length} requests from storage`);
