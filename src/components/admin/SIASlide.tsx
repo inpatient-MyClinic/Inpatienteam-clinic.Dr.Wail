@@ -810,16 +810,6 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </CardContent>
           </Card>
 
-          {/* Pending Cases */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Cases</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">14</div>
-              <p className="text-xs text-gray-500">Awaiting processing</p>
-            </CardContent>
-          </Card>
 
           {/* Revenue */}
           <Card>
@@ -901,26 +891,6 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </CardContent>
           </Card>
 
-          {/* Editable Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <textarea
-                  className="w-full h-20 p-2 border rounded"
-                  value={editableData.additionalNotes}
-                  onChange={(e) => setEditableData({...editableData, additionalNotes: e.target.value})}
-                  placeholder="Add notes about this month's performance..."
-                />
-              ) : (
-                <p className="text-sm text-gray-600">
-                  {editableData.additionalNotes || "No additional notes"}
-                </p>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
