@@ -769,23 +769,25 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                    <Badge variant="outline">14</Badge>
                  </div>
                  <div className="mt-4">
-                   <p className="text-sm font-medium mb-2">Failure Categories:</p>
-                   <div className="flex justify-between text-xs">
-                     <span>Documentation Issues:</span>
-                     <span>6</span>
-                   </div>
-                   <div className="flex justify-between text-xs">
-                     <span>Medical Criteria:</span>
-                     <span>4</span>
-                   </div>
-                   <div className="flex justify-between text-xs">
-                     <span>Insurance Issues:</span>
-                     <span>3</span>
-                   </div>
-                   <div className="flex justify-between text-xs">
-                     <span>Other:</span>
-                     <span>1</span>
-                   </div>
+                    <p className="text-sm font-medium mb-2">Failure Categories:</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span>Documentation Issues:</span>
+                        <span>6</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span>Medical Criteria:</span>
+                        <span>4</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span>Insurance Issues:</span>
+                        <span>3</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span>Other:</span>
+                        <span>1</span>
+                      </div>
+                    </div>
                  </div>
                </div>
             </CardContent>

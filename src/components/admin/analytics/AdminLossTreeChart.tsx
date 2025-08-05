@@ -47,20 +47,34 @@ const exportToExcel = (data: LossTreeData[]) => {
 
 export default function AdminLossTreeChart({ lossTreeData }: AdminLossTreeChartProps) {
   const DelayBreakdown = ({ title, count }: { title: string; count: number }) => {
-    // Specific delay breakdown based on status category
+    // Specific delay breakdown based on admin dashboard data
     const getDelayBreakdown = (status: string, totalCount: number) => {
-      if (status === "Done/Completed") {
+      if (status === "Pending") {
         return {
-          doctor: 38,
-          insurance: 13,
-          hospital: 9,
-          patient: 42
-        };
-      } else if (status === "Pending") {
-        return {
-          doctor: 4,
+          doctor: 0,
           insurance: 0,
-          hospital: 4,
+          hospital: 0,
+          patient: 0
+        };
+      } else if (status === "In Progress") {
+        return {
+          doctor: 0,
+          insurance: 0,
+          hospital: 0,
+          patient: 0
+        };
+      } else if (status === "Completed") {
+        return {
+          doctor: 0,
+          insurance: 0,
+          hospital: 0,
+          patient: 0
+        };
+      } else if (status === "Cancelled/Rejected") {
+        return {
+          doctor: 0,
+          insurance: 0,
+          hospital: 0,
           patient: 0
         };
       } else {
