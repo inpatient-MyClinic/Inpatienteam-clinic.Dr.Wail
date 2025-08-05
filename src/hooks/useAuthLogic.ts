@@ -182,19 +182,37 @@ export const useAuthLogic = () => {
   const handleOTPLogin = async () => {
     try {
       console.log('=== OTP LOGIN START ===');
-      console.log('Email:', email);
+      console.log('Raw Email Input:', email);
       
       // First check if user exists in profiles
       const normalizedEmail = email.trim().toLowerCase();
+      console.log('Normalized Email for Query:', normalizedEmail);
+      console.log('Email length after trim:', normalizedEmail.length);
+      console.log('Email bytes:', new TextEncoder().encode(normalizedEmail));
+      
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, role, status, email')
         .eq('email', normalizedEmail);
 
-      console.log('Profile lookup result:', { profiles, profileError, searchEmail: normalizedEmail });
+      console.log('=== DETAILED PROFILE LOOKUP ===');
+      console.log('Search Email:', normalizedEmail);
+      console.log('Profiles Found:', profiles);
+      console.log('Profile Error:', profileError);
+      console.log('Profiles Length:', profiles?.length);
+      console.log('Profiles is Array:', Array.isArray(profiles));
+      
+      // Let's also try a direct query to see what's in the database
+      const { data: allProfiles, error: allError } = await supabase
+        .from('profiles')
+        .select('email')
+        .limit(10);
+      console.log('All emails in database:', allProfiles?.map(p => p.email));
 
       if (profileError || !profiles || profiles.length === 0) {
-        console.error('User not found in profiles:', profileError);
+        console.error('=== PROFILE NOT FOUND ===');
+        console.error('Profile Error:', profileError);
+        console.error('Profiles data:', profiles);
         toast.error('User not found. Please contact an administrator.');
         return;
       }
