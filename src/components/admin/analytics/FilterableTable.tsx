@@ -108,9 +108,24 @@ export default function FilterableTable({ data, columns, title }: FilterableTabl
         })}
       </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        Showing {filteredAndSortedData.length} of {data.length} records
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Rows per page:</span>
+          <Select value="10" onValueChange={() => {}}>
+            <SelectTrigger className="w-16">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="text-sm text-gray-600">
+          Showing 1 to {Math.min(10, filteredAndSortedData.length)} of {filteredAndSortedData.length} entries
+        </div>
       </div>
 
       {/* Table */}

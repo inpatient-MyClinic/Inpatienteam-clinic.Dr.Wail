@@ -113,18 +113,22 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   // Calculate Top 5 doctors by total number of requests
   const top5DoctorsByRequests = getTop5('user');
 
-  // Loss Tree Analysis Data - updated to match case coordinator style, use cleaned data
-  const pendingCount = cleanedData.filter(item => item.status === "Pending").length;
-  const inProgressCount = cleanedData.filter(item => item.status === "In Progress").length;
-  const cancelledRejectedCount = cleanedData.filter(item => 
-    item.status === "Cancelled" || item.status === "Rejected"
+  // Status counts for proper categories
+  const doneCompletedCount = cleanedData.filter(item => 
+    item.status === "Done" || item.status === "Completed"
   ).length;
+  const pendingCount = cleanedData.filter(item => item.status === "Pending").length;
+  const scheduledCount = cleanedData.filter(item => item.status === "Scheduled").length;
+  const cancelledCount = cleanedData.filter(item => item.status === "Cancelled").length;
+  const plannedNVDCount = cleanedData.filter(item => item.status === "Planned NVD").length;
   
+  // Loss Tree Analysis Data - updated to match filter categories
   const lossTreeData = [
+    { stage: "Done/Completed", count: doneCompletedCount, percentage: totalRequests > 0 ? Number((doneCompletedCount / totalRequests * 100).toFixed(1)) : 0 },
     { stage: "Pending", count: pendingCount, percentage: totalRequests > 0 ? Number((pendingCount / totalRequests * 100).toFixed(1)) : 0 },
-    { stage: "In Progress", count: inProgressCount, percentage: totalRequests > 0 ? Number((inProgressCount / totalRequests * 100).toFixed(1)) : 0 },
-    { stage: "Completed", count: completedRequests, percentage: totalRequests > 0 ? Number((completedRequests / totalRequests * 100).toFixed(1)) : 0 },
-    { stage: "Cancelled/Rejected", count: cancelledRejectedCount, percentage: totalRequests > 0 ? Number((cancelledRejectedCount / totalRequests * 100).toFixed(1)) : 0 }
+    { stage: "Scheduled", count: scheduledCount, percentage: totalRequests > 0 ? Number((scheduledCount / totalRequests * 100).toFixed(1)) : 0 },
+    { stage: "Cancelled", count: cancelledCount, percentage: totalRequests > 0 ? Number((cancelledCount / totalRequests * 100).toFixed(1)) : 0 },
+    { stage: "Planned NVD", count: plannedNVDCount, percentage: totalRequests > 0 ? Number((plannedNVDCount / totalRequests * 100).toFixed(1)) : 0 }
   ];
 
   // NPS Score calculation - get from customer care data
@@ -162,16 +166,17 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   
   const npsScore = calculateNPS();
 
-  // Status data for pie chart - updated to include cancelled/rejected
+  // Status data for pie chart - updated to match filter categories
   const statusData = [
-    { name: "Completed", value: completedRequests },
-    { name: "In Progress", value: inProgressCount },
+    { name: "Done/Completed", value: doneCompletedCount },
     { name: "Pending", value: pendingCount },
-    { name: "Cancelled/Rejected", value: cancelledRejectedCount }
+    { name: "Scheduled", value: scheduledCount },
+    { name: "Cancelled", value: cancelledCount },
+    { name: "Planned NVD", value: plannedNVDCount }
   ];
 
-  // Chart colors - updated for 4 categories
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  // Chart colors - updated for 5 categories
+  const COLORS = ['#0088FE', '#FFBB28', '#00C49F', '#FF8042', '#8884d8'];
 
   // Filterable table columns configuration
   const tableColumns = [

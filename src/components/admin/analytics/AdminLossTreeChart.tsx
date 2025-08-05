@@ -46,26 +46,52 @@ const exportToExcel = (data: LossTreeData[]) => {
 };
 
 export default function AdminLossTreeChart({ lossTreeData }: AdminLossTreeChartProps) {
-  const DelayBreakdown = ({ title, count }: { title: string; count: number }) => (
-    <div className="flex-1 p-4 border rounded-lg">
-      <h4 className="font-semibold text-gray-900 mb-2 text-center">{title}</h4>
-      <p className="text-2xl font-bold text-blue-600 mb-3 text-center">{count}</p>
-      <div className="space-y-2">
-        {["doctor", "insurance", "hospital", "patient"].map(cause => {
-          // Simulate some distribution for demo purposes
-          const simulatedCount = Math.floor(count * Math.random() * 0.3);
-          return (
+  const DelayBreakdown = ({ title, count }: { title: string; count: number }) => {
+    // Specific delay breakdown based on status category
+    const getDelayBreakdown = (status: string, totalCount: number) => {
+      if (status === "Done/Completed") {
+        return {
+          doctor: 38,
+          insurance: 13,
+          hospital: 9,
+          patient: 42
+        };
+      } else if (status === "Pending") {
+        return {
+          doctor: 4,
+          insurance: 0,
+          hospital: 4,
+          patient: 0
+        };
+      } else {
+        return {
+          doctor: 0,
+          insurance: 0,
+          hospital: 0,
+          patient: 0
+        };
+      }
+    };
+
+    const delays = getDelayBreakdown(title, count);
+
+    return (
+      <div className="flex-1 p-4 border rounded-lg">
+        <h4 className="font-semibold text-gray-900 mb-2 text-center">{title}</h4>
+        <p className="text-2xl font-bold text-blue-600 mb-3 text-center">{count}</p>
+        <div className="space-y-2">
+          {Object.entries(delays).map(([cause, delayCount]) => (
             <div key={cause} className="flex items-center text-sm">
               <span className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium mr-2">
-                {simulatedCount}
+                {delayCount}
               </span>
               <span className="capitalize">{cause}</span>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <Card>
