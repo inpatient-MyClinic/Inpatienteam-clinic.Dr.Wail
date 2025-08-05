@@ -154,6 +154,14 @@ export default function TableWithPagination({
                               onChange={(e) => handleFilterChange(column.key, e.target.value)}
                             />
                             <div className="max-h-32 overflow-y-auto space-y-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start text-xs h-6"
+                                onClick={() => handleFilterChange(column.key, '')}
+                              >
+                                All {column.label}
+                              </Button>
                               {getUniqueValues(column.key).slice(0, 10).map((value) => (
                                 <Button
                                   key={value}

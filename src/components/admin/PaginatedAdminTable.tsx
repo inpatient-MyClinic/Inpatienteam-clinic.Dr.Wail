@@ -48,6 +48,20 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
   });
   const { toast } = useToast();
 
+  // Calculate status totals
+  const statusTotals = data.reduce((acc, item) => {
+    const status = item.status;
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Get specific status counts
+  const doneCount = (statusTotals["Done"] || 0) + (statusTotals["Completed"] || 0);
+  const pendingCount = statusTotals["Pending"] || 0;
+  const scheduledCount = statusTotals["Scheduled"] || 0;
+  const cancelledCount = (statusTotals["Cancelled"] || 0) + (statusTotals["Case Canceled"] || 0);
+  const plannedNVDCount = statusTotals["Planned NVD"] || 0;
+
   // Save settings to localStorage
   useEffect(() => {
     localStorage.setItem('adminPaginationSettings', JSON.stringify(paginationSettings));
@@ -68,12 +82,6 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
       req.patientMRN === task.patientMRN || 
       req.id === parseInt(task.id.replace('REQ', ''))
     );
-
-    // Debug logging
-    console.log('Converting task to request:');
-    console.log('Task:', task);
-    console.log('Found original request:', originalRequest);
-    console.log('All requests in storage:', requests);
 
     // If we found the original request, use its data; otherwise use task data
     const requestData = originalRequest || {};
@@ -346,6 +354,33 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+      </div>
+
+      {/* Status Totals Summary */}
+      <div className="p-4 border-b bg-gray-50">
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Filter by Status:</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
+          <div className="flex flex-col items-center p-2 bg-white rounded border">
+            <span className="font-semibold text-green-600">{doneCount}</span>
+            <span className="text-gray-600">Done/Completed</span>
+          </div>
+          <div className="flex flex-col items-center p-2 bg-white rounded border">
+            <span className="font-semibold text-yellow-600">{pendingCount}</span>
+            <span className="text-gray-600">Pending</span>
+          </div>
+          <div className="flex flex-col items-center p-2 bg-white rounded border">
+            <span className="font-semibold text-blue-600">{scheduledCount}</span>
+            <span className="text-gray-600">Scheduled</span>
+          </div>
+          <div className="flex flex-col items-center p-2 bg-white rounded border">
+            <span className="font-semibold text-red-600">{cancelledCount}</span>
+            <span className="text-gray-600">Cancelled</span>
+          </div>
+          <div className="flex flex-col items-center p-2 bg-white rounded border">
+            <span className="font-semibold text-purple-600">{plannedNVDCount}</span>
+            <span className="text-gray-600">Planned NVD</span>
+          </div>
         </div>
       </div>
 
