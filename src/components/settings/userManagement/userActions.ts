@@ -2,13 +2,14 @@
 import { User } from "./types";
 import { createNewUser, validateEmail, processExcelUsers, exportUsersToCSV } from "./userOperations";
 import { filterUsers } from "./userFilters";
+import { createUserAccount } from "@/services/userAccountService";
 
 export const useUserActions = (
   users: User[],
   setUsers: React.Dispatch<React.SetStateAction<User[]>>,
   toast: any
 ) => {
-  const addUser = (email: string, category: string, specialty: string) => {
+  const addUser = async (email: string, category: string, specialty: string) => {
     console.log('userActions: Adding user with email:', email);
     
     if (!email.trim()) {
@@ -32,21 +33,52 @@ export const useUserActions = (
     if (users.some(user => user.email === email)) {
       toast({
         title: "Error", 
-        description: "User with this email already exists",
+        description: "User with this email already exists in local management",
         variant: "destructive"
       });
       return false;
     }
 
-    const newUser = createNewUser(email, category, specialty);
-    setUsers(prev => [...prev, newUser]);
+    try {
+      // Map category to role
+      const roleMapping: Record<string, any> = {
+        'Admin': 'admin',
+        'Doctor': 'doctor', 
+        'Nurse': 'nurse',
+        'Case Coordinator': 'case-coordinator',
+        'Hospital': 'hospital',
+        'Finance': 'finance',
+        'Customer Service': 'customer-care'
+      };
 
-    console.log('userActions: Added new user:', newUser);
-    toast({
-      title: "Success",
-      description: `User ${email} added successfully`
-    });
-    return true;
+      // First create the actual user account in Supabase
+      await createUserAccount({
+        email: email.trim().toLowerCase(),
+        fullName: email.split('@')[0],
+        role: roleMapping[category] || 'doctor',
+        specialty: specialty !== 'none' ? specialty : undefined
+      });
+
+      // Then add to local management system
+      const newUser = createNewUser(email, category, specialty);
+      setUsers(prev => [...prev, newUser]);
+
+      console.log('userActions: Added new user to both database and local management:', newUser);
+      toast({
+        title: "Success",
+        description: `User ${email} created successfully! They can now login with the temporary password.`
+      });
+      return true;
+
+    } catch (error: any) {
+      console.error('Failed to create user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user account",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   const deleteUser = (userId: string) => {

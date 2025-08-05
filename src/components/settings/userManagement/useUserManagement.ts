@@ -85,9 +85,9 @@ export const useUserManagement = () => {
     }
   }, [users, isLoading]);
 
-  const addUser = () => {
+  const addUser = async () => {
     console.log('useUserManagement: Adding user:', newUserEmail, newUserCategory);
-    const success = userActions.addUser(newUserEmail, newUserCategory, newUserSpecialty);
+    const success = await userActions.addUser(newUserEmail, newUserCategory, newUserSpecialty);
     if (success) {
       setNewUserEmail("");
       setNewUserCategory("Doctor");

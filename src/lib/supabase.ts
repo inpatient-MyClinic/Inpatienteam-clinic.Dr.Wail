@@ -97,14 +97,8 @@ export class DatabaseService {
   }
 
   static async createUser(user: Omit<User, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await supabase
-      .from('users')
-      .insert(user)
-      .select()
-      .single()
-    
-    if (error) throw error
-    return data as User
+    console.error('DatabaseService.createUser is deprecated. User management now uses local storage via UserManagement component.');
+    throw new Error('Database user creation is no longer supported. Use the user management interface instead.');
   }
 
   static async updateUser(id: string, updates: Partial<User>) {
