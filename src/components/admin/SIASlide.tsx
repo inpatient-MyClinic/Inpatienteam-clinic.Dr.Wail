@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ComposedChart } from 'recharts';
 import { Calendar, Save, History, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,7 +25,27 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     achievement: 0,
     ytdGrowth: 0,
     mtdGrowth: 0,
-    additionalNotes: ""
+    additionalNotes: "",
+    // Conversion Rate Chart Data (YTD)
+    conversionRateData: [
+      { month: 'JAN', rate: 79 },
+      { month: 'FEB', rate: 79 },
+      { month: 'MAR', rate: 77 },
+      { month: 'APR', rate: 70 },
+      { month: 'MAY', rate: 76 },
+      { month: 'JUN', rate: 77 },
+      { month: 'JUL', rate: 78 }
+    ],
+    // NPS Chart Data
+    npsChartData: [
+      { month: 'Jan25', promoter: 91, passive: 0, detractor: 9, npsScore: 82 },
+      { month: 'Feb25', promoter: 86, passive: 0, detractor: 14, npsScore: 71 },
+      { month: 'Mar25', promoter: 80, passive: 10, detractor: 10, npsScore: 70 },
+      { month: 'Apr25', promoter: 91, passive: 0, detractor: 9, npsScore: 83 },
+      { month: 'May25', promoter: 89, passive: 11, detractor: 0, npsScore: 89 },
+      { month: 'Jun25', promoter: 78, passive: 14, detractor: 8, npsScore: 74 },
+      { month: 'Jul25', promoter: 86, passive: 8, detractor: 6, npsScore: 79 }
+    ]
   });
   const [monthlyNPS, setMonthlyNPS] = useState<Record<number, number>>({});
   const [financeData, setFinanceData] = useState<any[]>([]);
@@ -448,14 +468,48 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">Conversion Rate</CardTitle>
+                <CardTitle className="text-sm text-gray-600">Conversion Rate - YTD</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">78.5%</div>
-                <div className="text-sm mt-2">
-                  <div>Done: 164 / Total: 211</div>
-                </div>
-                <p className="text-xs text-gray-500">In-patient cases this month</p>
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-600 mb-2">Edit monthly conversion rates:</p>
+                    {editableData.conversionRateData.map((month, index) => (
+                      <div key={month.month} className="flex justify-between items-center">
+                        <span className="text-xs">{month.month}:</span>
+                        <Input
+                          type="number"
+                          value={month.rate}
+                          onChange={(e) => {
+                            const newData = {...editableData};
+                            newData.conversionRateData[index].rate = parseInt(e.target.value) || 0;
+                            setEditableData(newData);
+                          }}
+                          className="w-16 h-6 text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={editableData.conversionRateData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" fontSize={10} />
+                        <YAxis fontSize={10} domain={[60, 85]} />
+                        <Tooltip />
+                        <Line 
+                          type="monotone" 
+                          dataKey="rate" 
+                          stroke="#2563eb" 
+                          strokeWidth={3}
+                          dot={{ fill: '#2563eb', strokeWidth: 2, r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-2">Year-to-date conversion rate trends</p>
               </CardContent>
             </Card>
 
@@ -703,48 +757,69 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </CardHeader>
             <CardContent>
               {isEditing ? (
-                <Input
-                  type="number"
-                  value={editableData.npsScore}
-                  onChange={(e) => setEditableData({...editableData, npsScore: parseInt(e.target.value)})}
-                />
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-600 mb-2">Edit monthly NPS data:</p>
+                  {editableData.npsChartData.map((month, index) => (
+                    <div key={month.month} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium">{month.month}:</span>
+                        <div className="flex gap-1">
+                          <Input
+                            type="number"
+                            placeholder="Promoter"
+                            value={month.promoter}
+                            onChange={(e) => {
+                              const newData = {...editableData};
+                              newData.npsChartData[index].promoter = parseInt(e.target.value) || 0;
+                              setEditableData(newData);
+                            }}
+                            className="w-12 h-6 text-xs"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="NPS"
+                            value={month.npsScore}
+                            onChange={(e) => {
+                              const newData = {...editableData};
+                              newData.npsChartData[index].npsScore = parseInt(e.target.value) || 0;
+                              setEditableData(newData);
+                            }}
+                            className="w-12 h-6 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div>
-                  <div className="text-3xl font-bold text-green-600">{editableData.npsScore}</div>
-                  <div className="mt-2">
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      {Array.from({ length: 12 }, (_, i) => {
-                        const month = i + 1;
-                        const monthName = months.find(m => m.value === month)?.label.slice(0, 3);
-                        const storedScore = monthlyNPS[month];
-                        const calculatedScore = calculateNPSScore(JSON.parse(localStorage.getItem('customerCareRequests') || '[]'), month, selectedYear);
-                        const score = storedScore && !isNaN(parseInt(storedScore.toString())) ? parseInt(storedScore.toString()) : calculatedScore;
-                        
-                        return (
-                          <div 
-                            key={month} 
-                            className={`p-1 rounded text-center transition-colors ${
-                              month === selectedMonth 
-                                ? 'bg-primary text-primary-foreground ring-2 ring-primary/50' 
-                                : 'bg-muted hover:bg-muted/80'
-                            }`}
-                          >
-                            <div className="font-medium">{monthName}</div>
-                            <div className={`text-xs font-bold ${
-                              month === selectedMonth ? 'text-primary-foreground' : 
-                              score !== null && score >= 70 ? 'text-green-600' :
-                              score !== null && score >= 50 ? 'text-yellow-600' : 'text-red-600'
-                            }`}>
-                              {score !== null ? score : '-'}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="text-3xl font-bold text-green-600 mb-4">
+                    {editableData.npsChartData[editableData.npsChartData.length - 1]?.npsScore || 79}
+                  </div>
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={editableData.npsChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" fontSize={8} />
+                        <YAxis fontSize={8} />
+                        <Tooltip />
+                        <Bar dataKey="promoter" stackId="a" fill="#4ade80" name="Promoter" />
+                        <Bar dataKey="passive" stackId="a" fill="#fb923c" name="Passive" />
+                        <Bar dataKey="detractor" stackId="a" fill="#ef4444" name="Detractor" />
+                        <Line 
+                          type="monotone" 
+                          dataKey="npsScore" 
+                          stroke="#1e40af" 
+                          strokeWidth={2}
+                          dot={{ fill: '#1e40af', r: 4 }}
+                          name="NPS Score"
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               )}
-              <p className="text-xs text-gray-500">Net Promoter Score - 12 Month View</p>
+              <p className="text-xs text-gray-500 mt-2">Net Promoter Score trends with promoter/passive/detractor breakdown</p>
             </CardContent>
           </Card>
 
