@@ -159,15 +159,17 @@ export const useAuthLogic = () => {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('status, role')
-        .eq('email', email.trim().toLowerCase())
-        .single();
+        .ilike('email', email.trim())
+        .maybeSingle();
 
       if (profileError) {
-        if (profileError.code === 'PGRST116') {
-          toast.error('User not found. Please contact an administrator.');
-        } else {
-          toast.error('Error checking user status. Please try again.');
-        }
+        console.error('Profile lookup error:', profileError);
+        toast.error('Error checking user status. Please try again.');
+        return;
+      }
+
+      if (!profile) {
+        toast.error('User not found. Please contact an administrator to create your account.');
         return;
       }
 
