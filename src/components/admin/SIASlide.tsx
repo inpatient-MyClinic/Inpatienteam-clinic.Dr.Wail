@@ -14,6 +14,28 @@ interface SIASlideProps {
   onClose: () => void;
 }
 
+// Helper function to format dates properly
+const formatDate = (dateValue: any): string => {
+  if (!dateValue) return 'N/A';
+  
+  let date;
+  // Handle Excel serial date numbers
+  if (typeof dateValue === 'number' && dateValue > 25000) {
+    date = new Date((dateValue - 25569) * 86400 * 1000);
+  } else {
+    date = new Date(dateValue);
+  }
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
 export default function SIASlide({ data, onClose }: SIASlideProps) {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -106,40 +128,91 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     // Customer Care Data
     const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
     
-    // Filter data by current month (July example)
-    const currentMonth = new Date().getMonth() + 1; // Current month
-    const currentYear = new Date().getFullYear();
+    // Filter data by previous month (SIA shows previous month's data)
+    const filterMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+    const filterYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
     
-    // Filter requests for current analysis period
+    // Filter requests for current analysis period with proper date handling
     const filteredRequests = medicalRequests.filter((req: any) => {
-      const reqDate = new Date(req.dateCreated || req.createdAt || req.date);
-      return reqDate.getMonth() + 1 === currentMonth && reqDate.getFullYear() === currentYear;
+      // Handle multiple date field names and formats
+      const dateStr = req.dateCreated || req.createdAt || req.date || req.requestDate || req.surgery_date;
+      if (!dateStr) return false;
+      
+      let reqDate;
+      // Handle Excel serial date numbers
+      if (typeof dateStr === 'number' && dateStr > 25000) {
+        // Excel serial date to JavaScript Date
+        reqDate = new Date((dateStr - 25569) * 86400 * 1000);
+      } else {
+        reqDate = new Date(dateStr);
+      }
+      
+      // Check if date is valid
+      if (isNaN(reqDate.getTime())) return false;
+      
+      return reqDate.getMonth() + 1 === filterMonth && reqDate.getFullYear() === filterYear;
     });
     
-    // Calculate done cases (Completed + Scheduled + Planned) - should match admin dashboard
-    const doneStatuses = ['Done', 'Completed', 'Scheduled', 'Planned NVD'];
-    const doneRequests = filteredRequests.filter((req: any) => 
-      doneStatuses.includes(req.status)
-    );
+    // Count MCJ1 and MCJ2 cases from actual uploaded data
+    const mcj1Cases = filteredRequests.filter((req: any) => {
+      const referredFrom = req.referredFrom || req.clinicBranch || req.referred_from || '';
+      return referredFrom.toLowerCase().includes('mcj1') || 
+             referredFrom.toLowerCase().includes('mc j1') ||
+             referredFrom.toLowerCase().includes('mc-j1');
+    }).length;
     
-    // Use admin dashboard status counts if available 
-    const adminStatusCounts = JSON.parse(localStorage.getItem('adminStatusCounts') || '{}');
-    const actualDoneCount = adminStatusCounts.done || doneRequests.length;
-    const actualTotalCount = adminStatusCounts.total || filteredRequests.length;
+    const mcj2Cases = filteredRequests.filter((req: any) => {
+      const referredFrom = req.referredFrom || req.clinicBranch || req.referred_from || '';
+      return referredFrom.toLowerCase().includes('mcj2') || 
+             referredFrom.toLowerCase().includes('mc j2') ||
+             referredFrom.toLowerCase().includes('mc-j2');
+    }).length;
+    
+    // Calculate done cases (Done + Scheduled + Planned NVD) - updated criteria
+    const doneStatuses = ['Done', 'Completed', 'Scheduled', 'Planned NVD'];
+    const doneRequests = filteredRequests.filter((req: any) => {
+      const status = req.status || req.operationStatus || req.request_status || '';
+      return doneStatuses.some(doneStatus => 
+        status.toLowerCase().includes(doneStatus.toLowerCase())
+      );
+    });
+    
+    // Calculate total cases and conversion rate
+    const totalCases = filteredRequests.length;
+    const doneCases = doneRequests.length;
+    const conversionRate = totalCases > 0 ? ((doneCases / totalCases) * 100).toFixed(1) : "0";
     
     // Calculate status distribution
     const statusCounts = {
-      completed: filteredRequests.filter((req: any) => req.status === 'Done' || req.status === 'Completed').length,
-      pending: filteredRequests.filter((req: any) => req.status === 'Pending').length,
-      cancelled: filteredRequests.filter((req: any) => req.status === 'Cancelled').length,
-      rejected: filteredRequests.filter((req: any) => req.status === 'Rejected').length,
-      scheduled: filteredRequests.filter((req: any) => req.status === 'Scheduled').length,
-      plannedNVD: filteredRequests.filter((req: any) => req.status === 'Planned NVD').length
+      completed: filteredRequests.filter((req: any) => {
+        const status = (req.status || req.operationStatus || '').toLowerCase();
+        return status.includes('done') || status.includes('completed');
+      }).length,
+      pending: filteredRequests.filter((req: any) => {
+        const status = (req.status || req.operationStatus || '').toLowerCase();
+        return status.includes('pending');
+      }).length,
+      cancelled: filteredRequests.filter((req: any) => {
+        const status = (req.status || req.operationStatus || '').toLowerCase();
+        return status.includes('cancelled');
+      }).length,
+      rejected: filteredRequests.filter((req: any) => {
+        const status = (req.status || req.operationStatus || '').toLowerCase();
+        return status.includes('rejected');
+      }).length,
+      scheduled: filteredRequests.filter((req: any) => {
+        const status = (req.status || req.operationStatus || '').toLowerCase();
+        return status.includes('scheduled');
+      }).length,
+      plannedNVD: filteredRequests.filter((req: any) => {
+        const status = (req.status || req.operationStatus || '').toLowerCase();
+        return status.includes('planned');
+      }).length
     };
     
     // Get Top 5 Hospitals
     const hospitalCounts = filteredRequests.reduce((acc: any, req: any) => {
-      const hospital = req.hospitalName || req.referredToHospital || 'Unknown Hospital';
+      const hospital = req.hospitalName || req.referredToHospital || req.hospital || 'Unknown Hospital';
       acc[hospital] = (acc[hospital] || 0) + 1;
       return acc;
     }, {});
@@ -151,7 +224,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     
     // Get Top 5 Specialties
     const specialtyCounts = filteredRequests.reduce((acc: any, req: any) => {
-      const specialty = req.specialty || 'General';
+      const specialty = req.specialty || req.medical_specialty || 'General';
       acc[specialty] = (acc[specialty] || 0) + 1;
       return acc;
     }, {});
@@ -160,18 +233,6 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       .sort(([,a]: any, [,b]: any) => b - a)
       .slice(0, 5)
       .map(([specialty, count]) => ({ specialty, count }));
-    
-    // MC Branch Cases - based on uploaded Excel data
-    const mcj1Cases = 194; // From Excel data
-    const mcj2Cases = 17;  // From Excel data
-    const totalMCCases = 211; // Total from Excel
-    
-    // Conversion Rate calculation (164 done out of 211 total)
-    const conversionRate = ((164 / 211) * 100).toFixed(1); // 78.5%
-    
-    // IP Cases (In-Patient) - use conversion rate instead
-    const ipDoneCount = 164; // Done cases from admin dashboard
-    const ipTotalCount = 211; // Total cases from admin dashboard
     
     // Consolidate all data sources
     const consolidatedData = filteredRequests;
@@ -199,11 +260,23 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       consolidatedData,
       financeData: financeAnalyticsData,
       customerCareData,
+      mcBranchCounts: {
+        mcj1: mcj1Cases,
+        mcj2: mcj2Cases,
+        total: mcj1Cases + mcj2Cases
+      },
+      conversionData: {
+        done: doneCases,
+        total: totalCases,
+        rate: conversionRate
+      },
       metrics: {
         achievement: parseFloat(achievementValue),
         ytdGrowth: parseFloat(ytdGrowthValue),
         mtdGrowth: parseFloat(mtdGrowthValue)
-      }
+      },
+      top5Hospitals,
+      top5Specialties
     };
   };
 
@@ -676,17 +749,17 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   {isEditing ? (
                     <Input
                       type="number"
-                      value={adminRequests}
+                      value={integratedSIAData.mcBranchCounts.total}
                       onChange={(e) => setEditableData(prev => ({ ...prev, mcBranchCases: parseInt(e.target.value) || 0 }))}
                       className="text-2xl font-bold h-8 p-1"
                     />
-                  ) : adminRequests}
+                  ) : integratedSIAData.mcBranchCounts.total}
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span>Admin Requests: {adminRequests}</span>
-                  <span>Medical: {medicalRequests}</span>
+                  <span>MCJ1: {integratedSIAData.mcBranchCounts.mcj1}</span>
+                  <span>MCJ2: {integratedSIAData.mcBranchCounts.mcj2}</span>
                 </div>
-                <p className="text-xs text-gray-500">Admin dashboard requests</p>
+                <p className="text-xs text-gray-500">From uploaded Excel data</p>
               </CardContent>
             </Card>
 
@@ -745,11 +818,11 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   </div>
                 ) : (
                   <div>
-                    <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
+                    <div className="text-2xl font-bold text-green-600">{integratedSIAData.conversionData.rate}%</div>
                     <div className="text-sm mt-2">
-                      <div>Done: {actualDoneCount} / Total: {actualTotalCount}</div>
+                      <div>Done: {integratedSIAData.conversionData.done} / Total: {integratedSIAData.conversionData.total}</div>
                     </div>
-                    <p className="text-xs text-gray-500">Admin requests completion rate</p>
+                    <p className="text-xs text-gray-500">Done + Scheduled + Planned NVD</p>
                   </div>
                 )}
               </CardContent>
