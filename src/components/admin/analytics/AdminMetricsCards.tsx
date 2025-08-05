@@ -5,40 +5,40 @@ import { Badge } from "@/components/ui/badge";
 
 interface AdminMetricsCardsProps {
   conversionRate: string;
-  completedRequests: number;
   doneRequests: number;
   scheduledRequests: number;
+  plannedNVDRequests: number;
   totalRequests: number;
   utilizationRate: string;
   filteredDataLength: number;
   npsScore: number;
-  includeCompleted: boolean;
   includeDone: boolean;
   includeScheduled: boolean;
-  onToggleCompleted: () => void;
+  includePlannedNVD: boolean;
   onToggleDone: () => void;
   onToggleScheduled: () => void;
+  onTogglePlannedNVD: () => void;
 }
 
 export default function AdminMetricsCards({
   conversionRate,
-  completedRequests,
   doneRequests,
   scheduledRequests,
+  plannedNVDRequests,
   totalRequests,
   utilizationRate,
   filteredDataLength,
   npsScore,
-  includeCompleted,
   includeDone,
   includeScheduled,
-  onToggleCompleted,
+  includePlannedNVD,
   onToggleDone,
-  onToggleScheduled
+  onToggleScheduled,
+  onTogglePlannedNVD
 }: AdminMetricsCardsProps) {
-  const includedCount = (includeCompleted ? completedRequests : 0) + 
-                       (includeDone ? doneRequests : 0) + 
-                       (includeScheduled ? scheduledRequests : 0);
+  const includedCount = (includeDone ? doneRequests : 0) + 
+                       (includeScheduled ? scheduledRequests : 0) + 
+                       (includePlannedNVD ? plannedNVDRequests : 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -53,13 +53,6 @@ export default function AdminMetricsCards({
           </p>
           <div className="flex flex-wrap gap-1">
             <Badge 
-              variant={includeCompleted ? "default" : "outline"} 
-              className="cursor-pointer text-xs"
-              onClick={onToggleCompleted}
-            >
-              Completed ({completedRequests})
-            </Badge>
-            <Badge 
               variant={includeDone ? "default" : "outline"} 
               className="cursor-pointer text-xs"
               onClick={onToggleDone}
@@ -72,6 +65,13 @@ export default function AdminMetricsCards({
               onClick={onToggleScheduled}
             >
               Scheduled ({scheduledRequests})
+            </Badge>
+            <Badge 
+              variant={includePlannedNVD ? "default" : "outline"} 
+              className="cursor-pointer text-xs"
+              onClick={onTogglePlannedNVD}
+            >
+              Planned NVD ({plannedNVDRequests})
             </Badge>
           </div>
         </CardContent>

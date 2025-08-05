@@ -40,20 +40,22 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [selectedCoordinator, setSelectedCoordinator] = useState<string>("all");
   const [financeData, setFinanceData] = useState<any[]>([]);
   
-  // State for conversion rate toggles
-  const [includeCompleted, setIncludeCompleted] = useState(true);
+  // State for conversion rate toggles - merge Completed and Done as "Done"
   const [includeDone, setIncludeDone] = useState(true);
   const [includeScheduled, setIncludeScheduled] = useState(true);
+  const [includePlannedNVD, setIncludePlannedNVD] = useState(true);
 
-  // Calculate conversion rate with toggleable statuses
+  // Calculate conversion rate with toggleable statuses - merge Completed and Done
   const totalRequests = cleanedData.length;
   const completedRequests = cleanedData.filter(item => item.status === "Completed").length;
-  const doneRequests = cleanedData.filter(item => item.status === "Done").length;
+  const actualDoneRequests = cleanedData.filter(item => item.status === "Done").length;
+  const mergedDoneRequests = completedRequests + actualDoneRequests; // Merge Completed and Done
   const scheduledRequests = cleanedData.filter(item => item.status === "Scheduled").length;
+  const plannedNVDRequests = cleanedData.filter(item => item.status === "Planned NVD").length;
   
-  const includedCount = (includeCompleted ? completedRequests : 0) + 
-                       (includeDone ? doneRequests : 0) + 
-                       (includeScheduled ? scheduledRequests : 0);
+  const includedCount = (includeDone ? mergedDoneRequests : 0) + 
+                       (includeScheduled ? scheduledRequests : 0) + 
+                       (includePlannedNVD ? plannedNVDRequests : 0);
   const conversionRate = totalRequests > 0 ? (includedCount / totalRequests * 100).toFixed(1) : "0";
 
   // Calculate utilization rate (filtered requests / total requests)
@@ -229,19 +231,19 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
       {/* Key Metrics */}
       <AdminMetricsCards
         conversionRate={conversionRate}
-        completedRequests={completedRequests}
-        doneRequests={doneRequests}
+        doneRequests={mergedDoneRequests}
         scheduledRequests={scheduledRequests}
+        plannedNVDRequests={plannedNVDRequests}
         totalRequests={totalRequests}
         utilizationRate={utilizationRate}
         filteredDataLength={filteredData.length}
         npsScore={npsScore}
-        includeCompleted={includeCompleted}
         includeDone={includeDone}
         includeScheduled={includeScheduled}
-        onToggleCompleted={() => setIncludeCompleted(!includeCompleted)}
+        includePlannedNVD={includePlannedNVD}
         onToggleDone={() => setIncludeDone(!includeDone)}
         onToggleScheduled={() => setIncludeScheduled(!includeScheduled)}
+        onTogglePlannedNVD={() => setIncludePlannedNVD(!includePlannedNVD)}
       />
 
       {/* New Analytics - Rejection Analysis */}
