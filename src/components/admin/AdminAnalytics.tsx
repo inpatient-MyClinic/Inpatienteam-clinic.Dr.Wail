@@ -32,10 +32,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [selectedCoordinator, setSelectedCoordinator] = useState<string>("all");
   const [financeData, setFinanceData] = useState<any[]>([]);
 
-  // Calculate conversion rate (completed requests / total requests)
+  // Calculate conversion rate (155+9+2)/211
   const totalRequests = data.length;
   const completedRequests = data.filter(item => item.status === "Completed").length;
-  const conversionRate = totalRequests > 0 ? (completedRequests / totalRequests * 100).toFixed(1) : "0";
+  const doneRequests = data.filter(item => item.status === "Done").length;
+  const scheduledRequests = data.filter(item => item.status === "Scheduled").length;
+  const conversionRate = totalRequests > 0 ? ((completedRequests + doneRequests + scheduledRequests) / totalRequests * 100).toFixed(1) : "0";
 
   // Calculate utilization rate (filtered requests / total requests)
   const filteredData = data.filter(item => {
