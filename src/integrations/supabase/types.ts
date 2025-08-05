@@ -219,6 +219,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pre_approved_emails: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          email: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          email: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          email?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved_at: string | null
@@ -350,6 +374,10 @@ export type Database = {
       }
       is_admin_email: {
         Args: { email_address: string }
+        Returns: boolean
+      }
+      is_email_allowed_to_register: {
+        Args: { check_email: string }
         Returns: boolean
       }
       is_password_change_required: {

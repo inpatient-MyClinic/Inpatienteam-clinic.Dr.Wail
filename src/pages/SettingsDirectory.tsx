@@ -17,6 +17,7 @@ import AdminFieldConfiguration from "@/components/settings/AdminFieldConfigurati
 import UserTracker from "@/components/settings/UserTracker";
 import HospitalCodes from "@/components/settings/HospitalCodes";
 import SettingsDataManager from "@/components/settings/SettingsDataManager";
+import PreApprovedEmails from "@/components/settings/PreApprovedEmails";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 
@@ -121,9 +122,10 @@ const SettingsDirectory = () => {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-11">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="data">Data Manager</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="pre-approved">Pre-Approved Emails</TabsTrigger>
           <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
           <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
           <TabsTrigger value="privileges">Privilege Management</TabsTrigger>
@@ -141,6 +143,10 @@ const SettingsDirectory = () => {
 
         <TabsContent value="users" className="space-y-6">
           <EnhancedUserManagement />
+        </TabsContent>
+
+        <TabsContent value="pre-approved" className="space-y-6">
+          <PreApprovedEmails />
         </TabsContent>
 
         <TabsContent value="doctors" className="space-y-6">

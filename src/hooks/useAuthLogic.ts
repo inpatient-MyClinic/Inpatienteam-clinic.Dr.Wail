@@ -42,8 +42,27 @@ export const useAuthLogic = () => {
       return;
     }
 
+    // Check domain restrictions before attempting signup
+    const normalizedEmail = email.trim().toLowerCase();
+    
     try {
-      console.log('Attempting to create user with email:', email);
+      // Check if email is allowed to register
+      const { data: isAllowed, error: checkError } = await supabase.rpc('is_email_allowed_to_register', {
+        check_email: normalizedEmail
+      });
+
+      if (checkError) {
+        console.error('Error checking email permission:', checkError);
+        toast.error('Error validating email. Please try again.');
+        return;
+      }
+
+      if (!isAllowed) {
+        toast.error('Registration not allowed for this email domain. Contact administrator for pre-approval.');
+        return;
+      }
+
+      console.log('Email is allowed to register, proceeding with signup...');
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
