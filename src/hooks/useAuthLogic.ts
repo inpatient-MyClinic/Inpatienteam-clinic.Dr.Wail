@@ -254,19 +254,12 @@ export const useAuthLogic = () => {
       // Show success message
       toast.success('Verification code sent! Check email or console for code.');
       
-      // If there's a debug OTP in the response, log it prominently
+      // If there's a debug OTP in the response, log it only to console (no visible display for security)
       if (data && (data.otp_for_testing || data.debug_otp_for_testing)) {
         const debugOTP = data.otp_for_testing || data.debug_otp_for_testing;
-        console.log('=== DEBUG OTP CODE ===');
-        console.log('USE THIS CODE:', debugOTP);
-        console.log('======================');
-        
-        // Also show in a more visible way for debugging
-        setTimeout(() => {
-          toast.info(`DEBUG: OTP Code is ${debugOTP} (check console)`, {
-            duration: 10000
-          });
-        }, 1000);
+        console.log('=== DEBUG OTP CODE (CONSOLE ONLY) ===');
+        console.log('OTP Code:', debugOTP);
+        console.log('=======================================');
       }
       
     } catch (error) {

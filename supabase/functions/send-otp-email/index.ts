@@ -89,30 +89,31 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Send OTP email using Resend
       const emailResponse = await resend.emails.send({
-        from: "MyClinic <inpatienteam@gmail.com>",
+        from: "MyClinic <no-reply@myclinic.com.sa>",
         to: [normalizedEmail],
         subject: "Your Login Verification Code",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #333; text-align: center;">Login Verification Code</h2>
-            
-            <p>Hello ${profile.full_name || 'User'},</p>
-            
-            <p>You requested to login to your MyClinic account. Please use the verification code below:</p>
-            
-            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
-              <h1 style="font-size: 32px; letter-spacing: 8px; margin: 0; color: #2563eb;">${otpCode}</h1>
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #1d4ed8; margin-bottom: 10px;">My Clinic In-Patient</h1>
+              <p style="color: #6b7280;">Medical Management System</p>
             </div>
             
-            <p style="color: #666;">This code will expire in 2 minutes for security reasons.</p>
+            <div style="background-color: #f8fafc; padding: 30px; border-radius: 8px; text-align: center;">
+              <h2 style="color: #1f2937; margin-bottom: 20px;">Your Verification Code</h2>
+              <div style="font-size: 32px; font-weight: bold; color: #1d4ed8; letter-spacing: 8px; margin: 20px 0; font-family: monospace;">
+                ${otpCode}
+              </div>
+              <p style="color: #6b7280; margin-top: 20px;">
+                This code will expire in 5 minutes. Please do not share this code with anyone.
+              </p>
+            </div>
             
-            <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            
-            <p style="color: #999; font-size: 12px; text-align: center;">
-              MyClinic - Medical Request Management System
-            </p>
+            <div style="margin-top: 30px; padding: 20px; background-color: #fef3cd; border-radius: 8px;">
+              <p style="color: #92400e; margin: 0; font-size: 14px;">
+                <strong>Security Notice:</strong> If you did not request this code, please ignore this email and contact your administrator.
+              </p>
+            </div>
           </div>
         `,
       });
@@ -126,14 +127,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
-      // Still return the OTP for testing purposes if email fails
+      
+      // For development/testing - log OTP when email fails but don't show it visibly
       console.log('=== OTP CODE (EMAIL FAILED) ===', otpCode);
+      
+      // Still return success so user can see OTP input form
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'OTP generated but email failed to send',
-          debug_note: 'Check logs for OTP code',
-          otp_for_testing: otpCode  // Remove in production
+          message: 'OTP generated - check console for testing code'
         }),
         {
           status: 200,
@@ -148,9 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'OTP sent successfully to your email',
-        // Keep this for testing until email is fully working
-        debug_info: 'Check your email inbox for the verification code'
+        message: 'OTP sent successfully to your email'
       }),
       {
         status: 200,
@@ -180,8 +180,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         error: 'Failed to send OTP',
-        message: error.message,
-        debug_otp_for_testing: debugOTP  // Remove in production
+        message: error.message
       }),
       {
         status: 500,
