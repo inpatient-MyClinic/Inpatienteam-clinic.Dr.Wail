@@ -153,6 +153,7 @@ export const useAuthLogic = () => {
 
   const handleOTPLogin = async () => {
     try {
+      console.log('=== OTP LOGIN START ===');
       console.log('Initiating OTP login for:', email);
       
       // Check if user exists and is approved
@@ -162,6 +163,8 @@ export const useAuthLogic = () => {
         .ilike('email', email.trim())
         .maybeSingle();
 
+      console.log('Profile lookup result:', { profile, profileError });
+
       if (profileError) {
         console.error('Profile lookup error:', profileError);
         toast.error('Error checking user status. Please try again.');
@@ -169,19 +172,25 @@ export const useAuthLogic = () => {
       }
 
       if (!profile) {
+        console.error('No profile found for email:', email.trim());
         toast.error('User not found. Please contact an administrator to create your account.');
         return;
       }
 
       if (profile.status !== 'active') {
+        console.error('User not active. Status:', profile.status);
         toast.error('Your account is pending approval. Please contact an administrator.');
         return;
       }
+
+      console.log('User is valid and active. Sending OTP...');
 
       // Send OTP
       const { error: otpError } = await supabase.functions.invoke('send-otp-email', {
         body: { email: email.trim().toLowerCase() }
       });
+
+      console.log('OTP send result:', { otpError });
 
       if (otpError) {
         console.error('OTP send error:', otpError);
@@ -189,6 +198,7 @@ export const useAuthLogic = () => {
         return;
       }
 
+      console.log('=== OTP LOGIN SUCCESS ===');
       toast.success('Verification code sent to your email!');
       setShowOTPLogin(true);
     } catch (error) {

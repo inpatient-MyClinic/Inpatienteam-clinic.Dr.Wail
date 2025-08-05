@@ -46,6 +46,9 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
     setError('');
 
     try {
+      console.log('=== OTP VERIFICATION START ===');
+      console.log('Verifying OTP for email:', email, 'OTP:', otp);
+
       // Verify OTP using database function
       const { data: isValid, error: verifyError } = await supabase
         .rpc('verify_otp', { 
@@ -53,15 +56,21 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
           submitted_code: otp 
         });
 
+      console.log('OTP verification result:', { isValid, verifyError });
+
       if (verifyError) {
+        console.error('OTP verification error:', verifyError);
         throw verifyError;
       }
 
       if (!isValid) {
+        console.log('Invalid OTP provided');
         setError('Invalid or expired code. Please try again.');
         setOTP('');
         return;
       }
+
+      console.log('OTP is valid, getting user profile...');
 
       // OTP is valid - create a direct authentication session
       // Get user ID from profiles table
@@ -71,6 +80,8 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
         .ilike('email', email.trim())
         .maybeSingle();
 
+      console.log('Profile lookup for OTP login:', { profile, profileError });
+
       if (profileError) {
         console.error('Profile lookup error:', profileError);
         setError('Error loading user profile. Please contact support.');
@@ -78,9 +89,12 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
       }
 
       if (!profile) {
+        console.error('No profile found during OTP verification');
         setError('User profile not found. Please contact an administrator.');
         return;
       }
+
+      console.log('Found profile, storing user data in localStorage...');
 
       // Store proper user data in localStorage for app authentication system
       const userData = {
@@ -92,8 +106,40 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
       };
       localStorage.setItem(`user_${email.trim()}`, JSON.stringify(userData));
 
+      console.log('User data stored:', userData);
+      console.log('=== OTP VERIFICATION SUCCESS ===');
+
       toast.success('OTP verified successfully!');
       onSuccess();
+
+      // Redirect to appropriate dashboard
+      setTimeout(() => {
+        switch (profile.role) {
+          case 'admin':
+            window.location.href = '/admin';
+            break;
+          case 'doctor':
+            window.location.href = '/doctor-dashboard';
+            break;
+          case 'nurse':
+            window.location.href = '/nurse-dashboard';
+            break;
+          case 'hospital':
+            window.location.href = '/hospital-dashboard';
+            break;
+          case 'case-coordinator':
+            window.location.href = '/case-coordinator-dashboard';
+            break;
+          case 'finance':
+            window.location.href = '/finance-dashboard';
+            break;
+          case 'customer-care':
+            window.location.href = '/customer-care-dashboard';
+            break;
+          default:
+            window.location.href = '/dashboard';
+        }
+      }, 1000);
 
     } catch (error: any) {
       console.error('OTP verification error:', error);
