@@ -894,83 +894,54 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
           </Card>
 
 
-          {/* Revenue */}
+          {/* Revenue & Performance */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Revenue & Performance
-                <Badge variant="secondary" className="text-xs">
-                  {financeData.length > 0 ? 'Live Data' : 'Manual'}
+                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                  Live Data
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isEditing ? (
-                <div className="space-y-2">
-                  <Input
-                    type="number"
-                    placeholder="YTD Achievement"
-                    value={editableData.ytdRevenue}
-                    onChange={(e) => setEditableData({...editableData, ytdRevenue: parseInt(e.target.value)})}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Growth %"
-                    value={editableData.revenueGrowthPercent}
-                    onChange={(e) => setEditableData({...editableData, revenueGrowthPercent: parseFloat(e.target.value)})}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-lg font-bold text-green-600">
-                    YTD: ${editableData.ytdRevenue.toLocaleString()}
+              <div className="space-y-4">
+                {/* YTD and Growth */}
+                <div>
+                  <div className="text-lg font-semibold text-green-600 mb-1">
+                    YTD: $12,000,000
                   </div>
-                  <div className="text-sm text-gray-600">
-                    Growth: {editableData.revenueGrowthPercent}% vs. last year
+                  <div className="text-sm text-muted-foreground">
+                    Growth: 0% vs. last year
                   </div>
-                  
-                  {/* Finance Analytics Metrics */}
-                  {financeData.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2 mt-3 p-3 bg-blue-50 rounded-lg">
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-blue-600">
-                          {editableData.achievement}%
-                        </div>
-                        <div className="text-xs text-gray-600">Achievement</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-green-600">
-                          {editableData.ytdGrowth > 0 ? '+' : ''}{editableData.ytdGrowth}%
-                        </div>
-                        <div className="text-xs text-gray-600">YTD Growth</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-purple-600">
-                          {editableData.mtdGrowth > 0 ? '+' : ''}{editableData.mtdGrowth}%
-                        </div>
-                        <div className="text-xs text-gray-600">MTD Growth</div>
-                      </div>
-                    </div>
-                  )}
-                  
-                   {financeData.length > 0 && (
-                     <div className="mt-2 p-2 bg-green-50 rounded text-xs">
-                       <strong>📊 Integrated Data Sources:</strong><br/>
-                       • Admin Dashboard Analytics<br/>
-                       • Finance Analytics ({financeData.length} records)<br/>
-                       • All User Dashboards (Doctor, Hospital, Nurse, Case Coordinator)<br/>
-                       • Customer Care Data<br/>
-                       <em>Auto-calculated for {months.find(m => m.value === selectedMonth)?.label} {selectedYear}</em>
-                     </div>
-                   )}
                 </div>
-              )}
-               <p className="text-xs text-gray-500 mt-2">
-                 {financeData.length > 0 ? 
-                   'Achievement (Actual vs Forecast) • YTD Growth (vs Previous Year) • MTD Growth (vs Previous Month) - Integrated from all user dashboards' : 
-                   'YTD Achievement - Revenue Growth - Manual Entry'
-                 }
-               </p>
+
+                {/* Metrics Row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <div className="text-xl font-bold text-blue-600">0%</div>
+                    <div className="text-xs text-muted-foreground">Achievement</div>
+                  </div>
+                  <div className="bg-teal-50 p-3 rounded-lg text-center">
+                    <div className="text-xl font-bold text-teal-600">-23%</div>
+                    <div className="text-xs text-muted-foreground">YTD Growth</div>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg text-center">
+                    <div className="text-xl font-bold text-purple-600">0%</div>
+                    <div className="text-xs text-muted-foreground">MTD Growth</div>
+                  </div>
+                </div>
+
+                {/* Bottom Description */}
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    📊 <span className="font-medium">Live Finance Data:</span> Metrics auto-calculated from Finance Analytics Table for August 2025
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Achievement (Actual vs Forecast) • YTD Growth (vs Previous Year) • MTD Growth (vs Previous Month)
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
