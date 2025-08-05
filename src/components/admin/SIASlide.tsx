@@ -79,7 +79,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       { month: 'Apr25', promoter: 91, passive: 0, detractor: 9, npsScore: 83 },
       { month: 'May25', promoter: 89, passive: 11, detractor: 0, npsScore: 89 },
       { month: 'Jun25', promoter: 78, passive: 14, detractor: 8, npsScore: 74 },
-      { month: 'Jul25', promoter: 86, passive: 8, detractor: 6, npsScore: 79 }
+      { month: 'Jul25', promoter: 86, passive: 8, detractor: 6, npsScore: 86 }
     ]
   });
   const [monthlyNPS, setMonthlyNPS] = useState<Record<number, number>>({});
@@ -1290,7 +1290,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               ) : (
                 <div>
                   <div className="text-3xl font-bold text-green-600 mb-4">
-                    {editableData.npsChartData[editableData.npsChartData.length - 1]?.npsScore || 79}
+                    {editableData.npsChartData[editableData.npsChartData.length - 1]?.npsScore || 86}
                   </div>
                   <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
