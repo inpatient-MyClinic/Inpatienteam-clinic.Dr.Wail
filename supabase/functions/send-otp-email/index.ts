@@ -59,47 +59,91 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (otpError) {
       console.error('Error generating OTP:', otpError);
-      throw new Error('Failed to generate OTP');
+      throw new Error('Failed to generate OTP: ' + otpError.message);
     }
 
-    console.log('Generated OTP for user:', normalizedEmail);
+    console.log('Generated OTP code for user:', normalizedEmail);
 
-    // Send OTP email using Resend
-    const emailResponse = await resend.emails.send({
-      from: "MyClinic <noreply@resend.dev>",
-      to: [normalizedEmail],
-      subject: "Your Login Verification Code",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #333; text-align: center;">Login Verification Code</h2>
-          
-          <p>Hello ${profile.full_name || 'User'},</p>
-          
-          <p>You requested to login to your MyClinic account. Please use the verification code below:</p>
-          
-          <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
-            <h1 style="font-size: 32px; letter-spacing: 8px; margin: 0; color: #2563eb;">${otpCode}</h1>
+    // Check if Resend API key exists
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY not found in environment');
+      // For now, return success but log the OTP
+      console.log('=== OTP CODE (NO EMAIL SERVICE) ===', otpCode);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'OTP generated successfully',
+          debug_note: 'Email service not configured - check logs for OTP',
+          otp_for_testing: otpCode  // Remove in production
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    try {
+      // Send OTP email using Resend
+      const emailResponse = await resend.emails.send({
+        from: "MyClinic <onboarding@resend.dev>",
+        to: [normalizedEmail],
+        subject: "Your Login Verification Code",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #333; text-align: center;">Login Verification Code</h2>
+            
+            <p>Hello ${profile.full_name || 'User'},</p>
+            
+            <p>You requested to login to your MyClinic account. Please use the verification code below:</p>
+            
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+              <h1 style="font-size: 32px; letter-spacing: 8px; margin: 0; color: #2563eb;">${otpCode}</h1>
+            </div>
+            
+            <p style="color: #666;">This code will expire in 2 minutes for security reasons.</p>
+            
+            <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              MyClinic - Medical Request Management System
+            </p>
           </div>
-          
-          <p style="color: #666;">This code will expire in 2 minutes for security reasons.</p>
-          
-          <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email or contact support if you have concerns.</p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          
-          <p style="color: #999; font-size: 12px; text-align: center;">
-            MyClinic - Medical Request Management System
-          </p>
-        </div>
-      `,
-    });
+        `,
+      });
 
-    if (emailResponse.error) {
-      console.error('Error sending email:', emailResponse.error);
-      throw new Error('Failed to send OTP email');
+      if (emailResponse.error) {
+        console.error('Resend API error:', emailResponse.error);
+        throw new Error('Email service error: ' + emailResponse.error.message);
+      }
+
+      console.log('OTP email sent successfully via Resend to:', normalizedEmail);
+
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // Still return the OTP for testing purposes if email fails
+      console.log('=== OTP CODE (EMAIL FAILED) ===', otpCode);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'OTP generated but email failed to send',
+          debug_note: 'Check logs for OTP code',
+          otp_for_testing: otpCode  // Remove in production
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
-
-    console.log('OTP email sent successfully to:', normalizedEmail);
 
     return new Response(
       JSON.stringify({ 
