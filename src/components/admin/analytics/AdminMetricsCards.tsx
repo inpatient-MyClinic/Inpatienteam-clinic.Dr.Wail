@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ConversionRateSettings from "./ConversionRateSettings";
 
 interface AdminMetricsCardsProps {
   conversionRate: string;
@@ -36,13 +37,15 @@ export default function AdminMetricsCards({
   onToggleScheduled,
   onTogglePlannedNVD
 }: AdminMetricsCardsProps) {
+  const [showSettings, setShowSettings] = useState(false);
+  
   const includedCount = (includeDone ? doneRequests : 0) + 
                        (includeScheduled ? scheduledRequests : 0) + 
                        (includePlannedNVD ? plannedNVDRequests : 0);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <Card>
+      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowSettings(true)}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
         </CardHeader>
@@ -51,25 +54,35 @@ export default function AdminMetricsCards({
           <p className="text-xs text-muted-foreground mb-2">
             {includedCount} of {totalRequests} requests
           </p>
-          <div className="flex flex-wrap gap-1">
+          <p className="text-xs text-blue-600">Click to configure</p>
+          <div className="flex flex-wrap gap-1 mt-2">
             <Badge 
               variant={includeDone ? "default" : "outline"} 
               className="cursor-pointer text-xs"
-              onClick={onToggleDone}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDone();
+              }}
             >
               Done ({doneRequests})
             </Badge>
             <Badge 
               variant={includeScheduled ? "default" : "outline"} 
               className="cursor-pointer text-xs"
-              onClick={onToggleScheduled}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleScheduled();
+              }}
             >
               Scheduled ({scheduledRequests})
             </Badge>
             <Badge 
               variant={includePlannedNVD ? "default" : "outline"} 
               className="cursor-pointer text-xs"
-              onClick={onTogglePlannedNVD}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePlannedNVD();
+              }}
             >
               Planned NVD ({plannedNVDRequests})
             </Badge>
@@ -112,6 +125,21 @@ export default function AdminMetricsCards({
           </p>
         </CardContent>
       </Card>
+
+      <ConversionRateSettings
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        includeDone={includeDone}
+        includeScheduled={includeScheduled}
+        includePlannedNVD={includePlannedNVD}
+        doneCount={doneRequests}
+        scheduledCount={scheduledRequests}
+        plannedNVDCount={plannedNVDRequests}
+        totalRequests={totalRequests}
+        onToggleDone={onToggleDone}
+        onToggleScheduled={onToggleScheduled}
+        onTogglePlannedNVD={onTogglePlannedNVD}
+      />
     </div>
   );
 }

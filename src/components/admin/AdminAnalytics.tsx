@@ -41,9 +41,23 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [financeData, setFinanceData] = useState<any[]>([]);
   
   // State for conversion rate toggles - merge Completed and Done as "Done"
-  const [includeDone, setIncludeDone] = useState(true);
-  const [includeScheduled, setIncludeScheduled] = useState(true);
-  const [includePlannedNVD, setIncludePlannedNVD] = useState(true);
+  // Load saved settings from localStorage
+  const loadSavedSettings = () => {
+    const saved = localStorage.getItem('conversionRateSettings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (error) {
+        console.error('Error loading conversion rate settings:', error);
+      }
+    }
+    return { includeDone: true, includeScheduled: true, includePlannedNVD: true };
+  };
+
+  const savedSettings = loadSavedSettings();
+  const [includeDone, setIncludeDone] = useState(savedSettings.includeDone);
+  const [includeScheduled, setIncludeScheduled] = useState(savedSettings.includeScheduled);
+  const [includePlannedNVD, setIncludePlannedNVD] = useState(savedSettings.includePlannedNVD);
 
   // Calculate conversion rate with toggleable statuses - merge Completed and Done
   const totalRequests = cleanedData.length;
