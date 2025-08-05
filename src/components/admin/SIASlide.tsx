@@ -468,48 +468,45 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">Conversion Rate - YTD</CardTitle>
+                <CardTitle className="text-sm text-gray-600">Conversion Rate</CardTitle>
               </CardHeader>
               <CardContent>
                 {isEditing ? (
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-600 mb-2">Edit monthly conversion rates:</p>
-                    {editableData.conversionRateData.map((month, index) => (
-                      <div key={month.month} className="flex justify-between items-center">
-                        <span className="text-xs">{month.month}:</span>
-                        <Input
-                          type="number"
-                          value={month.rate}
-                          onChange={(e) => {
-                            const newData = {...editableData};
-                            newData.conversionRateData[index].rate = parseInt(e.target.value) || 0;
-                            setEditableData(newData);
-                          }}
-                          className="w-16 h-6 text-xs"
-                        />
-                      </div>
-                    ))}
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="Conversion Rate %"
+                      value={78.5}
+                      onChange={(e) => {
+                        // Handle conversion rate change
+                      }}
+                      className="text-sm"
+                    />
+                    <div className="space-y-1">
+                      <Input
+                        type="number"
+                        placeholder="Done Cases"
+                        defaultValue={164}
+                        className="text-xs"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Total Cases"
+                        defaultValue={211}
+                        className="text-xs"
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div className="h-32">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={editableData.conversionRateData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" fontSize={10} />
-                        <YAxis fontSize={10} domain={[60, 85]} />
-                        <Tooltip />
-                        <Line 
-                          type="monotone" 
-                          dataKey="rate" 
-                          stroke="#2563eb" 
-                          strokeWidth={3}
-                          dot={{ fill: '#2563eb', strokeWidth: 2, r: 6 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">78.5%</div>
+                    <div className="text-sm mt-2">
+                      <div>Done: 164 / Total: 211</div>
+                    </div>
+                    <p className="text-xs text-gray-500">In-patient cases this month</p>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 mt-2">Year-to-date conversion rate trends</p>
               </CardContent>
             </Card>
 
@@ -525,11 +522,49 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">Previous Month</CardTitle>
+                <CardTitle className="text-sm text-gray-600">Previous Month - Conversion Rate</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{previousMonthData.length}</div>
-                <p className="text-xs text-gray-500">{months.find(m => m.value === previousMonth)?.label} total cases</p>
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-600 mb-2">Edit conversion rate data:</p>
+                    {editableData.conversionRateData.map((month, index) => (
+                      <div key={month.month} className="flex justify-between items-center">
+                        <span className="text-xs">{month.month}:</span>
+                        <Input
+                          type="number"
+                          value={month.rate}
+                          onChange={(e) => {
+                            const newData = {...editableData};
+                            newData.conversionRateData[index].rate = parseInt(e.target.value) || 0;
+                            setEditableData(newData);
+                          }}
+                          className="w-12 h-6 text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="h-20 mb-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={editableData.conversionRateData}>
+                          <XAxis dataKey="month" fontSize={8} />
+                          <YAxis fontSize={8} domain={[65, 85]} />
+                          <Line 
+                            type="monotone" 
+                            dataKey="rate" 
+                            stroke="#2563eb" 
+                            strokeWidth={2}
+                            dot={{ fill: '#2563eb', strokeWidth: 1, r: 3 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="text-sm font-bold text-orange-600">YTD Cases: 1,456</div>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">Conversion trends & total received</p>
               </CardContent>
             </Card>
           </div>
