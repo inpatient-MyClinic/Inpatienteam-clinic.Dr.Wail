@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UserCheck, UserX, Clock, Mail, Phone, Building2 } from 'lucide-react';
+import { UserCheck, UserX, Clock, Mail, Phone, Building2, Edit3 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PendingUser {
@@ -23,7 +24,18 @@ export default function UserApproval() {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingUsers, setProcessingUsers] = useState<Set<string>>(new Set());
+  const [editingRoles, setEditingRoles] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  
+  const availableRoles = [
+    'doctor',
+    'nurse', 
+    'hospital',
+    'case-coordinator',
+    'finance',
+    'customer-care',
+    'admin'
+  ];
 
   useEffect(() => {
     fetchPendingUsers();
@@ -52,6 +64,42 @@ export default function UserApproval() {
       console.error('Error in fetchPendingUsers:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole as any })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating user role:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update user role",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setPendingUsers(prev => prev.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+      
+      toast({
+        title: "Role Updated",
+        description: "User role has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error in updateUserRole:', error);
+      toast({
+        title: "Error", 
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     }
   };
 
@@ -190,12 +238,51 @@ export default function UserApproval() {
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{user.full_name || 'No name provided'}</h3>
-                      <Badge variant={getRoleBadgeColor(user.role)}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </Badge>
-                    </div>
+                     <div className="flex items-center gap-2 flex-wrap">
+                       <h3 className="font-semibold">{user.full_name || 'No name provided'}</h3>
+                       <div className="flex items-center gap-2">
+                         <Badge variant={getRoleBadgeColor(user.role)}>
+                           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                         </Badge>
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => setEditingRoles(prev => {
+                             const newSet = new Set(prev);
+                             if (newSet.has(user.id)) {
+                               newSet.delete(user.id);
+                             } else {
+                               newSet.add(user.id);
+                             }
+                             return newSet;
+                           })}
+                           className="h-6 w-6 p-0"
+                         >
+                           <Edit3 className="h-3 w-3" />
+                         </Button>
+                       </div>
+                     </div>
+                     
+                     {editingRoles.has(user.id) && (
+                       <div className="flex items-center gap-2 mt-2">
+                         <label className="text-sm font-medium">Assign Role:</label>
+                         <Select 
+                           value={user.role} 
+                           onValueChange={(newRole) => updateUserRole(user.id, newRole)}
+                         >
+                           <SelectTrigger className="w-48">
+                             <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {availableRoles.map(role => (
+                               <SelectItem key={role} value={role}>
+                                 {role.charAt(0).toUpperCase() + role.slice(1).replace('-', ' ')}
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                     )}
                     
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
