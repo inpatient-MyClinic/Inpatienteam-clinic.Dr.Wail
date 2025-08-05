@@ -25,16 +25,14 @@ export const createUserAccount = async (params: CreateUserAccountParams) => {
       throw new Error('User with this email already exists');
     }
 
-    // Create auth user via Supabase auth signup
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create auth user via Supabase auth signup with admin privileges
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: params.email.toLowerCase().trim(),
       password: 'TempPassword123!', // Temporary password, user will need to change it
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: params.fullName || params.email.split('@')[0],
-          email: params.email.toLowerCase().trim()
-        }
+      email_confirm: true, // Auto-confirm email for admin-created users
+      user_metadata: {
+        full_name: params.fullName || params.email.split('@')[0],
+        email: params.email.toLowerCase().trim()
       }
     });
 
