@@ -67,22 +67,30 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
       // Get user ID from profiles table
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .single();
+        .select('id, role, status')
+        .ilike('email', email.trim())
+        .maybeSingle();
 
-      if (profileError || !profile) {
-        setError('User profile not found. Please contact support.');
+      if (profileError) {
+        console.error('Profile lookup error:', profileError);
+        setError('Error loading user profile. Please contact support.');
         return;
       }
 
-      // For demo purposes, we'll use a magic link approach
-      // In production, you'd want to create a proper session
-      localStorage.setItem(`user_${email}`, JSON.stringify({
-        email,
-        role: 'verified_otp_user',
+      if (!profile) {
+        setError('User profile not found. Please contact an administrator.');
+        return;
+      }
+
+      // Store proper user data in localStorage for app authentication system
+      const userData = {
+        email: email.trim(),
+        role: profile.role,
+        status: profile.status,
+        id: profile.id,
         loginTime: new Date().toISOString()
-      }));
+      };
+      localStorage.setItem(`user_${email.trim()}`, JSON.stringify(userData));
 
       toast.success('OTP verified successfully!');
       onSuccess();
