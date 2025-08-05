@@ -99,7 +99,7 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
       toast.success('Login successful!');
       onSuccess();
 
-      // Direct redirect
+      // Redirect with a slight delay to ensure state updates
       setTimeout(() => {
         const dashboards = {
           'admin': '/admin',
@@ -110,7 +110,10 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
           'finance': '/finance-dashboard',
           'customer-care': '/customer-care-dashboard'
         };
-        window.location.href = dashboards[profile.role] || '/dashboard';
+        
+        const targetUrl = dashboards[profile.role] || '/dashboard';
+        console.log('Redirecting to:', targetUrl);
+        window.location.href = targetUrl;
       }, 500);
 
     } catch (error: any) {
@@ -143,13 +146,16 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
     }
   };
 
-  return (
+   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle>Enter Verification Code</CardTitle>
         <CardDescription>
           We sent a 4-digit code to {email}
         </CardDescription>
+        <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+          <strong>Note:</strong> If you don't receive the email, check the browser console logs for the OTP code (for testing)
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmitOTP} className="space-y-4">

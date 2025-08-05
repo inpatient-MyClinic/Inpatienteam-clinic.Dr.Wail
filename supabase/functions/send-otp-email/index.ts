@@ -148,7 +148,9 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'OTP sent successfully to your email'
+        message: 'OTP sent successfully to your email',
+        // Keep this for testing until email is fully working
+        debug_info: 'Check your email inbox for the verification code'
       }),
       {
         status: 200,
@@ -161,10 +163,25 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error('Error in send-otp-email function:', error);
+    
+    // Try to get the OTP anyway for debugging
+    let debugOTP = 'unknown';
+    try {
+      const { data: testOTP } = await supabase
+        .rpc('generate_otp', { user_email: email.trim().toLowerCase() });
+      if (testOTP) {
+        debugOTP = testOTP;
+        console.log('=== DEBUG OTP FOR TESTING ===', debugOTP);
+      }
+    } catch (debugError) {
+      console.error('Could not generate debug OTP:', debugError);
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: 'Failed to send OTP',
-        message: error.message 
+        message: error.message,
+        debug_otp_for_testing: debugOTP  // Remove in production
       }),
       {
         status: 500,

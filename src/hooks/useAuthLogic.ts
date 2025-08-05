@@ -161,13 +161,16 @@ export const useAuthLogic = () => {
 
   const handleOTPLogin = async () => {
     try {
-      console.log('=== SIMPLE OTP LOGIN ===');
-      console.log('Sending OTP to:', email);
+      console.log('=== OTP LOGIN START ===');
+      console.log('Email:', email);
+      console.log('Calling send-otp-email function...');
       
-      // Let the edge function handle all validation
+      // Call the edge function to send OTP
       const { data, error: otpError } = await supabase.functions.invoke('send-otp-email', {
         body: { email: email.trim() }
       });
+
+      console.log('Edge function response:', { data, otpError });
 
       if (otpError) {
         console.error('OTP Error:', otpError);
@@ -176,12 +179,13 @@ export const useAuthLogic = () => {
         } else if (otpError.message?.includes('not active')) {
           toast.error('Account pending approval. Contact administrator.');
         } else {
-          toast.error('Failed to send verification code. Try again.');
+          toast.error(`Failed to send verification code: ${otpError.message}`);
         }
         return;
       }
 
-      toast.success('Verification code sent to your email!');
+      console.log('=== OTP SENT - SHOWING OTP SCREEN ===');
+      toast.success('Verification code sent to your email! Check your inbox.');
       setShowOTPLogin(true);
     } catch (error) {
       console.error('Login error:', error);
