@@ -51,14 +51,14 @@ export const createUserAccount = async (params: CreateUserAccountParams) => {
       throw new Error('User creation failed - no user returned');
     }
 
-    // Auto-confirm the user to bypass email verification
-    const { error: confirmError } = await supabase.auth.admin.updateUserById(
-      authData.user.id,
-      { email_confirm: true }
-    );
-
-    if (confirmError) {
-      console.error('Error confirming user:', confirmError);
+    // Auto-confirm the user via edge function
+    try {
+      await supabase.functions.invoke('auto-confirm-user', {
+        body: { email: params.email.toLowerCase().trim() }
+      });
+      console.log('User auto-confirmed successfully');
+    } catch (confirmError) {
+      console.error('Error auto-confirming user:', confirmError);
       // Continue anyway - user can still login with OTP
     }
 

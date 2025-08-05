@@ -150,33 +150,24 @@ export const useAuthLogic = () => {
         if (error.message === 'Invalid login credentials') {
           toast.error('Invalid email or password. Please try again.');
         } else if (error.message.includes('Email not confirmed')) {
-          // Instead of blocking, try to auto-confirm for admin users
+          // Try to auto-confirm the user via edge function
           console.log('Email not confirmed, attempting auto-confirmation...');
           try {
-            // Get the user ID from profiles
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('email', email.trim().toLowerCase())
-              .single();
-              
-            if (profiles) {
-              // Auto-confirm the user
-              await supabase.auth.admin.updateUserById(
-                profiles.id,
-                { email_confirm: true }
-              );
-              
-              // Retry login
-              const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-                email: email.trim().toLowerCase(),
-                password,
-              });
-              
-              if (!retryError && retryData.user) {
-                handleSuccessfulLogin(retryData.user.id);
-                return;
-              }
+            await supabase.functions.invoke('auto-confirm-user', {
+              body: { email: email.trim().toLowerCase() }
+            });
+            
+            // Retry login after confirmation
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+              email: email.trim().toLowerCase(),
+              password,
+            });
+            
+            if (!retryError && retryData.user) {
+              handleSuccessfulLogin(retryData.user.id);
+              return;
+            } else {
+              console.error('Retry login failed:', retryError);
             }
           } catch (confirmError) {
             console.error('Auto-confirmation failed:', confirmError);
