@@ -268,14 +268,19 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     { value: 12, label: "December" }
   ];
 
-  // Get integrated data and filter by selected month
+  // Get integrated data and filter by PREVIOUS month (selected month shows previous month's data)
   const integratedSIAData = loadIntegratedSIAData();
+  
+  // Calculate the previous month for filtering
+  const filterMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+  const filterYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+  
   const filteredData = integratedSIAData.consolidatedData.filter(item => {
     const itemDate = new Date(item.date || item.createdAt);
-    return itemDate.getMonth() + 1 === selectedMonth && itemDate.getFullYear() === selectedYear;
+    return itemDate.getMonth() + 1 === filterMonth && itemDate.getFullYear() === filterYear;
   });
 
-  // Calculate MC branch data
+  // Calculate MC branch data using previous month filter
   const mcj1Data = filteredData.filter(item => 
     item.referredFrom && item.referredFrom.includes("MCJ1")
   );
@@ -284,14 +289,14 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   );
   const mcBranchData = [...mcj1Data, ...mcj2Data];
 
-   // Calculate IP Cases - MTD (In-Patient cases)
+   // Calculate IP Cases - Previous Month Data (In-Patient cases)
    const ipCases = filteredData.filter(item => 
      item.type === "IP" || 
      item.admissionType === "In-Patient" ||
      (item.description && item.description.includes("IP"))
    );
    
-   // Calculate Done Cases (Completed + Scheduled + Planned NVD) - match admin dashboard
+   // Calculate Done Cases (Completed + Scheduled + Planned NVD) for previous month
    const doneStatuses = ['Done', 'Completed', 'Scheduled', 'Planned NVD'];
    const doneCases = filteredData.filter(item => {
      const status = item.operationStatus || item.status;
@@ -303,12 +308,12 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
    const actualDoneCount = adminStatusCounts.done || 164; // Default to 164 as per user's July data
    const actualTotalCount = adminStatusCounts.total || 211; // Default to 211 as per user's July data
 
-  // Calculate previous month data from integrated sources
-  const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
-  const previousYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+  // Calculate previous month data from integrated sources (now showing data 2 months back for comparison)
+  const comparisonMonth = filterMonth === 1 ? 12 : filterMonth - 1;
+  const comparisonYear = filterMonth === 1 ? filterYear - 1 : filterYear;
   const previousMonthData = integratedSIAData.consolidatedData.filter(item => {
     const itemDate = new Date(item.date || item.createdAt);
-    return itemDate.getMonth() + 1 === previousMonth && itemDate.getFullYear() === previousYear;
+    return itemDate.getMonth() + 1 === comparisonMonth && itemDate.getFullYear() === comparisonYear;
   });
 
   // Top 5 Hospitals
@@ -521,7 +526,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">SIA Performance Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">SIA Performance Dashboard - {months.find(m => m.value === filterMonth)?.label} {filterYear}</h1>
         </div>
         
         <div className="flex items-center gap-4">
