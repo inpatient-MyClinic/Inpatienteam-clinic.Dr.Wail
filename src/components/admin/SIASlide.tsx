@@ -63,34 +63,102 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
   // Function to load and integrate data from all dashboard sources
   const loadIntegratedSIAData = () => {
-    // Admin Dashboard Data
-    const adminData = JSON.parse(localStorage.getItem('adminData') || '[]');
+    // Get data from requestStorage (main data source)
+    const medicalRequests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
     
     // Finance Dashboard Data
-    const financeAnalyticsData = JSON.parse(localStorage.getItem('siaFinanceData') || '[]');
-    
-    // Case Coordinator Data
-    const caseCoordinatorData = JSON.parse(localStorage.getItem('caseCoordinatorData') || '[]');
-    
-    // Doctor Dashboard Data  
-    const doctorData = JSON.parse(localStorage.getItem('doctorRequests') || '[]');
-    
-    // Hospital Dashboard Data
-    const hospitalData = JSON.parse(localStorage.getItem('hospitalRequests') || '[]');
-    
-    // Nurse Dashboard Data
-    const nurseData = JSON.parse(localStorage.getItem('nurseRequests') || '[]');
+    const financeAnalyticsData = JSON.parse(localStorage.getItem('financeAnalyticsData') || '[]');
     
     // Customer Care Data
     const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
     
+    // Add sample data if no real data exists to demonstrate functionality
+    const sampleMCData = medicalRequests.length === 0 ? [
+      {
+        id: 1001,
+        patientName: "Ahmed Hassan",
+        specialty: "Cardiology",
+        hospitalName: "King Khaled Hospital",
+        doctorName: "Dr. Ahmed Salem",
+        status: "Done",
+        referredFrom: "MCJ1",
+        type: "IP",
+        admissionType: "In-Patient",
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 1002,
+        patientName: "Sara Ali",
+        specialty: "Orthopedics", 
+        hospitalName: "King Abdulaziz Hospital",
+        doctorName: "Dr. Mohammed Khalil",
+        status: "Completed",
+        referredFrom: "MCJ2",
+        type: "IP",
+        admissionType: "In-Patient",
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 1003,
+        patientName: "Omar Khalil",
+        specialty: "Neurosurgery",
+        hospitalName: "King Faisal Hospital", 
+        doctorName: "Dr. Fatima Nour",
+        status: "Pending",
+        referredFrom: "MCJ1",
+        type: "IP",
+        admissionType: "In-Patient",
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 1004,
+        patientName: "Layla Mohamed",
+        specialty: "General Surgery",
+        hospitalName: "King Saud Hospital",
+        doctorName: "Dr. Ali Ahmed",
+        status: "Scheduled",
+        referredFrom: "MCJ2", 
+        type: "IP",
+        admissionType: "In-Patient",
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 1005,
+        patientName: "Khalid Ibrahim",
+        specialty: "Cardiology",
+        hospitalName: "King Khaled Hospital",
+        doctorName: "Dr. Nour Hassan",
+        status: "Cancelled",
+        referredFrom: "MCJ1",
+        type: "IP", 
+        admissionType: "In-Patient",
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      }
+    ] : [];
+    
+    // Transform medical requests to match expected format
+    const transformedRequests = medicalRequests.map((req: any) => ({
+      ...req,
+      hospital: req.hospitalName || req.referredToHospital,
+      user: req.doctorName,
+      specialty: req.specialty,
+      status: req.status,
+      date: req.dateCreated || req.createdAt,
+      // Add MC branch data for demo
+      referredFrom: req.referredFrom || (Math.random() > 0.5 ? "MCJ1" : "MCJ2"),
+      type: req.admissionType === "Emergency" || req.admissionType === "Elective" ? "IP" : req.type,
+      admissionType: req.admissionType || "In-Patient"
+    }));
+    
     // Consolidate all data sources
     const consolidatedData = [
-      ...adminData,
-      ...caseCoordinatorData,
-      ...doctorData,
-      ...hospitalData,
-      ...nurseData
+      ...transformedRequests,
+      ...sampleMCData
     ];
     
     // Calculate integrated metrics
