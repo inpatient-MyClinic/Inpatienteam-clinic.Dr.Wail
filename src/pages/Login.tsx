@@ -64,8 +64,6 @@ const Login = () => {
     }
   }, [currentUserRole, navigate]);
 
-  console.log('🔍 LOGIN COMPONENT RENDER - showOTPLogin:', showOTPLogin);
-  console.log('🔍 LOGIN COMPONENT RENDER - isFirstTimeLogin:', isFirstTimeLogin);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col">
@@ -82,27 +80,13 @@ const Login = () => {
             <p className="text-blue-700 text-sm">Surgical Case Management System</p>
           </div>
 
-          {/* DEBUGGING STATE DISPLAY */}
-          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded">
-            <div className="text-xs">
-              <strong>DEBUG INFO:</strong><br/>
-              showOTPLogin: {showOTPLogin ? 'TRUE' : 'FALSE'}<br/>
-              isFirstTimeLogin: {isFirstTimeLogin ? 'TRUE' : 'FALSE'}<br/>
-              email: {email}
-            </div>
-          </div>
 
           {showOTPLogin ? (
-            <div>
-              <div className="mb-4 p-3 bg-green-100 border border-green-400 rounded text-center">
-                <strong>✅ OTP LOGIN ACTIVE</strong>
-              </div>
-              <OTPLoginForm
-                email={email}
-                onSuccess={handleOTPSuccess}
-                onBack={handleBackFromOTP}
-              />
-            </div>
+            <OTPLoginForm
+              email={email}
+              onSuccess={handleOTPSuccess}
+              onBack={handleBackFromOTP}
+            />
           ) : (
             <Card className="shadow-lg">
               <CardHeader className="text-center">

@@ -111,14 +111,20 @@ export const useAuthLogic = () => {
     
     console.log('=== LOGIN FLOW START ===');
     console.log('Email input:', email);
-    console.log('Current showOTPLogin state:', showOTPLogin);
     console.log('OTP setting:', localStorage.getItem('otpEnabled'));
     
     const normalizedEmail = email.trim().toLowerCase();
     
-    // Force OTP to be enabled for testing
-    console.log('🔧 FORCING OTP LOGIN FOR DEBUGGING');
-    await handleOTPLogin();
+    // Check if OTP is enabled or disabled
+    const otpEnabled = localStorage.getItem('otpEnabled') !== 'false';
+    
+    if (otpEnabled) {
+      console.log('OTP is ENABLED - calling handleOTPLogin');
+      await handleOTPLogin();
+    } else {
+      console.log('OTP is DISABLED - calling handleAdminLogin');
+      await handleAdminLogin();
+    }
   };
 
   const handleOTPLogin = async () => {
@@ -127,12 +133,8 @@ export const useAuthLogic = () => {
       console.log('Raw Email Input:', email);
       console.log('showOTPLogin state before:', showOTPLogin);
       
-      // **CRITICAL FIX: Set showOTPLogin IMMEDIATELY**
-      console.log('🚀 SETTING showOTPLogin to TRUE IMMEDIATELY');
+      // Set showOTPLogin to true
       setShowOTPLogin(true);
-      
-      // Show immediate feedback
-      toast.success('Preparing OTP login...', { duration: 3000 });
       
       // First check if user exists in profiles
       const normalizedEmail = email.trim().toLowerCase();
