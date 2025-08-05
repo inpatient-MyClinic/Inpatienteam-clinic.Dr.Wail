@@ -288,6 +288,31 @@ const SystemSettings = () => {
               </Select>
               <p className="text-sm text-muted-foreground mt-1">All new users will be assigned to this category by default</p>
             </div>
+
+            {/* OTP Authentication Toggle */}
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">OTP Authentication</Label>
+                  <p className="text-sm text-muted-foreground">Require OTP verification for user login</p>
+                </div>
+                <Switch
+                  checked={localStorage.getItem('otpEnabled') !== 'false'}
+                  onCheckedChange={(checked) => {
+                    localStorage.setItem('otpEnabled', checked.toString());
+                    toast({
+                      title: checked ? "OTP Enabled" : "OTP Disabled",
+                      description: checked 
+                        ? "Users will need to enter OTP codes to login" 
+                        : "Users can login directly without OTP verification"
+                    });
+                  }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                When disabled, users can login with just email/password. Useful for testing or environments without email service.
+              </p>
+            </div>
             
             <div className="pt-4 border-t">
               <h3 className="font-medium mb-2">Excel Upload Templates</h3>

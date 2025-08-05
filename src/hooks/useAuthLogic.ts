@@ -110,9 +110,17 @@ export const useAuthLogic = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For non-admin users, use OTP login
+    // Check if OTP is disabled in admin settings
+    const otpEnabled = localStorage.getItem('otpEnabled') !== 'false';
+    
+    // For non-admin users, check OTP setting
     if (!isAdminEmail(email)) {
-      return handleOTPLogin();
+      if (otpEnabled) {
+        return handleOTPLogin();
+      } else {
+        // OTP disabled - try direct login for non-admin users
+        return handleDirectLogin();
+      }
     }
     
     try {
@@ -177,6 +185,60 @@ export const useAuthLogic = () => {
       setShowOTPLogin(true);
     } catch (error) {
       console.error('Login error:', error);
+      toast.error('Login failed. Please try again.');
+    }
+  };
+
+  const handleDirectLogin = async () => {
+    try {
+      console.log('=== DIRECT LOGIN (OTP DISABLED) ===');
+      console.log('Direct login for:', email);
+      
+      // Check if user exists and is active first
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, status, email')
+        .or(`email.eq.${email.trim().toLowerCase()},email.ilike.${email.trim()}`);
+
+      if (profileError || !profiles || profiles.length === 0) {
+        toast.error('User not found. Please contact an administrator.');
+        return;
+      }
+
+      const profile = profiles[0];
+      
+      if (profile.status !== 'active') {
+        toast.error('Account pending approval. Contact administrator.');
+        return;
+      }
+
+      // Store user data directly in localStorage (bypass Supabase auth)
+      const userData = {
+        email: profile.email,
+        role: profile.role,
+        status: profile.status,
+        id: profile.id,
+        loginTime: new Date().toISOString()
+      };
+      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
+
+      toast.success('Login successful! (OTP bypassed)');
+      
+      // Redirect based on role
+      const dashboards = {
+        'admin': '/admin',
+        'doctor': '/doctor-dashboard',
+        'nurse': '/nurse-dashboard',
+        'hospital': '/hospital-dashboard',
+        'case-coordinator': '/case-coordinator-dashboard',
+        'finance': '/finance-dashboard',
+        'customer-care': '/customer-care-dashboard'
+      };
+      
+      navigate(dashboards[profile.role] || '/dashboard');
+      
+    } catch (error) {
+      console.error('Direct login error:', error);
       toast.error('Login failed. Please try again.');
     }
   };
