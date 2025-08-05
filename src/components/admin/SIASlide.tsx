@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ComposedChart } from 'recharts';
-import { Calendar, Save, History, ArrowLeft } from "lucide-react";
+import { Calendar, Save, History, ArrowLeft, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SIASlideProps {
@@ -399,6 +399,119 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     setIsEditing(false);
   };
 
+  const exportToPDF = () => {
+    // Create HTML content for PDF export
+    const currentDate = new Date().toLocaleDateString();
+    const monthName = months.find(m => m.value === selectedMonth)?.label || 'Current';
+    const version = `v${selectedYear}.${selectedMonth.toString().padStart(2, '0')}`;
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>SIA Executive Dashboard - ${monthName} ${selectedYear}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: Arial, sans-serif; line-height: 1.4; color: #333; }
+            .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 2px solid #e5e7eb; }
+            .logo { font-size: 24px; font-weight: bold; color: #1e40af; }
+            .version { font-size: 14px; color: #6b7280; }
+            .content { padding: 20px; }
+            .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+            .metric-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; text-align: center; }
+            .metric-value { font-size: 28px; font-weight: bold; color: #1e40af; margin-bottom: 5px; }
+            .metric-label { font-size: 12px; color: #6b7280; }
+            .section { margin-bottom: 30px; }
+            .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1f2937; }
+            .revenue-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+            .revenue-card { background: #f8fafc; border-radius: 8px; padding: 15px; text-align: center; }
+            .revenue-value { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+            .achievement { color: #2563eb; } .ytd-growth { color: #0d9488; } .mtd-growth { color: #7c3aed; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">🏥 SIA Executive Dashboard</div>
+            <div>
+              <div>${monthName} ${selectedYear}</div>
+              <div class="version">${version} | Generated: ${currentDate}</div>
+            </div>
+          </div>
+          
+          <div class="content">
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-value">211</div>
+                <div class="metric-label">MC Branch Cases</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">78.5%</div>
+                <div class="metric-label">Conversion Rate</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">164</div>
+                <div class="metric-label">Done Cases</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value">${editableData.npsScore}</div>
+                <div class="metric-label">NPS Score</div>
+              </div>
+            </div>
+            
+            <div class="section">
+              <div class="section-title">Revenue & Performance</div>
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 18px; color: #059669; font-weight: bold;">YTD: $${financeData.length > 0 ? 
+                  financeData.reduce((total, transaction) => total + parseFloat(transaction.amount?.replace(/[^0-9.-]+/g, '') || '0'), 0).toLocaleString() : 
+                  '12,000,000'}</div>
+                <div style="font-size: 14px; color: #6b7280;">Growth: ${financeData.length > 0 ? 
+                  ((financeData.filter(t => t.status === 'Paid').length / financeData.length * 100) - 100).toFixed(1) : '0'}% vs. last year</div>
+              </div>
+              <div class="revenue-grid">
+                <div class="revenue-card">
+                  <div class="revenue-value achievement">${financeData.length > 0 ? 
+                    ((financeData.filter(t => t.status === 'Paid').length / financeData.length) * 100).toFixed(0) : '0'}%</div>
+                  <div class="metric-label">Achievement</div>
+                </div>
+                <div class="revenue-card">
+                  <div class="revenue-value ytd-growth">${financeData.length > 0 ? 
+                    (((financeData.filter(t => t.status === 'Paid').length / financeData.length) * 100) - 123).toFixed(0) : '-23'}%</div>
+                  <div class="metric-label">YTD Growth</div>
+                </div>
+                <div class="revenue-card">
+                  <div class="revenue-value mtd-growth">${financeData.length > 0 ? 
+                    ((financeData.filter(t => t.status === 'Pending').length / financeData.length) * 100 - 100).toFixed(0) : '0'}%</div>
+                  <div class="metric-label">MTD Growth</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="footer">
+            SIA Executive Dashboard | ${version} | Confidential & Proprietary
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Create and trigger download
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SIA-Dashboard-${monthName}-${selectedYear}-${version}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Dashboard Exported",
+      description: `SIA Dashboard exported as HTML for ${monthName} ${selectedYear} (${version})`
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       {/* Header */}
@@ -437,6 +550,15 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
           <Button onClick={() => setIsEditing(!isEditing)} variant="outline">
             {isEditing ? "Cancel Edit" : "Edit"}
+          </Button>
+          
+          <Button 
+            onClick={exportToPDF}
+            variant="outline"
+            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
           </Button>
           
           <Button onClick={handleSave}>
