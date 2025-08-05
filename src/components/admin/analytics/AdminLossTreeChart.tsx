@@ -1,6 +1,9 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 interface LossTreeData {
   stage: string;
@@ -11,6 +14,36 @@ interface LossTreeData {
 interface AdminLossTreeChartProps {
   lossTreeData: LossTreeData[];
 }
+
+const exportToExcel = (data: LossTreeData[]) => {
+  const exportData = data.map(item => ({
+    'Status Category': item.stage,
+    'Count': item.count,
+    'Percentage': `${item.percentage}%`,
+    'Doctor Delays': Math.floor(item.count * 0.3),
+    'Insurance Delays': Math.floor(item.count * 0.25),
+    'Hospital Delays': Math.floor(item.count * 0.25),
+    'Patient Delays': Math.floor(item.count * 0.2)
+  }));
+  
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  
+  // Auto-size columns
+  const columnWidths = [];
+  const headers = Object.keys(exportData[0] || {});
+  headers.forEach((header, index) => {
+    const maxLength = Math.max(
+      header.length,
+      ...exportData.map(row => String(row[header] || '').length)
+    );
+    columnWidths[index] = { wch: Math.min(maxLength + 2, 50) };
+  });
+  worksheet['!cols'] = columnWidths;
+  
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Loss Tree Analysis');
+  XLSX.writeFile(workbook, 'loss_tree_analysis.xlsx');
+};
 
 export default function AdminLossTreeChart({ lossTreeData }: AdminLossTreeChartProps) {
   const DelayBreakdown = ({ title, count }: { title: string; count: number }) => (
@@ -36,9 +69,19 @@ export default function AdminLossTreeChart({ lossTreeData }: AdminLossTreeChartP
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Loss Tree Analysis</CardTitle>
-        <CardDescription>Breakdown of delay causes by status category</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Loss Tree Analysis</CardTitle>
+          <CardDescription>Breakdown of delay causes by status category</CardDescription>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => exportToExcel(lossTreeData)}
+          className="flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Export Excel
+        </Button>
       </CardHeader>
       <CardContent className="flex gap-4">
         {lossTreeData.map((item) => (

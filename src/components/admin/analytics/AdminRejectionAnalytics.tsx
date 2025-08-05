@@ -1,8 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, Eye } from "lucide-react";
+import * as XLSX from 'xlsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface AdminRejectionAnalyticsProps {
   data: any[];
@@ -46,6 +50,36 @@ interface DoctorRejectionRate {
 }
 
 export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalyticsProps) {
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  
+  // Function to export data to Excel
+  const exportToExcel = (exportData: any[], filename: string) => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    
+    // Auto-size columns
+    const columnWidths = [];
+    const headers = Object.keys(exportData[0] || {});
+    headers.forEach((header, index) => {
+      const maxLength = Math.max(
+        header.length,
+        ...exportData.map(row => String(row[header] || '').length)
+      );
+      columnWidths[index] = { wch: Math.min(maxLength + 2, 50) };
+    });
+    worksheet['!cols'] = columnWidths;
+    
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+    XLSX.writeFile(workbook, filename);
+  };
+  
+  // Function to get doctor's rejected requests
+  const getDoctorRejectedRequests = (doctorName: string) => {
+    return data.filter(item => 
+      item.user === doctorName && 
+      (item.status === 'Rejected' || item.status === 'Cancelled')
+    );
+  };
   // Calculate specialty rejection rates
   const specialtyStats = data.reduce((acc, item) => {
     const specialty = item.specialty || 'Unknown';
@@ -166,8 +200,25 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
 
       {/* Top 3 Doctors with High Rejection Rates */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-orange-600">Top 3 Doctors - Highest Rejection Rates</CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              const exportData = top3DoctorsRejection.map((doctor, index) => ({
+                'Rank': index + 1,
+                'Doctor': doctor.doctor,
+                'Total Cases': doctor.total,
+                'Rejected Cases': doctor.rejected,
+                'Rejection Rate': `${doctor.rejectionRate}%`
+              }));
+              exportToExcel(exportData, 'top_3_doctors_rejection_rates.xlsx');
+            }}
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -178,6 +229,7 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
                 <TableHead className="text-center">Total Cases</TableHead>
                 <TableHead className="text-center">Rejected Cases</TableHead>
                 <TableHead className="text-center">Rejection Rate</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -193,6 +245,73 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
                   <TableCell className="text-center">{doctor.rejected}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="destructive">{doctor.rejectionRate}%</Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View Requests
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Rejected Requests for {doctor.doctor}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm text-gray-600">
+                              Total rejected/cancelled requests: {doctor.rejected}
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const rejectedRequests = getDoctorRejectedRequests(doctor.doctor);
+                                const exportData = rejectedRequests.map(req => ({
+                                  'Request ID': req.id,
+                                  'Patient Name': req.patientName || 'N/A',
+                                  'Service Description': req.serviceDescription || req.description,
+                                  'Hospital': req.hospital,
+                                  'Status': req.status,
+                                  'Specialty': req.specialty,
+                                  'Date': req.date || req.createdAt,
+                                  'Rejection Reason': req.rejectionReason || 'Not specified'
+                                }));
+                                exportToExcel(exportData, `${doctor.doctor}_rejected_requests.xlsx`);
+                              }}
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Export
+                            </Button>
+                          </div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Request ID</TableHead>
+                                <TableHead>Patient</TableHead>
+                                <TableHead>Service</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Date</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {getDoctorRejectedRequests(doctor.doctor).map((request, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell>{request.id}</TableCell>
+                                  <TableCell>{request.patientName || 'N/A'}</TableCell>
+                                  <TableCell>{request.serviceDescription || request.description}</TableCell>
+                                  <TableCell>
+                                    <Badge variant="destructive">{request.status}</Badge>
+                                  </TableCell>
+                                  <TableCell>{request.date || request.createdAt}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               ))}

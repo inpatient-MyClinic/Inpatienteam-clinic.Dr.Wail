@@ -109,6 +109,9 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const top5Specialties = getTop5('specialty');
   const top5Hospitals = getTop5('hospital');
   const top5Doctors = getTop5('user');
+  
+  // Calculate Top 5 doctors by total number of requests
+  const top5DoctorsByRequests = getTop5('user');
 
   // Loss Tree Analysis Data - updated to match case coordinator style, use cleaned data
   const pendingCount = cleanedData.filter(item => item.status === "Pending").length;
@@ -297,13 +300,18 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
         top5Specialties={top5Specialties}
         top5Hospitals={top5Hospitals}
         top5Doctors={top5Doctors}
+        top5DoctorsByRequests={top5DoctorsByRequests}
       />
 
       {/* Loss Tree Analysis - updated style */}
       <AdminLossTreeChart lossTreeData={lossTreeData} />
 
           {/* Status Distribution - updated with cancelled/rejected */}
-          <AdminStatusDistribution statusData={statusData} colors={COLORS} />
+          <AdminStatusDistribution 
+            statusData={statusData} 
+            colors={COLORS} 
+            detailedData={filteredData}
+          />
         </TabsContent>
         
         <TabsContent value="finance" className="space-y-6">

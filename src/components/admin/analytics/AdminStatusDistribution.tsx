@@ -1,7 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface StatusData {
   name: string;
@@ -11,10 +15,29 @@ interface StatusData {
 interface AdminStatusDistributionProps {
   statusData: StatusData[];
   colors: string[];
+  detailedData?: any[];
 }
 
-export default function AdminStatusDistribution({ statusData, colors }: AdminStatusDistributionProps) {
+export default function AdminStatusDistribution({ statusData, colors, detailedData = [] }: AdminStatusDistributionProps) {
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const total = statusData.reduce((sum, item) => sum + item.value, 0);
+  
+  // Filter and paginate detailed data if provided
+  const filteredDetailedData = detailedData.filter(item => {
+    const matchesStatus = filterStatus === "all" || item.status === filterStatus;
+    const matchesSearch = searchTerm === "" || 
+      item.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.hospital?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+  
+  const totalPages = Math.ceil(filteredDetailedData.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedData = filteredDetailedData.slice(startIndex, startIndex + rowsPerPage);
   
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -84,6 +107,123 @@ export default function AdminStatusDistribution({ statusData, colors }: AdminSta
             );
           })}
         </div>
+        
+        {/* Detailed Data Table */}
+        {detailedData.length > 0 && (
+          <div className="mt-6 space-y-4">
+            <h4 className="text-lg font-semibold">Detailed Request Data</h4>
+            
+            {/* Filters */}
+            <div className="flex gap-4 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Status:</label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Search:</label>
+                <Input
+                  placeholder="Search by patient, doctor, hospital..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-64"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Rows per page:</label>
+                <Select value={rowsPerPage.toString()} onValueChange={(value) => {
+                  setRowsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Table */}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Doctor</TableHead>
+                  <TableHead>Hospital</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.id}</TableCell>
+                    <TableCell>{item.patientName || 'N/A'}</TableCell>
+                    <TableCell>{item.user || 'N/A'}</TableCell>
+                    <TableCell>{item.hospital || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={
+                          item.status === 'Completed' ? 'default' : 
+                          item.status === 'Pending' ? 'secondary' : 
+                          'destructive'
+                        }
+                      >
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.date || item.createdAt}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            {/* Pagination */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Showing {startIndex + 1} to {Math.min(startIndex + rowsPerPage, filteredDetailedData.length)} of {filteredDetailedData.length} results
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

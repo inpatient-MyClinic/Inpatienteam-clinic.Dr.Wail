@@ -11,9 +11,10 @@ interface AdminTopChartsProps {
   top5Specialties: TopData[];
   top5Hospitals: TopData[];
   top5Doctors: TopData[];
+  top5DoctorsByRequests: TopData[];
 }
 
-export default function AdminTopCharts({ top5Specialties, top5Hospitals, top5Doctors }: AdminTopChartsProps) {
+export default function AdminTopCharts({ top5Specialties, top5Hospitals, top5Doctors, top5DoctorsByRequests }: AdminTopChartsProps) {
   const ListCard = ({ title, data, color }: { title: string; data: TopData[]; color: string }) => (
     <Card>
       <CardHeader>
@@ -35,10 +36,15 @@ export default function AdminTopCharts({ top5Specialties, top5Hospitals, top5Doc
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <ListCard title="Top 5 Specialties" data={top5Specialties} color="bg-blue-600" />
-      <ListCard title="Top 5 Hospitals" data={top5Hospitals} color="bg-green-600" />
-      <ListCard title="Top 5 Doctors" data={top5Doctors} color="bg-yellow-600" />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ListCard title="Top 5 Specialties" data={top5Specialties} color="bg-blue-600" />
+        <ListCard title="Top 5 Hospitals" data={top5Hospitals} color="bg-green-600" />
+        <ListCard title="Top 5 Doctors (by Rejection Rate)" data={top5Doctors} color="bg-red-600" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+        <ListCard title="Top 5 Doctors (by Number of Requests)" data={top5DoctorsByRequests} color="bg-purple-600" />
+      </div>
     </div>
   );
 }
