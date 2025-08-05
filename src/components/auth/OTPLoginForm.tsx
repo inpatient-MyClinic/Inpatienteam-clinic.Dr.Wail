@@ -70,87 +70,48 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
         return;
       }
 
-      console.log('OTP is valid, getting user profile...');
+      console.log('OTP verified! Getting user profile...');
 
-      const normalizedEmail = email.trim().toLowerCase();
-      console.log('Looking up profile for:', normalizedEmail);
-
-      // Get user profile with multiple fallback approaches
-      let profile = null;
-      
-      // First try: exact match
-      const { data: profile1, error: error1 } = await supabase
+      // Get user profile directly
+      const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, role, status, email')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-      
-      if (profile1) {
-        profile = profile1;
-      } else {
-        // Second try: case-insensitive match
-        const { data: profile2, error: error2 } = await supabase
-          .from('profiles')
-          .select('id, role, status, email')
-          .ilike('email', normalizedEmail)
-          .maybeSingle();
-        profile = profile2;
-      }
+        .or(`email.eq.${email.trim().toLowerCase()},email.ilike.${email.trim()}`);
 
-      console.log('Profile lookup for OTP login:', { profile });
-
-      if (!profile) {
-        console.error('No profile found during OTP verification');
-        setError('User profile not found. Please contact an administrator.');
+      if (profileError || !profiles || profiles.length === 0) {
+        setError('User profile not found. Contact administrator.');
         return;
       }
 
-      console.log('Found profile, storing user data in localStorage...');
+      const profile = profiles[0];
+      console.log('Profile found:', profile);
 
-      // Store proper user data in localStorage for app authentication system
+      // Store user data in localStorage
       const userData = {
-        email: email.trim(),
+        email: profile.email,
         role: profile.role,
         status: profile.status,
         id: profile.id,
         loginTime: new Date().toISOString()
       };
-      localStorage.setItem(`user_${email.trim()}`, JSON.stringify(userData));
+      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
 
-      console.log('User data stored:', userData);
-      console.log('=== OTP VERIFICATION SUCCESS ===');
-
-      toast.success('OTP verified successfully!');
+      toast.success('Login successful!');
       onSuccess();
 
-      // Redirect to appropriate dashboard
+      // Direct redirect
       setTimeout(() => {
-        switch (profile.role) {
-          case 'admin':
-            window.location.href = '/admin';
-            break;
-          case 'doctor':
-            window.location.href = '/doctor-dashboard';
-            break;
-          case 'nurse':
-            window.location.href = '/nurse-dashboard';
-            break;
-          case 'hospital':
-            window.location.href = '/hospital-dashboard';
-            break;
-          case 'case-coordinator':
-            window.location.href = '/case-coordinator-dashboard';
-            break;
-          case 'finance':
-            window.location.href = '/finance-dashboard';
-            break;
-          case 'customer-care':
-            window.location.href = '/customer-care-dashboard';
-            break;
-          default:
-            window.location.href = '/dashboard';
-        }
-      }, 1000);
+        const dashboards = {
+          'admin': '/admin',
+          'doctor': '/doctor-dashboard',
+          'nurse': '/nurse-dashboard',
+          'hospital': '/hospital-dashboard',
+          'case-coordinator': '/case-coordinator-dashboard',
+          'finance': '/finance-dashboard',
+          'customer-care': '/customer-care-dashboard'
+        };
+        window.location.href = dashboards[profile.role] || '/dashboard';
+      }, 500);
 
     } catch (error: any) {
       console.error('OTP verification error:', error);

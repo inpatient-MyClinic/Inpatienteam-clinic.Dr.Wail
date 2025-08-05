@@ -153,81 +153,31 @@ export const useAuthLogic = () => {
 
   const handleOTPLogin = async () => {
     try {
-      console.log('=== OTP LOGIN START ===');
-      console.log('Initiating OTP login for:', email);
+      console.log('=== SIMPLE OTP LOGIN ===');
+      console.log('Sending OTP to:', email);
       
-      const normalizedEmail = email.trim().toLowerCase();
-      console.log('Normalized email:', normalizedEmail);
-      
-      // Check if user exists and is approved - try multiple approaches
-      let profile = null;
-      let profileError = null;
-      
-      // First try: exact match with normalized email
-      const { data: profile1, error: error1 } = await supabase
-        .from('profiles')
-        .select('status, role, email')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-      
-      if (profile1) {
-        profile = profile1;
-      } else {
-        // Second try: case-insensitive match
-        const { data: profile2, error: error2 } = await supabase
-          .from('profiles')
-          .select('status, role, email')
-          .ilike('email', normalizedEmail)
-          .maybeSingle();
-        
-        if (profile2) {
-          profile = profile2;
-        } else {
-          profileError = error2;
-        }
-      }
-
-      console.log('Profile lookup result:', { profile, profileError });
-
-      if (profileError) {
-        console.error('Profile lookup error:', profileError);
-        toast.error('Error checking user status. Please try again.');
-        return;
-      }
-
-      if (!profile) {
-        console.error('No profile found for email:', email.trim());
-        toast.error('User not found. Please contact an administrator to create your account.');
-        return;
-      }
-
-      if (profile.status !== 'active') {
-        console.error('User not active. Status:', profile.status);
-        toast.error('Your account is pending approval. Please contact an administrator.');
-        return;
-      }
-
-      console.log('User is valid and active. Sending OTP...');
-
-      // Send OTP
-      const { error: otpError } = await supabase.functions.invoke('send-otp-email', {
-        body: { email: email.trim().toLowerCase() }
+      // Let the edge function handle all validation
+      const { data, error: otpError } = await supabase.functions.invoke('send-otp-email', {
+        body: { email: email.trim() }
       });
 
-      console.log('OTP send result:', { otpError });
-
       if (otpError) {
-        console.error('OTP send error:', otpError);
-        toast.error('Failed to send verification code. Please try again.');
+        console.error('OTP Error:', otpError);
+        if (otpError.message?.includes('User not found')) {
+          toast.error('User not found. Please contact an administrator.');
+        } else if (otpError.message?.includes('not active')) {
+          toast.error('Account pending approval. Contact administrator.');
+        } else {
+          toast.error('Failed to send verification code. Try again.');
+        }
         return;
       }
 
-      console.log('=== OTP LOGIN SUCCESS ===');
       toast.success('Verification code sent to your email!');
       setShowOTPLogin(true);
     } catch (error) {
-      console.error('OTP login error:', error);
-      toast.error('Failed to initiate login. Please try again.');
+      console.error('Login error:', error);
+      toast.error('Login failed. Please try again.');
     }
   };
 

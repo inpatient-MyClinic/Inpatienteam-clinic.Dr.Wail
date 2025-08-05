@@ -30,39 +30,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
-    console.log('Normalized email:', normalizedEmail);
+    console.log('Processing OTP request for:', normalizedEmail);
 
-    // Check if user exists in profiles table first - try multiple approaches
-    let profile = null;
-    
-    // Try exact match first
-    const { data: profile1, error: error1 } = await supabase
+    // Simple direct query to find user
+    const { data: profiles, error: queryError } = await supabase
       .from('profiles')
       .select('status, role, full_name, email')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
+      .or(`email.eq.${normalizedEmail},email.ilike.${normalizedEmail}`);
     
-    if (profile1) {
-      profile = profile1;
-    } else {
-      // Try case-insensitive match
-      const { data: profile2, error: error2 } = await supabase
-        .from('profiles')
-        .select('status, role, full_name, email')
-        .ilike('email', normalizedEmail)
-        .maybeSingle();
-      profile = profile2;
-    }
+    console.log('Direct query result:', { profiles, queryError });
     
-    console.log('Profile found:', profile);
-
-    if (!profile) {
-      console.error('User not found for email:', normalizedEmail);
+    if (queryError || !profiles || profiles.length === 0) {
+      console.error('User not found in database');
       throw new Error('User not found');
     }
 
+    const profile = profiles[0];
+    console.log('Found user profile:', profile);
+
     if (profile.status !== 'active') {
-      console.error('User not active:', normalizedEmail, 'Status:', profile.status);
+      console.error('User account not active:', profile.status);
       throw new Error('User account is not active');
     }
 
