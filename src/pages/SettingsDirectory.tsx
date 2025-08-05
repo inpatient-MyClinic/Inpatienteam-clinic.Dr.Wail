@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import AdminFieldConfiguration from "@/components/settings/AdminFieldConfiguration";
 import UserTracker from "@/components/settings/UserTracker";
 import HospitalCodes from "@/components/settings/HospitalCodes";
+import SettingsDataManager from "@/components/settings/SettingsDataManager";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 
@@ -120,7 +121,8 @@ const SettingsDirectory = () => {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-10">
+        <TabsList className="grid w-full grid-cols-11">
+          <TabsTrigger value="data">Data Manager</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
           <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
@@ -132,6 +134,10 @@ const SettingsDirectory = () => {
           <TabsTrigger value="tracker">User Tracker</TabsTrigger>
           <TabsTrigger value="hospital-codes">Hospital Codes</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="data" className="space-y-6">
+          <SettingsDataManager />
+        </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
           <EnhancedUserManagement />
