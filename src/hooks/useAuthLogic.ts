@@ -115,8 +115,8 @@ export const useAuthLogic = () => {
     
     const normalizedEmail = email.trim().toLowerCase();
     
-    // Check if OTP is enabled or disabled
-    const otpEnabled = localStorage.getItem('otpEnabled') !== 'false';
+    // Check if OTP is enabled or disabled (default: disabled)
+    const otpEnabled = localStorage.getItem('otpEnabled') === 'true';
     
     if (otpEnabled) {
       console.log('OTP is ENABLED - calling handleOTPLogin');
