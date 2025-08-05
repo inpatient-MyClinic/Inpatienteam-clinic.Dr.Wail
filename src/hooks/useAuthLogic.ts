@@ -185,12 +185,13 @@ export const useAuthLogic = () => {
       console.log('Email:', email);
       
       // First check if user exists in profiles
+      const normalizedEmail = email.trim().toLowerCase();
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, role, status, email')
-        .or(`email.eq.${email.trim().toLowerCase()},email.ilike.${email.trim()}`);
+        .eq('email', normalizedEmail);
 
-      console.log('Profile lookup result:', { profiles, profileError });
+      console.log('Profile lookup result:', { profiles, profileError, searchEmail: normalizedEmail });
 
       if (profileError || !profiles || profiles.length === 0) {
         console.error('User not found in profiles:', profileError);
