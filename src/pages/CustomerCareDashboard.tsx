@@ -29,11 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
 
-const stats = [
-  { label: "Total Done", key: "total", color: "bg-blue-600", count: 45 },
-  { label: "Survey Sent", key: "sent", color: "bg-green-600", count: 35 },
-  { label: "Pending Survey", key: "pending", color: "bg-yellow-500", count: 10 },
-];
+// Stats will be calculated dynamically based on filtered data
 
 // Sample done requests data with survey responses
 const initialDoneRequests: any[] = [];
@@ -158,6 +154,17 @@ export default function CustomerCareDashboard() {
   };
 
   const filteredRequests = applyFilters(requests);
+  
+  // Calculate dynamic stats based on filtered data
+  const totalDone = filteredRequests.length;
+  const surveySent = filteredRequests.filter(req => req.surveySent).length;
+  const pendingSurvey = totalDone - surveySent;
+  
+  const stats = [
+    { label: "Total Done", key: "total", color: "bg-blue-600", count: totalDone },
+    { label: "Survey Sent", key: "sent", color: "bg-green-600", count: surveySent },
+    { label: "Pending Survey", key: "pending", color: "bg-yellow-500", count: pendingSurvey },
+  ];
   
   // Apply pagination
   const totalPages = Math.ceil(filteredRequests.length / rowsPerPage);
