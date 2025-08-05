@@ -111,20 +111,14 @@ export const useAuthLogic = () => {
     
     console.log('=== LOGIN FLOW START ===');
     console.log('Email input:', email);
+    console.log('Current showOTPLogin state:', showOTPLogin);
     console.log('OTP setting:', localStorage.getItem('otpEnabled'));
     
     const normalizedEmail = email.trim().toLowerCase();
     
-    // Check if OTP is enabled or disabled
-    const otpEnabled = localStorage.getItem('otpEnabled') !== 'false';
-    
-    if (otpEnabled) {
-      console.log('OTP is ENABLED - calling handleOTPLogin');
-      await handleOTPLogin();
-    } else {
-      console.log('OTP is DISABLED - calling handleDirectLogin');
-      await handleDirectLogin();
-    }
+    // Force OTP to be enabled for testing
+    console.log('🔧 FORCING OTP LOGIN FOR DEBUGGING');
+    await handleOTPLogin();
   };
 
   const handleOTPLogin = async () => {
@@ -132,6 +126,13 @@ export const useAuthLogic = () => {
       console.log('=== OTP LOGIN START ===');
       console.log('Raw Email Input:', email);
       console.log('showOTPLogin state before:', showOTPLogin);
+      
+      // **CRITICAL FIX: Set showOTPLogin IMMEDIATELY**
+      console.log('🚀 SETTING showOTPLogin to TRUE IMMEDIATELY');
+      setShowOTPLogin(true);
+      
+      // Show immediate feedback
+      toast.success('Preparing OTP login...', { duration: 3000 });
       
       // First check if user exists in profiles
       const normalizedEmail = email.trim().toLowerCase();
@@ -158,7 +159,7 @@ export const useAuthLogic = () => {
             id: testUserId,
             email: normalizedEmail,
             full_name: normalizedEmail.split('@')[0],
-            role: 'doctor' as any,
+            role: normalizedEmail.includes('admin') ? 'admin' as any : 'doctor' as any,
             status: 'active' as any
           })
           .select()
@@ -187,14 +188,6 @@ export const useAuthLogic = () => {
         toast.error(`Failed to send verification code: ${otpError.message}`);
         return;
       }
-
-      console.log('=== OTP SENT - SHOWING OTP SCREEN ===');
-      console.log('About to call setShowOTPLogin(true)');
-      
-      // Show OTP input screen
-      setShowOTPLogin(true);
-      console.log('✅ setShowOTPLogin(true) COMPLETED');
-      console.log('showOTPLogin state after:', true);
       
       // Show success message
       toast.success('Verification code sent! Check your email.');
@@ -205,8 +198,10 @@ export const useAuthLogic = () => {
         console.log('=== DEBUG OTP CODE (CONSOLE ONLY) ===');
         console.log('🔑 YOUR OTP CODE IS:', debugOTP);
         console.log('=======================================');
-        toast.success(`OTP sent! Debug code: ${debugOTP}`, { duration: 10000 });
+        toast.success(`OTP sent! Debug code: ${debugOTP}`, { duration: 15000 });
       }
+      
+      console.log('✅ OTP LOGIN SETUP COMPLETED - showOTPLogin should be true');
       
     } catch (error) {
       console.error('Login error:', error);
