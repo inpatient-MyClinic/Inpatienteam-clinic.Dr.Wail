@@ -748,48 +748,65 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </CardContent>
           </Card>
 
-          {/* Loss Tree */}
+          {/* Loss Tree - 2 Column Layout */}
           <Card>
             <CardHeader>
               <CardTitle>Loss Tree</CardTitle>
             </CardHeader>
             <CardContent>
-               <div className="space-y-3">
-                 {/* Use admin dashboard status counts - match Excel data */}
-                 <div className="flex justify-between">
-                   <span>Cancelled:</span>
-                   <Badge variant="destructive">15</Badge>
-                 </div>
-                 <div className="flex justify-between">
-                   <span>Rejected:</span>
-                   <Badge variant="destructive">0</Badge>
-                 </div>
-                 <div className="flex justify-between">
-                   <span>Pending:</span>
-                   <Badge variant="outline">14</Badge>
-                 </div>
-                 <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">Failure Categories:</p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span>Documentation Issues:</span>
-                        <span>6</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span>Medical Criteria:</span>
-                        <span>4</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span>Insurance Issues:</span>
-                        <span>3</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span>Other:</span>
-                        <span>1</span>
-                      </div>
+              <div className="grid grid-cols-2 gap-6">
+                {/* Column 1: Cancelled/Rejected */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Cancelled/Rejected:</span>
+                    <Badge variant="destructive">15</Badge>
+                  </div>
+                  <div className="pl-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Documentation Issues:</span>
+                      <span>6</span>
                     </div>
-                 </div>
-               </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Medical Criteria:</span>
+                      <span>4</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Insurance Issues:</span>
+                      <span>3</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Other:</span>
+                      <span>1</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Pending */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Pending:</span>
+                    <Badge variant="outline">14</Badge>
+                  </div>
+                  <div className="pl-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Documentation Issues:</span>
+                      <span>4</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Medical Criteria:</span>
+                      <span>3</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Insurance Issues:</span>
+                      <span>5</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Other:</span>
+                      <span>2</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
