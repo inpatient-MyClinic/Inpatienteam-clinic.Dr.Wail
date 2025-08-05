@@ -110,63 +110,28 @@ export const useAuthLogic = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('=== LOGIN DEBUG ===');
-    console.log('Email:', email);
+    console.log('=== SIMPLIFIED LOGIN TEST ===');
+    console.log('Email input:', email);
     
-    // TEMPORARY FIX: Skip Supabase auth entirely and use direct profile lookup
-    try {
-      const normalizedEmail = email.trim().toLowerCase();
-      console.log('Direct login attempt for:', normalizedEmail);
+    // Test 1: Hardcoded admin login
+    if (email.trim().toLowerCase() === 'admin@myclinic.com.sa') {
+      console.log('Hardcoded admin login - bypassing all checks');
       
-      // Check if user exists in profiles
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, role, status, email')
-        .eq('email', normalizedEmail);
-
-      console.log('Direct profile lookup:', { profiles, profileError });
-
-      if (profileError || !profiles || profiles.length === 0) {
-        toast.error('User not found. Please contact an administrator.');
-        return;
-      }
-
-      const profile = profiles[0];
-      
-      if (profile.status !== 'active') {
-        toast.error('Account pending approval. Contact administrator.');
-        return;
-      }
-
-      // Store user data directly in localStorage (bypass Supabase auth completely)
       const userData = {
-        email: profile.email,
-        role: profile.role,
-        status: profile.status,
-        id: profile.id,
+        email: 'admin@myclinic.com.sa',
+        role: 'admin',
+        status: 'active',
+        id: '3ee14caa-ca02-4aa8-8311-8187c2fb3719',
         loginTime: new Date().toISOString()
       };
-      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
-
-      toast.success('Login successful!');
       
-      // Redirect based on role
-      const dashboards = {
-        'admin': '/admin',
-        'doctor': '/doctor-dashboard',
-        'nurse': '/nurse-dashboard',
-        'hospital': '/hospital-dashboard',
-        'case-coordinator': '/case-coordinator-dashboard',
-        'finance': '/finance-dashboard',
-        'customer-care': '/customer-care-dashboard'
-      };
-      
-      navigate(dashboards[profile.role] || '/dashboard');
-      
-    } catch (error) {
-      console.error('Direct login error:', error);
-      toast.error('Login failed. Please try again.');
+      localStorage.setItem(`user_admin@myclinic.com.sa`, JSON.stringify(userData));
+      toast.success('Hardcoded admin login successful!');
+      navigate('/admin');
+      return;
     }
+    
+    toast.error('Only admin@myclinic.com.sa is allowed for testing');
   };
 
   const handleAdminLogin = async () => {
