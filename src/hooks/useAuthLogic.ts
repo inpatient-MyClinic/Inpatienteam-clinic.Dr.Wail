@@ -245,21 +245,28 @@ export const useAuthLogic = () => {
       }
 
       console.log('=== OTP SENT - SHOWING OTP SCREEN ===');
-      console.log('Setting showOTPLogin to true...');
+      console.log('Edge function response data:', data);
+      
+      // Show OTP input screen FIRST
+      setShowOTPLogin(true);
+      console.log('setShowOTPLogin(true) called');
       
       // Show success message
-      toast.success('Verification code sent to your email! Check your inbox.');
+      toast.success('Verification code sent! Check email or console for code.');
       
-      // Show OTP input screen
-      setShowOTPLogin(true);
-      
-      console.log('showOTPLogin state should now be true');
-      
-      // If there's a debug OTP in the response, log it
+      // If there's a debug OTP in the response, log it prominently
       if (data && (data.otp_for_testing || data.debug_otp_for_testing)) {
+        const debugOTP = data.otp_for_testing || data.debug_otp_for_testing;
         console.log('=== DEBUG OTP CODE ===');
-        console.log('OTP Code for testing:', data.otp_for_testing || data.debug_otp_for_testing);
-        console.log('Enter this code in the form that should appear');
+        console.log('USE THIS CODE:', debugOTP);
+        console.log('======================');
+        
+        // Also show in a more visible way for debugging
+        setTimeout(() => {
+          toast.info(`DEBUG: OTP Code is ${debugOTP} (check console)`, {
+            duration: 10000
+          });
+        }, 1000);
       }
       
     } catch (error) {
