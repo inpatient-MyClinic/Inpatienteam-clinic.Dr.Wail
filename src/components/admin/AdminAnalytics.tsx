@@ -39,13 +39,22 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [selectedDoctor, setSelectedDoctor] = useState<string>("all");
   const [selectedCoordinator, setSelectedCoordinator] = useState<string>("all");
   const [financeData, setFinanceData] = useState<any[]>([]);
+  
+  // State for conversion rate toggles
+  const [includeCompleted, setIncludeCompleted] = useState(true);
+  const [includeDone, setIncludeDone] = useState(true);
+  const [includeScheduled, setIncludeScheduled] = useState(true);
 
-  // Calculate conversion rate (155+9+2)/211
+  // Calculate conversion rate with toggleable statuses
   const totalRequests = cleanedData.length;
   const completedRequests = cleanedData.filter(item => item.status === "Completed").length;
   const doneRequests = cleanedData.filter(item => item.status === "Done").length;
   const scheduledRequests = cleanedData.filter(item => item.status === "Scheduled").length;
-  const conversionRate = totalRequests > 0 ? ((completedRequests + doneRequests + scheduledRequests) / totalRequests * 100).toFixed(1) : "0";
+  
+  const includedCount = (includeCompleted ? completedRequests : 0) + 
+                       (includeDone ? doneRequests : 0) + 
+                       (includeScheduled ? scheduledRequests : 0);
+  const conversionRate = totalRequests > 0 ? (includedCount / totalRequests * 100).toFixed(1) : "0";
 
   // Calculate utilization rate (filtered requests / total requests)
   const filteredData = cleanedData.filter(item => {
@@ -221,10 +230,18 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
       <AdminMetricsCards
         conversionRate={conversionRate}
         completedRequests={completedRequests}
+        doneRequests={doneRequests}
+        scheduledRequests={scheduledRequests}
         totalRequests={totalRequests}
         utilizationRate={utilizationRate}
         filteredDataLength={filteredData.length}
         npsScore={npsScore}
+        includeCompleted={includeCompleted}
+        includeDone={includeDone}
+        includeScheduled={includeScheduled}
+        onToggleCompleted={() => setIncludeCompleted(!includeCompleted)}
+        onToggleDone={() => setIncludeDone(!includeDone)}
+        onToggleScheduled={() => setIncludeScheduled(!includeScheduled)}
       />
 
       {/* New Analytics - Rejection Analysis */}
