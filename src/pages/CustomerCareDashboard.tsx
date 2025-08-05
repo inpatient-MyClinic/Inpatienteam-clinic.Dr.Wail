@@ -14,6 +14,8 @@ import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload
 import ComplaintUpload from "@/components/customercare/ComplaintUpload";
 import NPSTargetSettings from "@/components/settings/NPSTargetSettings";
 import Footer from "@/components/Footer";
+import TablePagination from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import {
   Table,
   TableBody,
@@ -69,8 +71,6 @@ export default function CustomerCareDashboard() {
     selectedMonths: []
   });
   const [complaintFilter, setComplaintFilter] = useState<'open' | 'closed' | null>(null);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -155,6 +155,21 @@ export default function CustomerCareDashboard() {
 
   const filteredRequests = applyFilters(requests);
   
+  // Use pagination hook for filtered data
+  const {
+    currentPage,
+    rowsPerPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    paginatedData: paginatedRequests,
+    setCurrentPage,
+    handleRowsPerPageChange
+  } = usePagination({
+    data: filteredRequests,
+    initialRowsPerPage: 10
+  });
+  
   // Calculate dynamic stats based on filtered data
   const totalDone = filteredRequests.length;
   const surveySent = filteredRequests.filter(req => req.surveySent).length;
@@ -165,12 +180,6 @@ export default function CustomerCareDashboard() {
     { label: "Survey Sent", key: "sent", color: "bg-green-600", count: surveySent },
     { label: "Pending Survey", key: "pending", color: "bg-yellow-500", count: pendingSurvey },
   ];
-  
-  // Apply pagination
-  const totalPages = Math.ceil(filteredRequests.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedRequests = filteredRequests.slice(startIndex, endIndex);
   
   // Debug logging
   console.log('Current requests:', requests);
@@ -708,90 +717,16 @@ export default function CustomerCareDashboard() {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-between mt-4 px-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Rows per page:</span>
-              <Select value={rowsPerPage.toString()} onValueChange={(value) => {
-                setRowsPerPage(Number(value));
-                setCurrentPage(1); // Reset to first page when changing rows per page
-              }}>
-                <SelectTrigger className="w-20 h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-gray-600">
-                Showing {startIndex + 1} to {Math.min(endIndex, filteredRequests.length)} of {filteredRequests.length} entries
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNumber;
-                  if (totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNumber = i + 1;
-                  } else if (currentPage > totalPages - 3) {
-                    pageNumber = totalPages - 4 + i;
-                  } else {
-                    pageNumber = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <Button
-                      key={pageNumber}
-                      variant={currentPage === pageNumber ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNumber)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {pageNumber}
-                    </Button>
-                  );
-                })}
-                
-                {totalPages > 5 && currentPage <= totalPages - 3 && (
-                  <>
-                    <span className="text-gray-500">...</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(totalPages)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {totalPages}
-                    </Button>
-                  </>
-                )}
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            rowsPerPage={rowsPerPage}
+            totalItems={filteredRequests.length}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            onPageChange={setCurrentPage}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
 
           {/* Monthly NPS Score Management */}
           <Card className="mb-6">

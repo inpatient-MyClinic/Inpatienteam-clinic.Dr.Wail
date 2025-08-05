@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
+import TablePagination from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import ExportButton from "./ExportButton";
 import { DoctorRequest, REQUEST_STATUSES } from "@/hooks/useDoctorRequests";
 
@@ -33,9 +34,6 @@ export default function RequestsTable({
   const [surgeryDateMonthFilter, setSurgeryDateMonthFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
   
   const { toast } = useToast();
 
