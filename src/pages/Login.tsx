@@ -135,8 +135,13 @@ const Login = () => {
                   }
                 </div>
                 {showOTPLogin && (
-                  <div className="mt-2 p-2 bg-blue-100 rounded text-blue-800 text-sm font-medium">
-                    ✅ OTP Input Form is Active - Enter your 4-digit code above
+                  <div className="mt-2 p-2 bg-green-100 rounded text-green-800 text-sm font-medium">
+                    ✅ OTP Form is ACTIVE - You should see 4 input boxes above this message
+                  </div>
+                )}
+                {!showOTPLogin && (
+                  <div className="mt-2 p-2 bg-red-100 rounded text-red-800 text-sm font-medium">
+                    ❌ OTP Form is NOT showing - Debug: showOTPLogin = {showOTPLogin.toString()}
                   </div>
                 )}
               </div>

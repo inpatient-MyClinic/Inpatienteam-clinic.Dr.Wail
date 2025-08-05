@@ -110,35 +110,13 @@ export const useAuthLogic = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if OTP is disabled in admin settings
-    const otpEnabled = localStorage.getItem('otpEnabled') !== 'false';
-    const isAdmin = isAdminEmail(email);
-    
     console.log('=== LOGIN DEBUG ===');
     console.log('Email:', email);
-    console.log('Is Admin:', isAdmin);
-    console.log('OTP Enabled:', otpEnabled);
-    console.log('localStorage otpEnabled value:', localStorage.getItem('otpEnabled'));
+    console.log('Current showOTPLogin state:', showOTPLogin);
     
-    // TEMPORARY: Force OTP for testing - remove this block when done testing
-    console.log('TESTING MODE: Using OTP login for all users');
-    return handleOTPLogin();
-    
-    // Original logic (commented out for testing):
-    // // For admin users, always use password login
-    // if (isAdmin) {
-    //   console.log('Using admin password login');
-    //   return handleAdminLogin();
-    // }
-    // 
-    // // For non-admin users, check OTP setting
-    // if (otpEnabled) {
-    //   console.log('OTP enabled - using OTP login');
-    //   return handleOTPLogin();
-    // } else {
-    //   console.log('OTP disabled - using direct login');
-    //   return handleDirectLogin();
-    // }
+    // Simplified: Always use OTP for all users
+    console.log('FORCING OTP LOGIN FOR ALL USERS');
+    await handleOTPLogin();
   };
 
   const handleAdminLogin = async () => {
@@ -246,13 +224,15 @@ export const useAuthLogic = () => {
 
       console.log('=== OTP SENT - SHOWING OTP SCREEN ===');
       console.log('Edge function response data:', data);
+      console.log('About to call setShowOTPLogin(true)');
       
-      // Show OTP input screen FIRST
+      // Show OTP input screen
       setShowOTPLogin(true);
-      console.log('setShowOTPLogin(true) called');
+      console.log('✅ setShowOTPLogin(true) COMPLETED');
+      console.log('Current showOTPLogin state should now be:', true);
       
       // Show success message
-      toast.success('Verification code sent! Check email or console for code.');
+      toast.success('Verification code sent! Check your email.');
       
       // If there's a debug OTP in the response, log it only to console (no visible display for security)
       if (data && (data.otp_for_testing || data.debug_otp_for_testing)) {
