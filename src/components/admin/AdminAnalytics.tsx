@@ -25,6 +25,14 @@ interface AdminAnalyticsProps {
 export default function AdminAnalytics({ data, selectedDates, selectedWeeks, selectedMonths }: AdminAnalyticsProps) {
   console.log("AdminAnalytics rendering with data:", data.length, "items");
   
+  // Clean case coordinator data: remove "No" entries and normalize "saud"/"Saud"
+  const cleanedData = data.map(item => ({
+    ...item,
+    caseCoordinator: item.caseCoordinator === "No" ? "" : 
+                     item.caseCoordinator === "saud" ? "Saud" : 
+                     item.caseCoordinator
+  })).filter(item => item.caseCoordinator !== "");
+  
   const [filterBy, setFilterBy] = useState<string>("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [selectedHospital, setSelectedHospital] = useState<string>("all");
@@ -33,14 +41,14 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [financeData, setFinanceData] = useState<any[]>([]);
 
   // Calculate conversion rate (155+9+2)/211
-  const totalRequests = data.length;
-  const completedRequests = data.filter(item => item.status === "Completed").length;
-  const doneRequests = data.filter(item => item.status === "Done").length;
-  const scheduledRequests = data.filter(item => item.status === "Scheduled").length;
+  const totalRequests = cleanedData.length;
+  const completedRequests = cleanedData.filter(item => item.status === "Completed").length;
+  const doneRequests = cleanedData.filter(item => item.status === "Done").length;
+  const scheduledRequests = cleanedData.filter(item => item.status === "Scheduled").length;
   const conversionRate = totalRequests > 0 ? ((completedRequests + doneRequests + scheduledRequests) / totalRequests * 100).toFixed(1) : "0";
 
   // Calculate utilization rate (filtered requests / total requests)
-  const filteredData = data.filter(item => {
+  const filteredData = cleanedData.filter(item => {
     const matchesSpecialty = selectedSpecialty === "all" || item.specialty === selectedSpecialty;
     const matchesHospital = selectedHospital === "all" || item.hospital === selectedHospital;
     const matchesDoctor = selectedDoctor === "all" || item.user === selectedDoctor;
@@ -51,15 +59,15 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   
   const utilizationRate = totalRequests > 0 ? (filteredData.length / totalRequests * 100).toFixed(1) : "0";
 
-  // Get unique values for filters
-  const specialties = [...new Set(data.map(item => item.specialty))];
-  const hospitals = [...new Set(data.map(item => item.hospital))];
-  const doctors = [...new Set(data.map(item => item.user))];
-  const coordinators = [...new Set(data.map(item => item.caseCoordinator))];
+  // Get unique values for filters - use cleaned data
+  const specialties = [...new Set(cleanedData.map(item => item.specialty))];
+  const hospitals = [...new Set(cleanedData.map(item => item.hospital))];
+  const doctors = [...new Set(cleanedData.map(item => item.user))];
+  const coordinators = [...new Set(cleanedData.map(item => item.caseCoordinator))];
 
-  // Calculate Top 5 metrics
+  // Calculate Top 5 metrics - use cleaned data
   const getTop5 = (field: string) => {
-    const counts = data.reduce((acc, item) => {
+    const counts = cleanedData.reduce((acc, item) => {
       const value = item[field];
       acc[value] = (acc[value] || 0) + 1;
       return acc;
@@ -75,10 +83,10 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const top5Hospitals = getTop5('hospital');
   const top5Doctors = getTop5('user');
 
-  // Loss Tree Analysis Data - updated to match case coordinator style
-  const pendingCount = data.filter(item => item.status === "Pending").length;
-  const inProgressCount = data.filter(item => item.status === "In Progress").length;
-  const cancelledRejectedCount = data.filter(item => 
+  // Loss Tree Analysis Data - updated to match case coordinator style, use cleaned data
+  const pendingCount = cleanedData.filter(item => item.status === "Pending").length;
+  const inProgressCount = cleanedData.filter(item => item.status === "In Progress").length;
+  const cancelledRejectedCount = cleanedData.filter(item => 
     item.status === "Cancelled" || item.status === "Rejected"
   ).length;
   
