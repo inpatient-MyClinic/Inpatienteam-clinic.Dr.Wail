@@ -113,13 +113,13 @@ export default function AdminDashboard() {
   console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
   console.log("All data length:", allRequestsData.length);
 
-  // Clean case coordinator data: remove "No" entries and normalize "saud"/"Saud"
+  // Clean case coordinator data: normalize "saud"/"Saud" and handle "No" entries
   const cleanedData = allRequestsData.map(item => ({
     ...item,
-    caseCoordinator: item.caseCoordinator === "No" ? "" : 
+    caseCoordinator: item.caseCoordinator === "No" ? "Unassigned" : 
                      item.caseCoordinator === "saud" ? "Saud" : 
-                     item.caseCoordinator
-  })).filter(item => item.caseCoordinator !== "");
+                     item.caseCoordinator || "Unassigned"
+  }));
 
   // Filter data based on active filter and date filters
   const filteredData = filterAdminData(
