@@ -552,16 +552,14 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
               <Edit3 className="h-4 w-4" />
               {isEditing ? "View Mode" : "Edit Mode"}
             </Button>
-            {isEditing && (
-              <Button
-                onClick={saveData}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                Save
-              </Button>
-            )}
+            <Button
+              onClick={saveData}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Save Changes
+            </Button>
             <Button
               variant="outline"
               size="sm"
