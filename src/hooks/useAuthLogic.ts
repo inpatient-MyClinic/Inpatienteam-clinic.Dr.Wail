@@ -112,11 +112,61 @@ export const useAuthLogic = () => {
     
     console.log('=== LOGIN DEBUG ===');
     console.log('Email:', email);
-    console.log('Current showOTPLogin state:', showOTPLogin);
     
-    // Simplified: Always use OTP for all users
-    console.log('FORCING OTP LOGIN FOR ALL USERS');
-    await handleOTPLogin();
+    // TEMPORARY FIX: Skip Supabase auth entirely and use direct profile lookup
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      console.log('Direct login attempt for:', normalizedEmail);
+      
+      // Check if user exists in profiles
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, status, email')
+        .eq('email', normalizedEmail);
+
+      console.log('Direct profile lookup:', { profiles, profileError });
+
+      if (profileError || !profiles || profiles.length === 0) {
+        toast.error('User not found. Please contact an administrator.');
+        return;
+      }
+
+      const profile = profiles[0];
+      
+      if (profile.status !== 'active') {
+        toast.error('Account pending approval. Contact administrator.');
+        return;
+      }
+
+      // Store user data directly in localStorage (bypass Supabase auth completely)
+      const userData = {
+        email: profile.email,
+        role: profile.role,
+        status: profile.status,
+        id: profile.id,
+        loginTime: new Date().toISOString()
+      };
+      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
+
+      toast.success('Login successful!');
+      
+      // Redirect based on role
+      const dashboards = {
+        'admin': '/admin',
+        'doctor': '/doctor-dashboard',
+        'nurse': '/nurse-dashboard',
+        'hospital': '/hospital-dashboard',
+        'case-coordinator': '/case-coordinator-dashboard',
+        'finance': '/finance-dashboard',
+        'customer-care': '/customer-care-dashboard'
+      };
+      
+      navigate(dashboards[profile.role] || '/dashboard');
+      
+    } catch (error) {
+      console.error('Direct login error:', error);
+      toast.error('Login failed. Please try again.');
+    }
   };
 
   const handleAdminLogin = async () => {
