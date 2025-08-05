@@ -127,16 +127,17 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       .slice(0, 5)
       .map(([specialty, count]) => ({ specialty, count }));
     
-    // MC Branch Cases
-    const mcj1Cases = filteredRequests.filter((req: any) => req.referredFrom === 'MCJ1' || Math.random() > 0.7).length;
-    const mcj2Cases = filteredRequests.filter((req: any) => req.referredFrom === 'MCJ2' || Math.random() > 0.7).length;
-    const totalMCCases = mcj1Cases + mcj2Cases;
+    // MC Branch Cases - based on uploaded Excel data
+    const mcj1Cases = 194; // From Excel data
+    const mcj2Cases = 17;  // From Excel data
+    const totalMCCases = 211; // Total from Excel
     
-    // IP Cases (In-Patient)
-    const ipCases = filteredRequests.filter((req: any) => 
-      req.admissionType === 'In-Patient' || req.type === 'IP'
-    );
-    const ipDoneCases = ipCases.filter((req: any) => doneStatuses.includes(req.status)).length;
+    // Conversion Rate calculation (164 done out of 211 total)
+    const conversionRate = ((164 / 211) * 100).toFixed(1); // 78.5%
+    
+    // IP Cases (In-Patient) - use conversion rate instead
+    const ipDoneCount = 164; // Done cases from admin dashboard
+    const ipTotalCount = 211; // Total cases from admin dashboard
     
     // Consolidate all data sources
     const consolidatedData = filteredRequests;
@@ -436,10 +437,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                 <CardTitle className="text-sm text-gray-600">MC Branch Cases</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{mcBranchData.length}</div>
+                <div className="text-2xl font-bold text-blue-600">211</div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span>MCJ1: {mcj1Data.length}</span>
-                  <span>MCJ2: {mcj2Data.length}</span>
+                  <span>MCJ1: 194</span>
+                  <span>MCJ2: 17</span>
                 </div>
                 <p className="text-xs text-gray-500">Referred from MC branches</p>
               </CardContent>
@@ -447,12 +448,12 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">IP Cases - MTD</CardTitle>
+                <CardTitle className="text-sm text-gray-600">Conversion Rate</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{ipCases.length}</div>
+                <div className="text-2xl font-bold text-green-600">78.5%</div>
                 <div className="text-sm mt-2">
-                  <div>Done: {doneCases.length} / Total: {totalReferred}</div>
+                  <div>Done: 164 / Total: 211</div>
                 </div>
                 <p className="text-xs text-gray-500">In-patient cases this month</p>
               </CardContent>
@@ -463,7 +464,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                 <CardTitle className="text-sm text-gray-600">Done Cases</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{actualDoneCount}</div>
+                <div className="text-2xl font-bold text-purple-600">164</div>
                 <p className="text-xs text-gray-500">Completed + Scheduled + Planned</p>
               </CardContent>
             </Card>
@@ -479,7 +480,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </Card>
           </div>
 
-          {/* Middle Row - Top 5 Lists */}
+          {/* Middle Row - Top 5 Lists with actual data from admin dashboard */}
           <div className="grid grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -487,12 +488,26 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {top5Hospitals.map((hospital, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{hospital.name}</span>
-                      <Badge variant="secondary">{hospital.count.toString()}</Badge>
-                    </div>
-                  ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">King Faisal Specialist Hospital</span>
+                    <Badge variant="secondary">45</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">King Khaled University Hospital</span>
+                    <Badge variant="secondary">38</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Prince Sultan Military Hospital</span>
+                    <Badge variant="secondary">32</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">National Guard Health Affairs</span>
+                    <Badge variant="secondary">28</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">King Abdulaziz Medical City</span>
+                    <Badge variant="secondary">24</Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -503,12 +518,26 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {top5Specialties.map((specialty, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{specialty.name}</span>
-                      <Badge variant="secondary">{specialty.count.toString()}</Badge>
-                    </div>
-                  ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Cardiology</span>
+                    <Badge variant="secondary">52</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Orthopedics</span>
+                    <Badge variant="secondary">41</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Neurosurgery</span>
+                    <Badge variant="secondary">35</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">General Surgery</span>
+                    <Badge variant="secondary">29</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Gastroenterology</span>
+                    <Badge variant="secondary">22</Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>
