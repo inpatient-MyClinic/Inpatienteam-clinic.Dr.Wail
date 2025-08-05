@@ -50,25 +50,39 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     setEditableData(prev => ({ ...prev, npsScore: finalNPS }));
   }, [selectedMonth, selectedYear]);
 
-  // Function to calculate NPS score for a specific month
+  // Function to calculate NPS score using Customer Care dashboard formula
   const calculateNPSScore = (requests: any[], month: number, year: number) => {
-    const monthRequests = requests.filter((req: any) => {
-      const reqDate = new Date(req.date);
-      return reqDate.getMonth() + 1 === month && reqDate.getFullYear() === year;
+    // Get Customer Care data instead of local requests
+    const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
+    
+    if (customerCareData.length === 0) return null;
+
+    // Filter by month and year if needed
+    const monthRequests = customerCareData.filter((req: any) => {
+      if (!req.Month) return true; // Include all if no month specified
+      // Handle different month formats
+      const reqMonth = typeof req.Month === 'string' ? parseInt(req.Month) : req.Month;
+      return reqMonth === month;
     });
 
-    if (monthRequests.length === 0) return null;
+    const respondedRequests = monthRequests.filter((r: any) => {
+      const npsScore = r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"];
+      return npsScore !== undefined && npsScore !== null && npsScore !== "";
+    });
 
-    const scores = monthRequests
-      .map((req: any) => parseInt(req.npsScore))
-      .filter((score: number) => !isNaN(score) && score >= 0 && score <= 10);
+    if (respondedRequests.length === 0) return null;
 
-    if (scores.length === 0) return null;
+    const promoters = respondedRequests.filter((r: any) => {
+      const score = Number(r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]);
+      return score >= 9;
+    }).length;
 
-    const promoters = scores.filter(score => score >= 9).length;
-    const detractors = scores.filter(score => score <= 6).length;
-    
-    return Math.round(((promoters - detractors) / scores.length) * 100);
+    const detractors = respondedRequests.filter((r: any) => {
+      const score = Number(r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]);
+      return score <= 6;
+    }).length;
+
+    return Math.round(((promoters - detractors) / respondedRequests.length) * 100);
   };
 
   // Helper function to get month index
@@ -133,14 +147,14 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
      (item.description && item.description.includes("IP"))
    );
    
-   // Calculate Done Cases (Completed + Done + Scheduled + Planned)
-   const doneCases = filteredData.filter(item => 
-     item.status === "Completed" || 
-     item.status === "Done" ||
-     item.status === "Scheduled" || 
-     item.status === "Planned NVD" ||
-     item.status === "Planned"
-   );
+   // Calculate Done Cases based on actual Excel data statuses
+   const doneCases = filteredData.filter(item => {
+     const status = item.operationStatus || item.status;
+     return status === "Done" || 
+            status === "Scheduled" || 
+            status === "Planned NVD" ||
+            status === "Completed";
+   });
 
   // Calculate previous month data (Month -25 concept)
   const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
