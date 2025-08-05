@@ -86,10 +86,8 @@ export default function AdminDashboard() {
         clinicBranch: req.clinicBranch || "Unknown"
       }));
       
-      // Limit to 209 requests to match total requirement
-      const limitedData = requestAdminData.slice(0, 209);
-      console.log(`Loading ${limitedData.length} requests from storage`);
-      setAllRequestsData(limitedData);
+      console.log(`Loading ${requestAdminData.length} requests from storage`);
+      setAllRequestsData(requestAdminData);
     };
 
     loadAllData();

@@ -49,10 +49,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     ytdGrowth: 0,
     mtdGrowth: 0,
     additionalNotes: "",
-    mcBranchCases: 209,
+    mcBranchCases: 211,
     conversionRate: 78.5,
     doneCases: 164,
-    totalCases: 209,
+    totalCases: 211,
     dashboardTitle: "SIA Performance Dashboard",
     customBoxes: [] as Array<{
       id: string;
@@ -128,8 +128,8 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     // Customer Care Data
     const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
     
-    // Use ALL medical requests data (limited to first 209 to match total)
-    const allRequests = medicalRequests.slice(0, 209);
+    // Use ALL medical requests data from uploaded Excel sheet
+    const allRequests = medicalRequests;
     
     console.log('Total medical requests in storage:', allRequests.length);
     console.log('Sample request data:', allRequests[0]);
@@ -192,7 +192,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     const doneCount = 154;
     const scheduledCount = 8;
     const plannedNVDCount = 2;
-    const totalCasesCount = 209;  // This should match your Excel data total
+    const totalCasesCount = allRequests.length;  // Use actual uploaded data count
     
     // Calculate conversion rate: (Done + Scheduled + Planned NVD) / Total
     const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount; // 164
