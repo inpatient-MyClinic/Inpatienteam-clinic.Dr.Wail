@@ -754,33 +754,6 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </CardContent>
           </Card>
 
-          {/* Bottom Row - Conversion Rate Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Conversion Rate: {conversionRate}%</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={conversionChartData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {conversionChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Right Column - Additional Metrics */}
