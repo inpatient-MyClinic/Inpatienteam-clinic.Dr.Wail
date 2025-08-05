@@ -82,12 +82,14 @@ const Login = () => {
           <Card className="shadow-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-blue-900">
-                {!isFirstTimeLogin ? "Login" : "Create Admin Password"}
+                {showOTPLogin ? "Enter Verification Code" : (!isFirstTimeLogin ? "Login" : "Create Admin Password")}
               </CardTitle>
               <CardDescription>
-                {!isFirstTimeLogin 
-                  ? "Sign in with your authorized administrator account" 
-                  : "Set up your password for first-time access"
+                {showOTPLogin 
+                  ? `We sent a 4-digit code to ${email}`
+                  : (!isFirstTimeLogin 
+                    ? "Sign in with your authorized administrator account" 
+                    : "Set up your password for first-time access")
                 }
               </CardDescription>
             </CardHeader>
@@ -120,7 +122,7 @@ const Login = () => {
                 />
               )}
 
-              {/* Debug info for OTP setting */}
+              {/* Authentication Mode Display */}
               <div className="mt-4 p-2 bg-gray-50 rounded text-xs text-gray-600">
                 <div className="flex items-center justify-between">
                   <span>Authentication Mode:</span>
@@ -134,17 +136,14 @@ const Login = () => {
                     : 'Users can login directly with email only'
                   }
                 </div>
-                {showOTPLogin && (
-                  <div className="mt-2 p-2 bg-green-100 rounded text-green-800 text-sm font-medium">
-                    ✅ OTP Form is ACTIVE - You should see 4 input boxes above this message
-                  </div>
-                )}
-                {!showOTPLogin && (
-                  <div className="mt-2 p-2 bg-red-100 rounded text-red-800 text-sm font-medium">
-                    ❌ OTP Form is NOT showing - Debug: showOTPLogin = {showOTPLogin.toString()}
-                  </div>
-                )}
               </div>
+
+              {/* OTP Debug Status */}
+              {showOTPLogin && (
+                <div className="mt-2 p-2 bg-green-100 rounded text-green-800 text-sm">
+                  ✅ <strong>OTP Form Active</strong> - Check console for debug OTP code
+                </div>
+              )}
 
               <div className="mt-6 pt-6 border-t">
                 <div className="text-center">
