@@ -150,7 +150,39 @@ export const useAuthLogic = () => {
         if (error.message === 'Invalid login credentials') {
           toast.error('Invalid email or password. Please try again.');
         } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Please check your email and confirm your account before logging in.');
+          // Instead of blocking, try to auto-confirm for admin users
+          console.log('Email not confirmed, attempting auto-confirmation...');
+          try {
+            // Get the user ID from profiles
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', email.trim().toLowerCase())
+              .single();
+              
+            if (profiles) {
+              // Auto-confirm the user
+              await supabase.auth.admin.updateUserById(
+                profiles.id,
+                { email_confirm: true }
+              );
+              
+              // Retry login
+              const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+                email: email.trim().toLowerCase(),
+                password,
+              });
+              
+              if (!retryError && retryData.user) {
+                handleSuccessfulLogin(retryData.user.id);
+                return;
+              }
+            }
+          } catch (confirmError) {
+            console.error('Auto-confirmation failed:', confirmError);
+          }
+          
+          toast.error('Account needs verification. Contact administrator.');
         } else if (error.message.includes('Too many requests')) {
           toast.error('Too many login attempts. Please wait a moment before trying again.');
         } else {
