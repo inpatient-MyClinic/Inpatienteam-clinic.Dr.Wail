@@ -373,7 +373,21 @@ export default function CustomerCareDashboard() {
       return score <= 6;
     }).length;
     
-    return Math.round(((promoters - detractors) / respondedRequests.length) * 100);
+    const npsValue = ((promoters - detractors) / respondedRequests.length) * 100;
+    const roundedNPS = Math.round(npsValue);
+    
+    // Debug logging for NPS calculation
+    console.log('NPS Calculation Debug:', {
+      totalResponded: respondedRequests.length,
+      promoters,
+      detractors,
+      passives: respondedRequests.length - promoters - detractors,
+      exactNPS: npsValue,
+      roundedNPS,
+      scores: respondedRequests.map(r => Number(r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]))
+    });
+    
+    return roundedNPS;
   };
 
   // Calculate NPS by month
