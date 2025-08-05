@@ -557,6 +557,46 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     setIsEditing(false);
   };
 
+  // Function to handle viewing old version
+  const handleViewOldVersion = () => {
+    const savedVersions = JSON.parse(localStorage.getItem('siaSlideVersions') || '[]');
+    if (savedVersions.length > 0) {
+      const lastVersion = savedVersions[savedVersions.length - 1];
+      setEditableData(lastVersion);
+      toast({
+        title: "Old Version Loaded",
+        description: `Loaded version from ${new Date(lastVersion.timestamp).toLocaleDateString()}`,
+      });
+    } else {
+      toast({
+        title: "No Previous Versions",
+        description: "No previous versions found to load.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Function to handle PDF export
+  const handleExportPDF = () => {
+    // Save current version before export
+    const currentVersion = {
+      ...editableData,
+      timestamp: new Date().toISOString()
+    };
+    
+    const savedVersions = JSON.parse(localStorage.getItem('siaSlideVersions') || '[]');
+    savedVersions.push(currentVersion);
+    localStorage.setItem('siaSlideVersions', JSON.stringify(savedVersions));
+    
+    // Call the existing export function
+    exportToPDF();
+    
+    toast({
+      title: "Version Saved",
+      description: "Current version has been saved for future reference.",
+    });
+  };
+
   const exportToPDF = () => {
     // Create HTML content for PDF export
     const currentDate = new Date().toLocaleDateString();
@@ -706,6 +746,15 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </SelectContent>
           </Select>
 
+          <Button 
+            onClick={handleViewOldVersion}
+            variant="outline"
+            className="bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+          >
+            <History className="h-4 w-4 mr-2" />
+            Old Version
+          </Button>
+
           <Button onClick={() => setIsEditing(!isEditing)} variant="outline">
             <Edit className="h-4 w-4 mr-2" />
             {isEditing ? "Cancel Edit" : "Edit Mode"}
@@ -719,7 +768,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
           )}
           
           <Button 
-            onClick={exportToPDF}
+            onClick={handleExportPDF}
             variant="outline"
             className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
           >
