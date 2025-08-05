@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,10 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+
 const supabase = createClient(supabaseUrl, supabaseKey);
+const resend = new Resend(resendApiKey);
 
 interface SendOTPRequest {
   email: string;
@@ -24,30 +28,83 @@ const handler = async (req: Request): Promise<Response> => {
     const { email }: SendOTPRequest = await req.json();
     console.log('Generating OTP for email:', email);
 
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if user exists in profiles table first
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('status, role, full_name')
+      .ilike('email', normalizedEmail)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error checking user profile:', profileError);
+      throw new Error('Failed to verify user');
+    }
+
+    if (!profile) {
+      console.error('User not found for email:', normalizedEmail);
+      throw new Error('User not found');
+    }
+
+    if (profile.status !== 'active') {
+      console.error('User not active:', normalizedEmail, 'Status:', profile.status);
+      throw new Error('User account is not active');
+    }
+
     // Generate OTP using database function
     const { data: otpCode, error: otpError } = await supabase
-      .rpc('generate_otp', { user_email: email });
+      .rpc('generate_otp', { user_email: normalizedEmail });
 
     if (otpError) {
       console.error('Error generating OTP:', otpError);
       throw new Error('Failed to generate OTP');
     }
 
-    console.log('Generated OTP:', otpCode);
+    console.log('Generated OTP for user:', normalizedEmail);
 
-    // For now, we'll log the OTP code. In production, you would integrate with an email service
-    // like Resend, SendGrid, or AWS SES to actually send the email
-    console.log(`EMAIL SIMULATION: Sending OTP ${otpCode} to ${email}`);
-    
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Send OTP email using Resend
+    const emailResponse = await resend.emails.send({
+      from: "MyClinic <noreply@resend.dev>",
+      to: [normalizedEmail],
+      subject: "Your Login Verification Code",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">Login Verification Code</h2>
+          
+          <p>Hello ${profile.full_name || 'User'},</p>
+          
+          <p>You requested to login to your MyClinic account. Please use the verification code below:</p>
+          
+          <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+            <h1 style="font-size: 32px; letter-spacing: 8px; margin: 0; color: #2563eb;">${otpCode}</h1>
+          </div>
+          
+          <p style="color: #666;">This code will expire in 2 minutes for security reasons.</p>
+          
+          <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email or contact support if you have concerns.</p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            MyClinic - Medical Request Management System
+          </p>
+        </div>
+      `,
+    });
+
+    if (emailResponse.error) {
+      console.error('Error sending email:', emailResponse.error);
+      throw new Error('Failed to send OTP email');
+    }
+
+    console.log('OTP email sent successfully to:', normalizedEmail);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'OTP sent successfully',
-        // Remove this in production - for demo purposes only
-        debug_otp: otpCode 
+        message: 'OTP sent successfully to your email'
       }),
       {
         status: 200,
@@ -63,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         error: 'Failed to send OTP',
-        details: error.message 
+        message: error.message 
       }),
       {
         status: 500,
