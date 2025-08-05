@@ -89,8 +89,40 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
     { stage: "Cancelled/Rejected", count: cancelledRejectedCount, percentage: totalRequests > 0 ? Number((cancelledRejectedCount / totalRequests * 100).toFixed(1)) : 0 }
   ];
 
-  // NPS Score calculation (simulated)
-  const npsScore = 72;
+  // NPS Score calculation - get from customer care data
+  const calculateNPS = () => {
+    // Get customer care data from localStorage
+    const customerCareData = localStorage.getItem('customerCareData');
+    if (!customerCareData) return 72; // fallback
+    
+    try {
+      const requests = JSON.parse(customerCareData);
+      const respondedRequests = requests.filter((r: any) => {
+        const npsScore = r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"];
+        return npsScore !== undefined && npsScore !== null && npsScore !== "";
+      });
+      
+      if (respondedRequests.length === 0) return 72; // fallback
+      
+      const promoters = respondedRequests.filter((r: any) => {
+        const score = Number(r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]);
+        return score >= 9;
+      }).length;
+      
+      const detractors = respondedRequests.filter((r: any) => {
+        const score = Number(r["On a scale of 1-10, how likely are you to recommend My Clinic? (NPS)"]);
+        return score <= 6;
+      }).length;
+      
+      const npsValue = ((promoters - detractors) / respondedRequests.length) * 100;
+      return Math.round(npsValue);
+    } catch (error) {
+      console.error('Error calculating NPS:', error);
+      return 72; // fallback
+    }
+  };
+  
+  const npsScore = calculateNPS();
 
   // Status data for pie chart - updated to include cancelled/rejected
   const statusData = [
