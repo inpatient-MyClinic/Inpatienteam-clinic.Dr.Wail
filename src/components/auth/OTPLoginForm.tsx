@@ -72,21 +72,32 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
 
       console.log('OTP is valid, getting user profile...');
 
-      // OTP is valid - create a direct authentication session
-      // Get user ID from profiles table
-      const { data: profile, error: profileError } = await supabase
+      const normalizedEmail = email.trim().toLowerCase();
+      console.log('Looking up profile for:', normalizedEmail);
+
+      // Get user profile with multiple fallback approaches
+      let profile = null;
+      
+      // First try: exact match
+      const { data: profile1, error: error1 } = await supabase
         .from('profiles')
-        .select('id, role, status')
-        .ilike('email', email.trim())
+        .select('id, role, status, email')
+        .eq('email', normalizedEmail)
         .maybeSingle();
-
-      console.log('Profile lookup for OTP login:', { profile, profileError });
-
-      if (profileError) {
-        console.error('Profile lookup error:', profileError);
-        setError('Error loading user profile. Please contact support.');
-        return;
+      
+      if (profile1) {
+        profile = profile1;
+      } else {
+        // Second try: case-insensitive match
+        const { data: profile2, error: error2 } = await supabase
+          .from('profiles')
+          .select('id, role, status, email')
+          .ilike('email', normalizedEmail)
+          .maybeSingle();
+        profile = profile2;
       }
+
+      console.log('Profile lookup for OTP login:', { profile });
 
       if (!profile) {
         console.error('No profile found during OTP verification');

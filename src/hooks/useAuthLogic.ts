@@ -156,12 +156,36 @@ export const useAuthLogic = () => {
       console.log('=== OTP LOGIN START ===');
       console.log('Initiating OTP login for:', email);
       
-      // Check if user exists and is approved
-      const { data: profile, error: profileError } = await supabase
+      const normalizedEmail = email.trim().toLowerCase();
+      console.log('Normalized email:', normalizedEmail);
+      
+      // Check if user exists and is approved - try multiple approaches
+      let profile = null;
+      let profileError = null;
+      
+      // First try: exact match with normalized email
+      const { data: profile1, error: error1 } = await supabase
         .from('profiles')
-        .select('status, role')
-        .ilike('email', email.trim())
+        .select('status, role, email')
+        .eq('email', normalizedEmail)
         .maybeSingle();
+      
+      if (profile1) {
+        profile = profile1;
+      } else {
+        // Second try: case-insensitive match
+        const { data: profile2, error: error2 } = await supabase
+          .from('profiles')
+          .select('status, role, email')
+          .ilike('email', normalizedEmail)
+          .maybeSingle();
+        
+        if (profile2) {
+          profile = profile2;
+        } else {
+          profileError = error2;
+        }
+      }
 
       console.log('Profile lookup result:', { profile, profileError });
 
