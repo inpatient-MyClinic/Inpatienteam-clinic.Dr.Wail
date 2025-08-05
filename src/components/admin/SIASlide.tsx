@@ -147,13 +147,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
      (item.description && item.description.includes("IP"))
    );
    
-   // Calculate Done Cases based on actual Excel data statuses
+   // Calculate Done Cases (Done + Completed statuses only)
    const doneCases = filteredData.filter(item => {
      const status = item.operationStatus || item.status;
-     return status === "Done" || 
-            status === "Scheduled" || 
-            status === "Planned NVD" ||
-            status === "Completed";
+     return status === "Done" || status === "Completed";
    });
 
   // Calculate previous month data (Month -25 concept)
