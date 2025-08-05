@@ -177,6 +177,25 @@ export const useAuthLogic = () => {
     try {
       console.log('=== OTP LOGIN START ===');
       console.log('Email:', email);
+      
+      // First check if user exists in profiles
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, status, email')
+        .or(`email.eq.${email.trim().toLowerCase()},email.ilike.${email.trim()}`);
+
+      if (profileError || !profiles || profiles.length === 0) {
+        toast.error('User not found. Please contact an administrator.');
+        return;
+      }
+
+      const profile = profiles[0];
+      
+      if (profile.status !== 'active') {
+        toast.error('Account pending approval. Contact administrator.');
+        return;
+      }
+
       console.log('Calling send-otp-email function...');
       
       // Call the edge function to send OTP
@@ -188,13 +207,7 @@ export const useAuthLogic = () => {
 
       if (otpError) {
         console.error('OTP Error:', otpError);
-        if (otpError.message?.includes('User not found')) {
-          toast.error('User not found. Please contact an administrator.');
-        } else if (otpError.message?.includes('not active')) {
-          toast.error('Account pending approval. Contact administrator.');
-        } else {
-          toast.error(`Failed to send verification code: ${otpError.message}`);
-        }
+        toast.error(`Failed to send verification code: ${otpError.message}`);
         return;
       }
 

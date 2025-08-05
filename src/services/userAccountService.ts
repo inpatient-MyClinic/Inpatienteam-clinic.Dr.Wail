@@ -25,16 +25,42 @@ export const createUserAccount = async (params: CreateUserAccountParams) => {
       throw new Error('User with this email already exists');
     }
 
-    // Create auth user via Supabase auth signup with admin privileges
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    // Create auth user via Supabase auth signup - simplified approach
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: params.email.toLowerCase().trim(),
-      password: 'TempPassword123!', // Temporary password, user will need to change it
-      email_confirm: true, // Auto-confirm email for admin-created users
-      user_metadata: {
-        full_name: params.fullName || params.email.split('@')[0],
-        email: params.email.toLowerCase().trim()
+      password: 'TempPassword123!', // Temporary password
+      options: {
+        data: {
+          full_name: params.fullName || params.email.split('@')[0],
+          email: params.email.toLowerCase().trim()
+        }
       }
     });
+
+    if (authError) {
+      console.error('Auth signup error:', authError);
+      
+      if (authError.message.includes('User already registered')) {
+        throw new Error('User with this email already exists');
+      } else {
+        throw new Error(`Failed to create user account: ${authError.message}`);
+      }
+    }
+
+    if (!authData.user) {
+      throw new Error('User creation failed - no user returned');
+    }
+
+    // Auto-confirm the user to bypass email verification
+    const { error: confirmError } = await supabase.auth.admin.updateUserById(
+      authData.user.id,
+      { email_confirm: true }
+    );
+
+    if (confirmError) {
+      console.error('Error confirming user:', confirmError);
+      // Continue anyway - user can still login with OTP
+    }
 
     if (authError) {
       console.error('Auth signup error:', authError);
