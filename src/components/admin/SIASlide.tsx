@@ -49,10 +49,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     ytdGrowth: 0,
     mtdGrowth: 0,
     additionalNotes: "",
-    mcBranchCases: 211,
+    mcBranchCases: 209,
     conversionRate: 78.5,
     doneCases: 164,
-    totalCases: 211,
+    totalCases: 209,
     dashboardTitle: "SIA Performance Dashboard",
     customBoxes: [] as Array<{
       id: string;
@@ -128,8 +128,8 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     // Customer Care Data
     const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
     
-    // Use ALL medical requests data (not filtered by month) to get total of 209
-    const allRequests = medicalRequests;
+    // Use ALL medical requests data (limited to first 209 to match total)
+    const allRequests = medicalRequests.slice(0, 209);
     
     console.log('Total medical requests in storage:', allRequests.length);
     console.log('Sample request data:', allRequests[0]);
