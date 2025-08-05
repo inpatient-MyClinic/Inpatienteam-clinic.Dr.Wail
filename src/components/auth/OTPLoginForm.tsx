@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -161,16 +161,21 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
         <form onSubmit={handleSubmitOTP} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="otp">Verification Code</Label>
-            <Input
-              id="otp"
-              type="text"
-              value={otp}
-              onChange={(e) => setOTP(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="0000"
-              maxLength={4}
-              className="text-center text-2xl tracking-widest"
-              autoComplete="one-time-code"
-            />
+            <div className="flex justify-center">
+              <InputOTP 
+                maxLength={4} 
+                value={otp} 
+                onChange={setOTP}
+                autoComplete="one-time-code"
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
           </div>
 
           {error && (
