@@ -20,27 +20,57 @@ interface AdminOverdueAnalyticsProps {
 }
 
 function isOverdue(request: any): { isOverdue: boolean; hoursOverdue: number } {
-  const createdAt = parseISO(request.date || request.createdAt);
-  const workStart = setHours(createdAt, 10); // 10 AM
-  const workEnd = setHours(createdAt, 20); // 8 PM
-  
-  // Check if request was created during work hours
-  if (isAfter(createdAt, workStart) && isBefore(createdAt, workEnd)) {
-    const actionTime = request.coordinatorActionTime ? parseISO(request.coordinatorActionTime) : null;
-    const hoursFromCreation = differenceInHours(new Date(), createdAt);
+  try {
+    // Handle different date formats (ISO string, Excel serial number, or Date object)
+    let createdAt: Date;
+    const dateValue = request.date || request.createdAt || request.requestDate;
     
-    if (!actionTime) {
-      // No action taken, check if 4 hours have passed
-      const isRequestOverdue = hoursFromCreation > 4;
-      return { isOverdue: isRequestOverdue, hoursOverdue: Math.max(0, hoursFromCreation - 4) };
-    } else {
-      // Action taken, check if it was within 4 hours
-      const hoursToAction = differenceInHours(actionTime, createdAt);
-      const isRequestOverdue = hoursToAction > 4;
-      return { isOverdue: isRequestOverdue, hoursOverdue: Math.max(0, hoursToAction - 4) };
+    if (!dateValue) {
+      return { isOverdue: false, hoursOverdue: 0 };
     }
+    
+    if (typeof dateValue === 'string') {
+      createdAt = parseISO(dateValue);
+    } else if (typeof dateValue === 'number') {
+      // Excel serial date number to JavaScript Date
+      createdAt = new Date((dateValue - 25569) * 86400 * 1000);
+    } else if (dateValue instanceof Date) {
+      createdAt = dateValue;
+    } else {
+      return { isOverdue: false, hoursOverdue: 0 };
+    }
+    
+    // Validate the date
+    if (isNaN(createdAt.getTime())) {
+      return { isOverdue: false, hoursOverdue: 0 };
+    }
+    
+    const workStart = setHours(createdAt, 10); // 10 AM
+    const workEnd = setHours(createdAt, 20); // 8 PM
+    
+    // Check if request was created during work hours
+    if (isAfter(createdAt, workStart) && isBefore(createdAt, workEnd)) {
+      const actionTime = request.coordinatorActionTime ? 
+        (typeof request.coordinatorActionTime === 'string' ? parseISO(request.coordinatorActionTime) : new Date(request.coordinatorActionTime)) 
+        : null;
+      const hoursFromCreation = differenceInHours(new Date(), createdAt);
+      
+      if (!actionTime || isNaN(actionTime.getTime())) {
+        // No action taken, check if 4 hours have passed
+        const isRequestOverdue = hoursFromCreation > 4;
+        return { isOverdue: isRequestOverdue, hoursOverdue: Math.max(0, hoursFromCreation - 4) };
+      } else {
+        // Action taken, check if it was within 4 hours
+        const hoursToAction = differenceInHours(actionTime, createdAt);
+        const isRequestOverdue = hoursToAction > 4;
+        return { isOverdue: isRequestOverdue, hoursOverdue: Math.max(0, hoursToAction - 4) };
+      }
+    }
+    return { isOverdue: false, hoursOverdue: 0 };
+  } catch (error) {
+    console.warn('Error processing date in isOverdue function:', error, request);
+    return { isOverdue: false, hoursOverdue: 0 };
   }
-  return { isOverdue: false, hoursOverdue: 0 };
 }
 
 export default function AdminOverdueAnalytics({ data }: AdminOverdueAnalyticsProps) {
