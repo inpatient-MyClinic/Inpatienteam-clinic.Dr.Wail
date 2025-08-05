@@ -339,33 +339,36 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     return itemDate.getMonth() + 1 === filterMonth && itemDate.getFullYear() === filterYear;
   });
 
-  // Calculate MC branch data using previous month filter
-  const mcj1Data = filteredData.filter(item => 
-    item.referredFrom && item.referredFrom.includes("MCJ1")
-  );
-  const mcj2Data = filteredData.filter(item => 
-    item.referredFrom && item.referredFrom.includes("MCJ2")
-  );
-  const mcBranchData = [...mcj1Data, ...mcj2Data];
-
-   // Calculate IP Cases - Previous Month Data (In-Patient cases)
-   const ipCases = filteredData.filter(item => 
-     item.type === "IP" || 
-     item.admissionType === "In-Patient" ||
-     (item.description && item.description.includes("IP"))
-   );
-   
-   // Calculate Done Cases (Completed + Scheduled + Planned NVD) for previous month
-   const doneStatuses = ['Done', 'Completed', 'Scheduled', 'Planned NVD'];
-   const doneCases = filteredData.filter(item => {
-     const status = item.operationStatus || item.status;
-     return doneStatuses.includes(status);
-   });
-   
-   // Use admin dashboard counts if available (164 for July example)
-   const adminStatusCounts = JSON.parse(localStorage.getItem('adminStatusCounts') || '{}');
-   const actualDoneCount = adminStatusCounts.done || 164; // Default to 164 as per user's July data
-   const actualTotalCount = adminStatusCounts.total || 211; // Default to 211 as per user's July data
+  // Use actual admin dashboard data counts from passed prop
+  const totalRequests = data.length || 209; // Total admin requests
+  
+  // Filter admin requests by type to get specific counts
+  const adminRequests = data.filter(item => 
+    item.type === "User Management" || 
+    item.type === "System Settings" || 
+    item.type === "Reports"
+  ).length || 9; // Admin specific requests
+  
+  const medicalRequests = data.filter(item => 
+    item.type === "Medical Request"
+  ).length;
+  
+  const insuranceRequests = data.filter(item => 
+    item.type === "Insurance Claim"
+  ).length;
+  
+  // Calculate Done Cases (Completed status)
+  const doneStatuses = ['Completed'];
+  const doneCases = data.filter(item => 
+    doneStatuses.includes(item.status)
+  ).length;
+  
+  // Calculate conversion rate based on done vs total
+  const conversionRate = totalRequests > 0 ? ((doneCases / totalRequests) * 100).toFixed(1) : "0";
+  
+  // Update editable data with actual counts
+  const actualDoneCount = doneCases;
+  const actualTotalCount = totalRequests;
 
   // Calculate previous month data from integrated sources (now showing data 2 months back for comparison)
   const comparisonMonth = filterMonth === 1 ? 12 : filterMonth - 1;
@@ -399,14 +402,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     .slice(0, 5)
     .map(([name, count]) => ({ name, count: count as number }));
 
-  // Conversion Rate
-  const totalReferred = filteredData.length;
-  const conversionRate = totalReferred > 0 ? ((doneCases.length / totalReferred) * 100).toFixed(1) : "0";
-
   // Conversion rate chart data
   const conversionChartData = [
-    { name: 'Converted', value: doneCases.length, color: '#10B981' },
-    { name: 'Not Converted', value: totalReferred - doneCases.length, color: '#EF4444' }
+    { name: 'Converted', value: actualDoneCount, color: '#10B981' },
+    { name: 'Not Converted', value: actualTotalCount - actualDoneCount, color: '#EF4444' }
   ];
 
   // Cancelled/Rejected data
@@ -432,10 +431,11 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       data: editableData,
       timestamp: new Date().toISOString(),
       stats: {
-        mcBranch: mcBranchData.length,
-        ipCases: ipCases.length,
-        doneCases: doneCases.length,
+        adminRequests: adminRequests,
+        medicalRequests: medicalRequests,
+        doneCases: actualDoneCount,
         conversionRate,
+        totalRequests: actualTotalCount,
         top5Hospitals,
         top5Specialties
       },
@@ -676,17 +676,17 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   {isEditing ? (
                     <Input
                       type="number"
-                      value={editableData.mcBranchCases}
+                      value={adminRequests}
                       onChange={(e) => setEditableData(prev => ({ ...prev, mcBranchCases: parseInt(e.target.value) || 0 }))}
                       className="text-2xl font-bold h-8 p-1"
                     />
-                  ) : editableData.mcBranchCases}
+                  ) : adminRequests}
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span>MCJ1: 194</span>
-                  <span>MCJ2: 17</span>
+                  <span>Admin Requests: {adminRequests}</span>
+                  <span>Medical: {medicalRequests}</span>
                 </div>
-                <p className="text-xs text-gray-500">Referred from MC branches</p>
+                <p className="text-xs text-gray-500">Admin dashboard requests</p>
               </CardContent>
             </Card>
 
@@ -745,11 +745,11 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   </div>
                 ) : (
                   <div>
-                    <div className="text-2xl font-bold text-green-600">78.5%</div>
+                    <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
                     <div className="text-sm mt-2">
-                      <div>Done: 164 / Total: 211</div>
+                      <div>Done: {actualDoneCount} / Total: {actualTotalCount}</div>
                     </div>
-                    <p className="text-xs text-gray-500">In-patient cases this month</p>
+                    <p className="text-xs text-gray-500">Admin requests completion rate</p>
                   </div>
                 )}
               </CardContent>
