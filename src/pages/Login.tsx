@@ -134,6 +134,11 @@ const Login = () => {
                     : 'Users can login directly with email only'
                   }
                 </div>
+                {showOTPLogin && (
+                  <div className="mt-2 p-2 bg-blue-100 rounded text-blue-800 text-sm font-medium">
+                    ✅ OTP Input Form is Active - Enter your 4-digit code above
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 pt-6 border-t">
