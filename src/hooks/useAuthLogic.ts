@@ -212,14 +212,19 @@ export const useAuthLogic = () => {
         .select('id, role, status, email')
         .or(`email.eq.${email.trim().toLowerCase()},email.ilike.${email.trim()}`);
 
+      console.log('Profile lookup result:', { profiles, profileError });
+
       if (profileError || !profiles || profiles.length === 0) {
+        console.error('User not found in profiles:', profileError);
         toast.error('User not found. Please contact an administrator.');
         return;
       }
 
       const profile = profiles[0];
+      console.log('Found profile:', profile);
       
       if (profile.status !== 'active') {
+        console.error('User account not active:', profile.status);
         toast.error('Account pending approval. Contact administrator.');
         return;
       }
@@ -240,8 +245,23 @@ export const useAuthLogic = () => {
       }
 
       console.log('=== OTP SENT - SHOWING OTP SCREEN ===');
+      console.log('Setting showOTPLogin to true...');
+      
+      // Show success message
       toast.success('Verification code sent to your email! Check your inbox.');
+      
+      // Show OTP input screen
       setShowOTPLogin(true);
+      
+      console.log('showOTPLogin state should now be true');
+      
+      // If there's a debug OTP in the response, log it
+      if (data && (data.otp_for_testing || data.debug_otp_for_testing)) {
+        console.log('=== DEBUG OTP CODE ===');
+        console.log('OTP Code for testing:', data.otp_for_testing || data.debug_otp_for_testing);
+        console.log('Enter this code in the form that should appear');
+      }
+      
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed. Please try again.');
