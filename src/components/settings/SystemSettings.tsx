@@ -300,6 +300,8 @@ const SystemSettings = () => {
                   checked={localStorage.getItem('otpEnabled') !== 'false'}
                   onCheckedChange={(checked) => {
                     localStorage.setItem('otpEnabled', checked.toString());
+                    console.log('OTP Setting changed:', checked);
+                    console.log('localStorage value set to:', localStorage.getItem('otpEnabled'));
                     toast({
                       title: checked ? "OTP Enabled" : "OTP Disabled",
                       description: checked 
@@ -308,6 +310,12 @@ const SystemSettings = () => {
                     });
                   }}
                 />
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                <span>Current setting:</span>
+                <Badge variant={localStorage.getItem('otpEnabled') !== 'false' ? 'default' : 'secondary'}>
+                  {localStorage.getItem('otpEnabled') !== 'false' ? 'OTP Required' : 'Direct Login'}
+                </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 When disabled, users can login with just email/password. Useful for testing or environments without email service.

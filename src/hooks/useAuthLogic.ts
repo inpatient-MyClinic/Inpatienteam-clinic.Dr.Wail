@@ -112,17 +112,31 @@ export const useAuthLogic = () => {
     
     // Check if OTP is disabled in admin settings
     const otpEnabled = localStorage.getItem('otpEnabled') !== 'false';
+    const isAdmin = isAdminEmail(email);
     
-    // For non-admin users, check OTP setting
-    if (!isAdminEmail(email)) {
-      if (otpEnabled) {
-        return handleOTPLogin();
-      } else {
-        // OTP disabled - try direct login for non-admin users
-        return handleDirectLogin();
-      }
+    console.log('=== LOGIN DEBUG ===');
+    console.log('Email:', email);
+    console.log('Is Admin:', isAdmin);
+    console.log('OTP Enabled:', otpEnabled);
+    console.log('localStorage otpEnabled value:', localStorage.getItem('otpEnabled'));
+    
+    // For admin users, always use password login
+    if (isAdmin) {
+      console.log('Using admin password login');
+      return handleAdminLogin();
     }
     
+    // For non-admin users, check OTP setting
+    if (otpEnabled) {
+      console.log('OTP enabled - using OTP login');
+      return handleOTPLogin();
+    } else {
+      console.log('OTP disabled - using direct login');
+      return handleDirectLogin();
+    }
+  };
+
+  const handleAdminLogin = async () => {
     try {
       console.log('Attempting admin login for email:', email);
       
