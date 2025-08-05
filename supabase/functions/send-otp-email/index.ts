@@ -87,9 +87,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     try {
-      // Send OTP email using Resend
+      // Send OTP email using Resend (using verified domain)
       const emailResponse = await resend.emails.send({
-        from: "MyClinic <no-reply@myclinic.com.sa>",
+        from: "MyClinic <onboarding@resend.dev>",
         to: [normalizedEmail],
         subject: "Your Login Verification Code",
         html: `
