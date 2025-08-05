@@ -28,6 +28,7 @@ interface AdminTask {
 interface PaginatedAdminTableProps {
   data: AdminTask[];
   currentUserRole?: string;
+  onStatusFilter?: (status: string | null) => void;
 }
 
 interface PaginationSettings {
@@ -36,7 +37,7 @@ interface PaginationSettings {
   userSpecific: Record<string, number>;
 }
 
-export default function PaginatedAdminTable({ data, currentUserRole = "admin" }: PaginatedAdminTableProps) {
+export default function PaginatedAdminTable({ data, currentUserRole = "admin", onStatusFilter }: PaginatedAdminTableProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [paginationSettings, setPaginationSettings] = useState<PaginationSettings>(() => {
     const saved = localStorage.getItem('adminPaginationSettings');
@@ -357,30 +358,45 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin" }:
         </div>
       </div>
 
-      {/* Status Totals Summary */}
+      {/* Status Totals Summary - Clickable Filters */}
       <div className="p-4 border-b bg-gray-50">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Filter by Status:</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
-          <div className="flex flex-col items-center p-2 bg-white rounded border">
+          <button 
+            className="flex flex-col items-center p-2 bg-white rounded border hover:bg-green-50 transition-colors cursor-pointer"
+            onClick={() => onStatusFilter && onStatusFilter('Done')}
+          >
             <span className="font-semibold text-green-600">{doneCount}</span>
             <span className="text-gray-600">Done/Completed</span>
-          </div>
-          <div className="flex flex-col items-center p-2 bg-white rounded border">
+          </button>
+          <button 
+            className="flex flex-col items-center p-2 bg-white rounded border hover:bg-yellow-50 transition-colors cursor-pointer"
+            onClick={() => onStatusFilter && onStatusFilter('Pending')}
+          >
             <span className="font-semibold text-yellow-600">{pendingCount}</span>
             <span className="text-gray-600">Pending</span>
-          </div>
-          <div className="flex flex-col items-center p-2 bg-white rounded border">
+          </button>
+          <button 
+            className="flex flex-col items-center p-2 bg-white rounded border hover:bg-blue-50 transition-colors cursor-pointer"
+            onClick={() => onStatusFilter && onStatusFilter('Scheduled')}
+          >
             <span className="font-semibold text-blue-600">{scheduledCount}</span>
             <span className="text-gray-600">Scheduled</span>
-          </div>
-          <div className="flex flex-col items-center p-2 bg-white rounded border">
+          </button>
+          <button 
+            className="flex flex-col items-center p-2 bg-white rounded border hover:bg-red-50 transition-colors cursor-pointer"
+            onClick={() => onStatusFilter && onStatusFilter('Cancelled')}
+          >
             <span className="font-semibold text-red-600">{cancelledCount}</span>
             <span className="text-gray-600">Cancelled</span>
-          </div>
-          <div className="flex flex-col items-center p-2 bg-white rounded border">
+          </button>
+          <button 
+            className="flex flex-col items-center p-2 bg-white rounded border hover:bg-purple-50 transition-colors cursor-pointer"
+            onClick={() => onStatusFilter && onStatusFilter('Planned NVD')}
+          >
             <span className="font-semibold text-purple-600">{plannedNVDCount}</span>
             <span className="text-gray-600">Planned NVD</span>
-          </div>
+          </button>
         </div>
       </div>
 

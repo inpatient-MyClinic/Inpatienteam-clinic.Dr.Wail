@@ -62,9 +62,9 @@ export default function CaseCoordinatorSidebar({
         <p className="text-sm text-blue-800 mt-1 font-semibold">{currentCoordinatorName}</p>
       </div>
 
-      {/* All Requests Stats */}
+      {/* Filter by Status */}
       <div className="mb-6">
-        <h3 className="text-sm font-semibold text-blue-900 mb-3">All Requests</h3>
+        <h3 className="text-sm font-semibold text-blue-900 mb-3">Filter by Status:</h3>
         <div className="space-y-2">
           {allStats.map((stat) => (
             <button

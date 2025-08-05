@@ -24,31 +24,50 @@ export default function AdminSidebar({
 }: AdminSidebarProps) {
   const navigate = useNavigate();
 
-  // Calculate dynamic stats from filtered data
+  // Calculate status totals matching table data
+  const statusTotals = filteredData.reduce((acc, item) => {
+    const status = item.status;
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Get specific status counts
+  const doneCount = (statusTotals["Done"] || 0) + (statusTotals["Completed"] || 0);
+  const pendingCount = statusTotals["Pending"] || 0;
+  const scheduledCount = statusTotals["Scheduled"] || 0;
+  const cancelledCount = (statusTotals["Cancelled"] || 0) + (statusTotals["Case Canceled"] || 0);
+  const plannedNVDCount = statusTotals["Planned NVD"] || 0;
+
   const adminStats = [
     { 
-      label: "Pending", 
-      value: filteredData.filter(item => item.status === "Pending").length, 
-      color: "bg-yellow-500", 
-      key: "pending" 
-    },
-    { 
-      label: "Completed", 
-      value: filteredData.filter(item => item.status === "Completed" || item.status === "Done").length, 
+      label: "Done/Completed", 
+      value: doneCount, 
       color: "bg-green-600", 
-      key: "completed" 
+      key: "Done" 
     },
     { 
-      label: "In Progress", 
-      value: filteredData.filter(item => item.status === "In Progress").length, 
+      label: "Pending", 
+      value: pendingCount, 
+      color: "bg-yellow-600", 
+      key: "Pending" 
+    },
+    { 
+      label: "Scheduled", 
+      value: scheduledCount, 
       color: "bg-blue-600", 
-      key: "in_progress" 
+      key: "Scheduled" 
     },
     { 
-      label: "High Priority", 
-      value: filteredData.filter(item => item.priority === "High" || item.priority === "High Priority").length, 
+      label: "Cancelled", 
+      value: cancelledCount, 
       color: "bg-red-600", 
-      key: "high_priority" 
+      key: "Cancelled" 
+    },
+    { 
+      label: "Planned NVD", 
+      value: plannedNVDCount, 
+      color: "bg-purple-600", 
+      key: "Planned NVD" 
     },
   ];
 
@@ -76,18 +95,16 @@ export default function AdminSidebar({
       <div className="flex flex-col gap-2 w-full mb-4">
         <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
         {adminStats.map((stat) => (
-          <div
+          <button
             key={stat.key}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer transition-opacity ${
-              !activeFilter || activeFilter === stat.label 
-                ? stat.color 
-                : stat.color + ' opacity-50'
-            } text-white`}
-            onClick={() => onStatusFilter(activeFilter === stat.label ? null : stat.label)}
+            className={`flex items-center justify-between rounded-lg px-4 py-2 cursor-pointer transition-all text-white hover:opacity-90 ${
+              activeFilter === stat.key ? 'ring-2 ring-blue-400 ring-offset-1' : ''
+            } ${stat.color}`}
+            onClick={() => onStatusFilter(activeFilter === stat.key ? null : stat.key)}
           >
-            <span className="text-xs">{stat.label}:</span>
+            <span className="text-xs">{stat.label}</span>
             <span className="font-bold text-lg">{stat.value}</span>
-          </div>
+          </button>
         ))}
         
         {activeFilter && (

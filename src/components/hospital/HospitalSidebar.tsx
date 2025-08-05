@@ -88,16 +88,17 @@ export default function HospitalSidebar({
         <p className="text-xs text-orange-700">{currentHospitalName}</p>
       </div>
 
-      {/* Status Stats */}
+      {/* Filter by Status */}
       <div className="w-full space-y-2 mb-6">
+        <p className="text-sm font-semibold text-orange-900 mb-2">Filter by Status:</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Pending", value: statusCounts.pending, color: "bg-yellow-600", key: "pending" },
-            { label: "Approved", value: statusCounts.approved, color: "bg-green-600", key: "approved" },
-            { label: "Rejected", value: statusCounts.rejected, color: "bg-red-600", key: "rejected" },
-            { label: "Need Justification", value: statusCounts.needJustification, color: "bg-orange-600", key: "need_justification" },
+            { label: "Pending", value: statusCounts.pending, color: "bg-yellow-600", key: "Pending" },
+            { label: "Approved", value: statusCounts.approved, color: "bg-green-600", key: "Approved" },
+            { label: "Rejected", value: statusCounts.rejected, color: "bg-red-600", key: "Rejected" },
+            { label: "Need Justification", value: statusCounts.needJustification, color: "bg-orange-600", key: "Need Justification" },
           ].map((stat) => (
-            <div
+            <button
               key={stat.key}
               className={`${stat.color} text-white p-3 rounded-lg text-center cursor-pointer transition-all duration-200 ${
                 activeStatusFilter === stat.key ? 'ring-2 ring-white ring-offset-2' : 'hover:opacity-80'
@@ -106,7 +107,7 @@ export default function HospitalSidebar({
             >
               <div className="text-xl font-bold">{stat.value}</div>
               <div className="text-xs">{stat.label}</div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

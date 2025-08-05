@@ -94,25 +94,26 @@ export default function DoctorSidebar({
         Create New Request
       </Button>
 
-      {/* Status Stats */}
+      {/* Filter by Status */}
       <div className="w-full space-y-2 mb-6">
+        <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Pending", value: statusCounts.pending, color: "bg-yellow-600", key: "pending" },
-            { label: "Under Process", value: statusCounts.underProcess, color: "bg-blue-600", key: "under_process" },
-            { label: "Done", value: statusCounts.done, color: "bg-green-600", key: "done" },
-            { label: "Rejected", value: statusCounts.rejected, color: "bg-red-600", key: "rejected" },
+            { label: "Pending", value: statusCounts.pending, color: "bg-yellow-600", key: "Pending" },
+            { label: "Under Process", value: statusCounts.underProcess, color: "bg-blue-600", key: "Under Process" },
+            { label: "Done", value: statusCounts.done, color: "bg-green-600", key: "Done" },
+            { label: "Rejected", value: statusCounts.rejected, color: "bg-red-600", key: "Rejected" },
           ].map((stat) => (
-            <div
+            <button
               key={stat.key}
               className={`${stat.color} text-white p-3 rounded-lg text-center cursor-pointer transition-all duration-200 ${
-                activeStatusFilter === stat.key.replace('_', ' ') ? 'ring-2 ring-white ring-offset-2' : 'hover:opacity-80'
+                activeStatusFilter === stat.key ? 'ring-2 ring-white ring-offset-2' : 'hover:opacity-80'
               }`}
-              onClick={() => onStatusFilterClick(activeStatusFilter === stat.key.replace('_', ' ') ? null : stat.key.replace('_', ' '))}
+              onClick={() => onStatusFilterClick(activeStatusFilter === stat.key ? null : stat.key)}
             >
               <div className="text-xl font-bold">{stat.value}</div>
               <div className="text-xs">{stat.label}</div>
-            </div>
+            </button>
           ))}
         </div>
 

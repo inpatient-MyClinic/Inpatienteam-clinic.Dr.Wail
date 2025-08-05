@@ -64,19 +64,19 @@ export default function NurseStats({
   ];
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-2 w-full">
+      <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
       {stats.map((stat) => (
-        <Button
+        <button
           key={stat.status}
           onClick={() => onStatusFilterClick(activeStatusFilter === stat.status ? null : stat.status)}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-all ${stat.color} ${
-            activeStatusFilter === stat.status ? 'ring-2 ring-white ring-offset-2' : ''
+          className={`flex items-center justify-between rounded-lg px-4 py-2 text-white transition-all ${stat.color} ${
+            activeStatusFilter === stat.status ? 'ring-2 ring-blue-400 ring-offset-1' : ''
           } hover:opacity-90`}
-          variant="ghost"
         >
-          <span className="text-xs">{stat.label}:</span>
+          <span className="text-xs">{stat.label}</span>
           <span className="font-bold text-lg">{getStatusCount(stat.status)}</span>
-        </Button>
+        </button>
       ))}
       
       {/* Delayed Requests Counter */}
@@ -290,11 +290,11 @@ export default function NurseStats({
       {activeStatusFilter && (
         <Button
           onClick={() => onStatusFilterClick(null)}
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-red-600 hover:text-red-700 mt-2"
+          className="mt-2"
         >
-          Clear Status Filter
+          Clear Filter
         </Button>
       )}
     </div>
