@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ComposedChart } from 'recharts';
-import { Calendar, Save, History, ArrowLeft, FileText, Download } from "lucide-react";
+import { Calendar, Save, History, ArrowLeft, FileText, Download, Edit, Plus, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SIASlideProps {
@@ -26,6 +27,18 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     ytdGrowth: 0,
     mtdGrowth: 0,
     additionalNotes: "",
+    mcBranchCases: 211,
+    conversionRate: 78.5,
+    doneCases: 164,
+    totalCases: 211,
+    dashboardTitle: "SIA Performance Dashboard",
+    customBoxes: [] as Array<{
+      id: string;
+      title: string;
+      value: string;
+      image?: string;
+      description?: string;
+    }>,
     // Conversion Rate Chart Data (YTD)
     conversionRateData: [
       { month: 'JAN', rate: 79 },
@@ -49,6 +62,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   });
   const [monthlyNPS, setMonthlyNPS] = useState<Record<number, number>>({});
   const [financeData, setFinanceData] = useState<any[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
 
   // Load integrated data from all dashboard sources on component mount
   useEffect(() => {
@@ -251,6 +265,51 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     { currentStatus: "In Progress", actionPlan: "Introduction presentation in general for In-patient and another one per specialty", priority: "High", timeline: "Aug- 2025" }
   ]);
   const { toast } = useToast();
+
+  // Function to handle image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, boxId: string) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setUploadedImages(prev => ({ ...prev, [boxId]: imageUrl }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Function to add custom box
+  const addCustomBox = () => {
+    const newBox = {
+      id: `custom-${Date.now()}`,
+      title: "Custom Metric",
+      value: "0",
+      description: "New custom metric"
+    };
+    setEditableData(prev => ({
+      ...prev,
+      customBoxes: [...prev.customBoxes, newBox]
+    }));
+  };
+
+  // Function to remove custom box
+  const removeCustomBox = (id: string) => {
+    setEditableData(prev => ({
+      ...prev,
+      customBoxes: prev.customBoxes.filter(box => box.id !== id)
+    }));
+  };
+
+  // Function to update custom box
+  const updateCustomBox = (id: string, field: string, value: string) => {
+    setEditableData(prev => ({
+      ...prev,
+      customBoxes: prev.customBoxes.map(box => 
+        box.id === id ? { ...box, [field]: value } : box
+      )
+    }));
+  };
 
   // Generate month options
   const months = [
@@ -554,8 +613,16 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
           </Select>
 
           <Button onClick={() => setIsEditing(!isEditing)} variant="outline">
-            {isEditing ? "Cancel Edit" : "Edit"}
+            <Edit className="h-4 w-4 mr-2" />
+            {isEditing ? "Cancel Edit" : "Edit Mode"}
           </Button>
+          
+          {isEditing && (
+            <Button onClick={addCustomBox} variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Box
+            </Button>
+          )}
           
           <Button 
             onClick={exportToPDF}
@@ -579,12 +646,42 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
         <div className="col-span-8 space-y-6">
           {/* Top Row - Key Numbers */}
           <div className="grid grid-cols-4 gap-4">
-            <Card>
+            <Card className="relative">
+              {isEditing && uploadedImages['mc-branch'] && (
+                <div className="absolute top-2 right-2 w-12 h-12 rounded overflow-hidden">
+                  <img src={uploadedImages['mc-branch']} alt="MC Branch" className="w-full h-full object-cover" />
+                </div>
+              )}
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">MC Branch Cases</CardTitle>
+                <CardTitle className="text-sm text-gray-600">
+                  {isEditing ? (
+                    <Input
+                      value="MC Branch Cases"
+                      onChange={(e) => {/* Handle title edit */}}
+                      className="text-sm h-6 p-1"
+                    />
+                  ) : "MC Branch Cases"}
+                </CardTitle>
+                {isEditing && (
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'mc-branch')}
+                    className="text-xs h-6 mt-1"
+                  />
+                )}
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">211</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={editableData.mcBranchCases}
+                      onChange={(e) => setEditableData(prev => ({ ...prev, mcBranchCases: parseInt(e.target.value) || 0 }))}
+                      className="text-2xl font-bold h-8 p-1"
+                    />
+                  ) : editableData.mcBranchCases}
+                </div>
                 <div className="flex justify-between text-xs mt-2">
                   <span>MCJ1: 194</span>
                   <span>MCJ2: 17</span>
@@ -593,9 +690,30 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="relative">
+              {isEditing && uploadedImages['conversion-rate'] && (
+                <div className="absolute top-2 right-2 w-12 h-12 rounded overflow-hidden">
+                  <img src={uploadedImages['conversion-rate']} alt="Conversion Rate" className="w-full h-full object-cover" />
+                </div>
+              )}
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">Conversion Rate</CardTitle>
+                <CardTitle className="text-sm text-gray-600">
+                  {isEditing ? (
+                    <div className="space-y-1">
+                      <Input
+                        value="Conversion Rate"
+                        onChange={(e) => {/* Handle title edit */}}
+                        className="text-sm h-6 p-1"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'conversion-rate')}
+                        className="text-xs h-6"
+                      />
+                    </div>
+                  ) : "Conversion Rate"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {isEditing ? (
@@ -637,12 +755,42 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="relative">
+              {isEditing && uploadedImages['done-cases'] && (
+                <div className="absolute top-2 right-2 w-12 h-12 rounded overflow-hidden">
+                  <img src={uploadedImages['done-cases']} alt="Done Cases" className="w-full h-full object-cover" />
+                </div>
+              )}
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-600">Done Cases</CardTitle>
+                <CardTitle className="text-sm text-gray-600">
+                  {isEditing ? (
+                    <Input
+                      value="Done Cases"
+                      onChange={(e) => {/* Handle title edit */}}
+                      className="text-sm h-6 p-1"
+                    />
+                  ) : "Done Cases"}
+                </CardTitle>
+                {isEditing && (
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'done-cases')}
+                    className="text-xs h-6 mt-1"
+                  />
+                )}
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">164</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      value={editableData.doneCases}
+                      onChange={(e) => setEditableData(prev => ({ ...prev, doneCases: parseInt(e.target.value) || 0 }))}
+                      className="text-2xl font-bold h-8 p-1"
+                    />
+                  ) : editableData.doneCases}
+                </div>
                 <p className="text-xs text-gray-500">Completed + Scheduled + Planned</p>
               </CardContent>
             </Card>
@@ -695,6 +843,71 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardContent>
             </Card>
           </div>
+
+          {/* Custom Boxes */}
+          {editableData.customBoxes.length > 0 && (
+            <div className="grid grid-cols-4 gap-4">
+              {editableData.customBoxes.map((box) => (
+                <Card key={box.id} className="relative">
+                  {isEditing && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCustomBox(box.id)}
+                      className="absolute top-1 right-1 h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {uploadedImages[box.id] && (
+                    <div className="absolute top-2 right-8 w-12 h-12 rounded overflow-hidden">
+                      <img src={uploadedImages[box.id]} alt={box.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">
+                      {isEditing ? (
+                        <Input
+                          value={box.title}
+                          onChange={(e) => updateCustomBox(box.id, 'title', e.target.value)}
+                          className="text-sm h-6 p-1"
+                        />
+                      ) : box.title}
+                    </CardTitle>
+                    {isEditing && (
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, box.id)}
+                        className="text-xs h-6 mt-1"
+                      />
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {isEditing ? (
+                        <Input
+                          value={box.value}
+                          onChange={(e) => updateCustomBox(box.id, 'value', e.target.value)}
+                          className="text-2xl font-bold h-8 p-1"
+                        />
+                      ) : box.value}
+                    </div>
+                    {isEditing ? (
+                      <Textarea
+                        value={box.description || ''}
+                        onChange={(e) => updateCustomBox(box.id, 'description', e.target.value)}
+                        className="text-xs mt-2 min-h-8"
+                        placeholder="Description..."
+                      />
+                    ) : (
+                      <div className="text-xs text-gray-500 mt-2">{box.description}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Middle Row - Top 5 Lists with actual data from admin dashboard */}
           <div className="grid grid-cols-2 gap-6">
