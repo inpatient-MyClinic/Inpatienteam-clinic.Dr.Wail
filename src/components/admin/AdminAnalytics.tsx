@@ -47,6 +47,8 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
 
   // Calculate conversion rate with toggleable statuses - merge Completed and Done
   const totalRequests = cleanedData.length;
+  
+  // Use cleanedData for accurate counting
   const completedRequests = cleanedData.filter(item => item.status === "Completed").length;
   const actualDoneRequests = cleanedData.filter(item => item.status === "Done").length;
   const mergedDoneRequests = completedRequests + actualDoneRequests; // Merge Completed and Done
