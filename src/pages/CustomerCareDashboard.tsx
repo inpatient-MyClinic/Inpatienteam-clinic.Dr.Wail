@@ -622,15 +622,17 @@ export default function CustomerCareDashboard() {
                          {req["How would you rate your surgical experience?"] || "-"}
                        </span>
                      </TableCell>
-                     <TableCell className="text-center">
-                       <span className={`px-2 py-1 rounded text-xs ${
-                         req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.toLowerCase()?.includes("satisfactory") || req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.includes("مرضي") ? "bg-green-100 text-green-800" :
-                         req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.toLowerCase()?.includes("unsatisfactory") || req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.includes("غير مرضي") ? "bg-red-100 text-red-800" :
-                         "bg-gray-100 text-gray-800"
-                       }`}>
-                         {req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"] || "-"}
-                       </span>
-                     </TableCell>
+                      <TableCell className="text-center">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.toLowerCase()?.includes("satisfactory") || 
+                          req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.includes("مرضي جدا") ? "bg-green-100 text-green-800" :
+                          req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.toLowerCase()?.includes("unsatisfactory") || 
+                          req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"]?.includes("غير مرضي جدا") ? "bg-red-100 text-red-800" :
+                          "bg-gray-100 text-gray-800"
+                        }`}>
+                          {req["How was your experience with the post-consultation services provided by My Clinic team? ماهو تقييمك للخدمات ما بعد العملية المقدمة من قبل فريق عيادتي؟"] || "-"}
+                        </span>
+                      </TableCell>
                      <TableCell className="text-center">
                        <span className={`px-2 py-1 rounded text-xs ${
                          parseInt(req["On a scale of 1-5, how would you rate your overall experience?"]) >= 4 ? "bg-green-100 text-green-800" :
