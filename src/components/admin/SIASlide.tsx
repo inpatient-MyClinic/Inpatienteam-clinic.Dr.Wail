@@ -155,26 +155,37 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     
     // Count MCJ1 and MCJ2 cases from column H in uploaded Excel data
     // MCJ1 = MC Al Muhammadiyah, MCJ2 = MC Al Safa
+    // Column H in Excel is usually "My Clinic Branch" field
     const mcj1Cases = filteredRequests.filter((req: any) => {
-      // Check column H and various field names that might contain MCJ data
-      const columnH = req.H || req['Column H'] || req.referredFrom || req.clinicBranch || req.referred_from || req.branch || '';
-      const columnHStr = String(columnH).toLowerCase();
-      return columnHStr.includes('al muhammadiyah') || 
-             columnHStr.includes('muhammadiyah') ||
-             columnHStr.includes('mc al muhammadiyah') ||
-             columnHStr.includes('mcj1') ||
-             columnHStr.includes('mc j1');
+      // Check multiple possible field names for Excel column H
+      const columnHValue = req.H || req['H'] || req.__EMPTY_7 || 
+                          req['My Clinic Branch'] || req.clinicBranch || 
+                          req['Column H'] || req.referredFrom || req.referred_from || 
+                          req.branch || '';
+      
+      const valueStr = String(columnHValue).toLowerCase().trim();
+      return valueStr.includes('al muhammadiyah') || 
+             valueStr.includes('muhammadiyah') ||
+             valueStr.includes('mc al muhammadiyah') ||
+             valueStr.includes('mcj1') ||
+             valueStr.includes('mc j1') ||
+             valueStr === 'mcj1';
     }).length;
     
     const mcj2Cases = filteredRequests.filter((req: any) => {
-      // Check column H and various field names that might contain MCJ data
-      const columnH = req.H || req['Column H'] || req.referredFrom || req.clinicBranch || req.referred_from || req.branch || '';
-      const columnHStr = String(columnH).toLowerCase();
-      return columnHStr.includes('al safa') || 
-             columnHStr.includes('safa') ||
-             columnHStr.includes('mc al safa') ||
-             columnHStr.includes('mcj2') ||
-             columnHStr.includes('mc j2');
+      // Check multiple possible field names for Excel column H
+      const columnHValue = req.H || req['H'] || req.__EMPTY_7 || 
+                          req['My Clinic Branch'] || req.clinicBranch || 
+                          req['Column H'] || req.referredFrom || req.referred_from || 
+                          req.branch || '';
+      
+      const valueStr = String(columnHValue).toLowerCase().trim();
+      return valueStr.includes('al safa') || 
+             valueStr.includes('safa') ||
+             valueStr.includes('mc al safa') ||
+             valueStr.includes('mcj2') ||
+             valueStr.includes('mc j2') ||
+             valueStr === 'mcj2';
     }).length;
     
     // Use exact numbers provided by user
