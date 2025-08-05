@@ -79,28 +79,26 @@ const Login = () => {
             <p className="text-blue-700 text-sm">Surgical Case Management System</p>
           </div>
 
-          <Card className="shadow-lg">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-blue-900">
-                {showOTPLogin ? "Enter Verification Code" : (!isFirstTimeLogin ? "Login" : "Create Admin Password")}
-              </CardTitle>
-              <CardDescription>
-                {showOTPLogin 
-                  ? `We sent a 4-digit code to ${email}`
-                  : (!isFirstTimeLogin 
+          {showOTPLogin ? (
+            <OTPLoginForm
+              email={email}
+              onSuccess={handleOTPSuccess}
+              onBack={handleBackFromOTP}
+            />
+          ) : (
+            <Card className="shadow-lg">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl text-blue-900">
+                  {!isFirstTimeLogin ? "Login" : "Create Admin Password"}
+                </CardTitle>
+                <CardDescription>
+                  {!isFirstTimeLogin 
                     ? "Sign in with your authorized administrator account" 
-                    : "Set up your password for first-time access")
-                }
-              </CardDescription>
-            </CardHeader>
+                    : "Set up your password for first-time access"}
+                </CardDescription>
+              </CardHeader>
             <CardContent>
-              {showOTPLogin ? (
-                <OTPLoginForm
-                  email={email}
-                  onSuccess={handleOTPSuccess}
-                  onBack={handleBackFromOTP}
-                />
-              ) : !isFirstTimeLogin ? (
+              {!isFirstTimeLogin ? (
                 <LoginForm
                   email={email}
                   setEmail={setEmail}
@@ -159,7 +157,8 @@ const Login = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
       
