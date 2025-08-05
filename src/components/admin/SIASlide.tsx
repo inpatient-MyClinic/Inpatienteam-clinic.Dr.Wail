@@ -154,26 +154,27 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     });
     
     // Count MCJ1 and MCJ2 cases from column H in uploaded Excel data
+    // MCJ1 = MC Al Muhammadiyah, MCJ2 = MC Al Safa
     const mcj1Cases = filteredRequests.filter((req: any) => {
       // Check column H and various field names that might contain MCJ data
       const columnH = req.H || req['Column H'] || req.referredFrom || req.clinicBranch || req.referred_from || req.branch || '';
       const columnHStr = String(columnH).toLowerCase();
-      return columnHStr.includes('mcj1') || 
-             columnHStr.includes('mc j1') ||
-             columnHStr.includes('mc-j1') ||
-             columnHStr.includes('myclinic j1') ||
-             columnHStr.includes('myclinic-j1');
+      return columnHStr.includes('al muhammadiyah') || 
+             columnHStr.includes('muhammadiyah') ||
+             columnHStr.includes('mc al muhammadiyah') ||
+             columnHStr.includes('mcj1') ||
+             columnHStr.includes('mc j1');
     }).length;
     
     const mcj2Cases = filteredRequests.filter((req: any) => {
       // Check column H and various field names that might contain MCJ data
       const columnH = req.H || req['Column H'] || req.referredFrom || req.clinicBranch || req.referred_from || req.branch || '';
       const columnHStr = String(columnH).toLowerCase();
-      return columnHStr.includes('mcj2') || 
-             columnHStr.includes('mc j2') ||
-             columnHStr.includes('mc-j2') ||
-             columnHStr.includes('myclinic j2') ||
-             columnHStr.includes('myclinic-j2');
+      return columnHStr.includes('al safa') || 
+             columnHStr.includes('safa') ||
+             columnHStr.includes('mc al safa') ||
+             columnHStr.includes('mcj2') ||
+             columnHStr.includes('mc j2');
     }).length;
     
     // Use exact numbers provided by user
@@ -765,8 +766,8 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                   ) : integratedSIAData.mcBranchCounts.total}
                 </div>
                 <div className="flex justify-between text-xs mt-2">
-                  <span>MCJ1: {integratedSIAData.mcBranchCounts.mcj1}</span>
-                  <span>MCJ2: {integratedSIAData.mcBranchCounts.mcj2}</span>
+                  <span>MCJ1 (Al Muhammadiyah): {integratedSIAData.mcBranchCounts.mcj1}</span>
+                  <span>MCJ2 (Al Safa): {integratedSIAData.mcBranchCounts.mcj2}</span>
                 </div>
                 <p className="text-xs text-gray-500">From uploaded Excel data</p>
               </CardContent>
