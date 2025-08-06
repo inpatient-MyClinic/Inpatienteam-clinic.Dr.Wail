@@ -38,29 +38,37 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
       try {
         setIsLoading(true);
         console.log('Loading finance analytics data...');
+        
+        // First check localStorage
+        const localData = localStorage.getItem('financeAnalyticsData');
+        console.log('LocalStorage data:', localData);
+        
         const data = await loadFinanceAnalyticsData();
-        console.log('Loaded data:', data);
+        console.log('Loaded data from service:', data);
         
         if (data.length === 0) {
           console.log('No data found, loading sample data');
-          // Load sample data if no data exists
           loadSampleData();
         } else {
+          console.log('Setting finance data:', data);
           setFinanceData(data);
         }
       } catch (error) {
         console.error('Error loading data:', error);
+        console.log('Fallback: Loading sample data due to error');
+        loadSampleData();
         toast({
           title: "Loading from Sample Data",
           description: "Using sample data - save your changes to persist them.",
         });
-        loadSampleData();
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
+    // Load data immediately and also load sample data as backup
+    loadSampleData(); // Load sample data first to ensure table is never empty
+    loadData(); // Then try to load from database/localStorage
   }, []);
 
   // Get available years from the data
@@ -287,6 +295,7 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   };
 
   const loadSampleData = () => {
+    console.log('Loading sample data...');
     const sampleData: FinanceData[] = [
       {
         id: "1",
@@ -330,7 +339,12 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
       }
     ];
     
+    console.log('Setting sample data:', sampleData);
     setFinanceData(sampleData);
+    
+    // Also save to localStorage
+    localStorage.setItem('financeAnalyticsData', JSON.stringify(sampleData));
+    console.log('Sample data saved to localStorage');
   };
 
   const exportToExcel = () => {
