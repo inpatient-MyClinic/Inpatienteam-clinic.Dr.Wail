@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      finance_analytics_data: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          data: Json
+          id: string
+          row_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          row_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          row_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_transactions: {
         Row: {
           amount: number | null
