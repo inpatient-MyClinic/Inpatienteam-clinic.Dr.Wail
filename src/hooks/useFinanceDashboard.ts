@@ -4,23 +4,12 @@ import { Transaction, StatusCounts } from '@/types/finance';
 import { initialTransactions } from '@/data/financeData';
 import { savePaymentUpdateToSystem, loadSystemPaymentUpdates } from '@/utils/financeUtils';
 import { useToast } from '@/hooks/use-toast';
-import { useFinanceAnalyticsSync } from './useFinanceAnalyticsSync';
 
 export const useFinanceDashboard = () => {
-  const { generateTransactionsFromAnalytics } = useFinanceAnalyticsSync();
-  
   // Check if data was cleared and initialize accordingly
   const getInitialTransactions = () => {
     const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
-    if (dataCleared) return [];
-    
-    // Try to load from analytics data first
-    const analyticsTransactions = generateTransactionsFromAnalytics();
-    if (analyticsTransactions.length > 0) {
-      return analyticsTransactions;
-    }
-    
-    return initialTransactions;
+    return dataCleared ? [] : initialTransactions;
   };
   
   const [transactions, setTransactions] = useState<Transaction[]>(getInitialTransactions());
@@ -32,7 +21,7 @@ export const useFinanceDashboard = () => {
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load system payment updates on component mount and listen for analytics updates
+  // Load system payment updates on component mount
   useEffect(() => {
     // Check if data was cleared
     const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
@@ -53,31 +42,15 @@ export const useFinanceDashboard = () => {
       console.log('Loaded payment updates from system:', Object.keys(systemUpdates).length);
     }
     
-    // Listen for analytics data updates
-    const handleAnalyticsDataUpdate = () => {
-      try {
-        const generatedTransactions = generateTransactionsFromAnalytics();
-        if (generatedTransactions.length > 0) {
-          setTransactions(generatedTransactions);
-        }
-      } catch (error) {
-        console.error('Error updating transactions from analytics:', error);
-      }
-    };
-    
     // Listen for data clear events
     const handleDataCleared = () => {
       setTransactions([]);
     };
     
     window.addEventListener('financeDataCleared', handleDataCleared);
-    window.addEventListener('financeAnalyticsUpdated', handleAnalyticsDataUpdate);
-    window.addEventListener('financeYearsUpdated', handleAnalyticsDataUpdate);
     
     return () => {
       window.removeEventListener('financeDataCleared', handleDataCleared);
-      window.removeEventListener('financeAnalyticsUpdated', handleAnalyticsDataUpdate);
-      window.removeEventListener('financeYearsUpdated', handleAnalyticsDataUpdate);
     };
   }, []);
 
