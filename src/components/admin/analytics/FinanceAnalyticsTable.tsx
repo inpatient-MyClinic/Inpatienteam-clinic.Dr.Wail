@@ -105,11 +105,26 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
 
   // Get filtered month columns based on selected years
   const filteredMonthColumns = useMemo(() => {
-    return Object.keys(financeData[0] || {}).filter(key => {
-      if (key === 'id' || key === 'category' || key === 'type') return false;
-      const year = key.split('-')[1];
-      return year && selectedYears.includes(`20${year}`);
-    });
+    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const yearOrder = ['23', '24', '25']; // 2023, 2024, 2025
+    
+    return Object.keys(financeData[0] || {})
+      .filter(key => {
+        if (key === 'id' || key === 'category' || key === 'type') return false;
+        const year = key.split('-')[1];
+        return year && selectedYears.includes(`20${year}`);
+      })
+      .sort((a, b) => {
+        const [monthA, yearA] = a.split('-');
+        const [monthB, yearB] = b.split('-');
+        
+        // First sort by year
+        const yearCompare = yearOrder.indexOf(yearA) - yearOrder.indexOf(yearB);
+        if (yearCompare !== 0) return yearCompare;
+        
+        // Then sort by month within the same year
+        return monthOrder.indexOf(monthA) - monthOrder.indexOf(monthB);
+      });
   }, [financeData, selectedYears]);
 
   // Get all month columns for adding new columns
