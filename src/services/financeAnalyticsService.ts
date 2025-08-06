@@ -20,13 +20,24 @@ interface DatabaseRow {
 
 export const saveFinanceAnalyticsData = async (data: FinanceAnalyticsData[]): Promise<void> => {
   try {
+    // Check authentication first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log('No authenticated user, saving to localStorage only');
+      localStorage.setItem('financeAnalyticsData', JSON.stringify(data));
+      return;
+    }
+
     // First, get existing data to update or insert
     const { data: existingData, error: fetchError } = await supabase
       .from('finance_analytics_data')
       .select('*');
 
     if (fetchError) {
-      throw fetchError;
+      console.error('Database fetch error:', fetchError);
+      // Fallback to localStorage
+      localStorage.setItem('financeAnalyticsData', JSON.stringify(data));
+      return;
     }
 
     const existingRowIds = new Set(existingData?.map(row => row.row_id) || []);
@@ -68,7 +79,7 @@ export const saveFinanceAnalyticsData = async (data: FinanceAnalyticsData[]): Pr
           .eq('row_id', update.row_id);
 
         if (error) {
-          throw error;
+          console.error('Update error:', error);
         }
       }
     }
@@ -80,47 +91,89 @@ export const saveFinanceAnalyticsData = async (data: FinanceAnalyticsData[]): Pr
         .insert(inserts);
 
       if (error) {
-        throw error;
+        console.error('Insert error:', error);
       }
     }
 
+    // Also save to localStorage as backup
+    localStorage.setItem('financeAnalyticsData', JSON.stringify(data));
+
   } catch (error) {
     console.error('Error saving finance analytics data:', error);
-    throw error;
+    // Fallback to localStorage
+    localStorage.setItem('financeAnalyticsData', JSON.stringify(data));
   }
 };
 
 export const loadFinanceAnalyticsData = async (): Promise<FinanceAnalyticsData[]> => {
   try {
+    // First try to load from localStorage
+    const localData = localStorage.getItem('financeAnalyticsData');
+    let fallbackData: FinanceAnalyticsData[] = [];
+    
+    if (localData) {
+      try {
+        fallbackData = JSON.parse(localData);
+      } catch (e) {
+        console.error('Error parsing localStorage data:', e);
+      }
+    }
+
+    // Check authentication
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log('No authenticated user, using localStorage data');
+      return fallbackData;
+    }
+
     const { data, error } = await supabase
       .from('finance_analytics_data')
       .select('*')
       .order('created_at', { ascending: true });
 
     if (error) {
-      throw error;
+      console.error('Database load error:', error);
+      return fallbackData;
     }
 
     if (!data || data.length === 0) {
-      return [];
+      console.log('No database data found, using localStorage data');
+      return fallbackData;
     }
 
     // Convert database format to component format
-    return data.map((row: DatabaseRow) => ({
+    const dbData = data.map((row: DatabaseRow) => ({
       id: row.row_id,
       category: row.category,
       type: row.type,
       ...row.data
     }));
 
+    return dbData;
+
   } catch (error) {
     console.error('Error loading finance analytics data:', error);
-    throw error;
+    // Fallback to localStorage
+    const localData = localStorage.getItem('financeAnalyticsData');
+    if (localData) {
+      try {
+        return JSON.parse(localData);
+      } catch (e) {
+        console.error('Error parsing localStorage fallback:', e);
+      }
+    }
+    return [];
   }
 };
 
 export const deleteFinanceAnalyticsRow = async (rowId: string): Promise<void> => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log('No authenticated user, cannot delete from database');
+      return;
+    }
+
     const { error } = await supabase
       .from('finance_analytics_data')
       .delete()
