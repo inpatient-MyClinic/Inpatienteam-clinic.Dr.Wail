@@ -126,12 +126,12 @@ const Login = () => {
               <div className="mt-4 p-2 bg-gray-50 rounded text-xs text-gray-600">
                 <div className="flex items-center justify-between">
                   <span>Authentication Mode:</span>
-                  <span className={`font-medium ${localStorage.getItem('otpEnabled') !== 'false' ? 'text-blue-600' : 'text-green-600'}`}>
-                    {localStorage.getItem('otpEnabled') !== 'false' ? 'OTP Required' : 'Direct Login'}
+                   <span className={`font-medium ${localStorage.getItem('otpEnabled') === 'true' ? 'text-blue-600' : 'text-green-600'}`}>
+                    {localStorage.getItem('otpEnabled') === 'true' ? 'OTP Required' : 'Direct Login'}
                   </span>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {localStorage.getItem('otpEnabled') !== 'false' 
+                  {localStorage.getItem('otpEnabled') === 'true' 
                     ? 'Users will receive OTP codes via email' 
                     : 'Users can login directly with email only'
                   }

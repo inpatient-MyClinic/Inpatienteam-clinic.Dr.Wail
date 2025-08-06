@@ -297,7 +297,7 @@ const SystemSettings = () => {
                   <p className="text-sm text-muted-foreground">Require OTP verification for user login</p>
                 </div>
                 <Switch
-                  checked={localStorage.getItem('otpEnabled') !== 'false'}
+                  checked={localStorage.getItem('otpEnabled') === 'true'}
                   onCheckedChange={(checked) => {
                     localStorage.setItem('otpEnabled', checked.toString());
                     console.log('OTP Setting changed:', checked);
@@ -313,8 +313,8 @@ const SystemSettings = () => {
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                 <span>Current setting:</span>
-                <Badge variant={localStorage.getItem('otpEnabled') !== 'false' ? 'default' : 'secondary'}>
-                  {localStorage.getItem('otpEnabled') !== 'false' ? 'OTP Required' : 'Direct Login'}
+                <Badge variant={localStorage.getItem('otpEnabled') === 'true' ? 'default' : 'secondary'}>
+                  {localStorage.getItem('otpEnabled') === 'true' ? 'OTP Required' : 'Direct Login'}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-2">

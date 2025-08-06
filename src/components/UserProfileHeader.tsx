@@ -153,7 +153,7 @@ export default function UserProfileHeader({ className = "" }: UserProfileHeaderP
 
   return (
     <div className={`flex items-center gap-4 ${className}`}>
-      <Logo size="sm" showText={false} />
+      <Logo size="lg" showText={true} />
       
       <div className="flex items-center gap-3">
         <div className="text-right">
