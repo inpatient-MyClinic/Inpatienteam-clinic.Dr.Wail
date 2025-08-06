@@ -24,7 +24,7 @@ interface FinanceAnalyticsTableProps {
 export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalyticsTableProps) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedYears, setSelectedYears] = useState<string[]>(["2023", "2024", "2025"]);
+  const [selectedYears, setSelectedYears] = useState<string[]>(["2025"]);
   const [chartDialogOpen, setChartDialogOpen] = useState(false);
   const [chartType, setChartType] = useState<"achievement" | "growth-ytd">("achievement");
   const fileInputRef = useRef<HTMLInputElement>(null);
