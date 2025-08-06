@@ -278,14 +278,14 @@ export default function UserTracker() {
   const handleRenewPassword = async (userId: string, userEmail: string) => {
     setIsRenewingPassword(userId);
     try {
-      // Update the user's profile to force password change
+      // Update the user's profile to force password change using email instead of potentially invalid UUID
       const { error } = await supabase
         .from('profiles')
         .update({ 
           must_change_password: true,
           password_change_required_at: new Date().toISOString()
         })
-        .eq('id', userId);
+        .eq('email', userEmail);
 
       if (error) {
         console.error('Error forcing password renewal:', error);
@@ -325,13 +325,18 @@ export default function UserTracker() {
 
     setIsBulkRenewing(true);
     try {
+      // Get the email addresses for selected users to use in the update
+      const selectedEmails = activities
+        .filter(activity => selectedUsers.includes(activity.userId))
+        .map(activity => activity.userEmail);
+
       const { error } = await supabase
         .from('profiles')
         .update({ 
           must_change_password: true,
           password_change_required_at: new Date().toISOString()
         })
-        .in('id', selectedUsers);
+        .in('email', selectedEmails);
 
       if (error) {
         console.error('Error bulk renewing passwords:', error);
