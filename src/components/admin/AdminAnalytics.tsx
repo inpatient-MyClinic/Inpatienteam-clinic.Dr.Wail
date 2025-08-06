@@ -60,14 +60,14 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [includePlannedNVD, setIncludePlannedNVD] = useState(savedSettings.includePlannedNVD);
 
   // Calculate conversion rate with toggleable statuses - merge Completed and Done
-  const totalRequests = cleanedData.length;
+  const totalRequests = data.length; // Use original data length for consistency
   
-  // Use cleanedData for accurate counting
-  const completedRequests = cleanedData.filter(item => item.status === "Completed").length;
-  const actualDoneRequests = cleanedData.filter(item => item.status === "Done").length;
+  // Use original data for accurate counting to match dashboard totals
+  const completedRequests = data.filter(item => item.status === "Completed").length;
+  const actualDoneRequests = data.filter(item => item.status === "Done").length;
   const mergedDoneRequests = completedRequests + actualDoneRequests; // Merge Completed and Done
-  const scheduledRequests = cleanedData.filter(item => item.status === "Scheduled").length;
-  const plannedNVDRequests = cleanedData.filter(item => item.status === "Planned NVD").length;
+  const scheduledRequests = data.filter(item => item.status === "Scheduled").length;
+  const plannedNVDRequests = data.filter(item => item.status === "Planned NVD").length;
   
   const includedCount = (includeDone ? mergedDoneRequests : 0) + 
                        (includeScheduled ? scheduledRequests : 0) + 
