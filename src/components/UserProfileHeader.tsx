@@ -152,11 +152,11 @@ export default function UserProfileHeader({ className = "" }: UserProfileHeaderP
   }
 
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
+    <div className={`flex flex-col items-center gap-4 ${className}`}>
       <Logo size="lg" showText={true} />
       
       <div className="flex items-center gap-3">
-        <div className="text-right">
+        <div className="text-center">
           <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
           <p className="text-xs text-gray-500">{getRoleDisplayName()}</p>
         </div>
