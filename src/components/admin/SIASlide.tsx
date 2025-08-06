@@ -119,67 +119,84 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
   // Function to load and integrate data from all dashboard sources
   const loadIntegratedSIAData = () => {
-    // Get data from requestStorage (main data source)
+    // Get data from multiple sources for comprehensive SIA analysis
     const medicalRequests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
+    const requestStorageData = JSON.parse(localStorage.getItem('requestStorage') || '[]');
     
     // Finance Dashboard Data
     const financeAnalyticsData = JSON.parse(localStorage.getItem('financeAnalyticsData') || '[]');
+    const siaFinanceData = JSON.parse(localStorage.getItem('siaFinanceData') || '[]');
     
     // Customer Care Data
     const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
     
-    // Use ALL medical requests data from uploaded Excel sheet
-    const allRequests = medicalRequests;
+    // Combine all request sources, prioritizing medical_requests but falling back to requestStorage
+    const allRequests = medicalRequests.length > 0 ? medicalRequests : requestStorageData;
     
-    console.log('Total medical requests in storage:', allRequests.length);
-    console.log('Sample request data:', allRequests[0]);
+    console.log('SIA Data Sources Check:');
+    console.log('- Medical requests:', medicalRequests.length);
+    console.log('- Request storage:', requestStorageData.length);
+    console.log('- Finance data:', financeAnalyticsData.length);
+    console.log('- Customer care data:', customerCareData.length);
+    console.log('Using data source with', allRequests.length, 'records');
     
     // Log all possible field names to debug column H access
     if (allRequests.length > 0) {
       console.log('Available fields in first request:', Object.keys(allRequests[0]));
+      console.log('Sample request for field analysis:', allRequests[0]);
     }
     
-    // Count MCJ1 and MCJ2 cases from column H in uploaded Excel data
+    // Count MCJ1 and MCJ2 cases from Excel data - Enhanced field detection
     // MCJ1 = MC Al Muhammadiyah, MCJ2 = MC Al Safa
-    // Column H in Excel is usually "My Clinic Branch" field
+    // Check all possible column variations and field names
     const mcj1Cases = allRequests.filter((req: any) => {
-      // Check multiple possible field names for Excel column H
-      const columnHValue = req.H || req['H'] || req.__EMPTY_7 || 
-                          req['My Clinic Branch'] || req.clinicBranch || 
-                          req['Column H'] || req.referredFrom || req.referred_from || 
-                          req.branch || '';
+      // Enhanced field detection for My Clinic Branch or referral source
+      const possibleFields = [
+        req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
+        req['My Clinic Branch'], req.clinicBranch, req['Column H'], 
+        req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
+        req['Referred From'], req['Hospital Code'], req.source, req.origin,
+        req['Branch'], req['Clinic Branch'], req['MC Branch']
+      ];
       
+      const columnHValue = possibleFields.find(val => val !== undefined && val !== null && val !== '') || '';
       const valueStr = String(columnHValue).toLowerCase().trim();
+      
       const isMatch = valueStr.includes('al muhammadiyah') || 
              valueStr.includes('muhammadiyah') ||
              valueStr.includes('mc al muhammadiyah') ||
-             valueStr.includes('mcj1') ||
-             valueStr.includes('mc j1') ||
-             valueStr === 'mcj1';
+             valueStr.includes('mcj1') || valueStr.includes('mc j1') ||
+             valueStr === 'mcj1' || valueStr.includes('mc1') ||
+             valueStr.includes('myclinic muhammadiyah');
       
       if (isMatch) {
-        console.log('MCJ1 match found:', columnHValue, 'in request:', req.id);
+        console.log('MCJ1 match found:', columnHValue, 'in request:', req.id || req.requestId);
       }
       return isMatch;
     }).length;
     
     const mcj2Cases = allRequests.filter((req: any) => {
-      // Check multiple possible field names for Excel column H
-      const columnHValue = req.H || req['H'] || req.__EMPTY_7 || 
-                          req['My Clinic Branch'] || req.clinicBranch || 
-                          req['Column H'] || req.referredFrom || req.referred_from || 
-                          req.branch || '';
+      // Enhanced field detection for My Clinic Branch or referral source
+      const possibleFields = [
+        req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
+        req['My Clinic Branch'], req.clinicBranch, req['Column H'], 
+        req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
+        req['Referred From'], req['Hospital Code'], req.source, req.origin,
+        req['Branch'], req['Clinic Branch'], req['MC Branch']
+      ];
       
+      const columnHValue = possibleFields.find(val => val !== undefined && val !== null && val !== '') || '';
       const valueStr = String(columnHValue).toLowerCase().trim();
+      
       const isMatch = valueStr.includes('al safa') || 
              valueStr.includes('safa') ||
              valueStr.includes('mc al safa') ||
-             valueStr.includes('mcj2') ||
-             valueStr.includes('mc j2') ||
-             valueStr === 'mcj2';
+             valueStr.includes('mcj2') || valueStr.includes('mc j2') ||
+             valueStr === 'mcj2' || valueStr.includes('mc2') ||
+             valueStr.includes('myclinic safa');
       
       if (isMatch) {
-        console.log('MCJ2 match found:', columnHValue, 'in request:', req.id);
+        console.log('MCJ2 match found:', columnHValue, 'in request:', req.id || req.requestId);
       }
       return isMatch;
     }).length;
@@ -198,38 +215,56 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount; // 164
     const conversionRate = ((totalDoneAndScheduled / totalCasesCount) * 100).toFixed(2); // 78.47%
     
-    // Calculate status distribution from all requests
+    // Calculate status distribution from all requests with enhanced field mapping
     const statusCounts = {
       completed: allRequests.filter((req: any) => {
-        const status = (req.status || req.operationStatus || '').toLowerCase();
-        return status.includes('done') || status.includes('completed');
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const status = statusFields.find(s => s) || '';
+        const statusStr = String(status).toLowerCase().trim();
+        return statusStr.includes('done') || statusStr.includes('completed') || statusStr.includes('complete');
       }).length,
       pending: allRequests.filter((req: any) => {
-        const status = (req.status || req.operationStatus || '').toLowerCase();
-        return status.includes('pending');
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const status = statusFields.find(s => s) || '';
+        const statusStr = String(status).toLowerCase().trim();
+        return statusStr.includes('pending') || statusStr.includes('waiting');
       }).length,
       cancelled: allRequests.filter((req: any) => {
-        const status = (req.status || req.operationStatus || '').toLowerCase();
-        return status.includes('cancelled');
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const status = statusFields.find(s => s) || '';
+        const statusStr = String(status).toLowerCase().trim();
+        return statusStr.includes('cancelled') || statusStr.includes('canceled');
       }).length,
       rejected: allRequests.filter((req: any) => {
-        const status = (req.status || req.operationStatus || '').toLowerCase();
-        return status.includes('rejected');
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const status = statusFields.find(s => s) || '';
+        const statusStr = String(status).toLowerCase().trim();
+        return statusStr.includes('rejected') || statusStr.includes('declined');
       }).length,
       scheduled: allRequests.filter((req: any) => {
-        const status = (req.status || req.operationStatus || '').toLowerCase();
-        return status.includes('scheduled');
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const status = statusFields.find(s => s) || '';
+        const statusStr = String(status).toLowerCase().trim();
+        return statusStr.includes('scheduled') || statusStr.includes('booked');
       }).length,
       plannedNVD: allRequests.filter((req: any) => {
-        const status = (req.status || req.operationStatus || '').toLowerCase();
-        return status.includes('planned');
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const status = statusFields.find(s => s) || '';
+        const statusStr = String(status).toLowerCase().trim();
+        return statusStr.includes('planned') || statusStr.includes('nvd');
       }).length
     };
     
-    // Get Top 5 Hospitals from all requests
+    // Get Top 5 Hospitals from all requests with enhanced field detection
     const hospitalCounts = allRequests.reduce((acc: any, req: any) => {
-      const hospital = req.hospitalName || req.referredToHospital || req.hospital || 'Unknown Hospital';
-      acc[hospital] = (acc[hospital] || 0) + 1;
+      const hospitalFields = [
+        req.hospitalName, req.referredToHospital, req.hospital, 
+        req['Hospital Name'], req['Referred To Hospital'], req['Hospital'],
+        req.referredTo, req['Referred To'], req.hospitalCode, req['Hospital Code']
+      ];
+      const hospital = hospitalFields.find(h => h && h.trim()) || 'Unknown Hospital';
+      const hospitalKey = String(hospital).trim();
+      acc[hospitalKey] = (acc[hospitalKey] || 0) + 1;
       return acc;
     }, {});
     
@@ -238,10 +273,15 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       .slice(0, 5)
       .map(([hospital, count]) => ({ hospital, count }));
     
-    // Get Top 5 Specialties from all requests
+    // Get Top 5 Specialties from all requests with enhanced field detection
     const specialtyCounts = allRequests.reduce((acc: any, req: any) => {
-      const specialty = req.specialty || req.medical_specialty || 'General';
-      acc[specialty] = (acc[specialty] || 0) + 1;
+      const specialtyFields = [
+        req.specialty, req.medical_specialty, req['Specialty'], 
+        req['Medical Specialty'], req.medicalSpecialty, req.department
+      ];
+      const specialty = specialtyFields.find(s => s && s.trim()) || 'General';
+      const specialtyKey = String(specialty).trim();
+      acc[specialtyKey] = (acc[specialtyKey] || 0) + 1;
       return acc;
     }, {});
     
