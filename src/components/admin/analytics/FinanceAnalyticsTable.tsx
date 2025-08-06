@@ -37,7 +37,25 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
       try {
         const parsedData = JSON.parse(savedData);
         console.log('Parsed data:', parsedData); // Debug log
-        return parsedData;
+        // Ensure all months for each year are present in saved data
+        const fullData = parsedData.map((row: FinanceData) => {
+          const fullRow = { ...row };
+          // Add missing months for each year
+          const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const allYears = ['23', '24', '25'];
+          
+          allYears.forEach(year => {
+            allMonths.forEach(month => {
+              const key = `${month}-${year}`;
+              if (!(key in fullRow)) {
+                fullRow[key] = "";
+              }
+            });
+          });
+          
+          return fullRow;
+        });
+        return fullData;
       } catch (error) {
         console.error('Error loading saved data:', error);
       }
