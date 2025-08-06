@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Users, FileText, Settings, BarChart3, Calculator } from "lucide-react";
 import AdminRequestsUpload from "./AdminRequestsUpload";
 import DataBackupManager from "./DataBackupManager";
+import TaskCreationDialog from "./TaskCreationDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +17,7 @@ interface AdminQuickActionsProps {
 export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAnalytics }: AdminQuickActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
 
   const handleRequestsUpload = (data: any[]) => {
     console.log("Processing uploaded historical requests:", data);
@@ -26,11 +28,8 @@ export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAn
   };
 
   const handleAddTask = () => {
-    console.log("Add Task clicked");
-    toast({
-      title: "Add Task",
-      description: "Task creation functionality will be implemented soon.",
-    });
+    console.log("Add Task clicked - opening task creation dialog");
+    setShowTaskDialog(true);
   };
 
   const handleManageUsers = () => {
@@ -80,43 +79,49 @@ export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAn
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-4">
-          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleAddTask}>
-            <Plus className="w-5 h-5" />
-            <span className="text-xs">Add Task</span>
-          </Button>
-          
-          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleManageUsers}>
-            <Users className="w-5 h-5" />
-            <span className="text-xs">Manage Users</span>
-          </Button>
-          
-          <AdminRequestsUpload onUpload={handleRequestsUpload} />
-          
-          <DataBackupManager />
-          
-          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleGenerateReport}>
-            <FileText className="w-5 h-5" />
-            <span className="text-xs">Generate Report</span>
-          </Button>
-          
-          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleFinanceAnalytics}>
-            <Calculator className="w-5 h-5" />
-            <span className="text-xs">Finance Analytics</span>
-          </Button>
-          
-          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleSystemSettings}>
-            <Settings className="w-5 h-5" />
-            <span className="text-xs">System Settings</span>
-          </Button>
-          
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-4">
+            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleAddTask}>
+              <Plus className="w-5 h-5" />
+              <span className="text-xs">Add Task</span>
+            </Button>
+            
+            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleManageUsers}>
+              <Users className="w-5 h-5" />
+              <span className="text-xs">Manage Users</span>
+            </Button>
+            
+            <AdminRequestsUpload onUpload={handleRequestsUpload} />
+            
+            <DataBackupManager />
+            
+            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleGenerateReport}>
+              <FileText className="w-5 h-5" />
+              <span className="text-xs">Generate Report</span>
+            </Button>
+            
+            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleFinanceAnalytics}>
+              <Calculator className="w-5 h-5" />
+              <span className="text-xs">Finance Analytics</span>
+            </Button>
+            
+            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleSystemSettings}>
+              <Settings className="w-5 h-5" />
+              <span className="text-xs">System Settings</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <TaskCreationDialog 
+        open={showTaskDialog} 
+        onClose={() => setShowTaskDialog(false)} 
+      />
+    </>
   );
 }
