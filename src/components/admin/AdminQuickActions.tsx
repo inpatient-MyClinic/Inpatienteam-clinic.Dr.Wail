@@ -115,10 +115,6 @@ export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAn
             <span className="text-xs">System Settings</span>
           </Button>
           
-          <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleAnalytics}>
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-xs">Analytics</span>
-          </Button>
         </div>
       </CardContent>
     </Card>
