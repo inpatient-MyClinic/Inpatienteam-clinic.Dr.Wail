@@ -118,11 +118,14 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
   );
 
   const handleYearToggle = (year: string) => {
-    setSelectedYears(prev => 
-      prev.includes(year) 
+    setSelectedYears(prev => {
+      const newSelection = prev.includes(year) 
         ? prev.filter(y => y !== year)
-        : [...prev, year].sort()
-    );
+        : [...prev, year].sort();
+      
+      // Ensure at least one year is always selected
+      return newSelection.length === 0 ? [year] : newSelection;
+    });
   };
 
   const handleCellChange = useCallback((rowId: string, column: string, value: string) => {
