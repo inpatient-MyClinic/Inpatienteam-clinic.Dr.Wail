@@ -141,8 +141,8 @@ export const useAuthLogic = () => {
       console.log('OTP is ENABLED - calling handleOTPLogin');
       await handleOTPLogin();
     } else {
-      console.log('OTP is DISABLED - calling handleAdminLogin');
-      await handleAdminLogin();
+      console.log('OTP is DISABLED - calling handleDirectLogin (bypass Supabase auth)');
+      await handleDirectLogin();
     }
   };
 
