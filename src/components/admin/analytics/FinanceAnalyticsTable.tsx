@@ -124,7 +124,15 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
         : [...prev, year].sort();
       
       // Ensure at least one year is always selected
-      return newSelection.length === 0 ? [year] : newSelection;
+      const finalSelection = newSelection.length === 0 ? [year] : newSelection;
+      
+      // Save selected years to localStorage for sync with finance dashboard
+      localStorage.setItem('financeSelectedYears', JSON.stringify(finalSelection));
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('financeYearsUpdated'));
+      
+      return finalSelection;
     });
   };
 
@@ -139,6 +147,10 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     setFinanceData(updatedData);
     // Save to localStorage immediately
     localStorage.setItem('financeAnalyticsData', JSON.stringify(updatedData));
+    
+    // Dispatch event to notify finance dashboard of updates
+    window.dispatchEvent(new CustomEvent('financeAnalyticsUpdated'));
+    
     console.log('Data saved to localStorage:', localStorage.getItem('financeAnalyticsData')); // Debug log
   }, [financeData]);
 
@@ -370,9 +382,13 @@ export default function FinanceAnalyticsTable({ onDataChange }: FinanceAnalytics
     localStorage.setItem('financeAnalyticsData', JSON.stringify(financeData));
     onDataChange?.(financeData);
     setIsEditing(false);
+    
+    // Dispatch event to notify finance dashboard of updates
+    window.dispatchEvent(new CustomEvent('financeAnalyticsUpdated'));
+    
     toast({
       title: "Data Saved",
-      description: "Finance analytics data has been saved successfully.",
+      description: "Finance analytics data has been saved successfully and finance dashboard updated.",
     });
   };
 
