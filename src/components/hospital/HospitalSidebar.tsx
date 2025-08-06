@@ -1,13 +1,13 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut, FileQuestion, Clock, Eye, Send, FileText } from "lucide-react";
+import { ArrowLeft, FileQuestion, Clock, Eye, Send, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import Logo from "@/components/Logo";
+import UserProfileHeader from "@/components/UserProfileHeader";
 
 interface HospitalSidebarProps {
   currentHospitalName: string;
@@ -37,22 +37,6 @@ export default function HospitalSidebar({
   const { toast } = useToast();
   const [justificationText, setJustificationText] = useState("");
 
-  const handleLogout = () => {
-    // Clear all user data from localStorage
-    const keys = Object.keys(localStorage);
-    keys.forEach(key => {
-      if (key.startsWith('user_') || key.startsWith('password_') || key.startsWith('lastPasswordUpdate_')) {
-        localStorage.removeItem(key);
-      }
-    });
-
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-
-    navigate("/");
-  };
 
   const getNeedJustificationRequests = () => {
     return filteredRequests.filter(req => req.status === "Need Justification");
@@ -81,7 +65,7 @@ export default function HospitalSidebar({
 
   return (
     <aside className="w-[19rem] bg-orange-50 flex flex-col items-center p-6 border-r">
-      <Logo size="sm" showText={false} className="mb-4" />
+      <UserProfileHeader className="mb-6" />
       
       <div className="text-center mb-4">
         <h1 className="text-lg font-bold text-orange-900">Hospital Dashboard</h1>
@@ -263,15 +247,6 @@ export default function HospitalSidebar({
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Roles
-        </Button>
-
-        <Button 
-          variant="destructive"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
         </Button>
       </div>
     </aside>

@@ -54,17 +54,17 @@ const HomePage = () => {
       case 'admin':
         return <Navigate to="/admin" replace />;
       case 'doctor':
-        return <Navigate to="/doctor" replace />;
+        return <Navigate to="/doctor-dashboard" replace />;
       case 'nurse':
-        return <Navigate to="/nurse" replace />;
+        return <Navigate to="/nurse-dashboard" replace />;
       case 'hospital':
-        return <Navigate to="/hospital" replace />;
+        return <Navigate to="/hospital-dashboard" replace />;
       case 'case-coordinator':
-        return <Navigate to="/case-coordinator" replace />;
+        return <Navigate to="/case-coordinator-dashboard" replace />;
       case 'finance':
-        return <Navigate to="/finance" replace />;
+        return <Navigate to="/finance-dashboard" replace />;
       case 'customer-care':
-        return <Navigate to="/customer-care" replace />;
+        return <Navigate to="/customer-care-dashboard" replace />;
       default:
         console.log('HomePage: Unknown role, redirecting to default dashboard');
         return <Navigate to="/dashboard" replace />;
@@ -89,12 +89,12 @@ function App() {
                 <Route path="/change-password" element={<ChangePassword />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/doctor" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
-                <Route path="/nurse" element={<ProtectedRoute allowedRoles={['nurse']}><NurseDashboard /></ProtectedRoute>} />
-                <Route path="/hospital" element={<ProtectedRoute allowedRoles={['hospital']}><HospitalDashboard /></ProtectedRoute>} />
-                <Route path="/case-coordinator" element={<ProtectedRoute allowedRoles={['case-coordinator']}><CaseCoordinatorDashboard /></ProtectedRoute>} />
-                <Route path="/finance" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
-                <Route path="/customer-care" element={<ProtectedRoute allowedRoles={['customer-care']}><CustomerCareDashboard /></ProtectedRoute>} />
+                <Route path="/doctor-dashboard" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
+                <Route path="/nurse-dashboard" element={<ProtectedRoute allowedRoles={['nurse']}><NurseDashboard /></ProtectedRoute>} />
+                <Route path="/hospital-dashboard" element={<ProtectedRoute allowedRoles={['hospital']}><HospitalDashboard /></ProtectedRoute>} />
+                <Route path="/case-coordinator-dashboard" element={<ProtectedRoute allowedRoles={['case-coordinator']}><CaseCoordinatorDashboard /></ProtectedRoute>} />
+                <Route path="/finance-dashboard" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
+                <Route path="/customer-care-dashboard" element={<ProtectedRoute allowedRoles={['customer-care']}><CustomerCareDashboard /></ProtectedRoute>} />
                 <Route path="/create-request" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
                 <Route path="/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SettingsDirectory /></ProtectedRoute>} />

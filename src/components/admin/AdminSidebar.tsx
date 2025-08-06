@@ -3,8 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Users, Settings, FileText, BarChart3, ArrowLeft, Plus, LogOut, UserCheck, Stethoscope, Building2, Clipboard, DollarSign, HeartHandshake } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo from "@/components/Logo";
-import LogoutButton from "@/components/auth/LogoutButton";
+import UserProfileHeader from "@/components/UserProfileHeader";
 import ComplaintManager from "@/components/complaints/ComplaintManager";
 
 interface AdminSidebarProps {
@@ -75,7 +74,7 @@ export default function AdminSidebar({
 
   return (
     <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-      <Logo size="sm" showText={false} className="mb-4" />
+      <UserProfileHeader className="mb-6" />
       
       <div className="text-center mb-8">
         <h1 className="text-lg font-bold text-blue-900">Admin Dashboard</h1>
@@ -139,7 +138,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/doctor")}
+          onClick={() => navigate("/doctor-dashboard")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <Stethoscope className="w-4 h-4 mr-2" />
@@ -148,7 +147,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/nurse")}
+          onClick={() => navigate("/nurse-dashboard")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <UserCheck className="w-4 h-4 mr-2" />
@@ -157,7 +156,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/hospital")}
+          onClick={() => navigate("/hospital-dashboard")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <Building2 className="w-4 h-4 mr-2" />
@@ -166,7 +165,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/case-coordinator")}
+          onClick={() => navigate("/case-coordinator-dashboard")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <Clipboard className="w-4 h-4 mr-2" />
@@ -175,7 +174,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/finance")}
+          onClick={() => navigate("/finance-dashboard")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <DollarSign className="w-4 h-4 mr-2" />
@@ -184,7 +183,7 @@ export default function AdminSidebar({
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/customer-care")}
+          onClick={() => navigate("/customer-care-dashboard")}
           className="w-full justify-start text-blue-700 hover:bg-blue-100"
         >
           <HeartHandshake className="w-4 h-4 mr-2" />
@@ -201,11 +200,6 @@ export default function AdminSidebar({
       </div>
 
       <div className="mt-auto flex flex-col gap-2 w-full">
-        <LogoutButton 
-          variant="outline"
-          className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
-        />
-        
         <Button 
           variant="outline"
           onClick={() => navigate("/role-selection")}

@@ -34,13 +34,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
-    let profileFetched = false;
     
     console.log('useAuth: Setting up auth listeners');
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) {
           console.log('useAuth: Component unmounted, skipping auth state change');
           return;
@@ -50,59 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && !profileFetched) {
-          profileFetched = true;
-          console.log('useAuth: User authenticated, fetching profile...');
-          
-          // Defer Supabase calls with setTimeout to prevent deadlock
-          setTimeout(async () => {
-            if (!mounted) {
-              console.log('useAuth: Component unmounted during profile fetch');
-              return;
-            }
-            
-            try {
-              console.log('useAuth: Starting profile fetch for user:', session.user.id);
-              
-              const result = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .maybeSingle();
-              
-              if (!mounted) {
-                console.log('useAuth: Component unmounted after profile fetch');
-                return;
-              }
-              
-              if (result.error) {
-                console.error('useAuth: Profile fetch error:', result.error);
-                // For specific error codes, handle differently
-                if (result.error.code === 'PGRST116') {
-                  console.log('useAuth: No profile found for user, this is expected for new users');
-                }
-                setProfile(null);
-              } else {
-                console.log('useAuth: Profile fetched successfully:', result.data);
-                setProfile(result.data);
-              }
-              
-              setLoading(false);
-              console.log('useAuth: Auth state update complete');
-            } catch (error) {
-              console.error('useAuth: Unexpected error during profile fetch:', error);
-              if (mounted) {
-                setProfile(null);
-                setLoading(false);
-              }
-            }
-          }, 50);
-        } else if (!session?.user) {
-          console.log('useAuth: No user session, clearing profile');
-          profileFetched = false;
-          setProfile(null);
-          setLoading(false);
-        }
+        // Don't fetch profile here - let the localStorage auth system handle it
+        setProfile(null);
+        setLoading(false);
       }
     );
 
@@ -112,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.warn('useAuth: Session check timed out, setting loading to false');
         setLoading(false);
       }
-    }, 5000);
+    }, 2000);
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       clearTimeout(sessionTimeout);
@@ -131,56 +80,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('useAuth: Initial session check complete:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user && !profileFetched) {
-        profileFetched = true;
-        console.log('useAuth: Initial session has user, fetching profile...');
-        
-        setTimeout(async () => {
-          if (!mounted) {
-            console.log('useAuth: Component unmounted during initial profile fetch');
-            return;
-          }
-          
-          try {
-            console.log('useAuth: Starting initial profile fetch for user:', session.user.id);
-            
-            const result = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            if (!mounted) {
-              console.log('useAuth: Component unmounted after initial profile fetch');
-              return;
-            }
-            
-            if (result.error) {
-              console.error('useAuth: Initial profile fetch error:', result.error);
-              if (result.error.code === 'PGRST116') {
-                console.log('useAuth: No profile found for user in initial fetch');
-              }
-              setProfile(null);
-            } else {
-              console.log('useAuth: Initial profile fetched successfully:', result.data);
-              setProfile(result.data);
-            }
-            
-            setLoading(false);
-            console.log('useAuth: Initial auth setup complete');
-          } catch (error) {
-            console.error('useAuth: Unexpected error in initial profile fetch:', error);
-            if (mounted) {
-              setProfile(null);
-              setLoading(false);
-            }
-          }
-        }, 50);
-      } else {
-        console.log('useAuth: No user in initial session or profile already fetched');
-        setLoading(false);
-      }
+      setProfile(null);
+      setLoading(false);
     }).catch((error) => {
       console.error('useAuth: Error in getSession promise:', error);
       if (mounted) {
