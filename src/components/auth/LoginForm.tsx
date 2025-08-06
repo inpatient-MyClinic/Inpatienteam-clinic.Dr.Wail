@@ -72,12 +72,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
         Sign In
       </Button>
       
-      <div className="text-center">
-        <p className="text-xs text-gray-500 mt-2">
-          For demo: Just enter an email (password optional)
-        </p>
-      </div>
-      
       {onCreateAccount && (
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">

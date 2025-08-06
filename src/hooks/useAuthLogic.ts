@@ -234,90 +234,49 @@ export const useAuthLogic = () => {
     try {
       console.log('=== DIRECT LOGIN (OTP DISABLED) ===');
       console.log('Direct login for:', email);
-      console.log('Password provided:', password ? 'Yes' : 'No');
       
-      // If no password provided, just use localStorage auth system
-      if (!password) {
-        console.log('No password provided, using localStorage auth');
-        // Check if user exists and is active first
-        const { data: profiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, role, status, email')
-          .eq('email', email.trim().toLowerCase());
+      // Check if user exists and is active first
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, status, email')
+        .eq('email', email.trim().toLowerCase());
 
-        if (profileError || !profiles || profiles.length === 0) {
-          toast.error('User not found. Creating a demo user...');
-          
-          // Create a demo user for testing
-          const testUserId = crypto.randomUUID();
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: testUserId,
-              email: email.trim().toLowerCase(),
-              full_name: email.split('@')[0],
-              role: email.includes('admin') ? 'admin' as any : 'doctor' as any,
-              status: 'active' as any
-            })
-            .select()
-            .single();
-            
-          if (createError) {
-            console.error('Create error:', createError);
-            toast.error('Failed to create demo user.');
-            return;
-          }
-          
-          const userData = {
-            email: newProfile.email,
-            role: newProfile.role,
-            status: newProfile.status,
-            id: newProfile.id,
-            loginTime: new Date().toISOString()
-          };
-          localStorage.setItem(`user_${newProfile.email}`, JSON.stringify(userData));
-          toast.success('Demo user created and logged in!');
-          navigate('/admin');
-          return;
-        }
-
-        const profile = profiles[0];
-        
-        if (profile.status !== 'active') {
-          toast.error('Account pending approval. Contact administrator.');
-          return;
-        }
-
-        // Store user data directly in localStorage (bypass Supabase auth)
-        const userData = {
-          email: profile.email,
-          role: profile.role,
-          status: profile.status,
-          id: profile.id,
-          loginTime: new Date().toISOString()
-        };
-        localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
-
-        toast.success('Login successful! (Password bypassed for demo)');
-        
-        // Redirect based on role
-        const dashboards = {
-          'admin': '/admin',
-          'doctor': '/doctor-dashboard',
-          'nurse': '/nurse-dashboard',
-          'hospital': '/hospital-dashboard',
-          'case-coordinator': '/case-coordinator-dashboard',
-          'finance': '/finance-dashboard',
-          'customer-care': '/customer-care-dashboard'
-        };
-        
-        navigate(dashboards[profile.role] || '/dashboard');
+      if (profileError || !profiles || profiles.length === 0) {
+        toast.error('User not found. Please contact an administrator.');
         return;
       }
+
+      const profile = profiles[0];
       
-      // If password provided, try normal Supabase auth
-      console.log('Password provided, trying Supabase auth...');
-      await handleAdminLogin();
+      if (profile.status !== 'active') {
+        toast.error('Account pending approval. Contact administrator.');
+        return;
+      }
+
+      // Store user data directly in localStorage (bypass Supabase auth)
+      const userData = {
+        email: profile.email,
+        role: profile.role,
+        status: profile.status,
+        id: profile.id,
+        loginTime: new Date().toISOString()
+      };
+      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
+
+      toast.success('Login successful! (OTP bypassed)');
+      
+      // Redirect based on role
+      const dashboards = {
+        'admin': '/admin',
+        'doctor': '/doctor-dashboard',
+        'nurse': '/nurse-dashboard',
+        'hospital': '/hospital-dashboard',
+        'case-coordinator': '/case-coordinator-dashboard',
+        'finance': '/finance-dashboard',
+        'customer-care': '/customer-care-dashboard'
+      };
+      
+      navigate(dashboards[profile.role] || '/dashboard');
       
     } catch (error) {
       console.error('Direct login error:', error);
