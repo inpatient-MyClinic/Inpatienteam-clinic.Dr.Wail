@@ -371,8 +371,15 @@ export const useAuthLogic = () => {
         (profile.password_change_required_at && new Date(profile.password_change_required_at) <= new Date());
       
       if (passwordChangeRequired) {
-        toast.error('Your password has expired. Please change your password.');
-        await supabase.auth.signOut();
+        // Store user data temporarily and redirect to password change page
+        const userData = {
+          email: profile.email,
+          role: profile.role,
+          status: profile.status,
+          id: userId
+        };
+        localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
+        navigate('/change-password');
         return;
       }
 

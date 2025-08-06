@@ -21,6 +21,7 @@ import NotificationsLogs from "./pages/NotificationsLogs";
 import PrivilegeManagement from "./pages/PrivilegeManagement";
 import RequestWireframe from "./pages/RequestWireframe";
 import RoleSelection from "./pages/RoleSelection";
+import ChangePassword from "./pages/ChangePassword";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,7 @@ function App() {
           <ErrorBoundary>
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/change-password" element={<ChangePassword />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
                 <Route path="/doctor" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
