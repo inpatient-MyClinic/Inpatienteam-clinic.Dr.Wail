@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import TableWithPagination from "@/components/ui/table-with-pagination";
+import AssignmentDialog from "./AssignmentDialog";
+import EditRequestDialog from "./EditRequestDialog";
 
 interface AdminTask {
   id: string;
@@ -215,11 +217,17 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin", o
                 currentUserRole={currentUserRole}
               />
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              Edit Request
+            <DropdownMenuItem asChild>
+              <EditRequestDialog 
+                request={convertToRequest(row)}
+                onSave={handleEditRequest}
+              />
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              Assign to User
+            <DropdownMenuItem asChild>
+              <AssignmentDialog 
+                request={convertToRequest(row)}
+                onAssign={handleAssignRequest}
+              />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -256,6 +264,55 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin", o
         rowsPerPage: newRowsPerPage
       }));
     }
+  };
+
+  const handleEditRequest = (requestId: string, updatedData: any) => {
+    const requests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
+    const updatedRequests = requests.map((req: any) => {
+      if (req.id === parseInt(requestId) || req.id === requestId) {
+        return { ...req, ...updatedData, updatedAt: new Date().toISOString() };
+      }
+      return req;
+    });
+    
+    localStorage.setItem('medical_requests', JSON.stringify(updatedRequests));
+    
+    // Trigger a storage event to update other components
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleAssignRequest = (requestId: string, coordinatorName: string) => {
+    const requests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
+    const updatedRequests = requests.map((req: any) => {
+      if (req.id === parseInt(requestId) || req.id === requestId) {
+        return { 
+          ...req, 
+          assignedCoordinator: coordinatorName,
+          coordinatorActionTime: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return req;
+    });
+    
+    localStorage.setItem('medical_requests', JSON.stringify(updatedRequests));
+    
+    // Log the assignment
+    const auditTrail = JSON.parse(localStorage.getItem('audit_trail') || '[]');
+    auditTrail.push({
+      id: Date.now().toString(),
+      requestId,
+      action: 'Manual Assignment',
+      userName: 'Admin',
+      userEmail: 'admin@myclinic.com.sa',
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+      details: { assignedTo: coordinatorName }
+    });
+    localStorage.setItem('audit_trail', JSON.stringify(auditTrail));
+    
+    // Trigger a storage event to update other components
+    window.dispatchEvent(new Event('storage'));
   };
 
   const getStatusColor = (status: string) => {
