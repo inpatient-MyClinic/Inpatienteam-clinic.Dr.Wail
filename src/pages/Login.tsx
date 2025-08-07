@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import LoginForm from "@/components/auth/LoginForm";
 import PasswordCreationForm from "@/components/auth/PasswordCreationForm";
 import OTPLoginForm from "@/components/auth/OTPLoginForm";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import Footer from "@/components/Footer";
 import { useAuthLogic } from "@/hooks/useAuthLogic";
 import { getCurrentUserRole } from "@/utils/auth";
@@ -23,13 +24,17 @@ const Login = () => {
     rememberMe,
     setRememberMe,
     isFirstTimeLogin,
+    setIsFirstTimeLogin,
     showOTPLogin,
+    showForgotPassword,
     handlePasswordCreation,
     handleLogin,
     handleBackToLogin,
+    handleForgotPassword,
     handleOTPSuccess,
     handleBackFromOTP,
-    handleSuccessfulLogin
+    handleSuccessfulLogin,
+    isLoading
   } = useAuthLogic();
 
   // Redirect authenticated users to their dashboard
@@ -91,16 +96,22 @@ const Login = () => {
             <Card className="shadow-lg">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl text-blue-900">
-                  {!isFirstTimeLogin ? "Login" : "Create Admin Password"}
+                  {showForgotPassword ? "Reset Password" : !isFirstTimeLogin ? "Login" : "Create Account"}
                 </CardTitle>
                 <CardDescription>
-                  {!isFirstTimeLogin 
-                    ? "Sign in with your authorized administrator account" 
-                    : "Set up your password for first-time access"}
+                  {showForgotPassword 
+                    ? "Enter your email to receive a password reset link"
+                    : !isFirstTimeLogin 
+                      ? "Sign in with your email and password" 
+                      : "Set up your password for first-time access"}
                 </CardDescription>
               </CardHeader>
             <CardContent>
-              {!isFirstTimeLogin ? (
+              {showForgotPassword ? (
+                <ForgotPasswordForm
+                  onBackToLogin={handleBackToLogin}
+                />
+              ) : !isFirstTimeLogin ? (
                 <LoginForm
                   email={email}
                   setEmail={setEmail}
@@ -109,6 +120,8 @@ const Login = () => {
                   rememberMe={rememberMe}
                   setRememberMe={setRememberMe}
                   onSubmit={handleLogin}
+                  onCreateAccount={() => setIsFirstTimeLogin(true)}
+                  onForgotPassword={handleForgotPassword}
                 />
               ) : (
                 <PasswordCreationForm
@@ -119,45 +132,25 @@ const Login = () => {
                   setConfirmPassword={setConfirmPassword}
                   onSubmit={handlePasswordCreation}
                   onBackToLogin={handleBackToLogin}
+                  isAdminEmail={email.includes('admin') || email.includes('myclinic.com.sa')}
                 />
               )}
 
-              {/* Authentication Mode Display */}
-              <div className="mt-4 p-2 bg-gray-50 rounded text-xs text-gray-600">
-                <div className="flex items-center justify-between">
-                  <span>Authentication Mode:</span>
-                   <span className={`font-medium ${localStorage.getItem('otpEnabled') === 'true' ? 'text-blue-600' : 'text-green-600'}`}>
-                    {localStorage.getItem('otpEnabled') === 'true' ? 'OTP Required' : 'Direct Login'}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {localStorage.getItem('otpEnabled') === 'true' 
-                    ? 'Users will receive OTP codes via email' 
-                    : 'Users can login directly with email only'
-                  }
-                </div>
-              </div>
-
-              {/* OTP Debug Status */}
-              {showOTPLogin && (
-                <div className="mt-2 p-2 bg-green-100 rounded text-green-800 text-sm">
-                  ✅ <strong>OTP Form Active</strong> - Check console for debug OTP code
-                </div>
-              )}
-
-              <div className="mt-6 pt-6 border-t">
-                <div className="text-center">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-blue-900 mb-2">Access Restriction</p>
-                    <p className="text-sm text-blue-700">
-                      Only users with authorized email addresses are allowed to access
+              {!showForgotPassword && (
+                <div className="mt-6 pt-6 border-t">
+                  <div className="text-center">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-green-900 mb-2">🔒 Secure Authentication</p>
+                      <p className="text-sm text-green-700">
+                        All users must create secure passwords that expire every 3 months
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      Passwords are encrypted and protected using industry standards
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-4">
-                    Unauthorized access attempts are logged and monitored
-                  </p>
                 </div>
-              </div>
+              )}
             </CardContent>
             </Card>
           )}

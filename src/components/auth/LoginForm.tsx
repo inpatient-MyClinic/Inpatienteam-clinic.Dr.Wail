@@ -14,6 +14,7 @@ interface LoginFormProps {
   setRememberMe: (remember: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCreateAccount?: () => void;
+  onForgotPassword?: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -24,7 +25,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
   rememberMe,
   setRememberMe,
   onSubmit,
-  onCreateAccount
+  onCreateAccount,
+  onForgotPassword
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">

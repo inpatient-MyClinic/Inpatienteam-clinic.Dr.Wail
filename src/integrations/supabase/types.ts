@@ -282,12 +282,15 @@ export type Database = {
           approved_by: string | null
           created_at: string | null
           email: string
+          force_password_change: boolean | null
           full_name: string | null
           hospital_code: string | null
           id: string
+          last_password_change: string | null
           must_change_password: boolean | null
           password_change_required_at: string | null
           password_changed_at: string | null
+          password_expires_at: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           specialty: string | null
@@ -299,12 +302,15 @@ export type Database = {
           approved_by?: string | null
           created_at?: string | null
           email: string
+          force_password_change?: boolean | null
           full_name?: string | null
           hospital_code?: string | null
           id: string
+          last_password_change?: string | null
           must_change_password?: boolean | null
           password_change_required_at?: string | null
           password_changed_at?: string | null
+          password_expires_at?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           specialty?: string | null
@@ -316,12 +322,15 @@ export type Database = {
           approved_by?: string | null
           created_at?: string | null
           email?: string
+          force_password_change?: boolean | null
           full_name?: string | null
           hospital_code?: string | null
           id?: string
+          last_password_change?: string | null
           must_change_password?: boolean | null
           password_change_required_at?: string | null
           password_changed_at?: string | null
+          password_expires_at?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           specialty?: string | null
@@ -418,6 +427,10 @@ export type Database = {
         Returns: boolean
       }
       is_password_change_required: {
+        Args: { user_id_param: string }
+        Returns: boolean
+      }
+      is_password_expired: {
         Args: { user_id_param: string }
         Returns: boolean
       }

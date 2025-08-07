@@ -20,6 +20,8 @@ export const useAuthLogic = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isFirstTimeLogin, setIsFirstTimeLogin] = useState(false);
   const [showOTPLogin, setShowOTPLogin] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handlePasswordCreation = async (e: React.FormEvent) => {
@@ -127,23 +129,10 @@ export const useAuthLogic = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("handleLogin called - using Supabase authentication only");
     
-    console.log('=== LOGIN FLOW START ===');
-    console.log('Email input:', email);
-    console.log('OTP setting:', localStorage.getItem('otpEnabled'));
-    
-    const normalizedEmail = email.trim().toLowerCase();
-    
-    // Check if OTP is enabled or disabled (default: disabled)
-    const otpEnabled = localStorage.getItem('otpEnabled') === 'true';
-    
-    if (otpEnabled) {
-      console.log('OTP is ENABLED - calling handleOTPLogin');
-      await handleOTPLogin();
-    } else {
-      console.log('OTP is DISABLED - calling handleDirectLogin (bypass Supabase auth)');
-      await handleDirectLogin();
-    }
+    // All users must now use Supabase authentication
+    await handleSupabaseLogin();
   };
 
   const handleOTPLogin = async () => {
@@ -230,57 +219,44 @@ export const useAuthLogic = () => {
     }
   };
 
-  const handleDirectLogin = async () => {
+  const handleSupabaseLogin = async () => {
+    console.log("Supabase login attempt for:", email);
+    
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
     try {
-      console.log('=== DIRECT LOGIN (OTP DISABLED) ===');
-      console.log('Direct login for:', email);
+      setIsLoading(true);
       
-      // Check if user exists and is active first
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, role, status, email')
-        .eq('email', email.trim().toLowerCase());
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password
+      });
 
-      if (profileError || !profiles || profiles.length === 0) {
-        toast.error('User not found. Please contact an administrator.');
+      if (error) {
+        console.error("Supabase login error:", error);
+        
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password. Please check your credentials.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Please confirm your email before logging in.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 
-      const profile = profiles[0];
-      
-      if (profile.status !== 'active') {
-        toast.error('Account pending approval. Contact administrator.');
-        return;
+      if (data.user && data.session) {
+        console.log("Supabase login successful for:", email);
+        await handleSuccessfulLogin(data.user.id);
       }
-
-      // Store user data directly in localStorage (bypass Supabase auth)
-      const userData = {
-        email: profile.email,
-        role: profile.role,
-        status: profile.status,
-        id: profile.id,
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
-
-      toast.success('Login successful! (OTP bypassed)');
-      
-      // Redirect based on role
-      const dashboards = {
-        'admin': '/admin',
-        'doctor': '/doctor-dashboard',
-        'nurse': '/nurse-dashboard',
-        'hospital': '/hospital-dashboard',
-        'case-coordinator': '/case-coordinator-dashboard',
-        'finance': '/finance-dashboard',
-        'customer-care': '/customer-care-dashboard'
-      };
-      
-      navigate(dashboards[profile.role] || '/dashboard');
-      
     } catch (error) {
-      console.error('Direct login error:', error);
-      toast.error('Login failed. Please try again.');
+      console.error("Supabase login error:", error);
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -346,83 +322,92 @@ export const useAuthLogic = () => {
 
   const handleSuccessfulLogin = async (userId: string) => {
     try {
-      // Get user profile and email
+      console.log("Processing successful login for user:", userId);
+      
+      // Fetch user profile from Supabase
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, status, must_change_password, password_change_required_at, email')
+        .select('*')
         .eq('id', userId)
         .single();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
-        toast.error('Error loading user profile. Please try again.');
-        await supabase.auth.signOut();
+        console.error("Error fetching profile:", profileError);
+        toast.error("Error loading user profile");
         return;
       }
 
+      if (!profile) {
+        console.error("No profile found for user:", userId);
+        toast.error("User profile not found");
+        return;
+      }
+
+      console.log("User profile loaded:", profile);
+
+      // Check user status
       if (profile.status !== 'active') {
-        toast.error('Your account is pending approval. Please contact an administrator.');
+        toast.error("Your account is pending approval. Please wait for admin approval.");
         await supabase.auth.signOut();
         return;
       }
 
-      // Check if password change is required
-      const passwordChangeRequired = profile.must_change_password || 
-        (profile.password_change_required_at && new Date(profile.password_change_required_at) <= new Date());
+      // Check if password has expired or must be changed
+      const { data: isExpired } = await supabase.rpc('is_password_expired', { 
+        user_id_param: userId 
+      });
       
-      if (passwordChangeRequired) {
-        // Store user data temporarily and redirect to password change page
-        const userData = {
-          email: profile.email,
-          role: profile.role,
-          status: profile.status,
-          id: userId
-        };
-        localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
+      if (isExpired || profile.must_change_password || profile.force_password_change) {
+        console.log("Password expired or change required");
+        toast.info("Your password has expired or must be changed. Please set a new password.");
         navigate('/change-password');
         return;
       }
 
-      // Store user data in localStorage for app authentication system
+      // Store user data in localStorage for compatibility
       const userData = {
         email: profile.email,
         role: profile.role,
-        status: profile.status,
-        id: userId
+        isAuthenticated: true,
+        loginType: 'supabase',
+        profile: profile
       };
-      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
-
-      toast.success('Login successful!');
       
-      // Redirect based on role
+      localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
+      localStorage.setItem('currentUser', profile.email);
+      
+      console.log("User data stored, navigating to dashboard");
+      toast.success("Login successful!");
+      
+      // Navigate based on role
       switch (profile.role) {
         case 'admin':
           navigate('/admin');
           break;
         case 'doctor':
-          navigate('/doctor-dashboard');
+          navigate('/dashboard');
           break;
         case 'nurse':
-          navigate('/nurse-dashboard');
+          navigate('/nurse');
           break;
         case 'hospital':
-          navigate('/hospital-dashboard');
+          navigate('/hospital');
           break;
         case 'case-coordinator':
-          navigate('/case-coordinator-dashboard');
+          navigate('/case-coordinator');
           break;
         case 'finance':
-          navigate('/finance-dashboard');
+          navigate('/finance');
           break;
         case 'customer-care':
-          navigate('/customer-care-dashboard');
+          navigate('/customer-care');
           break;
         default:
           navigate('/dashboard');
       }
     } catch (error) {
-      console.error('Post-login error:', error);
-      toast.error('Login successful but failed to load profile. Please try again.');
+      console.error("Error in handleSuccessfulLogin:", error);
+      toast.error("Error processing login");
     }
   };
 
@@ -438,8 +423,17 @@ export const useAuthLogic = () => {
 
   const handleBackToLogin = () => {
     setIsFirstTimeLogin(false);
-    setPassword("");
-    setConfirmPassword("");
+    setShowOTPLogin(false);
+    setShowForgotPassword(false);
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleForgotPassword = () => {
+    setShowForgotPassword(true);
+    setIsFirstTimeLogin(false);
+    setShowOTPLogin(false);
   };
 
   return {
@@ -454,12 +448,15 @@ export const useAuthLogic = () => {
     isFirstTimeLogin,
     setIsFirstTimeLogin,
     showOTPLogin,
+    showForgotPassword,
     handlePasswordCreation,
     handleLogin,
     handleBackToLogin,
+    handleForgotPassword,
     handleOTPSuccess,
     handleBackFromOTP,
     handleSuccessfulLogin,
-    isAdminEmail
+    isAdminEmail,
+    isLoading
   };
 };
