@@ -56,6 +56,10 @@ const ServicePricingTable = () => {
 
   const getCurrentUserAccess = () => {
     if (!user?.id) return null;
+    // Admin always has full access
+    if (user?.role === 'admin') {
+      return { canView: true, userType: 'admin' as 'hospital' | 'doctor' | 'finance', hospitalCode: undefined };
+    }
     return userAccess[user.id] || null;
   };
 
@@ -63,6 +67,22 @@ const ServicePricingTable = () => {
     const newPrice = parseFloat(price) || 0;
     const oldPrice = pricing[service]?.[hospital] || 0;
     const currentAccess = getCurrentUserAccess();
+    
+    // Admin can modify directly without approval process
+    if (user?.role === 'admin') {
+      setPricing(prev => {
+        const updated = {
+          ...prev,
+          [service]: {
+            ...prev[service],
+            [hospital]: newPrice
+          }
+        };
+        localStorage.setItem('servicePricing', JSON.stringify(updated));
+        return updated;
+      });
+      return;
+    }
     
     if (!currentAccess?.canView) {
       toast({
@@ -74,7 +94,7 @@ const ServicePricingTable = () => {
     }
 
     // For hospital users, only allow changes to their own hospital
-    if (currentAccess.userType === 'hospital' && currentAccess.hospitalCode !== hospital) {
+    if (currentAccess.userType === 'hospital' && currentAccess.hospitalCode && currentAccess.hospitalCode !== hospital) {
       toast({
         title: "Access Denied",
         description: "You can only modify pricing for your hospital",
@@ -83,7 +103,7 @@ const ServicePricingTable = () => {
       return;
     }
 
-    // Create pending change instead of direct update
+    // Create pending change instead of direct update for non-admin users
     const change: PricingChange = {
       service,
       hospital,
@@ -161,6 +181,11 @@ const ServicePricingTable = () => {
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   
   const getCurrentUserDisplayPrice = (service: string, hospital: string) => {
+    // Admin sees actual prices, others see pending changes
+    if (user?.role === 'admin') {
+      return pricing[service]?.[hospital] || "";
+    }
+    
     const pendingChange = pendingChanges.find(c => c.service === service && c.hospital === hospital);
     if (pendingChange) {
       return pendingChange.newPrice;
@@ -174,6 +199,11 @@ const ServicePricingTable = () => {
 
   const getFilteredHospitals = () => {
     const currentAccess = getCurrentUserAccess();
+    // Admin sees all hospitals
+    if (user?.role === 'admin') {
+      return hospitals;
+    }
+    // Hospital users see only their hospital
     if (currentAccess?.userType === 'hospital' && currentAccess.hospitalCode) {
       return [currentAccess.hospitalCode];
     }
@@ -181,6 +211,10 @@ const ServicePricingTable = () => {
   };
 
   const canViewPricing = () => {
+    // Admin always has access
+    if (user?.role === 'admin') {
+      return true;
+    }
     const currentAccess = getCurrentUserAccess();
     return currentAccess?.canView || false;
   };
@@ -255,7 +289,8 @@ const ServicePricingTable = () => {
                             <TableCell className="font-medium">{service}</TableCell>
                             {getFilteredHospitals().map(hospital => {
                               const pendingChange = getPendingChangeForCell(service, hospital);
-                              const cellClass = pendingChange 
+                              // Only show pending styling for non-admin users
+                              const cellClass = (pendingChange && user?.role !== 'admin')
                                 ? (pendingChange.userType === 'hospital' 
                                     ? "bg-blue-50 border-blue-200" 
                                     : "bg-green-50 border-green-200")
@@ -271,7 +306,7 @@ const ServicePricingTable = () => {
                                       onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
                                       className={`w-24 ${cellClass}`}
                                     />
-                                    {pendingChange && (
+                                    {pendingChange && user?.role !== 'admin' && (
                                       <Badge 
                                         variant="secondary" 
                                         className={`absolute -top-2 -right-2 text-xs ${
