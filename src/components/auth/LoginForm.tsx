@@ -62,7 +62,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             type="button"
             variant="link" 
             className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800 underline"
-            onClick={onForgotPassword || (() => alert('Forgot password clicked!'))}
+            onClick={onForgotPassword}
           >
             Forgot your password?
           </Button>
