@@ -16,7 +16,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'doctor' | 'hospital' | 'finance';
+  role: 'doctor' | 'hospital' | 'finance' | 'admin';
   specialty?: string;
   hospitalCode?: string;
   hasPricingAccess: boolean;
@@ -24,17 +24,23 @@ interface User {
 
 interface UserAccess {
   canView: boolean;
-  userType: 'hospital' | 'doctor' | 'finance';
+  userType: 'hospital' | 'doctor' | 'finance' | 'admin';
   hospitalCode?: string;
 }
 
 interface EnhancedPricingAccessProps {
   userAccess: {[userId: string]: UserAccess};
   onUpdateAccess: (access: {[userId: string]: UserAccess}) => void;
+  isCurrentUserAdmin: boolean;
 }
 
 // Mock data for different user types
 const mockUsers: User[] = [
+  // Admin users
+  { id: "admin1", name: "System Administrator", email: "admin@myclinic.com.sa", role: "admin", hasPricingAccess: true },
+  { id: "admin2", name: "Wail Ahmed", email: "wail.ahmed@myclinic.com.sa", role: "admin", hasPricingAccess: true },
+  { id: "admin3", name: "Inpatient Team", email: "inpatienteam@gmail.com", role: "admin", hasPricingAccess: true },
+  
   // Doctors
   { id: "d1", name: "Dr. Ahmed Al-Rashid", email: "ahmed.rashid@myclinic.com.sa", role: "doctor", specialty: "Cardiology", hasPricingAccess: true },
   { id: "d2", name: "Dr. Fatima Al-Zahra", email: "fatima.zahra@myclinic.com.sa", role: "doctor", specialty: "Cardiology", hasPricingAccess: false },
@@ -52,7 +58,8 @@ const mockUsers: User[] = [
 
 const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({ 
   userAccess, 
-  onUpdateAccess 
+  onUpdateAccess,
+  isCurrentUserAdmin
 }) => {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>(mockUsers);
@@ -85,6 +92,15 @@ const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({
   }, [users, selectedRole, selectedSpecialty, selectedHospital, searchTerm]);
 
   const toggleUserAccess = (userId: string) => {
+    if (!isCurrentUserAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can modify user access",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
@@ -198,11 +214,18 @@ const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Summary Stats */}
-          <div className="grid grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
+          <div className="grid grid-cols-5 gap-4 p-4 bg-muted/30 rounded-lg">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600 flex items-center justify-center gap-1">
+                <Users className="w-5 h-5" />
+                {stats.doctors.filter(d => d.hasPricingAccess).length}/{stats.doctors.length}
+              </div>
+              <div className="text-sm text-muted-foreground">Admins</div>
+            </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600 flex items-center justify-center gap-1">
                 <Users className="w-5 h-5" />
-                {stats.doctors.filter(d => d.hasPricingAccess).length}/{stats.doctors.length}
+                {users.filter(u => u.role === 'admin' && u.hasPricingAccess).length}/{users.filter(u => u.role === 'admin').length}
               </div>
               <div className="text-sm text-muted-foreground">Doctors</div>
             </div>
@@ -229,6 +252,7 @@ const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({
           <Tabs defaultValue="all" className="space-y-4">
             <TabsList>
               <TabsTrigger value="all">All Users</TabsTrigger>
+              <TabsTrigger value="admin">Admins</TabsTrigger>
               <TabsTrigger value="doctor">Doctors</TabsTrigger>
               <TabsTrigger value="hospital">Hospital Users</TabsTrigger>
               <TabsTrigger value="finance">Finance Team</TabsTrigger>
@@ -258,6 +282,7 @@ const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="doctor">Doctor</SelectItem>
                       <SelectItem value="hospital">Hospital</SelectItem>
                       <SelectItem value="finance">Finance</SelectItem>
@@ -352,6 +377,7 @@ const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({
                             <Badge 
                               variant="secondary"
                               className={
+                                user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                                 user.role === 'doctor' ? 'bg-blue-100 text-blue-800' :
                                 user.role === 'hospital' ? 'bg-orange-100 text-orange-800' :
                                 'bg-green-100 text-green-800'
@@ -378,7 +404,7 @@ const EnhancedPricingAccess: React.FC<EnhancedPricingAccessProps> = ({
             </TabsContent>
 
             {/* Individual role tabs with role-specific bulk actions */}
-            {(['doctor', 'hospital', 'finance'] as const).map(role => (
+            {(['admin', 'doctor', 'hospital', 'finance'] as const).map(role => (
               <TabsContent key={role} value={role} className="space-y-4">
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => grantAccessToAll(role)}>

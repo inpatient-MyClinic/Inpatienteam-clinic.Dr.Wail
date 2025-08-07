@@ -24,6 +24,7 @@ const hospitals = [
 ];
 
 interface PricingChange {
+  id: string;
   service: string;
   hospital: string;
   newPrice: number;
@@ -31,20 +32,33 @@ interface PricingChange {
   modifiedBy: string;
   modifiedAt: string;
   status: 'pending' | 'approved' | 'rejected';
-  userType: 'hospital' | 'doctor' | 'finance';
+  userType: 'hospital' | 'doctor' | 'finance' | 'admin';
+}
+
+interface UserAccess {
+  canView: boolean;
+  userType: 'hospital' | 'doctor' | 'finance' | 'admin';
+  hospitalCode?: string;
 }
 
 const ServicePricingTable = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
-  const [selectedService, setSelectedService] = useState("");
   const [pricing, setPricing] = useState<{[key: string]: {[hospital: string]: number}}>({});
   const [pendingChanges, setPendingChanges] = useState<PricingChange[]>([]);
-  const [userAccess, setUserAccess] = useState<{[userId: string]: {canView: boolean, userType: 'hospital' | 'doctor' | 'finance', hospitalCode?: string}}>({});
+  const [userAccess, setUserAccess] = useState<{[userId: string]: UserAccess}>({});
+
+  // Check if current user is admin
+  const isAdmin = () => {
+    return user?.email?.includes('admin') || 
+           user?.email === 'wail.ahmed@myclinic.com.sa' ||
+           user?.email === 'inpatienteam@gmail.com' ||
+           localStorage.getItem('userRole') === 'admin';
+  };
 
   useEffect(() => {
-    // Load saved pricing and access data from localStorage
+    // Load saved data from localStorage
     const savedPricing = localStorage.getItem('servicePricing');
     const savedPendingChanges = localStorage.getItem('pendingPricingChanges');
     const savedUserAccess = localStorage.getItem('pricingUserAccess');
@@ -52,20 +66,33 @@ const ServicePricingTable = () => {
     if (savedPricing) setPricing(JSON.parse(savedPricing));
     if (savedPendingChanges) setPendingChanges(JSON.parse(savedPendingChanges));
     if (savedUserAccess) setUserAccess(JSON.parse(savedUserAccess));
+
+    // Load sample pricing data if empty
+    if (!savedPricing) {
+      const samplePricing = {
+        "Cardiac Catheterization": {
+          "King Fahad Hospital": 15000,
+          "King Faisal Hospital": 14500,
+          "King Abdulaziz Hospital": 16000
+        },
+        "Angioplasty": {
+          "King Fahad Hospital": 25000,
+          "King Faisal Hospital": 24000,
+          "King Abdulaziz Hospital": 26000
+        }
+      };
+      setPricing(samplePricing);
+      localStorage.setItem('servicePricing', JSON.stringify(samplePricing));
+    }
   }, []);
 
   const getCurrentUserAccess = () => {
     if (!user?.id) return null;
     
-    // Check for admin role - admin emails or stored role
-    const isAdmin = user?.email?.includes('admin') || 
-                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
-                   user?.email === 'inpatienteam@gmail.com' ||
-                   localStorage.getItem('userRole') === 'admin';
-    
-    if (isAdmin) {
-      return { canView: true, userType: 'admin' as 'hospital' | 'doctor' | 'finance', hospitalCode: undefined };
+    if (isAdmin()) {
+      return { canView: true, userType: 'admin' as const, hospitalCode: undefined };
     }
+    
     return userAccess[user.id] || null;
   };
 
@@ -74,14 +101,8 @@ const ServicePricingTable = () => {
     const oldPrice = pricing[service]?.[hospital] || 0;
     const currentAccess = getCurrentUserAccess();
     
-    // Check for admin role
-    const isAdmin = user?.email?.includes('admin') || 
-                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
-                   user?.email === 'inpatienteam@gmail.com' ||
-                   localStorage.getItem('userRole') === 'admin';
-    
-    // Admin can modify directly without approval process
-    if (isAdmin) {
+    // Admin can modify directly
+    if (isAdmin()) {
       setPricing(prev => {
         const updated = {
           ...prev,
@@ -92,6 +113,11 @@ const ServicePricingTable = () => {
         };
         localStorage.setItem('servicePricing', JSON.stringify(updated));
         return updated;
+      });
+      
+      toast({
+        title: "Price Updated",
+        description: `Price for ${service} at ${hospital} updated to ${newPrice} SAR`,
       });
       return;
     }
@@ -115,8 +141,9 @@ const ServicePricingTable = () => {
       return;
     }
 
-    // Create pending change instead of direct update for non-admin users
+    // Create pending change for non-admin users
     const change: PricingChange = {
+      id: Date.now().toString(),
       service,
       hospital,
       newPrice,
@@ -135,12 +162,12 @@ const ServicePricingTable = () => {
 
     toast({
       title: "Change Submitted",
-      description: "Your pricing change is pending approval",
+      description: "Your pricing change is pending admin approval",
     });
   };
 
-  const approvePendingChange = (changeIndex: number) => {
-    const change = pendingChanges[changeIndex];
+  const approvePendingChange = (changeId: string) => {
+    const change = pendingChanges.find(c => c.id === changeId);
     if (!change) return;
 
     // Update actual pricing
@@ -158,7 +185,7 @@ const ServicePricingTable = () => {
 
     // Remove from pending changes
     setPendingChanges(prev => {
-      const updated = prev.filter((_, i) => i !== changeIndex);
+      const updated = prev.filter(c => c.id !== changeId);
       localStorage.setItem('pendingPricingChanges', JSON.stringify(updated));
       return updated;
     });
@@ -169,44 +196,28 @@ const ServicePricingTable = () => {
     });
   };
 
-  const rejectPendingChange = (changeIndex: number) => {
+  const rejectPendingChange = (changeId: string) => {
+    const change = pendingChanges.find(c => c.id === changeId);
+    
     setPendingChanges(prev => {
-      const updated = prev.filter((_, i) => i !== changeIndex);
+      const updated = prev.filter(c => c.id !== changeId);
       localStorage.setItem('pendingPricingChanges', JSON.stringify(updated));
       return updated;
     });
 
     toast({
       title: "Change Rejected",
-      description: "Pricing change has been rejected",
+      description: change ? `Pricing change for ${change.service} at ${change.hospital} has been rejected` : "Change rejected",
     });
   };
 
-  const savePricing = () => {
-    localStorage.setItem('servicePricing', JSON.stringify(pricing));
-    toast({
-      title: "Success",
-      description: "Pricing updated successfully"
-    });
-  };
-
-  const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
-  
   const getCurrentUserDisplayPrice = (service: string, hospital: string) => {
-    // Check for admin role
-    const isAdmin = user?.email?.includes('admin') || 
-                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
-                   user?.email === 'inpatienteam@gmail.com' ||
-                   localStorage.getItem('userRole') === 'admin';
-    
-    // Admin sees actual prices, others see pending changes
-    if (isAdmin) {
-      return pricing[service]?.[hospital] || "";
-    }
-    
-    const pendingChange = pendingChanges.find(c => c.service === service && c.hospital === hospital);
-    if (pendingChange) {
-      return pendingChange.newPrice;
+    // For non-admin users, show pending changes
+    if (!isAdmin()) {
+      const pendingChange = pendingChanges.find(c => c.service === service && c.hospital === hospital);
+      if (pendingChange) {
+        return pendingChange.newPrice;
+      }
     }
     return pricing[service]?.[hospital] || "";
   };
@@ -217,37 +228,28 @@ const ServicePricingTable = () => {
 
   const getFilteredHospitals = () => {
     const currentAccess = getCurrentUserAccess();
-    // Check for admin role
-    const isAdmin = user?.email?.includes('admin') || 
-                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
-                   user?.email === 'inpatienteam@gmail.com' ||
-                   localStorage.getItem('userRole') === 'admin';
     
-    // Admin sees all hospitals
-    if (isAdmin) {
+    if (isAdmin()) {
       return hospitals;
     }
-    // Hospital users see only their hospital
+    
     if (currentAccess?.userType === 'hospital' && currentAccess.hospitalCode) {
       return [currentAccess.hospitalCode];
     }
+    
     return hospitals;
   };
 
   const canViewPricing = () => {
-    // Check for admin role
-    const isAdmin = user?.email?.includes('admin') || 
-                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
-                   user?.email === 'inpatienteam@gmail.com' ||
-                   localStorage.getItem('userRole') === 'admin';
-    
-    // Admin always has access
-    if (isAdmin) {
+    if (isAdmin()) {
       return true;
     }
+    
     const currentAccess = getCurrentUserAccess();
     return currentAccess?.canView || false;
   };
+
+  const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
 
   return (
     <Tabs defaultValue="pricing" className="space-y-4">
@@ -265,6 +267,11 @@ const ServicePricingTable = () => {
         <Card>
           <CardHeader>
             <CardTitle>Service Pricing by Hospital</CardTitle>
+            {isAdmin() && (
+              <p className="text-sm text-muted-foreground text-green-600">
+                Admin Access: You can view and modify all pricing directly
+              </p>
+            )}
             {!canViewPricing() && (
               <p className="text-sm text-muted-foreground text-red-600">
                 You don't have access to view pricing. Contact your administrator.
@@ -294,16 +301,18 @@ const ServicePricingTable = () => {
 
                 {selectedSpecialty && (
                   <div className="overflow-x-auto">
-                    <div className="mb-4 flex gap-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-                        <span>Hospital Changes (Pending)</span>
+                    {!isAdmin() && (
+                      <div className="mb-4 flex gap-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
+                          <span>Hospital Changes (Pending Approval)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
+                          <span>Doctor/Finance Changes (Pending Approval)</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                        <span>Doctor/Finance Changes (Pending)</span>
-                      </div>
-                    </div>
+                    )}
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -320,14 +329,8 @@ const ServicePricingTable = () => {
                             {getFilteredHospitals().map(hospital => {
                               const pendingChange = getPendingChangeForCell(service, hospital);
                               
-                              // Check for admin role
-                              const isAdmin = user?.email?.includes('admin') || 
-                                             user?.email === 'wail.ahmed@myclinic.com.sa' ||
-                                             user?.email === 'inpatienteam@gmail.com' ||
-                                             localStorage.getItem('userRole') === 'admin';
-                              
                               // Only show pending styling for non-admin users
-                              const cellClass = (pendingChange && !isAdmin)
+                              const cellClass = (pendingChange && !isAdmin())
                                 ? (pendingChange.userType === 'hospital' 
                                     ? "bg-blue-50 border-blue-200" 
                                     : "bg-green-50 border-green-200")
@@ -343,7 +346,7 @@ const ServicePricingTable = () => {
                                       onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
                                       className={`w-24 ${cellClass}`}
                                     />
-                                    {pendingChange && !isAdmin && (
+                                    {pendingChange && !isAdmin() && (
                                       <Badge 
                                         variant="secondary" 
                                         className={`absolute -top-2 -right-2 text-xs ${
@@ -365,10 +368,6 @@ const ServicePricingTable = () => {
                     </Table>
                   </div>
                 )}
-
-                <Button onClick={savePricing} className="mt-4">
-                  Save Pricing
-                </Button>
               </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
@@ -383,6 +382,7 @@ const ServicePricingTable = () => {
         <EnhancedPricingAccess 
           userAccess={userAccess}
           onUpdateAccess={setUserAccess}
+          isCurrentUserAdmin={isAdmin()}
         />
       </TabsContent>
 
@@ -392,20 +392,20 @@ const ServicePricingTable = () => {
             <CardHeader>
               <CardTitle>Pending Pricing Changes</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Review and approve/reject pricing modifications
+                Review and approve/reject pricing modifications from users
               </p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {pendingChanges.map((change, index) => (
-                  <div key={index} className="border rounded-lg p-4">
+                {pendingChanges.map((change) => (
+                  <div key={change.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <div className="font-medium">
                           {change.service} - {change.hospital}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Price change: {change.oldPrice} → {change.newPrice} SAR
+                          Price change: {change.oldPrice} SAR → {change.newPrice} SAR
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Modified by: {change.modifiedBy} ({change.userType}) at {new Date(change.modifiedAt).toLocaleString()}
@@ -418,12 +418,16 @@ const ServicePricingTable = () => {
                         >
                           {change.userType === 'hospital' ? 'Hospital Change' : 'Doctor/Finance Change'}
                         </Badge>
-                        <Button size="sm" onClick={() => approvePendingChange(index)}>
-                          Approve
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => rejectPendingChange(index)}>
-                          Reject
-                        </Button>
+                        {isAdmin() && (
+                          <>
+                            <Button size="sm" onClick={() => approvePendingChange(change.id)}>
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => rejectPendingChange(change.id)}>
+                              Reject
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
