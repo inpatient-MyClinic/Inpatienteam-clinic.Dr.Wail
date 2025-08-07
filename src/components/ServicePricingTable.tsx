@@ -56,8 +56,14 @@ const ServicePricingTable = () => {
 
   const getCurrentUserAccess = () => {
     if (!user?.id) return null;
-    // Admin always has full access
-    if (user?.role === 'admin') {
+    
+    // Check for admin role - admin emails or stored role
+    const isAdmin = user?.email?.includes('admin') || 
+                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
+                   user?.email === 'inpatienteam@gmail.com' ||
+                   localStorage.getItem('userRole') === 'admin';
+    
+    if (isAdmin) {
       return { canView: true, userType: 'admin' as 'hospital' | 'doctor' | 'finance', hospitalCode: undefined };
     }
     return userAccess[user.id] || null;
@@ -68,8 +74,14 @@ const ServicePricingTable = () => {
     const oldPrice = pricing[service]?.[hospital] || 0;
     const currentAccess = getCurrentUserAccess();
     
+    // Check for admin role
+    const isAdmin = user?.email?.includes('admin') || 
+                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
+                   user?.email === 'inpatienteam@gmail.com' ||
+                   localStorage.getItem('userRole') === 'admin';
+    
     // Admin can modify directly without approval process
-    if (user?.role === 'admin') {
+    if (isAdmin) {
       setPricing(prev => {
         const updated = {
           ...prev,
@@ -181,8 +193,14 @@ const ServicePricingTable = () => {
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
   
   const getCurrentUserDisplayPrice = (service: string, hospital: string) => {
+    // Check for admin role
+    const isAdmin = user?.email?.includes('admin') || 
+                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
+                   user?.email === 'inpatienteam@gmail.com' ||
+                   localStorage.getItem('userRole') === 'admin';
+    
     // Admin sees actual prices, others see pending changes
-    if (user?.role === 'admin') {
+    if (isAdmin) {
       return pricing[service]?.[hospital] || "";
     }
     
@@ -199,8 +217,14 @@ const ServicePricingTable = () => {
 
   const getFilteredHospitals = () => {
     const currentAccess = getCurrentUserAccess();
+    // Check for admin role
+    const isAdmin = user?.email?.includes('admin') || 
+                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
+                   user?.email === 'inpatienteam@gmail.com' ||
+                   localStorage.getItem('userRole') === 'admin';
+    
     // Admin sees all hospitals
-    if (user?.role === 'admin') {
+    if (isAdmin) {
       return hospitals;
     }
     // Hospital users see only their hospital
@@ -211,8 +235,14 @@ const ServicePricingTable = () => {
   };
 
   const canViewPricing = () => {
+    // Check for admin role
+    const isAdmin = user?.email?.includes('admin') || 
+                   user?.email === 'wail.ahmed@myclinic.com.sa' ||
+                   user?.email === 'inpatienteam@gmail.com' ||
+                   localStorage.getItem('userRole') === 'admin';
+    
     // Admin always has access
-    if (user?.role === 'admin') {
+    if (isAdmin) {
       return true;
     }
     const currentAccess = getCurrentUserAccess();
@@ -289,8 +319,15 @@ const ServicePricingTable = () => {
                             <TableCell className="font-medium">{service}</TableCell>
                             {getFilteredHospitals().map(hospital => {
                               const pendingChange = getPendingChangeForCell(service, hospital);
+                              
+                              // Check for admin role
+                              const isAdmin = user?.email?.includes('admin') || 
+                                             user?.email === 'wail.ahmed@myclinic.com.sa' ||
+                                             user?.email === 'inpatienteam@gmail.com' ||
+                                             localStorage.getItem('userRole') === 'admin';
+                              
                               // Only show pending styling for non-admin users
-                              const cellClass = (pendingChange && user?.role !== 'admin')
+                              const cellClass = (pendingChange && !isAdmin)
                                 ? (pendingChange.userType === 'hospital' 
                                     ? "bg-blue-50 border-blue-200" 
                                     : "bg-green-50 border-green-200")
@@ -306,7 +343,7 @@ const ServicePricingTable = () => {
                                       onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
                                       className={`w-24 ${cellClass}`}
                                     />
-                                    {pendingChange && user?.role !== 'admin' && (
+                                    {pendingChange && !isAdmin && (
                                       <Badge 
                                         variant="secondary" 
                                         className={`absolute -top-2 -right-2 text-xs ${
