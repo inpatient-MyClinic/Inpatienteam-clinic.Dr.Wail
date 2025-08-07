@@ -123,21 +123,48 @@ const SettingsDirectory = () => {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-12">
-          <TabsTrigger value="data">Data Manager</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="coordinator-matrix">Coordinator Matrix</TabsTrigger>
-          <TabsTrigger value="pre-approved">Pre-Approved Emails</TabsTrigger>
-          <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
-          <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
-          <TabsTrigger value="privileges">Privilege Management</TabsTrigger>
-          <TabsTrigger value="fields">Custom Fields</TabsTrigger>
-          <TabsTrigger value="admin-fields">Admin Fields</TabsTrigger>
-          <TabsTrigger value="audit">Audit Trail</TabsTrigger>
-          <TabsTrigger value="system">System Settings</TabsTrigger>
-          <TabsTrigger value="tracker">User Tracker</TabsTrigger>
-          <TabsTrigger value="hospital-codes">Hospital Codes</TabsTrigger>
-        </TabsList>
+        <div className="space-y-4">
+          {/* User & Access Management */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">👥 User & Access Management</h3>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="pre-approved">Pre-Approved Emails</TabsTrigger>
+              <TabsTrigger value="coordinator-matrix">Coordinator Matrix</TabsTrigger>
+              <TabsTrigger value="privileges">Privilege Management</TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* System Configuration */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">⚙️ System Configuration</h3>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="system">System Settings</TabsTrigger>
+              <TabsTrigger value="admin-fields">Admin Fields</TabsTrigger>
+              <TabsTrigger value="fields">Custom Fields</TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Medical & Business Setup */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">🏥 Medical & Business Setup</h3>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="doctors">Doctor Management</TabsTrigger>
+              <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
+              <TabsTrigger value="hospital-codes">Hospital Codes</TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Data & Monitoring */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">📊 Data & Monitoring</h3>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="data">Data Manager</TabsTrigger>
+              <TabsTrigger value="audit">Audit Trail</TabsTrigger>
+              <TabsTrigger value="tracker">User Tracker</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="data" className="space-y-6">
           <SettingsDataManager />
