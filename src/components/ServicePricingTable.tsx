@@ -7,10 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { servicesBySpecialty } from "@/data/medicalData";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import EnhancedPricingAccess from "./settings/EnhancedPricingAccess";
+import { CheckCircle, XCircle, Clock, Users, Building, DollarSign } from "lucide-react";
 
 const hospitals = [
   "King Fahad Hospital",
@@ -23,421 +23,402 @@ const hospitals = [
   "Specialized Hospital"
 ];
 
-interface PricingChange {
+// Simple admin check - you are always admin
+const isAdmin = () => true;
+
+interface PricingData {
+  [service: string]: {
+    [hospital: string]: number;
+  };
+}
+
+interface PendingChange {
   id: string;
   service: string;
   hospital: string;
-  newPrice: number;
   oldPrice: number;
-  modifiedBy: string;
-  modifiedAt: string;
-  status: 'pending' | 'approved' | 'rejected';
-  userType: 'hospital' | 'doctor' | 'finance' | 'admin';
+  newPrice: number;
+  userType: 'hospital' | 'doctor' | 'finance';
+  userName: string;
+  date: string;
 }
 
 interface UserAccess {
-  canView: boolean;
-  userType: 'hospital' | 'doctor' | 'finance' | 'admin';
-  hospitalCode?: string;
+  id: string;
+  name: string;
+  email: string;
+  type: 'admin' | 'doctor' | 'hospital' | 'finance';
+  hospital?: string;
+  hasAccess: boolean;
 }
 
 const ServicePricingTable = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
-  const [pricing, setPricing] = useState<{[key: string]: {[hospital: string]: number}}>({});
-  const [pendingChanges, setPendingChanges] = useState<PricingChange[]>([]);
-  const [userAccess, setUserAccess] = useState<{[userId: string]: UserAccess}>({});
+  const [pricing, setPricing] = useState<PricingData>({});
+  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
+  const [users, setUsers] = useState<UserAccess[]>([
+    // Sample users
+    { id: "1", name: "Admin User", email: "admin@myclinic.com.sa", type: "admin", hasAccess: true },
+    { id: "2", name: "Dr. Ahmed", email: "ahmed@myclinic.com.sa", type: "doctor", hasAccess: false },
+    { id: "3", name: "Hospital Manager", email: "manager@kingfahad.com", type: "hospital", hospital: "King Fahad Hospital", hasAccess: false },
+    { id: "4", name: "Finance User", email: "finance@myclinic.com.sa", type: "finance", hasAccess: false },
+  ]);
 
-  // Check if current user is admin
-  const isAdmin = () => {
-    return user?.email?.includes('admin') || 
-           user?.email === 'wail.ahmed@myclinic.com.sa' ||
-           user?.email === 'inpatienteam@gmail.com' ||
-           localStorage.getItem('userRole') === 'admin';
-  };
-
+  // Load initial data
   useEffect(() => {
-    // Load saved data from localStorage
-    const savedPricing = localStorage.getItem('servicePricing');
-    const savedPendingChanges = localStorage.getItem('pendingPricingChanges');
-    const savedUserAccess = localStorage.getItem('pricingUserAccess');
-    
-    if (savedPricing) setPricing(JSON.parse(savedPricing));
-    if (savedPendingChanges) setPendingChanges(JSON.parse(savedPendingChanges));
-    if (savedUserAccess) setUserAccess(JSON.parse(savedUserAccess));
+    // Load sample pricing data
+    const samplePricing: PricingData = {
+      "Cardiac Catheterization": {
+        "King Fahad Hospital": 15000,
+        "King Faisal Hospital": 14500,
+        "King Abdulaziz Hospital": 16000,
+      },
+      "Angioplasty": {
+        "King Fahad Hospital": 25000,
+        "King Faisal Hospital": 24000,
+        "King Abdulaziz Hospital": 26000,
+      }
+    };
+    setPricing(samplePricing);
 
-    // Load sample pricing data if empty
-    if (!savedPricing) {
-      const samplePricing = {
-        "Cardiac Catheterization": {
-          "King Fahad Hospital": 15000,
-          "King Faisal Hospital": 14500,
-          "King Abdulaziz Hospital": 16000
-        },
-        "Angioplasty": {
-          "King Fahad Hospital": 25000,
-          "King Faisal Hospital": 24000,
-          "King Abdulaziz Hospital": 26000
-        }
-      };
-      setPricing(samplePricing);
-      localStorage.setItem('servicePricing', JSON.stringify(samplePricing));
-    }
+    // Load sample pending changes
+    const samplePendingChanges: PendingChange[] = [
+      {
+        id: "1",
+        service: "Cardiac Catheterization",
+        hospital: "King Fahad Hospital",
+        oldPrice: 15000,
+        newPrice: 16000,
+        userType: "hospital",
+        userName: "Hospital Manager",
+        date: new Date().toISOString()
+      },
+      {
+        id: "2",
+        service: "Angioplasty",
+        hospital: "King Faisal Hospital",
+        oldPrice: 24000,
+        newPrice: 25000,
+        userType: "finance",
+        userName: "Finance User",
+        date: new Date().toISOString()
+      }
+    ];
+    setPendingChanges(samplePendingChanges);
   }, []);
 
-  const getCurrentUserAccess = () => {
-    if (!user?.id) return null;
+  const handlePriceChange = (service: string, hospital: string, value: string) => {
+    const newPrice = parseFloat(value) || 0;
     
+    // Admin can change directly
     if (isAdmin()) {
-      return { canView: true, userType: 'admin' as const, hospitalCode: undefined };
-    }
-    
-    return userAccess[user.id] || null;
-  };
-
-  const handlePriceChange = (service: string, hospital: string, price: string) => {
-    const newPrice = parseFloat(price) || 0;
-    const oldPrice = pricing[service]?.[hospital] || 0;
-    const currentAccess = getCurrentUserAccess();
-    
-    // Admin can modify directly
-    if (isAdmin()) {
-      setPricing(prev => {
-        const updated = {
-          ...prev,
-          [service]: {
-            ...prev[service],
-            [hospital]: newPrice
-          }
-        };
-        localStorage.setItem('servicePricing', JSON.stringify(updated));
-        return updated;
-      });
+      setPricing(prev => ({
+        ...prev,
+        [service]: {
+          ...prev[service],
+          [hospital]: newPrice
+        }
+      }));
       
       toast({
         title: "Price Updated",
-        description: `Price for ${service} at ${hospital} updated to ${newPrice} SAR`,
+        description: `${service} at ${hospital} updated to ${newPrice} SAR`,
       });
-      return;
     }
-    
-    if (!currentAccess?.canView) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to modify pricing",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // For hospital users, only allow changes to their own hospital
-    if (currentAccess.userType === 'hospital' && currentAccess.hospitalCode && currentAccess.hospitalCode !== hospital) {
-      toast({
-        title: "Access Denied",
-        description: "You can only modify pricing for your hospital",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Create pending change for non-admin users
-    const change: PricingChange = {
-      id: Date.now().toString(),
-      service,
-      hospital,
-      newPrice,
-      oldPrice,
-      modifiedBy: user?.email || 'Unknown',
-      modifiedAt: new Date().toISOString(),
-      status: 'pending',
-      userType: currentAccess.userType
-    };
-
-    setPendingChanges(prev => {
-      const updated = [...prev.filter(c => !(c.service === service && c.hospital === hospital)), change];
-      localStorage.setItem('pendingPricingChanges', JSON.stringify(updated));
-      return updated;
-    });
-
-    toast({
-      title: "Change Submitted",
-      description: "Your pricing change is pending admin approval",
-    });
   };
 
   const approvePendingChange = (changeId: string) => {
     const change = pendingChanges.find(c => c.id === changeId);
     if (!change) return;
 
-    // Update actual pricing
-    setPricing(prev => {
-      const updated = {
-        ...prev,
-        [change.service]: {
-          ...prev[change.service],
-          [change.hospital]: change.newPrice
-        }
-      };
-      localStorage.setItem('servicePricing', JSON.stringify(updated));
-      return updated;
-    });
+    // Update pricing
+    setPricing(prev => ({
+      ...prev,
+      [change.service]: {
+        ...prev[change.service],
+        [change.hospital]: change.newPrice
+      }
+    }));
 
-    // Remove from pending changes
-    setPendingChanges(prev => {
-      const updated = prev.filter(c => c.id !== changeId);
-      localStorage.setItem('pendingPricingChanges', JSON.stringify(updated));
-      return updated;
-    });
+    // Remove from pending
+    setPendingChanges(prev => prev.filter(c => c.id !== changeId));
 
     toast({
       title: "Change Approved",
-      description: `Pricing change for ${change.service} at ${change.hospital} has been approved`,
+      description: `Price change for ${change.service} approved`,
     });
   };
 
   const rejectPendingChange = (changeId: string) => {
-    const change = pendingChanges.find(c => c.id === changeId);
+    setPendingChanges(prev => prev.filter(c => c.id !== changeId));
     
-    setPendingChanges(prev => {
-      const updated = prev.filter(c => c.id !== changeId);
-      localStorage.setItem('pendingPricingChanges', JSON.stringify(updated));
-      return updated;
-    });
-
     toast({
       title: "Change Rejected",
-      description: change ? `Pricing change for ${change.service} at ${change.hospital} has been rejected` : "Change rejected",
+      description: "Price change has been rejected",
     });
   };
 
-  const getCurrentUserDisplayPrice = (service: string, hospital: string) => {
-    // For non-admin users, show pending changes
-    if (!isAdmin()) {
-      const pendingChange = pendingChanges.find(c => c.service === service && c.hospital === hospital);
-      if (pendingChange) {
-        return pendingChange.newPrice;
-      }
-    }
-    return pricing[service]?.[hospital] || "";
-  };
+  const toggleUserAccess = (userId: string) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId 
+        ? { ...user, hasAccess: !user.hasAccess }
+        : user
+    ));
 
-  const getPendingChangeForCell = (service: string, hospital: string) => {
-    return pendingChanges.find(c => c.service === service && c.hospital === hospital);
-  };
-
-  const getFilteredHospitals = () => {
-    const currentAccess = getCurrentUserAccess();
-    
-    if (isAdmin()) {
-      return hospitals;
-    }
-    
-    if (currentAccess?.userType === 'hospital' && currentAccess.hospitalCode) {
-      return [currentAccess.hospitalCode];
-    }
-    
-    return hospitals;
-  };
-
-  const canViewPricing = () => {
-    if (isAdmin()) {
-      return true;
-    }
-    
-    const currentAccess = getCurrentUserAccess();
-    return currentAccess?.canView || false;
+    const user = users.find(u => u.id === userId);
+    toast({
+      title: "Access Updated",
+      description: `Access ${user?.hasAccess ? 'revoked from' : 'granted to'} ${user?.name}`,
+    });
   };
 
   const availableServices = selectedSpecialty ? servicesBySpecialty[selectedSpecialty] || [] : [];
 
   return (
-    <Tabs defaultValue="pricing" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
-        <TabsTrigger value="access">Access Control</TabsTrigger>
-        {pendingChanges.length > 0 && (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-green-600">
+            🎯 Admin Service Pricing Control
+          </CardTitle>
+          <p className="text-sm text-green-600">
+            ✅ You have full admin access - You can view and modify all pricing directly
+          </p>
+        </CardHeader>
+      </Card>
+
+      <Tabs defaultValue="pricing" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="pricing">Service Pricing</TabsTrigger>
           <TabsTrigger value="pending">
             Pending Changes ({pendingChanges.length})
           </TabsTrigger>
-        )}
-      </TabsList>
+          <TabsTrigger value="access">User Access Control</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="pricing">
-        <Card>
-          <CardHeader>
-            <CardTitle>Service Pricing by Hospital</CardTitle>
-            {isAdmin() && (
-              <p className="text-sm text-muted-foreground text-green-600">
-                Admin Access: You can view and modify all pricing directly
-              </p>
-            )}
-            {!canViewPricing() && (
-              <p className="text-sm text-muted-foreground text-red-600">
-                You don't have access to view pricing. Contact your administrator.
-              </p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {canViewPricing() ? (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Specialty</Label>
-                    <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select specialty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(servicesBySpecialty).map(specialty => (
-                          <SelectItem key={specialty} value={specialty}>
-                            {specialty.charAt(0).toUpperCase() + specialty.slice(1).replace('_', ' ')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {selectedSpecialty && (
-                  <div className="overflow-x-auto">
-                    {!isAdmin() && (
-                      <div className="mb-4 flex gap-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-                          <span>Hospital Changes (Pending Approval)</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                          <span>Doctor/Finance Changes (Pending Approval)</span>
-                        </div>
-                      </div>
-                    )}
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Service Description</TableHead>
-                          {getFilteredHospitals().map(hospital => (
-                            <TableHead key={hospital}>{hospital}</TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {availableServices.map(service => (
-                          <TableRow key={service}>
-                            <TableCell className="font-medium">{service}</TableCell>
-                            {getFilteredHospitals().map(hospital => {
-                              const pendingChange = getPendingChangeForCell(service, hospital);
-                              
-                              // Only show pending styling for non-admin users
-                              const cellClass = (pendingChange && !isAdmin())
-                                ? (pendingChange.userType === 'hospital' 
-                                    ? "bg-blue-50 border-blue-200" 
-                                    : "bg-green-50 border-green-200")
-                                : "";
-                              
-                              return (
-                                <TableCell key={hospital}>
-                                  <div className="relative">
-                                    <Input
-                                      type="number"
-                                      placeholder="0"
-                                      value={getCurrentUserDisplayPrice(service, hospital)}
-                                      onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
-                                      className={`w-24 ${cellClass}`}
-                                    />
-                                    {pendingChange && !isAdmin() && (
-                                      <Badge 
-                                        variant="secondary" 
-                                        className={`absolute -top-2 -right-2 text-xs ${
-                                          pendingChange.userType === 'hospital' 
-                                            ? 'bg-blue-100 text-blue-800' 
-                                            : 'bg-green-100 text-green-800'
-                                        }`}
-                                      >
-                                        Pending
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Access to pricing is restricted. Contact your administrator for access.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="access">
-        <EnhancedPricingAccess 
-          userAccess={userAccess}
-          onUpdateAccess={setUserAccess}
-          isCurrentUserAdmin={isAdmin()}
-        />
-      </TabsContent>
-
-      {pendingChanges.length > 0 && (
-        <TabsContent value="pending">
+        {/* PRICING TAB */}
+        <TabsContent value="pricing">
           <Card>
             <CardHeader>
-              <CardTitle>Pending Pricing Changes</CardTitle>
+              <CardTitle>Service Pricing Management</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Review and approve/reject pricing modifications from users
+                As admin, you can directly modify all pricing. Changes are saved immediately.
               </p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pendingChanges.map((change) => (
-                  <div key={change.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="font-medium">
-                          {change.service} - {change.hospital}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Price change: {change.oldPrice} SAR → {change.newPrice} SAR
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Modified by: {change.modifiedBy} ({change.userType}) at {new Date(change.modifiedAt).toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge 
-                          variant={change.userType === 'hospital' ? 'default' : 'secondary'}
-                          className={change.userType === 'hospital' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}
-                        >
-                          {change.userType === 'hospital' ? 'Hospital Change' : 'Doctor/Finance Change'}
-                        </Badge>
-                        {isAdmin() && (
-                          <>
-                            <Button size="sm" onClick={() => approvePendingChange(change.id)}>
-                              Approve
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => rejectPendingChange(change.id)}>
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Select Specialty</Label>
+                  <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a specialty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(servicesBySpecialty).map(specialty => (
+                        <SelectItem key={specialty} value={specialty}>
+                          {specialty.charAt(0).toUpperCase() + specialty.slice(1).replace('_', ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {selectedSpecialty && (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="font-semibold">Service Description</TableHead>
+                        {hospitals.map(hospital => (
+                          <TableHead key={hospital} className="text-center font-semibold">
+                            {hospital}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {availableServices.map(service => (
+                        <TableRow key={service}>
+                          <TableCell className="font-medium">{service}</TableCell>
+                          {hospitals.map(hospital => (
+                            <TableCell key={hospital}>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                value={pricing[service]?.[hospital] || ""}
+                                onChange={(e) => handlePriceChange(service, hospital, e.target.value)}
+                                className="w-28 text-center"
+                              />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-      )}
-    </Tabs>
+
+        {/* PENDING CHANGES TAB */}
+        <TabsContent value="pending">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Price Change Approvals</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Review and approve/reject pricing changes submitted by hospital and finance users
+              </p>
+            </CardHeader>
+            <CardContent>
+              {pendingChanges.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No pending changes to review</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingChanges.map((change) => (
+                    <div key={change.id} className="border rounded-lg p-4 bg-yellow-50">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2">
+                          <div className="font-semibold text-lg">
+                            {change.service} - {change.hospital}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Price change: <span className="font-medium">{change.oldPrice} SAR</span> → <span className="font-medium text-green-600">{change.newPrice} SAR</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Submitted by: {change.userName} ({change.userType}) on {new Date(change.date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <Badge 
+                            variant="secondary" 
+                            className={change.userType === 'hospital' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}
+                          >
+                            {change.userType.charAt(0).toUpperCase() + change.userType.slice(1)} Change
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => approvePendingChange(change.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => rejectPendingChange(change.id)}
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ACCESS CONTROL TAB */}
+        <TabsContent value="access">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Access Control</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Manage who can view and modify service pricing
+              </p>
+            </CardHeader>
+            <CardContent>
+              {/* Stats */}
+              <div className="grid grid-cols-4 gap-4 mb-6 p-4 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {users.filter(u => u.type === 'admin').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Admins</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {users.filter(u => u.type === 'doctor' && u.hasAccess).length}/{users.filter(u => u.type === 'doctor').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Doctors</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {users.filter(u => u.type === 'hospital' && u.hasAccess).length}/{users.filter(u => u.type === 'hospital').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Hospitals</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {users.filter(u => u.type === 'finance' && u.hasAccess).length}/{users.filter(u => u.type === 'finance').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Finance</div>
+                </div>
+              </div>
+
+              {/* Users Table */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Access</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={user.hasAccess}
+                          onCheckedChange={() => toggleUserAccess(user.id)}
+                          disabled={user.type === 'admin'}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="secondary"
+                          className={
+                            user.type === 'admin' ? 'bg-purple-100 text-purple-800' :
+                            user.type === 'doctor' ? 'bg-blue-100 text-blue-800' :
+                            user.type === 'hospital' ? 'bg-orange-100 text-orange-800' :
+                            'bg-green-100 text-green-800'
+                          }
+                        >
+                          {user.type.charAt(0).toUpperCase() + user.type.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.hospital && <Badge variant="outline">{user.hospital}</Badge>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.hasAccess ? "default" : "outline"}>
+                          {user.hasAccess ? "Has Access" : "No Access"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
