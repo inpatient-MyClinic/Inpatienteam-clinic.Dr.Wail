@@ -57,18 +57,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
           className="w-full"
           required
         />
-        {onForgotPassword && (
-          <div className="text-right mt-1">
-            <Button 
-              type="button"
-              variant="link" 
-              className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800 underline"
-              onClick={onForgotPassword}
-            >
-              Forgot your password?
-            </Button>
-          </div>
-        )}
+        <div className="text-right mt-1">
+          <Button 
+            type="button"
+            variant="link" 
+            className="p-0 h-auto text-sm text-blue-600 hover:text-blue-800 underline"
+            onClick={onForgotPassword || (() => alert('Forgot password clicked!'))}
+          >
+            Forgot your password?
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">
