@@ -88,9 +88,6 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
   // Load integrated data from all dashboard sources on component mount
   useEffect(() => {
-    // Clear old finance data and load fresh integrated data
-    localStorage.removeItem('financeAnalyticsData');
-    
     // Integrate data from multiple sources according to admin dashboard analysis
     const integratedData = loadIntegratedSIAData();
     setFinanceData(integratedData.financeData);
@@ -126,8 +123,10 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     const medicalRequests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
     const requestStorageData = JSON.parse(localStorage.getItem('requestStorage') || '[]');
     
-    // Finance Dashboard Data
+    // Finance Dashboard Data (prefer SIA-specific if available)
+    const siaFinanceData = JSON.parse(localStorage.getItem('siaFinanceData') || '[]');
     const financeAnalyticsData = JSON.parse(localStorage.getItem('financeAnalyticsData') || '[]');
+    const allFinance = (Array.isArray(siaFinanceData) && siaFinanceData.length > 0) ? siaFinanceData : (Array.isArray(financeAnalyticsData) ? financeAnalyticsData : []);
     
     // Customer Care Data
     const customerCareData = JSON.parse(localStorage.getItem('customerCareData') || '[]');
@@ -146,20 +145,36 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       return isNaN(d.getTime()) ? null : d;
     };
     
+    // Helper: robustly extract the date from a finance record
+    const getFinanceDate = (item: any) => {
+      const raw = item.transaction_date ?? item.date ?? item['Transaction Date'] ?? item['Date'] ?? item.createdAt;
+      if (!raw) return null as Date | null;
+      if (typeof raw === 'number' && raw > 25000) {
+        return new Date((raw - 25569) * 86400 * 1000);
+      }
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : d;
+    };
+    
     // Filter by the currently selected month/year
     const consolidatedData = allRequests;
     const currentMonthData = consolidatedData.filter((item: any) => {
       const d = getItemDate(item);
       return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
     });
-    
     const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
     const previousMonthData = consolidatedData.filter((item: any) => {
       const d = getItemDate(item);
       return d && d.getMonth() + 1 === prevMonth && d.getFullYear() === prevYear;
     });
-    
+
+    // Finance: filter to selected month/year
+    const currentMonthFinance = (allFinance || []).filter((t: any) => {
+      const d = getFinanceDate(t);
+      return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+    });
+
     // MC branch counts based on current month data
     const mcj1Cases = currentMonthData.filter((req: any) => {
       const possibleFields = [
@@ -265,7 +280,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     
     return {
       consolidatedData,
-      financeData: financeAnalyticsData,
+      financeData: currentMonthFinance,
       customerCareData,
       mcBranchCounts: { mcj1: mcj1Cases, mcj2: mcj2Cases, total: mcj1Cases + mcj2Cases },
       conversionData: {
@@ -1391,13 +1406,17 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                 {/* YTD and Growth - Dynamic from Finance Data */}
                 <div>
                   <div className="text-lg font-semibold text-green-600 mb-1">
-                    YTD: ${financeData.length > 0 ? 
-                      financeData.reduce((total, transaction) => total + parseFloat(transaction.amount?.replace(/[^0-9.-]+/g, '') || '0'), 0).toLocaleString() : 
-                      '12,000,000'}
+                    Revenue (Selected Month): SAR {financeData.length > 0 ? 
+                      financeData.reduce((total, t) => {
+                        const raw = (t.amount ?? t.Amount ?? t['Amount'] ?? t['Amount (SAR)'] ?? t.value ?? t['Value']);
+                        const num = typeof raw === 'number' ? raw : parseFloat(String(raw || '').replace(/[^0-9.-]+/g, ''));
+                        return total + (isNaN(num) ? 0 : num);
+                      }, 0).toLocaleString() : 
+                      '0'}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Growth: {financeData.length > 0 ? 
-                      ((financeData.filter(t => t.status === 'Paid').length / financeData.length * 100) - 100).toFixed(1) : '0'}% vs. last year
+                    Paid % this month: {financeData.length > 0 ? 
+                      ((financeData.filter(t => String(t.status || t.payment_status || '').toLowerCase() === 'paid').length / financeData.length) * 100).toFixed(1) : '0'}%
                   </div>
                 </div>
 
@@ -1405,17 +1424,17 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-blue-50 p-3 rounded-lg text-center">
                     <div className="text-xl font-bold text-blue-600">
-                      {financeData.length > 0 ? 
-                        ((financeData.filter(t => t.status === 'Paid').length / financeData.length) * 100).toFixed(0) : '0'}%
+                    {financeData.length > 0 ? 
+                      ((financeData.filter(t => String(t.status || t.payment_status || '').toLowerCase() === 'paid').length / financeData.length) * 100).toFixed(0) : '0'}%
                     </div>
-                    <div className="text-xs text-muted-foreground">Achievement</div>
+                    <div className="text-xs text-muted-foreground">Paid %</div>
                   </div>
                   <div className="bg-teal-50 p-3 rounded-lg text-center">
                     <div className="text-xl font-bold text-teal-600">
                       {financeData.length > 0 ? 
-                        (((financeData.filter(t => t.status === 'Paid').length / financeData.length) * 100) - 123).toFixed(0) : '-23'}%
+                        (financeData.filter(t => String(t.status || t.payment_status || '').toLowerCase() === 'paid').length).toLocaleString() : '0'}
                     </div>
-                    <div className="text-xs text-muted-foreground">YTD Growth</div>
+                    <div className="text-xs text-muted-foreground">Paid Count</div>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-lg text-center">
                     <div className="text-xl font-bold text-purple-600">
