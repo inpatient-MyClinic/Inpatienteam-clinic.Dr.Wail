@@ -408,12 +408,22 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   const integratedSIAData = loadIntegratedSIAData();
   
   // Use the selected month/year for primary filtering
+  // Use the selected month/year for primary filtering
   const filterMonth = selectedMonth;
   const filterYear = selectedYear;
   
+  // Robust date extraction (handles strings, Date, and Excel serials)
   const filteredData = integratedSIAData.consolidatedData.filter(item => {
-    const itemDate = new Date(item.date || item.createdAt);
-    return itemDate.getMonth() + 1 === filterMonth && itemDate.getFullYear() === filterYear;
+    const raw = item.date ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
+    if (!raw) return false;
+    let d: Date | null = null;
+    if (typeof raw === 'number' && raw > 25000) {
+      d = new Date((raw - 25569) * 86400 * 1000);
+    } else {
+      const tmp = new Date(raw);
+      d = isNaN(tmp.getTime()) ? null : tmp;
+    }
+    return !!d && d.getMonth() + 1 === filterMonth && d.getFullYear() === filterYear;
   });
 
   // Use actual admin dashboard data counts from passed prop
