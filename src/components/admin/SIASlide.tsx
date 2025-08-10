@@ -156,6 +156,47 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       return isNaN(d.getTime()) ? null : d;
     };
     
+    // Normalization helpers for hospital and specialty names
+    const normalizeHospitalName = (val: any): string | null => {
+      if (val === undefined || val === null) return null;
+      const s = String(val).trim();
+      if (!s) return null;
+      const low = s.toLowerCase();
+      // DSFH
+      if (/fakee?h|dsfh/.test(low)) return 'DSFH';
+      // Al Salamah
+      if (/salamah|al\s*salamah/.test(low)) return 'Al Salamah';
+      // DSAH Al Basateen / HMG Al Basateen
+      if (/basate?e?n|basatin|hmg|dsah/.test(low)) return 'DSAH Al Basateen';
+      // Al Batal
+      if (/batal|al\s*batal/.test(low)) return 'Al Batal';
+      // Bin Rushd
+      if (/bin\s*rushd/.test(low)) return 'Bin Rushd';
+      // IMC
+      if (/international medical center|imc/.test(low)) return 'IMC';
+      // KCH
+      if (/king\s*\w*\s*hospital|kch/.test(low)) return 'KCH';
+      return s; // default as-is (trimmed)
+    };
+
+    const normalizeSpecialtyName = (val: any): string | null => {
+      if (val === undefined || val === null) return null;
+      const s = String(val).trim();
+      if (!s) return null;
+      const low = s.toLowerCase();
+      // OBG / OB-GYN
+      if (/^obg$|ob\/?gyn|obstetric|gynec/.test(low)) return 'OBG';
+      // Ophthalmology
+      if (/ophth|ophtha|ophthalm/.test(low)) return 'Ophtha';
+      // ENT / Otolaryngology
+      if (/^ent$|otolaryng/.test(low)) return 'ENT';
+      // GIT / Gastro
+      if (/^git$|gastro/.test(low)) return 'GIT';
+      // Cardio shorthand
+      if (/cardio/.test(low)) return 'Cardiology';
+      return s; // default as-is
+    };
+    
     // Filter by the currently selected month/year
     const consolidatedData = allRequests;
     const currentMonthData = consolidatedData.filter((item: any) => {
@@ -249,28 +290,39 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount;
     const conversionRate = totalCasesCount > 0 ? ((totalDoneAndScheduled / totalCasesCount) * 100).toFixed(2) : '0.00';
     
-    // Top hospitals/specialties based on current month data
+    // Top hospitals/specialties based on current month data (with normalization)
     const hospitalCounts = currentMonthData.reduce((acc: any, req: any) => {
       const hospitalFields = [
         req.hospitalName, req.referredToHospital, req.hospital,
         req['Hospital Name'], req['Referred To Hospital'], req['Hospital'],
-        req.referredTo, req['Referred To'], req.hospitalCode, req['Hospital Code']
+        req.referredTo, req['Referred To'], req.hospitalCode, req['Hospital Code'],
+        req.destinationHospital, req['Destination Hospital'], req.partnerHospital, req['Partner Hospital']
       ];
-      const hospital = hospitalFields.find((h: any) => h && String(h).trim()) || 'Unknown Hospital';
-      const key = String(hospital).trim();
+      const raw = hospitalFields.find((h: any) => h !== undefined && h !== null && String(h).trim() !== '');
+      const key = normalizeHospitalName(raw);
+      if (!key) return acc;
       acc[key] = (acc[key] || 0) + 1;
       return acc;
-    }, {});
-    const top5Hospitals = Object.entries(hospitalCounts).sort(([,a]: any, [,b]: any) => (b as number) - (a as number)).slice(0,5).map(([hospital, count]) => ({ hospital, count }));
+    }, {} as Record<string, number>);
+    const top5Hospitals = Object.entries(hospitalCounts)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 5)
+      .map(([hospital, count]) => ({ hospital, count }));
     
     const specialtyCounts = currentMonthData.reduce((acc: any, req: any) => {
-      const specialtyFields = [req.specialty, req.medical_specialty, req['Specialty'], req['Medical Specialty'], req.medicalSpecialty, req.department];
-      const specialty = specialtyFields.find((s: any) => s && String(s).trim()) || 'General';
-      const key = String(specialty).trim();
+      const specialtyFields = [
+        req.specialty, req.medical_specialty, req['Specialty'], req['Medical Specialty'], req.medicalSpecialty, req.department,
+        req['Speciality'], req['Specialization'], req['Department/Specialty'], req.spec, req.Spec, req['Specialty Name']
+      ];
+      const raw = specialtyFields.find((s: any) => s !== undefined && s !== null && String(s).trim() !== '');
+      const key = normalizeSpecialtyName(raw) || 'General';
       acc[key] = (acc[key] || 0) + 1;
       return acc;
-    }, {});
-    const top5Specialties = Object.entries(specialtyCounts).sort(([,a]: any, [,b]: any) => (b as number) - (a as number)).slice(0,5).map(([specialty, count]) => ({ specialty, count }));
+    }, {} as Record<string, number>);
+    const top5Specialties = Object.entries(specialtyCounts)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 5)
+      .map(([specialty, count]) => ({ specialty, count }));
     
     // Achievement and growth based on request counts
     const totalRequests = consolidatedData.length;
@@ -501,39 +553,52 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     return undefined;
   };
 
+  // Normalizers for display in Top lists
+  const normalizeHospital = (val: any): string => {
+    if (val === undefined || val === null) return 'Unknown Hospital';
+    const s = String(val).trim();
+    if (!s) return 'Unknown Hospital';
+    const low = s.toLowerCase();
+    if (/fakee?h|dsfh/.test(low)) return 'DSFH';
+    if (/salamah|al\s*salamah/.test(low)) return 'Al Salamah';
+    if (/basate?e?n|basatin|hmg|dsah/.test(low)) return 'DSAH Al Basateen';
+    if (/batal|al\s*batal/.test(low)) return 'Al Batal';
+    if (/bin\s*rushd/.test(low)) return 'Bin Rushd';
+    if (/international medical center|imc/.test(low)) return 'IMC';
+    if (/king\s*\w*\s*hospital|kch/.test(low)) return 'KCH';
+    return s;
+  };
+
+  const normalizeSpecialty = (val: any): string => {
+    if (val === undefined || val === null) return 'General';
+    const s = String(val).trim();
+    if (!s) return 'General';
+    const low = s.toLowerCase();
+    if (/^obg$|ob\/?gyn|obstetric|gynec/.test(low)) return 'OBG';
+    if (/ophth|ophtha|ophthalm/.test(low)) return 'Ophtha';
+    if (/^ent$|otolaryng/.test(low)) return 'ENT';
+    if (/^git$|gastro/.test(low)) return 'GIT';
+    if (/cardio/.test(low)) return 'Cardiology';
+    return s;
+  };
+
   const getHospitalFromItem = (item: any) => {
     const direct = item.hospitalName ?? item.referredToHospital ?? item.hospital ??
       item['Hospital Name'] ?? item['Referred To Hospital'] ?? item['Hospital'] ??
       item.referredTo ?? item['Referred To'] ?? item.hospitalCode ?? item['Hospital Code'] ??
-      item.partnerHospital ?? item['Partner Hospital'] ?? item.receivingHospital ?? item['Receiving Hospital'];
+      item.partnerHospital ?? item['Partner Hospital'] ?? item.receivingHospital ?? item['Receiving Hospital'] ??
+      item.destinationHospital ?? item['Destination Hospital'];
     const raw = direct ?? findValueByKeyIncludes(item, ['hospital']);
-    const val = raw ? String(raw).trim() : 'Unknown Hospital';
-    return val;
-  };
-
-  const normalizeSpecialty = (s: string) => {
-    const x = s.toLowerCase().replace(/\s+/g, ' ').trim();
-    if (!x) return 'General';
-    if (
-      x.includes('ob/gyn') || x.includes('ob gyn') || x.includes('obgyn') ||
-      x.includes('gynecology & obstetrics') || x.includes('gynecology and obstetrics') ||
-      x.includes('obstetrics and gynecology')
-    ) return 'OB/GYN';
-    if (x.includes('ent') || x.includes('otolaryng')) return 'ENT';
-    if (x.includes('ortho')) return 'Orthopedics';
-    if (x.includes('cardio')) return 'Cardiology';
-    if (x.includes('neuro')) return 'Neurosurgery';
-    return s.trim();
+    return normalizeHospital(raw);
   };
 
   const getSpecialtyFromItem = (item: any) => {
     const direct = item.specialty ?? item.medical_specialty ?? item['Specialty'] ?? item['Speciality'] ??
-      item['Medical Specialty'] ?? item.medicalSpecialty ?? item.department ?? item['Department'];
+      item['Medical Specialty'] ?? item.medicalSpecialty ?? item.department ?? item['Department'] ??
+      item['Specialization'] ?? item['Department/Specialty'] ?? item.spec ?? item.Spec ?? item['Specialty Name'];
     const raw = direct ?? findValueByKeyIncludes(item, ['special', 'dept']);
-    const val = raw ? String(raw).trim() : 'General';
-    return normalizeSpecialty(val);
+    return normalizeSpecialty(raw);
   };
-
   const hospitalCounts = filteredData.reduce((acc, item) => {
     const h = getHospitalFromItem(item);
     acc[h] = (acc[h] || 0) + 1;
