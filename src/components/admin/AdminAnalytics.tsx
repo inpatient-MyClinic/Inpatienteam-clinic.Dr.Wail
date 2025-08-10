@@ -205,7 +205,32 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
     { key: 'specialty', label: 'Specialty', filterable: true, sortable: true },
     { key: 'hospital', label: 'Hospital', filterable: true, sortable: true },
     { key: 'caseCoordinator', label: 'Coordinator', filterable: true, sortable: true },
-    { key: 'date', label: 'Date', filterable: false, sortable: true },
+    { 
+      key: 'date', 
+      label: 'Date', 
+      filterable: false, 
+      sortable: true,
+      render: (value: any) => {
+        if (!value) return 'N/A';
+        
+        let date;
+        // Handle Excel serial date numbers
+        if (typeof value === 'number' && value > 25000) {
+          date = new Date((value - 25569) * 86400 * 1000);
+        } else {
+          date = new Date(value);
+        }
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    },
     { 
       key: 'priority', 
       label: 'Priority', 
