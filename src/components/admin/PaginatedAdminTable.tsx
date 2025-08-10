@@ -151,6 +151,43 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin", o
     };
   };
 
+  // Helper: format Excel serials and common date fields into readable dates
+  const formatPotentialDate = (value: any, row: any): string => {
+    const candidates = [
+      value,
+      row?.requestDate,
+      row?.created_at,
+      row?.dateCreated,
+      row?.Date,
+      row?.['Request Date']
+    ].filter((v) => v !== undefined && v !== null && v !== '');
+
+    if (candidates.length === 0) return 'N/A';
+    const dateValue = candidates[0];
+
+    let d: Date;
+    if (typeof dateValue === 'number' && dateValue > 25000) {
+      // Excel serial date (from 1899-12-30 baseline)
+      d = new Date((dateValue - 25569) * 86400 * 1000);
+    } else if (typeof dateValue === 'string') {
+      const trimmed = dateValue.trim();
+      const numeric = Number(trimmed);
+      if (!isNaN(numeric) && numeric > 25000) {
+        d = new Date((numeric - 25569) * 86400 * 1000);
+      } else {
+        d = new Date(trimmed);
+      }
+    } else if (dateValue instanceof Date) {
+      d = dateValue;
+    } else {
+      d = new Date(dateValue as any);
+    }
+
+    if (isNaN(d.getTime())) return String(value ?? '');
+
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
   // Define table columns for the new pagination component
   const columns = [
     {
@@ -198,7 +235,8 @@ export default function PaginatedAdminTable({ data, currentUserRole = "admin", o
       key: "date",
       label: "Date",
       filterable: true,
-      sortable: true
+      sortable: true,
+      render: (value: any, row: any) => formatPotentialDate(value, row)
     },
     {
       key: "actions",
