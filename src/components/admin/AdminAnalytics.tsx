@@ -210,15 +210,22 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
       label: 'Date', 
       filterable: false, 
       sortable: true,
-      render: (value: any) => {
-        if (!value) return 'N/A';
+      render: (value: any, row: any) => {
+        // Try multiple possible date fields
+        const dateValue = value || row.requestDate || row.created_at || row.dateCreated || row['Date'] || row['Request Date'];
+        
+        if (!dateValue) return 'N/A';
         
         let date;
-        // Handle Excel serial date numbers
-        if (typeof value === 'number' && value > 25000) {
-          date = new Date((value - 25569) * 86400 * 1000);
+        // Handle Excel serial date numbers (numbers > 25000 are likely Excel dates)
+        if (typeof dateValue === 'number' && dateValue > 25000) {
+          // Excel serial date conversion: Excel date starts from 1900-01-01, but with leap year bug
+          date = new Date((dateValue - 25569) * 86400 * 1000);
+        } else if (typeof dateValue === 'string' && !isNaN(Number(dateValue)) && Number(dateValue) > 25000) {
+          // Handle string numbers that are Excel dates
+          date = new Date((Number(dateValue) - 25569) * 86400 * 1000);
         } else {
-          date = new Date(value);
+          date = new Date(dateValue);
         }
         
         // Check if date is valid
