@@ -153,7 +153,7 @@ export default function AdminDashboard() {
   if (showSIASlide) {
     return (
       <SIASlide 
-        data={allRequestsData} 
+        data={filteredData} 
         onClose={() => handleToggleSIASlide()} 
       />
     );

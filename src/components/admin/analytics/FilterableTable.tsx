@@ -20,6 +20,8 @@ interface FilterableTableProps {
 export default function FilterableTable({ data, columns, title }: FilterableTableProps) {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Get unique values for each filterable column
   const getUniqueValues = (key: string) => {
@@ -53,6 +55,16 @@ export default function FilterableTable({ data, columns, title }: FilterableTabl
 
     return filtered;
   }, [data, filters, sortConfig]);
+
+  // Apply pagination
+  const totalPages = Math.ceil(filteredAndSortedData.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedData = filteredAndSortedData.slice(startIndex, startIndex + rowsPerPage);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   const handleSort = (key: string) => {
     setSortConfig(current => ({
@@ -112,19 +124,42 @@ export default function FilterableTable({ data, columns, title }: FilterableTabl
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Rows per page:</span>
-          <Select value="10" onValueChange={() => {}}>
-            <SelectTrigger className="w-16">
+          <Select value={String(rowsPerPage)} onValueChange={(value) => {
+            setRowsPerPage(Number(value));
+            setCurrentPage(1);
+          }}>
+            <SelectTrigger className="w-20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="10">10</SelectItem>
               <SelectItem value="25">25</SelectItem>
               <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="text-sm text-gray-600">
-          Showing 1 to {Math.min(10, filteredAndSortedData.length)} of {filteredAndSortedData.length} entries
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Showing {startIndex + 1} to {Math.min(startIndex + rowsPerPage, filteredAndSortedData.length)} of {filteredAndSortedData.length} entries
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm">Page {currentPage} of {totalPages}</span>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -151,7 +186,7 @@ export default function FilterableTable({ data, columns, title }: FilterableTabl
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredAndSortedData.map((row, index) => (
+          {paginatedData.map((row, index) => (
             <TableRow key={index}>
               {columns.map(column => (
                 <TableCell key={column.key}>

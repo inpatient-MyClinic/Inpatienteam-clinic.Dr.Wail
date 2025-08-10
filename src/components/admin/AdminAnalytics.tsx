@@ -25,8 +25,16 @@ interface AdminAnalyticsProps {
 export default function AdminAnalytics({ data, selectedDates, selectedWeeks, selectedMonths }: AdminAnalyticsProps) {
   console.log("AdminAnalytics rendering with data:", data.length, "items");
   
+  // Apply month filter first - filter by selected months
+  const monthFilteredData = selectedMonths.length > 0 ? 
+    data.filter(item => {
+      const itemDate = new Date(item.date || item.requestDate || item.created_at);
+      const itemMonth = itemDate.toLocaleString('default', { month: 'long' });
+      return selectedMonths.includes(itemMonth);
+    }) : data;
+  
   // Clean case coordinator data: remove "No" entries and normalize "saud"/"Saud"
-  const cleanedData = data.map(item => ({
+  const cleanedData = monthFilteredData.map(item => ({
     ...item,
     caseCoordinator: item.caseCoordinator === "No" ? "" : 
                      item.caseCoordinator === "saud" ? "Saud" : 
@@ -60,11 +68,11 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [includePlannedNVD, setIncludePlannedNVD] = useState(savedSettings.includePlannedNVD);
 
   // Calculate conversion rate with toggleable statuses - merge Completed and Done
-  const totalRequests = data.length; // Use original data length for consistency
+  const totalRequests = monthFilteredData.length; // Use month filtered data for consistency
   
-  // Use original data for accurate counting to match dashboard totals
-  const completedRequests = data.filter(item => item.status === "Completed").length;
-  const actualDoneRequests = data.filter(item => item.status === "Done").length;
+  // Use month filtered data for accurate counting to match dashboard totals
+  const completedRequests = monthFilteredData.filter(item => item.status === "Completed").length;
+  const actualDoneRequests = monthFilteredData.filter(item => item.status === "Done").length;
   const mergedDoneRequests = completedRequests + actualDoneRequests; // Merge Completed and Done
   const scheduledRequests = data.filter(item => item.status === "Scheduled").length;
   const plannedNVDRequests = data.filter(item => item.status === "Planned NVD").length;

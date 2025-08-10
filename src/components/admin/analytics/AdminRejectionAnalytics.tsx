@@ -80,9 +80,29 @@ export default function AdminRejectionAnalytics({ data }: AdminRejectionAnalytic
       (item.status === 'Rejected' || item.status === 'Cancelled')
     );
   };
-  // Calculate specialty rejection rates
+  // Function to normalize specialty names for better grouping
+  const normalizeSpecialty = (specialty: string) => {
+    if (!specialty) return 'Unknown';
+    const normalized = specialty.toLowerCase().trim();
+    
+    // Group similar specialties
+    if (normalized.includes('obg') || normalized.includes('gynecolog') || normalized.includes('obstetric')) return 'OB/GYN';
+    if (normalized.includes('ophtha') || normalized.includes('eye')) return 'Ophthalmology';
+    if (normalized.includes('ent') || normalized.includes('ear') || normalized.includes('nose') || normalized.includes('throat')) return 'ENT';
+    if (normalized.includes('git') || normalized.includes('gastro')) return 'Gastroenterology';
+    if (normalized.includes('cardio') || normalized.includes('heart')) return 'Cardiology';
+    if (normalized.includes('ortho') || normalized.includes('bone')) return 'Orthopedics';
+    if (normalized.includes('neuro') || normalized.includes('brain')) return 'Neurology';
+    if (normalized.includes('dermato') || normalized.includes('skin')) return 'Dermatology';
+    if (normalized.includes('pediat') || normalized.includes('child')) return 'Pediatrics';
+    if (normalized.includes('surgery') || normalized.includes('surgical')) return 'Surgery';
+    
+    return specialty; // Return original if no match
+  };
+
+  // Calculate specialty rejection rates with normalized specialties
   const specialtyStats = data.reduce((acc, item) => {
-    const specialty = item.specialty || 'Unknown';
+    const specialty = normalizeSpecialty(item.specialty || 'Unknown');
     if (!acc[specialty]) {
       acc[specialty] = { total: 0, rejected: 0, services: {} };
     }
