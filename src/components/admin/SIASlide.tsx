@@ -216,6 +216,11 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
     });
 
+    // Debug: Log the filtered data for the current month
+    console.log('Current Month Data Count:', currentMonthData.length);
+    console.log('Selected Month:', selectedMonth, 'Selected Year:', selectedYear);
+    console.log('Sample current month data:', currentMonthData.slice(0, 3));
+
     // MC branch counts based on current month data
     const mcj1Cases = currentMonthData.filter((req: any) => {
       const possibleFields = [
@@ -227,8 +232,12 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       ];
       const columnHValue = possibleFields.find((val: any) => val !== undefined && val !== null && val !== '') || '';
       const valueStr = String(columnHValue).toLowerCase().trim();
-      return valueStr.includes('al muhammadiyah') || valueStr.includes('muhammadiyah') || valueStr.includes('mc al muhammadiyah') || valueStr.includes('mcj1') || valueStr.includes('mc j1') || valueStr === 'mcj1' || valueStr.includes('mc1') || valueStr.includes('myclinic muhammadiyah');
-    }).length;
+      const isMatch = valueStr.includes('al muhammadiyah') || valueStr.includes('muhammadiyah') || valueStr.includes('mc al muhammadiyah') || valueStr.includes('mcj1') || valueStr.includes('mc j1') || valueStr === 'mcj1' || valueStr.includes('mc1') || valueStr.includes('myclinic muhammadiyah');
+      if (isMatch) {
+        console.log('MCJ1 Match found:', valueStr, 'from fields:', possibleFields);
+      }
+      return isMatch;
+    });
     
     const mcj2Cases = currentMonthData.filter((req: any) => {
       const possibleFields = [
@@ -240,8 +249,15 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       ];
       const columnHValue = possibleFields.find((val: any) => val !== undefined && val !== null && val !== '') || '';
       const valueStr = String(columnHValue).toLowerCase().trim();
-      return valueStr.includes('al safa') || valueStr.includes('safa') || valueStr.includes('mc al safa') || valueStr.includes('mcj2') || valueStr.includes('mc j2') || valueStr === 'mcj2' || valueStr.includes('mc2') || valueStr.includes('myclinic safa');
-    }).length;
+      const isMatch = valueStr.includes('al safa') || valueStr.includes('safa') || valueStr.includes('mc al safa') || valueStr.includes('mcj2') || valueStr.includes('mc j2') || valueStr === 'mcj2' || valueStr.includes('mc2') || valueStr.includes('myclinic safa');
+      if (isMatch) {
+        console.log('MCJ2 Match found:', valueStr, 'from fields:', possibleFields);
+      }
+      return isMatch;
+    });
+
+    console.log('MCJ1 Cases found:', mcj1Cases.length);
+    console.log('MCJ2 Cases found:', mcj2Cases.length);
     
     // Status distribution and conversion counts from current month data
     const statusCounts = {
