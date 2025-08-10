@@ -489,11 +489,54 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     return !!itemDate && itemDate.getMonth() + 1 === comparisonMonth && itemDate.getFullYear() === comparisonYear;
   });
 
-  // Top 5 Hospitals
-  const hospitalCounts = filteredData.reduce((acc, item) => {
-    if (item.hospital) {
-      acc[item.hospital] = (acc[item.hospital] || 0) + 1;
+  // Top 5 Hospitals and Specialties (robust field detection)
+  const findValueByKeyIncludes = (obj: any, patterns: string[]) => {
+    for (const key in obj) {
+      const l = key.toLowerCase();
+      if (patterns.some((p) => l.includes(p))) {
+        const v = (obj as any)[key];
+        if (v !== undefined && v !== null && String(v).trim() !== '') return v;
+      }
     }
+    return undefined;
+  };
+
+  const getHospitalFromItem = (item: any) => {
+    const direct = item.hospitalName ?? item.referredToHospital ?? item.hospital ??
+      item['Hospital Name'] ?? item['Referred To Hospital'] ?? item['Hospital'] ??
+      item.referredTo ?? item['Referred To'] ?? item.hospitalCode ?? item['Hospital Code'] ??
+      item.partnerHospital ?? item['Partner Hospital'] ?? item.receivingHospital ?? item['Receiving Hospital'];
+    const raw = direct ?? findValueByKeyIncludes(item, ['hospital']);
+    const val = raw ? String(raw).trim() : 'Unknown Hospital';
+    return val;
+  };
+
+  const normalizeSpecialty = (s: string) => {
+    const x = s.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!x) return 'General';
+    if (
+      x.includes('ob/gyn') || x.includes('ob gyn') || x.includes('obgyn') ||
+      x.includes('gynecology & obstetrics') || x.includes('gynecology and obstetrics') ||
+      x.includes('obstetrics and gynecology')
+    ) return 'OB/GYN';
+    if (x.includes('ent') || x.includes('otolaryng')) return 'ENT';
+    if (x.includes('ortho')) return 'Orthopedics';
+    if (x.includes('cardio')) return 'Cardiology';
+    if (x.includes('neuro')) return 'Neurosurgery';
+    return s.trim();
+  };
+
+  const getSpecialtyFromItem = (item: any) => {
+    const direct = item.specialty ?? item.medical_specialty ?? item['Specialty'] ?? item['Speciality'] ??
+      item['Medical Specialty'] ?? item.medicalSpecialty ?? item.department ?? item['Department'];
+    const raw = direct ?? findValueByKeyIncludes(item, ['special', 'dept']);
+    const val = raw ? String(raw).trim() : 'General';
+    return normalizeSpecialty(val);
+  };
+
+  const hospitalCounts = filteredData.reduce((acc, item) => {
+    const h = getHospitalFromItem(item);
+    acc[h] = (acc[h] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   const top5Hospitals = Object.entries(hospitalCounts)
@@ -501,11 +544,9 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     .slice(0, 5)
     .map(([name, count]) => ({ name, count: count as number }));
 
-  // Top 5 Specialties
   const specialtyCounts = filteredData.reduce((acc, item) => {
-    if (item.specialty) {
-      acc[item.specialty] = (acc[item.specialty] || 0) + 1;
-    }
+    const s = getSpecialtyFromItem(item);
+    acc[s] = (acc[s] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   const top5Specialties = Object.entries(specialtyCounts)
@@ -1075,7 +1116,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
             </div>
           )}
 
-          {/* Middle Row - Top 5 Lists with actual data from admin dashboard */}
+          {/* Middle Row - Top 5 Lists with actual data from selected month */}
           <div className="grid grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -1083,26 +1124,16 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">King Faisal Specialist Hospital</span>
-                    <Badge variant="secondary">45</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">King Khaled University Hospital</span>
-                    <Badge variant="secondary">38</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Prince Sultan Military Hospital</span>
-                    <Badge variant="secondary">32</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">National Guard Health Affairs</span>
-                    <Badge variant="secondary">28</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">King Abdulaziz Medical City</span>
-                    <Badge variant="secondary">24</Badge>
-                  </div>
+                  {top5Hospitals.length > 0 ? (
+                    top5Hospitals.map((h, idx) => (
+                      <div key={`${h.name}-${idx}`} className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{h.name}</span>
+                        <Badge variant="secondary">{h.count}</Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No data for selected month</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1113,26 +1144,16 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Cardiology</span>
-                    <Badge variant="secondary">52</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Orthopedics</span>
-                    <Badge variant="secondary">41</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Neurosurgery</span>
-                    <Badge variant="secondary">35</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">General Surgery</span>
-                    <Badge variant="secondary">29</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Gastroenterology</span>
-                    <Badge variant="secondary">22</Badge>
-                  </div>
+                  {top5Specialties.length > 0 ? (
+                    top5Specialties.map((s, idx) => (
+                      <div key={`${s.name}-${idx}`} className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{s.name}</span>
+                        <Badge variant="secondary">{s.count}</Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No data for selected month</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
