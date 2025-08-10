@@ -136,7 +136,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     
     // Helper: robustly extract the date from a record
     const getItemDate = (item: any) => {
-      const raw = item.date ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
+      const raw = item.date ?? item.dateCreated ?? item.requestDate ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
       if (!raw) return null as Date | null;
       if (typeof raw === 'number' && raw > 25000) {
         return new Date((raw - 25569) * 86400 * 1000);
@@ -429,7 +429,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   
   // Robust date extraction (handles strings, Date, and Excel serials)
   const filteredData = integratedSIAData.consolidatedData.filter(item => {
-    const raw = item.date ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
+    const raw = item.date ?? item.dateCreated ?? item.requestDate ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
     if (!raw) return false;
     let d: Date | null = null;
     if (typeof raw === 'number' && raw > 25000) {
@@ -477,8 +477,16 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   const comparisonMonth = filterMonth === 1 ? 12 : filterMonth - 1;
   const comparisonYear = filterMonth === 1 ? filterYear - 1 : filterYear;
   const previousMonthData = integratedSIAData.consolidatedData.filter(item => {
-    const itemDate = new Date(item.date || item.createdAt);
-    return itemDate.getMonth() + 1 === comparisonMonth && itemDate.getFullYear() === comparisonYear;
+    const raw = item.date ?? item.dateCreated ?? item.requestDate ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'];
+    if (!raw) return false;
+    let itemDate: Date | null = null;
+    if (typeof raw === 'number' && raw > 25000) {
+      itemDate = new Date((raw - 25569) * 86400 * 1000);
+    } else {
+      const tmp = new Date(raw);
+      itemDate = isNaN(tmp.getTime()) ? null : tmp;
+    }
+    return !!itemDate && itemDate.getMonth() + 1 === comparisonMonth && itemDate.getFullYear() === comparisonYear;
   });
 
   // Top 5 Hospitals
@@ -750,6 +758,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2024">2024</SelectItem>
               <SelectItem value="2023">2023</SelectItem>
             </SelectContent>
