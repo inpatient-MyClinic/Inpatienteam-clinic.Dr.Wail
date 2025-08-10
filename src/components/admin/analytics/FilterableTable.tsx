@@ -77,6 +77,40 @@ export default function FilterableTable({ data, columns, title }: FilterableTabl
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  // Helper: format Excel serial or common date fields
+  const formatPotentialDate = (value: any, row: any): string | null => {
+    const candidates = [
+      value,
+      row?.requestDate,
+      row?.created_at,
+      row?.dateCreated,
+      row?.Date,
+      row?.['Request Date']
+    ].filter((v) => v !== undefined && v !== null && v !== '');
+
+    if (candidates.length === 0) return null;
+    const dateValue = candidates[0];
+
+    let d: Date;
+    if (typeof dateValue === 'number' && dateValue > 25000) {
+      d = new Date((dateValue - 25569) * 86400 * 1000);
+    } else if (typeof dateValue === 'string') {
+      const trimmed = dateValue.trim();
+      const numeric = Number(trimmed);
+      if (!isNaN(numeric) && numeric > 25000) {
+        d = new Date((numeric - 25569) * 86400 * 1000);
+      } else {
+        d = new Date(trimmed);
+      }
+    } else {
+      d = new Date(dateValue as any);
+    }
+
+    if (isNaN(d.getTime())) return null;
+
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
   return (
     <div className="space-y-4">
       {title && <h3 className="text-lg font-semibold">{title}</h3>}
@@ -190,7 +224,11 @@ export default function FilterableTable({ data, columns, title }: FilterableTabl
             <TableRow key={index}>
               {columns.map(column => (
                 <TableCell key={column.key}>
-                  {column.render ? column.render(row[column.key], row) : row[column.key]}
+                  {column.render
+                    ? column.render(row[column.key], row)
+                    : ((column.key.toLowerCase().includes('date') || column.label.toLowerCase().includes('date'))
+                        ? (formatPotentialDate(row[column.key], row) ?? String(row[column.key] ?? ''))
+                        : String(row[column.key] ?? ''))}
                 </TableCell>
               ))}
             </TableRow>
