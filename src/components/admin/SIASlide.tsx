@@ -94,6 +94,60 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
   const [financeData, setFinanceData] = useState<any[]>([]);
   const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
 
+  // Sync SIA month/year with the passed filtered data (so totals match parent filters)
+  useEffect(() => {
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    const toDate = (value: any): Date | null => {
+      if (value === undefined || value === null || value === '') return null;
+      if (typeof value === 'number' && value > 25000) return new Date((value - 25569) * 86400 * 1000);
+      if (typeof value === 'string') {
+        const t = value.trim();
+        const n = Number(t);
+        if (!isNaN(n) && n > 25000) return new Date((n - 25569) * 86400 * 1000);
+        const d = new Date(t);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const getItemDate = (item: any): Date | null => {
+      const candidates = [
+        item?.requestDate,
+        item?.date,
+        item?.created_at,
+        item?.createdAt,
+        item?.dateCreated,
+        item?.['Date'],
+        item?.['Request Date'],
+        item?.['Created At']
+      ];
+      for (const c of candidates) {
+        const d = toDate(c);
+        if (d) return d;
+      }
+      return null;
+    };
+
+    const counts: Record<string, { m: number; y: number; c: number }> = {};
+    data.forEach((it) => {
+      const d = getItemDate(it);
+      if (!d) return;
+      const m = d.getMonth() + 1;
+      const y = d.getFullYear();
+      const key = `${y}-${m}`;
+      counts[key] = counts[key] ? { ...counts[key], c: counts[key].c + 1 } : { m, y, c: 1 };
+    });
+
+    const top = Object.values(counts).sort((a, b) => b.c - a.c)[0];
+    if (top) {
+      // Only update if different to avoid unnecessary rerenders
+      setSelectedMonth((prev) => (prev !== top.m ? top.m : prev));
+      setSelectedYear((prev) => (prev !== top.y ? top.y : prev));
+    }
+  }, [data]);
+
   // Load integrated data from all dashboard sources on component mount
   useEffect(() => {
     // Integrate data from multiple sources according to admin dashboard analysis

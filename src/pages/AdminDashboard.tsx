@@ -151,9 +151,16 @@ export default function AdminDashboard() {
   }
 
   if (showSIASlide) {
+    const dateOnlyFilteredForSIA = filterAdminData(
+      cleanedData,
+      null,
+      selectedDates,
+      selectedWeeks,
+      selectedMonths
+    );
     return (
       <SIASlide 
-        data={filteredData} 
+        data={dateOnlyFilteredForSIA} 
         onClose={() => handleToggleSIASlide()} 
       />
     );
