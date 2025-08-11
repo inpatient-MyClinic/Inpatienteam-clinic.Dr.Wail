@@ -19,9 +19,17 @@ const formatDate = (dateValue: any): string => {
   if (!dateValue) return 'N/A';
   
   let date;
-  // Handle Excel serial date numbers
+  // Handle Excel serial date numbers and string representations
   if (typeof dateValue === 'number' && dateValue > 25000) {
     date = new Date((dateValue - 25569) * 86400 * 1000);
+  } else if (typeof dateValue === 'string') {
+    const t = dateValue.trim();
+    const n = Number(t);
+    if (!isNaN(n) && n > 25000) {
+      date = new Date((n - 25569) * 86400 * 1000);
+    } else {
+      date = new Date(t);
+    }
   } else {
     date = new Date(dateValue);
   }
@@ -135,26 +143,44 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     const allRequests = medicalRequests.length > 0 ? medicalRequests : requestStorageData;
     
     // Helper: robustly extract the date from a record
-    const getItemDate = (item: any) => {
-      const raw = item.date ?? item.dateCreated ?? item.requestDate ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
-      if (!raw) return null as Date | null;
-      if (typeof raw === 'number' && raw > 25000) {
-        return new Date((raw - 25569) * 86400 * 1000);
-      }
-      const d = new Date(raw);
-      return isNaN(d.getTime()) ? null : d;
-    };
+const getItemDate = (item: any) => {
+  const raw = item.date ?? item.dateCreated ?? item.requestDate ?? item.created_at ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
+  if (raw === undefined || raw === null || raw === '') return null as Date | null;
+  if (typeof raw === 'number' && raw > 25000) {
+    return new Date((raw - 25569) * 86400 * 1000);
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    const n = Number(t);
+    if (!isNaN(n) && n > 25000) {
+      return new Date((n - 25569) * 86400 * 1000);
+    }
+    const d2 = new Date(t);
+    return isNaN(d2.getTime()) ? null : d2;
+  }
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+};
     
     // Helper: robustly extract the date from a finance record
-    const getFinanceDate = (item: any) => {
-      const raw = item.transaction_date ?? item.date ?? item['Transaction Date'] ?? item['Date'] ?? item.createdAt;
-      if (!raw) return null as Date | null;
-      if (typeof raw === 'number' && raw > 25000) {
-        return new Date((raw - 25569) * 86400 * 1000);
-      }
-      const d = new Date(raw);
-      return isNaN(d.getTime()) ? null : d;
-    };
+const getFinanceDate = (item: any) => {
+  const raw = item.transaction_date ?? item.date ?? item['Transaction Date'] ?? item['Date'] ?? item.createdAt;
+  if (raw === undefined || raw === null || raw === '') return null as Date | null;
+  if (typeof raw === 'number' && raw > 25000) {
+    return new Date((raw - 25569) * 86400 * 1000);
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    const n = Number(t);
+    if (!isNaN(n) && n > 25000) {
+      return new Date((n - 25569) * 86400 * 1000);
+    }
+    const d2 = new Date(t);
+    return isNaN(d2.getTime()) ? null : d2;
+  }
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+};
     
     // Normalization helpers for hospital and specialty names
     const normalizeHospitalName = (val: any): string | null => {
@@ -197,12 +223,12 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       return s; // default as-is
     };
     
-    // Filter by the currently selected month/year
-    const consolidatedData = allRequests;
-    const currentMonthData = consolidatedData.filter((item: any) => {
-      const d = getItemDate(item);
-      return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
-    });
+// Filter by the currently selected month/year
+const consolidatedData = (Array.isArray(data) && data.length > 0) ? data : allRequests;
+const currentMonthData = consolidatedData.filter((item: any) => {
+  const d = getItemDate(item);
+  return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+});
     const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
     const previousMonthData = consolidatedData.filter((item: any) => {
@@ -348,13 +374,13 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
     
     return {
       consolidatedData,
-      financeData: currentMonthFinance,
-      customerCareData,
-      mcBranchCounts: { mcj1: mcj1Cases, mcj2: mcj2Cases, total: mcj1Cases + mcj2Cases },
-      conversionData: {
-        done: totalDoneAndScheduled,
-        total: totalCasesCount,
-        rate: conversionRate,
+financeData: currentMonthFinance,
+customerCareData,
+mcBranchCounts: { mcj1: mcj1Cases.length, mcj2: mcj2Cases.length, total: mcj1Cases.length + mcj2Cases.length },
+conversionData: {
+  done: totalDoneAndScheduled,
+  total: totalCasesCount,
+  rate: conversionRate,
         breakdown: { doneCount, scheduledCount, plannedNVDCount }
       },
       metrics: {
