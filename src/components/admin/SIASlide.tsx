@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 interface SIASlideProps {
   data: any[];
   onClose: () => void;
+  initialMonth?: number;
+  initialYear?: number;
 }
 
 // Helper function to format dates properly
@@ -44,9 +46,9 @@ const formatDate = (dateValue: any): string => {
   });
 };
 
-export default function SIASlide({ data, onClose }: SIASlideProps) {
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+export default function SIASlide({ data, onClose, initialMonth, initialYear }: SIASlideProps) {
+  const [selectedMonth, setSelectedMonth] = useState<number>(initialMonth ?? (new Date().getMonth() + 1));
+  const [selectedYear, setSelectedYear] = useState<number>(initialYear ?? new Date().getFullYear());
   const [isEditing, setIsEditing] = useState(false);
   const [editableData, setEditableData] = useState({
     npsScore: 85,
@@ -96,6 +98,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
 
   // Sync SIA month/year with the passed filtered data (so totals match parent filters)
   useEffect(() => {
+    if (initialMonth != null || initialYear != null) return; // respect external selection
     if (!Array.isArray(data) || data.length === 0) return;
 
     const toDate = (value: any): Date | null => {
@@ -146,7 +149,7 @@ export default function SIASlide({ data, onClose }: SIASlideProps) {
       setSelectedMonth((prev) => (prev !== top.m ? top.m : prev));
       setSelectedYear((prev) => (prev !== top.y ? top.y : prev));
     }
-  }, [data]);
+  }, [data, initialMonth, initialYear]);
 
   // Load integrated data from all dashboard sources on component mount
   useEffect(() => {

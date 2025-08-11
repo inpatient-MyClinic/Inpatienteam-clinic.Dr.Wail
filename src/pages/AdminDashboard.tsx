@@ -77,7 +77,7 @@ export default function AdminDashboard() {
         specialty: req.specialty || "General",
         hospital: req.hospitalName || req.referredToHospital || "Unknown Hospital",
         caseCoordinator: req.assignedCoordinator || req.caseManager || "Unassigned",
-        requestDate: new Date(req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}:00Z` : new Date()),
+        requestDate: req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}` : null,
         completionDate: req.status === "Done" || req.status === "Completed" ? new Date() : null,
         serviceDescription: req.serviceDescription || "Unknown Service",
         // Additional fields for SIASlide analytics
@@ -158,9 +158,44 @@ export default function AdminDashboard() {
       selectedWeeks,
       selectedMonths
     );
+
+    // Determine initial month/year for SIA from current filters
+    const monthNameToNumber: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+    };
+
+    let initialMonth: number | undefined;
+    let initialYear: number | undefined;
+
+    if (selectedDates.length > 0) {
+      initialMonth = selectedDates[0].getMonth() + 1;
+      initialYear = selectedDates[0].getFullYear();
+    } else if (selectedMonths.length > 0) {
+      const m = monthNameToNumber[selectedMonths[0]];
+      if (m) {
+        initialMonth = m;
+        // Pick the most frequent year for that month from the available data
+        const yearCounts: Record<number, number> = {};
+        cleanedData.forEach((it) => {
+          const raw = it.date || it.requestDate || it.dateCreated || it.created_at || it.createdAt;
+          if (!raw) return;
+          const d = new Date(typeof raw === 'string' ? raw : String(raw));
+          if (isNaN(d.getTime())) return;
+          if (d.getMonth() + 1 !== m) return;
+          const y = d.getFullYear();
+          yearCounts[y] = (yearCounts[y] || 0) + 1;
+        });
+        const top = Object.entries(yearCounts).sort((a, b) => b[1] - a[1])[0];
+        initialYear = top ? Number(top[0]) : new Date().getFullYear();
+      }
+    }
+
     return (
       <SIASlide 
         data={dateOnlyFilteredForSIA} 
+        initialMonth={initialMonth}
+        initialYear={initialYear}
         onClose={() => handleToggleSIASlide()} 
       />
     );
