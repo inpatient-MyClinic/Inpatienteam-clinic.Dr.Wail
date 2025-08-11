@@ -82,10 +82,8 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   // Clean case coordinator data: remove "No" entries and normalize "saud"/"Saud"
   const cleanedData = monthFilteredDataNorm.map(item => ({
     ...item,
-    caseCoordinator: item.caseCoordinator === "No" ? "" : 
-                     item.caseCoordinator === "saud" ? "Saud" : 
-                     item.caseCoordinator
-  })).filter(item => item.caseCoordinator !== "");
+    caseCoordinator: item.caseCoordinator === "saud" ? "Saud" : item.caseCoordinator
+  }));
   
   const [filterBy, setFilterBy] = useState<string>("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
@@ -142,7 +140,7 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const specialties = [...new Set(cleanedData.map(item => item.specialty))];
   const hospitals = [...new Set(cleanedData.map(item => item.hospital))];
   const doctors = [...new Set(cleanedData.map(item => item.user))];
-  const coordinators = [...new Set(cleanedData.map(item => item.caseCoordinator))];
+  const coordinators = [...new Set(cleanedData.map(item => item.caseCoordinator))].filter(Boolean);
 
   // Calculate Top 5 metrics - use cleaned data
   const getTop5 = (field: string) => {
@@ -165,12 +163,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   // Calculate Top 5 doctors by total number of requests
   const top5DoctorsByRequests = getTop5('user');
 
-  // Status counts for proper categories (normalized)
-  const doneCompletedCount = cleanedData.filter(item => item._status === 'completed').length;
-  const pendingCount = cleanedData.filter(item => item._status === 'pending').length;
-  const scheduledCount = cleanedData.filter(item => item._status === 'scheduled').length;
-  const cancelledCount = cleanedData.filter(item => item._status === 'cancelled').length;
-  const plannedNVDCount = cleanedData.filter(item => item._status === 'plannednvd').length;
+  // Status counts for proper categories (normalized) - aligned with current filters and month selection
+  const doneCompletedCount = filteredData.filter(item => item._status === 'completed').length;
+  const pendingCount = filteredData.filter(item => item._status === 'pending').length;
+  const scheduledCount = filteredData.filter(item => item._status === 'scheduled').length;
+  const cancelledCount = filteredData.filter(item => item._status === 'cancelled').length;
+  const plannedNVDCount = filteredData.filter(item => item._status === 'plannednvd').length;
   
   // Loss Tree Analysis Data - match SIA dashboard format with grouped statuses
   const lossTreeData = [
