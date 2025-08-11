@@ -53,16 +53,34 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
     return null;
   };
 
+  // Apply month filter (locale-agnostic) using fixed month map and case-insensitive compare
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const monthFilteredData = selectedMonths.length > 0 ? 
     data.filter(item => {
       const d = getItemDate(item);
       if (!d) return false;
-      const itemMonth = d.toLocaleString('default', { month: 'long' });
-      return selectedMonths.includes(itemMonth);
+      const itemMonth = monthNames[d.getMonth()].toLowerCase();
+      return selectedMonths.some(m => (m || '').toLowerCase() === itemMonth);
     }) : data;
+
+  // Normalize statuses for reliable counting
+  const normalizeStatus = (value: any) => {
+    const s = String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
+    if (s === 'done' || s === 'completed') return 'completed';
+    if (s === 'scheduled') return 'scheduled';
+    if (s === 'plannednvd') return 'plannednvd';
+    if (s === 'pending' || s === 'inprogress') return 'pending';
+    if (s === 'cancelled' || s === 'canceled' || s === 'rejected' || s === 'cancelled/rejected') return 'cancelled';
+    return s;
+  };
+
+  const monthFilteredDataNorm = monthFilteredData.map(item => ({
+    ...item,
+    _status: normalizeStatus(item.status)
+  }));
   
   // Clean case coordinator data: remove "No" entries and normalize "saud"/"Saud"
-  const cleanedData = monthFilteredData.map(item => ({
+  const cleanedData = monthFilteredDataNorm.map(item => ({
     ...item,
     caseCoordinator: item.caseCoordinator === "No" ? "" : 
                      item.caseCoordinator === "saud" ? "Saud" : 
@@ -96,14 +114,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   const [includePlannedNVD, setIncludePlannedNVD] = useState(savedSettings.includePlannedNVD);
 
   // Calculate conversion rate with toggleable statuses - merge Completed and Done
-  const totalRequests = monthFilteredData.length; // Use month filtered data for consistency
+  const totalRequests = monthFilteredDataNorm.length; // Use month filtered + normalized data for consistency
   
-  // Use month filtered data for accurate counting to match dashboard totals
-  const completedRequests = monthFilteredData.filter(item => item.status === "Completed").length;
-  const actualDoneRequests = monthFilteredData.filter(item => item.status === "Done").length;
-  const mergedDoneRequests = completedRequests + actualDoneRequests; // Merge Completed and Done
-  const scheduledRequests = data.filter(item => item.status === "Scheduled").length;
-  const plannedNVDRequests = data.filter(item => item.status === "Planned NVD").length;
+  // Use month filtered, normalized data for accurate counting to match dashboard totals
+  const mergedDoneRequests = monthFilteredDataNorm.filter(item => item._status === 'completed').length;
+  const scheduledRequests = monthFilteredDataNorm.filter(item => item._status === 'scheduled').length;
+  const plannedNVDRequests = monthFilteredDataNorm.filter(item => item._status === 'plannednvd').length;
   
   const includedCount = (includeDone ? mergedDoneRequests : 0) + 
                        (includeScheduled ? scheduledRequests : 0) + 
@@ -149,14 +165,12 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   // Calculate Top 5 doctors by total number of requests
   const top5DoctorsByRequests = getTop5('user');
 
-  // Status counts for proper categories
-  const doneCompletedCount = cleanedData.filter(item => 
-    item.status === "Done" || item.status === "Completed"
-  ).length;
-  const pendingCount = cleanedData.filter(item => item.status === "Pending").length;
-  const scheduledCount = cleanedData.filter(item => item.status === "Scheduled").length;
-  const cancelledCount = cleanedData.filter(item => item.status === "Cancelled").length;
-  const plannedNVDCount = cleanedData.filter(item => item.status === "Planned NVD").length;
+  // Status counts for proper categories (normalized)
+  const doneCompletedCount = cleanedData.filter(item => item._status === 'completed').length;
+  const pendingCount = cleanedData.filter(item => item._status === 'pending').length;
+  const scheduledCount = cleanedData.filter(item => item._status === 'scheduled').length;
+  const cancelledCount = cleanedData.filter(item => item._status === 'cancelled').length;
+  const plannedNVDCount = cleanedData.filter(item => item._status === 'plannednvd').length;
   
   // Loss Tree Analysis Data - match SIA dashboard format with grouped statuses
   const lossTreeData = [
