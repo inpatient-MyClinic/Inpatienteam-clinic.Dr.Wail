@@ -112,7 +112,7 @@ export default function AdminMainContent({
         <div>
           <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
           <AdminAnalytics 
-            data={adminData}
+            data={filteredData}
             selectedDates={selectedDates}
             selectedWeeks={selectedWeeks}
             selectedMonths={selectedMonths}

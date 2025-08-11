@@ -25,11 +25,39 @@ interface AdminAnalyticsProps {
 export default function AdminAnalytics({ data, selectedDates, selectedWeeks, selectedMonths }: AdminAnalyticsProps) {
   console.log("AdminAnalytics rendering with data:", data.length, "items");
   
-  // Apply month filter first - filter by selected months
+  // Apply month filter first - filter by selected months using robust date parsing
+  const toDate = (value: any): Date | null => {
+    if (value === undefined || value === null || value === '') return null;
+    let d: Date | null = null;
+    if (typeof value === 'number') {
+      d = value > 25000 ? new Date((value - 25569) * 86400 * 1000) : new Date(value);
+    } else if (typeof value === 'string') {
+      const t = value.trim();
+      const n = Number(t);
+      if (!isNaN(n) && n > 25000) d = new Date((n - 25569) * 86400 * 1000);
+      else d = new Date(t);
+    } else if (value instanceof Date) {
+      d = value;
+    } else {
+      try { d = new Date(value as any); } catch { d = null; }
+    }
+    return d && !isNaN(d.getTime()) ? d : null;
+  };
+
+  const getItemDate = (item: any): Date | null => {
+    const candidates = [item.date, item.requestDate, item.created_at, item.createdAt, item.dateCreated, item['Date'], item['Request Date']];
+    for (const c of candidates) {
+      const d = toDate(c);
+      if (d) return d;
+    }
+    return null;
+  };
+
   const monthFilteredData = selectedMonths.length > 0 ? 
     data.filter(item => {
-      const itemDate = new Date(item.date || item.requestDate || item.created_at);
-      const itemMonth = itemDate.toLocaleString('default', { month: 'long' });
+      const d = getItemDate(item);
+      if (!d) return false;
+      const itemMonth = d.toLocaleString('default', { month: 'long' });
       return selectedMonths.includes(itemMonth);
     }) : data;
   
