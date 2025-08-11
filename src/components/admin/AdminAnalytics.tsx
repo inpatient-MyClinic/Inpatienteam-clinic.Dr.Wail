@@ -50,17 +50,66 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
       const d = toDate(c);
       if (d) return d;
     }
+
+    // Fallback: derive date from Month/Months fields (supports full/short names or 1-12)
+    const monthField = item['Month'] ?? item['Months'] ?? item.month ?? item.MONTH ?? item.Months;
+    if (monthField !== undefined && monthField !== null && monthField !== '') {
+      const m = String(monthField).trim().toLowerCase();
+      const map: Record<string, number> = {
+        jan: 0, january: 0, '1': 0, '01': 0,
+        feb: 1, february: 1, '2': 1, '02': 1,
+        mar: 2, march: 2, '3': 2, '03': 2,
+        apr: 3, april: 3, '4': 3, '04': 3,
+        may: 4, '5': 4, '05': 4,
+        jun: 5, june: 5, '6': 5, '06': 5,
+        jul: 6, july: 6, '7': 6, '07': 6,
+        aug: 7, august: 7, '8': 7, '08': 7,
+        sep: 8, sept: 8, september: 8, '9': 8, '09': 8,
+        oct: 9, october: 9, '10': 9,
+        nov: 10, november: 10, '11': 10,
+        dec: 11, december: 11, '12': 11,
+      };
+      const mi = map[m];
+      if (mi !== undefined) {
+        return new Date(2000, mi, 1); // Year/day arbitrary; month filtering only needs month index
+      }
+    }
+
     return null;
   };
-
   // Apply month filter (locale-agnostic) using fixed month map and case-insensitive compare
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const monthFilteredData = selectedMonths.length > 0 ? 
+  const parseMonthToIndex = (m: any): number | null => {
+    if (m === undefined || m === null || m === '') return null;
+    const s = String(m).trim().toLowerCase();
+    const map: Record<string, number> = {
+      jan: 0, january: 0, '1': 0, '01': 0,
+      feb: 1, february: 1, '2': 1, '02': 1,
+      mar: 2, march: 2, '3': 2, '03': 2,
+      apr: 3, april: 3, '4': 3, '04': 3,
+      may: 4, '5': 4, '05': 4,
+      jun: 5, june: 5, '6': 5, '06': 5,
+      jul: 6, july: 6, '7': 6, '07': 6,
+      aug: 7, august: 7, '8': 7, '08': 7,
+      sep: 8, sept: 8, september: 8, '9': 8, '09': 8,
+      oct: 9, october: 9, '10': 9,
+      nov: 10, november: 10, '11': 10,
+      dec: 11, december: 11, '12': 11,
+    };
+    return map[s] ?? null;
+  };
+
+  const selectedMonthIdx = new Set(
+    (selectedMonths || [])
+      .map(parseMonthToIndex)
+      .filter((v): v is number => v !== null)
+  );
+
+  const monthFilteredData = selectedMonthIdx.size > 0 ? 
     data.filter(item => {
       const d = getItemDate(item);
       if (!d) return false;
-      const itemMonth = monthNames[d.getMonth()].toLowerCase();
-      return selectedMonths.some(m => (m || '').toLowerCase() === itemMonth);
+      return selectedMonthIdx.has(d.getMonth());
     }) : data;
 
   // Normalize statuses for reliable counting
