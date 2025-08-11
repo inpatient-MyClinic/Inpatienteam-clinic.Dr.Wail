@@ -69,26 +69,24 @@ export function filterAdminData(
     }
 
     // Fallback: month-only fields (e.g., 'Month' column from uploads)
-    const monthRaw = item?.month ?? item?.Month ?? item?.['Month'];
+    const monthRaw = item?.month ?? item?.Month ?? item?.Months ?? item?.MONTH ?? item?.MONTHS ?? item?.['Month'] ?? item?.['Months'];
     if (monthRaw !== undefined && monthRaw !== null && monthRaw !== '') {
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      let idx: number | null = null;
-      if (typeof monthRaw === 'number') {
-        const n = Math.floor(monthRaw);
-        if (n >= 1 && n <= 12) idx = n - 1;
-      } else {
-        const s = String(monthRaw).trim().toLowerCase();
-        const num = parseInt(s, 10);
-        if (!isNaN(num) && num >= 1 && num <= 12) idx = num - 1;
-        if (idx === null) {
-          const iFull = monthNames.findIndex(m => m.toLowerCase() === s);
-          if (iFull !== -1) idx = iFull;
-        }
-        if (idx === null && s.length >= 3) {
-          const iAbbr = monthNames.findIndex(m => m.toLowerCase().startsWith(s.slice(0,3)));
-          if (iAbbr !== -1) idx = iAbbr;
-        }
-      }
+      const s = String(monthRaw).trim().toLowerCase();
+      const map: Record<string, number> = {
+        jan: 0, january: 0, '1': 0, '01': 0,
+        feb: 1, february: 1, '2': 1, '02': 1,
+        mar: 2, march: 2, '3': 2, '03': 2,
+        apr: 3, april: 3, '4': 3, '04': 3,
+        may: 4, '5': 4, '05': 4,
+        jun: 5, june: 5, '6': 5, '06': 5,
+        jul: 6, july: 6, '7': 6, '07': 6,
+        aug: 7, august: 7, '8': 7, '08': 7,
+        sep: 8, sept: 8, september: 8, '9': 8, '09': 8,
+        oct: 9, october: 9, '10': 9,
+        nov: 10, november: 10, '11': 10,
+        dec: 11, december: 11, '12': 11,
+      };
+      const idx = map[s] ?? null;
       if (idx !== null) {
         const y = new Date().getFullYear();
         return new Date(y, idx, 1);
@@ -113,15 +111,32 @@ export function filterAdminData(
     // Date precedence: Month > Week > Specific Dates (locale-agnostic month match)
     let matchesDateFilter = true;
     if (selectedMonths.length > 0) {
-      matchesDateFilter = (
-        itemDate !== null && (() => {
-          const monthIndex = itemDate.getMonth();
-          const monthName = [
-            'January','February','March','April','May','June','July','August','September','October','November','December'
-          ][monthIndex].toLowerCase();
-          return selectedMonths.some(m => (m || '').toLowerCase() === monthName);
-        })()
-      );
+      if (itemDate !== null) {
+        const monthIndex = itemDate.getMonth();
+        const parseIdx = (m: any): number | null => {
+          if (m === undefined || m === null || m === '') return null;
+          const s = String(m).trim().toLowerCase();
+          const map: Record<string, number> = {
+            jan: 0, january: 0, '1': 0, '01': 0,
+            feb: 1, february: 1, '2': 1, '02': 1,
+            mar: 2, march: 2, '3': 2, '03': 2,
+            apr: 3, april: 3, '4': 3, '04': 3,
+            may: 4, '5': 4, '05': 4,
+            jun: 5, june: 5, '6': 5, '06': 5,
+            jul: 6, july: 6, '7': 6, '07': 6,
+            aug: 7, august: 7, '8': 7, '08': 7,
+            sep: 8, sept: 8, september: 8, '9': 8, '09': 8,
+            oct: 9, october: 9, '10': 9,
+            nov: 10, november: 10, '11': 10,
+            dec: 11, december: 11, '12': 11,
+          };
+          return map[s] ?? null;
+        };
+        const idxSet = new Set(selectedMonths.map(parseIdx).filter((v): v is number => v !== null));
+        matchesDateFilter = idxSet.has(monthIndex);
+      } else {
+        matchesDateFilter = false;
+      }
     } else if (selectedWeeks.length > 0) {
       matchesDateFilter = (
         itemDate !== null && selectedWeeks.includes(getWeekOfMonthLabel(itemDate))
