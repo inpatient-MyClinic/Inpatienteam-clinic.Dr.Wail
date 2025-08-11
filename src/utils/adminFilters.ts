@@ -83,21 +83,25 @@ export function filterAdminData(
 
     const itemDate = getItemDate(item);
 
-    const matchesDate = selectedDates.length === 0 || (
-      itemDate !== null && selectedDates.some(date => itemDate.toDateString() === date.toDateString())
-    );
+    // Date precedence: Month > Week > Specific Dates
+    let matchesDateFilter = true;
+    if (selectedMonths.length > 0) {
+      matchesDateFilter = (
+        itemDate !== null && selectedMonths.includes(
+          itemDate.toLocaleString('default', { month: 'long' })
+        )
+      );
+    } else if (selectedWeeks.length > 0) {
+      matchesDateFilter = (
+        itemDate !== null && selectedWeeks.includes(getWeekOfMonthLabel(itemDate))
+      );
+    } else if (selectedDates.length > 0) {
+      matchesDateFilter = (
+        itemDate !== null && selectedDates.some(date => itemDate.toDateString() === date.toDateString())
+      );
+    }
 
-    const matchesWeek = selectedWeeks.length === 0 || (
-      itemDate !== null && selectedWeeks.includes(getWeekOfMonthLabel(itemDate))
-    );
-
-    const matchesMonth = selectedMonths.length === 0 || (
-      itemDate !== null && selectedMonths.includes(
-        itemDate.toLocaleString('default', { month: 'long' })
-      )
-    );
-
-    return matchesStatus && matchesDate && matchesWeek && matchesMonth;
+    return matchesStatus && matchesDateFilter;
   });
 }
 
