@@ -83,13 +83,17 @@ export function filterAdminData(
 
     const itemDate = getItemDate(item);
 
-    // Date precedence: Month > Week > Specific Dates
+    // Date precedence: Month > Week > Specific Dates (locale-agnostic month match)
     let matchesDateFilter = true;
     if (selectedMonths.length > 0) {
       matchesDateFilter = (
-        itemDate !== null && selectedMonths.includes(
-          itemDate.toLocaleString('default', { month: 'long' })
-        )
+        itemDate !== null && (() => {
+          const monthIndex = itemDate.getMonth();
+          const monthName = [
+            'January','February','March','April','May','June','July','August','September','October','November','December'
+          ][monthIndex].toLowerCase();
+          return selectedMonths.some(m => (m || '').toLowerCase() === monthName);
+        })()
       );
     } else if (selectedWeeks.length > 0) {
       matchesDateFilter = (
