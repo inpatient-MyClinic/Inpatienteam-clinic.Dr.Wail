@@ -67,9 +67,36 @@ export function filterAdminData(
       const d = toDate(c);
       if (d) return d;
     }
+
+    // Fallback: month-only fields (e.g., 'Month' column from uploads)
+    const monthRaw = item?.month ?? item?.Month ?? item?.['Month'];
+    if (monthRaw !== undefined && monthRaw !== null && monthRaw !== '') {
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      let idx: number | null = null;
+      if (typeof monthRaw === 'number') {
+        const n = Math.floor(monthRaw);
+        if (n >= 1 && n <= 12) idx = n - 1;
+      } else {
+        const s = String(monthRaw).trim().toLowerCase();
+        const num = parseInt(s, 10);
+        if (!isNaN(num) && num >= 1 && num <= 12) idx = num - 1;
+        if (idx === null) {
+          const iFull = monthNames.findIndex(m => m.toLowerCase() === s);
+          if (iFull !== -1) idx = iFull;
+        }
+        if (idx === null && s.length >= 3) {
+          const iAbbr = monthNames.findIndex(m => m.toLowerCase().startsWith(s.slice(0,3)));
+          if (iAbbr !== -1) idx = iAbbr;
+        }
+      }
+      if (idx !== null) {
+        const y = new Date().getFullYear();
+        return new Date(y, idx, 1);
+      }
+    }
+
     return null;
   };
-
   // Helper: get week-of-month label like "Week 1".."Week 5"
   const getWeekOfMonthLabel = (d: Date): string => {
     const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);

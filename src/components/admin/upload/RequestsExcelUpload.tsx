@@ -10,8 +10,9 @@ import ClearAllDataButton from "@/components/admin/ClearAllDataButton";
 
 interface ColumnMapping {
   excelColumn: string;
-  requestField: keyof RequestFormData;
+  requestField: string;
   required: boolean;
+  label?: string;
 }
 
 const defaultColumnMappings: ColumnMapping[] = [
@@ -51,6 +52,7 @@ const defaultColumnMappings: ColumnMapping[] = [
   { excelColumn: "Start time", requestField: "startTime", required: false },
   { excelColumn: "Completion time", requestField: "completionTime", required: false },
   { excelColumn: "Date of Request:", requestField: "dateCreated", required: false },
+  { excelColumn: "Month", requestField: "month", required: false, label: "Month" },
   { excelColumn: "Date of File Opening", requestField: "fileOpeningDate", required: false },
   { excelColumn: "Date of Order Submission by Doctor", requestField: "orderSubmissionDate", required: false },
   { excelColumn: "Agreed - Booked - OR date(mm/dd/yyyy)", requestField: "agreedBookingDate", required: false },
@@ -71,7 +73,7 @@ interface UploadResult {
   success: number;
   errors: number;
   details: string[];
-  processedData: RequestFormData[];
+  processedData: any[];
 }
 
 export default function RequestsExcelUpload() {
@@ -92,11 +94,11 @@ export default function RequestsExcelUpload() {
         "Name": "Ahmed Hassan",
         "Last modified time": "2024-01-15 18:00",
         "Date of Request:": "2024-01-15",
+        "Month": "January",
         "My Clinic Branch": "Main Branch",
         "Patient's MRN:": "P001",
         "Patient's Name:": "Ahmed Hassan",
         "Patient's National ID:": "1234567890",
-        "Patient's Mobile No.:": "0554447777",
         "Specialty": "cardiology",
         "Type of Admission": "Emergency",
         "Referred Hospital": "DSAH",
@@ -203,6 +205,22 @@ export default function RequestsExcelUpload() {
       processedData: []
     };
 
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const parseMonth = (v: any): number | null => {
+      if (v === undefined || v === null) return null;
+      if (typeof v === 'number') {
+        const n = Math.floor(v);
+        if (n >= 1 && n <= 12) return n - 1;
+      }
+      const s = String(v).trim().toLowerCase();
+      const num = parseInt(s, 10);
+      if (!isNaN(num) && num >= 1 && num <= 12) return num - 1;
+      const idxFull = monthNames.findIndex(m => m.toLowerCase() === s);
+      if (idxFull !== -1) return idxFull;
+      const idxAbbr = monthNames.findIndex(m => m.toLowerCase().startsWith(s.slice(0,3)));
+      return idxAbbr !== -1 ? idxAbbr : null;
+    };
+
     excelData.forEach((row, index) => {
       try {
         const requestData: Partial<RequestFormData> = {};
@@ -213,6 +231,17 @@ export default function RequestsExcelUpload() {
             (requestData as any)[mapping.requestField] = row[mapping.excelColumn];
           }
         });
+
+        // If a Month is provided and dateCreated is missing, derive first day of that month (current year)
+        const monthRaw = (requestData as any).month ?? row['Month'];
+        if (!requestData.dateCreated && monthRaw !== undefined && monthRaw !== '') {
+          const mi = parseMonth(monthRaw);
+          if (mi !== null) {
+            const year = new Date().getFullYear();
+            const d = new Date(year, mi, 1);
+            requestData.dateCreated = d.toISOString().split('T')[0];
+          }
+        }
 
         // Set default values for missing required fields
         if (!requestData.dateCreated) {
@@ -371,7 +400,7 @@ export default function RequestsExcelUpload() {
               {mappings.map((mapping, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <label className="text-sm font-medium min-w-0 flex-1">
-                    {mapping.requestField}
+                    {mapping.label || mapping.requestField}
                     {mapping.required && <span className="text-red-500 ml-1">*</span>}
                   </label>
                   <select
