@@ -31,6 +31,7 @@ interface PaginatedAdminTableProps {
   data: AdminTask[];
   currentUserRole?: string;
   onStatusFilter?: (status: string | null) => void;
+  totalForPeriod?: number; // total count for selected month/week/date, ignoring status
 }
 
 interface PaginationSettings {

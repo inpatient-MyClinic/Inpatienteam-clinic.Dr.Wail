@@ -18,6 +18,27 @@ export function filterAdminData(
       const n = Number(trimmed);
       if (!isNaN(n) && n > 25000) {
         d = new Date((n - 25569) * 86400 * 1000);
+      } else if (trimmed.length === 10 && trimmed[4] === '-' && trimmed[7] === '-') {
+        const [y, m, day] = trimmed.split('-').map(Number);
+        d = new Date(y, (m || 1) - 1, day || 1); // Parse as local date to avoid TZ shifts
+      } else if (/[\/.\-]/.test(trimmed)) {
+        const parts = trimmed.split(/[\/.\-]/).map(p => p.trim());
+        let y: number, m: number, day: number;
+        const [a, b, c] = parts.map(p => Number(p));
+        if (a > 31) {
+          // Assume YYYY-MM-DD or YYYY/MM/DD
+          y = a; m = b; day = c;
+        } else if (a > 12) {
+          // DD/MM/YYYY
+          day = a; m = b; y = c;
+        } else if (b > 12) {
+          // MM/DD/YYYY
+          m = a; day = b; y = c;
+        } else {
+          // Default to DD/MM/YYYY for ambiguous cases
+          day = a; m = b; y = c;
+        }
+        d = new Date(y, (m || 1) - 1, day || 1);
       } else {
         d = new Date(trimmed);
       }
