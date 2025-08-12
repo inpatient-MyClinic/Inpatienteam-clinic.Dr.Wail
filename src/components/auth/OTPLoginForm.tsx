@@ -153,9 +153,6 @@ const OTPLoginForm: React.FC<OTPLoginFormProps> = ({ email, onSuccess, onBack })
         <CardDescription>
           We sent a 4-digit code to {email}
         </CardDescription>
-        <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-          <strong>Note:</strong> If you don't receive the email, check the browser console logs for the OTP code (for testing)
-        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmitOTP} className="space-y-4">

@@ -67,14 +67,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if Resend API key exists
     if (!resendApiKey) {
       console.error('RESEND_API_KEY not found in environment');
-      // For now, return success but log the OTP
-      console.log('=== OTP CODE (NO EMAIL SERVICE) ===', otpCode);
+      // Do NOT expose OTP in responses under any circumstance
+      console.log('Email service not configured; OTP generated but not disclosed');
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'OTP generated successfully',
-          debug_note: 'Email service not configured - check logs for OTP',
-          otp_for_testing: otpCode  // Remove in production
+          message: 'OTP generated successfully'
         }),
         {
           status: 200,
@@ -105,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
                 ${otpCode}
               </div>
               <p style="color: #6b7280; margin-top: 20px;">
-                This code will expire in 5 minutes. Please do not share this code with anyone.
+                This code will expire in 2 minutes. Please do not share this code with anyone.
               </p>
             </div>
             
@@ -135,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'OTP generated - check console for testing code'
+          message: 'OTP generated'
         }),
         {
           status: 200,
@@ -164,18 +162,6 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error in send-otp-email function:', error);
     
-    // Try to get the OTP anyway for debugging
-    let debugOTP = 'unknown';
-    try {
-      const { data: testOTP } = await supabase
-        .rpc('generate_otp', { user_email: email.trim().toLowerCase() });
-      if (testOTP) {
-        debugOTP = testOTP;
-        console.log('=== DEBUG OTP FOR TESTING ===', debugOTP);
-      }
-    } catch (debugError) {
-      console.error('Could not generate debug OTP:', debugError);
-    }
     
     return new Response(
       JSON.stringify({ 

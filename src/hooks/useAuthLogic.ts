@@ -159,29 +159,10 @@ export const useAuthLogic = () => {
       console.log('Profiles Found:', profiles);
       console.log('Profile Error:', profileError);
       
-      // If no profile found, create a test one for now
+      // Ensure the user exists without creating profiles client-side
       if (profileError || !profiles || profiles.length === 0) {
-        console.log('=== CREATING TEST PROFILE ===');
-        const testUserId = crypto.randomUUID();
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: testUserId,
-            email: normalizedEmail,
-            full_name: normalizedEmail.split('@')[0],
-            role: normalizedEmail.includes('admin') ? 'admin' as any : 'doctor' as any,
-            status: 'active' as any
-          })
-          .select()
-          .single();
-          
-        console.log('Test profile created:', newProfile, 'Error:', createError);
-        
-        if (createError) {
-          console.error('Create error details:', createError);
-          toast.error('Failed to create test user. Please contact administrator.');
-          return;
-        }
+        toast.error('User not found or not approved. Please contact administrator.');
+        return;
       }
 
       console.log('Calling send-otp-email function...');
@@ -202,14 +183,6 @@ export const useAuthLogic = () => {
       // Show success message
       toast.success('Verification code sent! Check your email.');
       
-      // Always show debug OTP for testing
-      if (data) {
-        const debugOTP = data.otp || data.otp_for_testing || data.debug_otp_for_testing || 'Check console logs';
-        console.log('=== DEBUG OTP CODE (CONSOLE ONLY) ===');
-        console.log('🔑 YOUR OTP CODE IS:', debugOTP);
-        console.log('=======================================');
-        toast.success(`OTP sent! Debug code: ${debugOTP}`, { duration: 15000 });
-      }
       
       console.log('✅ OTP LOGIN SETUP COMPLETED - showOTPLogin should be true');
       

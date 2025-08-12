@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { isAdmin, getCurrentUserEmail } from '@/utils/auth';
+import { getCurrentUserEmail } from '@/utils/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,11 +20,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/" replace />;
   }
 
-  // CRITICAL FIX: Force admin redirection for admin emails
-  if (currentUserEmail && isAdmin(currentUserEmail) && currentUserRole !== 'admin') {
-    console.log("ProtectedRoute: Admin email detected but wrong role, redirecting to admin");
-    return <Navigate to="/admin" replace />;
-  }
 
   if (!allowedRoles.includes(currentUserRole)) {
     // Redirect to user's appropriate dashboard based on their role
