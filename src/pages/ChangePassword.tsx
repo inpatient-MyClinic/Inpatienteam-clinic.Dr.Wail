@@ -41,7 +41,49 @@ export default function ChangePassword() {
 
     setIsLoading(true);
     try {
-      // Update password in Supabase
+      // First check if we have a session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // If no session, try to sign in first using localStorage email and generate a reset
+        const currentUserEmail = Object.keys(localStorage)
+          .find(key => key.startsWith('user_'))
+          ?.replace('user_', '');
+        
+        if (!currentUserEmail) {
+          toast({
+            title: "Error",
+            description: "Please log in again to change your password",
+            variant: "destructive",
+          });
+          navigate('/');
+          return;
+        }
+
+        // Send reset password email instead
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(currentUserEmail, {
+          redirectTo: `${window.location.origin}/change-password`
+        });
+
+        if (resetError) {
+          console.error('Reset password error:', resetError);
+          toast({
+            title: "Error", 
+            description: "Failed to send password reset email. Please try logging in again.",
+            variant: "destructive",
+          });
+          navigate('/');
+          return;
+        }
+
+        toast({
+          title: "Password Reset Email Sent",
+          description: "Please check your email for password reset instructions.",
+        });
+        return;
+      }
+
+      // Update password if we have a valid session
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
