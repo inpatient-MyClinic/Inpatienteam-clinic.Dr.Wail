@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { getCurrentUserRole, getCurrentUserEmail } from "@/utils/auth";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -78,36 +79,38 @@ const HomePage = () => {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/doctor-dashboard" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
-                <Route path="/nurse-dashboard" element={<ProtectedRoute allowedRoles={['nurse']}><NurseDashboard /></ProtectedRoute>} />
-                <Route path="/hospital-dashboard" element={<ProtectedRoute allowedRoles={['hospital']}><HospitalDashboard /></ProtectedRoute>} />
-                <Route path="/case-coordinator-dashboard" element={<ProtectedRoute allowedRoles={['case-coordinator']}><CaseCoordinatorDashboard /></ProtectedRoute>} />
-                <Route path="/finance-dashboard" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
-                <Route path="/customer-care-dashboard" element={<ProtectedRoute allowedRoles={['customer-care']}><CustomerCareDashboard /></ProtectedRoute>} />
-                <Route path="/create-request" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
-                <Route path="/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SettingsDirectory /></ProtectedRoute>} />
-                <Route path="/notifications" element={<ProtectedRoute><NotificationsLogs /></ProtectedRoute>} />
-                <Route path="/privileges" element={<ProtectedRoute allowedRoles={['admin', 'nurse']}><PrivilegeManagement /></ProtectedRoute>} />
-                <Route path="/wireframe" element={<ProtectedRoute><RequestWireframe /></ProtectedRoute>} />
-                <Route path="/role-selection" element={<ProtectedRoute><RoleSelection /></ProtectedRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </ErrorBoundary>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+                  <Route path="/doctor-dashboard" element={<ProtectedRoute allowedRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
+                  <Route path="/nurse-dashboard" element={<ProtectedRoute allowedRoles={['nurse']}><NurseDashboard /></ProtectedRoute>} />
+                  <Route path="/hospital-dashboard" element={<ProtectedRoute allowedRoles={['hospital']}><HospitalDashboard /></ProtectedRoute>} />
+                  <Route path="/case-coordinator-dashboard" element={<ProtectedRoute allowedRoles={['case-coordinator']}><CaseCoordinatorDashboard /></ProtectedRoute>} />
+                  <Route path="/finance-dashboard" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
+                  <Route path="/customer-care-dashboard" element={<ProtectedRoute allowedRoles={['customer-care']}><CustomerCareDashboard /></ProtectedRoute>} />
+                  <Route path="/create-request" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
+                  <Route path="/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SettingsDirectory /></ProtectedRoute>} />
+                  <Route path="/notifications" element={<ProtectedRoute><NotificationsLogs /></ProtectedRoute>} />
+                  <Route path="/privileges" element={<ProtectedRoute allowedRoles={['admin', 'nurse']}><PrivilegeManagement /></ProtectedRoute>} />
+                  <Route path="/wireframe" element={<ProtectedRoute><RequestWireframe /></ProtectedRoute>} />
+                  <Route path="/role-selection" element={<ProtectedRoute><RoleSelection /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </ErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
