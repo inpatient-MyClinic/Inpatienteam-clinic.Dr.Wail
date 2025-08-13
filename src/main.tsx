@@ -5,12 +5,20 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { SystemInitializationService } from './services/systemInitializationService'
 
 // Initialize system services safely
-SystemInitializationService.initialize();
+try {
+  SystemInitializationService.initialize();
+} catch (error) {
+  console.error('System initialization failed:', error);
+}
 
 // Ensure cleanup on hot module replacement
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    SystemInitializationService.cleanup();
+    try {
+      SystemInitializationService.cleanup();
+    } catch (error) {
+      console.error('System cleanup failed:', error);
+    }
   });
 }
 
