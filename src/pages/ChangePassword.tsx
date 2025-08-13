@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/Logo';
 
 export default function ChangePassword() {
-  const [currentPassword, setCurrentPassword] = useState('');
+  
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -145,17 +145,6 @@ export default function ChangePassword() {
           </Alert>
 
           <form onSubmit={handlePasswordChange} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                placeholder="Enter your current password"
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
