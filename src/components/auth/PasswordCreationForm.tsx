@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface PasswordCreationFormProps {
   email: string;
@@ -52,9 +53,8 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
 
       <div className="space-y-2">
         <Label htmlFor="newPassword">{isAdminEmail ? 'Create Admin Password' : 'Create Password'}</Label>
-        <Input
+        <PasswordInput
           id="newPassword"
-          type="password"
           placeholder="Create a strong password (min 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -65,9 +65,8 @@ const PasswordCreationForm: React.FC<PasswordCreationFormProps> = ({
 
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
