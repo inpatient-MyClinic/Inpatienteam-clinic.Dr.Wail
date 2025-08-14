@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -390,7 +390,7 @@ export type Database = {
         Returns: undefined
       }
       check_password_similarity: {
-        Args: { user_id_param: string; new_password_hash: string }
+        Args: { new_password_hash: string; user_id_param: string }
         Returns: boolean
       }
       cleanup_old_passwords: {
@@ -408,9 +408,9 @@ export type Database = {
       get_users_by_role: {
         Args: { target_role?: Database["public"]["Enums"]["user_role"] }
         Returns: {
-          id: string
-          full_name: string
           email: string
+          full_name: string
+          id: string
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
@@ -437,14 +437,14 @@ export type Database = {
       search_users: {
         Args: { search_term: string }
         Returns: {
-          id: string
-          full_name: string
           email: string
+          full_name: string
+          id: string
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
       verify_otp: {
-        Args: { user_email: string; submitted_code: string }
+        Args: { submitted_code: string; user_email: string }
         Returns: boolean
       }
     }
