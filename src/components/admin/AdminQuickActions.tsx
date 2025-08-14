@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, FileText, Settings, BarChart3, Calculator, Mail } from "lucide-react";
+import { Plus, Users, FileText, Settings, BarChart3, Calculator, Mail, Activity } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import AdminRequestsUpload from "./AdminRequestsUpload";
 import DataBackupManager from "./DataBackupManager";
 import TaskCreationDialog from "./TaskCreationDialog";
@@ -80,6 +81,32 @@ export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAn
     }
   };
 
+  const handleHealthCheck = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('health-check');
+      
+      if (error) {
+        toast({
+          title: "Health Check Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Health Check Successful",
+        description: `Site URL: ${data.siteUrl}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Health Check Error",
+        description: error.message || "Failed to perform health check",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Card className="mb-6">
@@ -120,6 +147,11 @@ export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAn
             <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => setShowEmailTestDialog(true)}>
               <Mail className="w-5 h-5" />
               <span className="text-xs">Send Test Email</span>
+            </Button>
+            
+            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleHealthCheck}>
+              <Activity className="w-5 h-5" />
+              <span className="text-xs">Health</span>
             </Button>
           </div>
         </CardContent>

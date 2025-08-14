@@ -16,21 +16,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Check for environment variables (return booleans only, no secrets)
-    const diagnostics = {
-      smtpHost: !!Deno.env.get('SMTP_HOST'),
-      smtpPort: !!Deno.env.get('SMTP_PORT'),
-      smtpUser: !!Deno.env.get('SMTP_USER'),
-      smtpPass: !!Deno.env.get('SMTP_PASS'),
-      smtpSecure: !!Deno.env.get('SMTP_SECURE'),
-      emailFrom: !!Deno.env.get('EMAIL_FROM'),
-      emailReplyTo: !!Deno.env.get('EMAIL_REPLY_TO'),
-      resendApiKey: !!Deno.env.get('RESEND_API_KEY')
-    };
+    const siteUrl = Deno.env.get('PUBLIC_SITE_URL') || 'https://www.inpatienteam.com';
+    
+    console.log('[Health Check] Site URL check:', siteUrl);
 
-    console.log('[Email Debug] Diagnostics check:', diagnostics);
-
-    return new Response(JSON.stringify(diagnostics), {
+    return new Response(JSON.stringify({ 
+      siteUrl,
+      status: 'healthy',
+      timestamp: new Date().toISOString()
+    }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error('[Email Debug] Error:', error);
+    console.error('[Health Check] Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
