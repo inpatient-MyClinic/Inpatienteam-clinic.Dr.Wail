@@ -358,22 +358,22 @@ export const useAuthLogic = () => {
           navigate('/admin');
           break;
         case 'doctor':
-          navigate('/dashboard');
+          navigate('/doctor-dashboard');
           break;
         case 'nurse':
-          navigate('/nurse');
+          navigate('/nurse-dashboard');
           break;
         case 'hospital':
-          navigate('/hospital');
+          navigate('/hospital-dashboard');
           break;
         case 'case-coordinator':
-          navigate('/case-coordinator');
+          navigate('/case-coordinator-dashboard');
           break;
         case 'finance':
-          navigate('/finance');
+          navigate('/finance-dashboard');
           break;
         case 'customer-care':
-          navigate('/customer-care');
+          navigate('/customer-care-dashboard');
           break;
         default:
           navigate('/dashboard');
