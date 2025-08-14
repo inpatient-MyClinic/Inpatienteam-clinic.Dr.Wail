@@ -85,9 +85,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     try {
-      // Send OTP email using Resend (using verified domain)
+      // Send OTP email using Resend
       const emailResponse = await resend.emails.send({
-        from: "MyClinic <onboarding@resend.dev>",
+        from: "MyClinic Support <noreply@resend.dev>",
         to: [normalizedEmail],
         subject: "Your Login Verification Code",
         html: `
@@ -125,15 +125,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
+      console.error('Full email error details:', JSON.stringify(emailError));
       
       // For development/testing - log OTP when email fails but don't show it visibly
-      console.log('=== OTP CODE (EMAIL FAILED) ===', otpCode);
+      console.log('=== OTP CODE (EMAIL FAILED) ===');
+      console.log('CODE:', otpCode);
+      console.log('EMAIL:', normalizedEmail);
+      console.log('===========================');
       
-      // Still return success so user can see OTP input form
+      // Return success but with warning message for now
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'OTP generated'
+          warning: true,
+          message: 'OTP generated. Email delivery failed - check console logs for code during development.',
+          debugMessage: 'Email sending failed, but OTP was generated successfully.'
         }),
         {
           status: 200,
