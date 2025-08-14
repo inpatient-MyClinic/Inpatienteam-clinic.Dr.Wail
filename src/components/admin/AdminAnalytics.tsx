@@ -13,6 +13,7 @@ import AdminCoordinatorPerformanceTable from "./analytics/AdminCoordinatorPerfor
 import AdminRejectionAnalytics from "./analytics/AdminRejectionAnalytics";
 import AdminCoordinatorLeadTime from "./analytics/AdminCoordinatorLeadTime";
 import FilterableTable from "./analytics/FilterableTable";
+import AnalyticsValidationPanel from "./analytics/AnalyticsValidationPanel";
 import { Badge } from "@/components/ui/badge";
 
 interface AdminAnalyticsProps {
@@ -356,9 +357,10 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
   return (
     <div className="space-y-6 mb-6">
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="analytics">Standard Analytics</TabsTrigger>
           <TabsTrigger value="finance">Finance Analytics Table</TabsTrigger>
+          <TabsTrigger value="validation">Accuracy Validation</TabsTrigger>
         </TabsList>
         
         <TabsContent value="analytics" className="space-y-6">
@@ -454,6 +456,23 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
               // Save finance data to localStorage for SIA integration
               localStorage.setItem('siaFinanceData', JSON.stringify(data));
             }}
+          />
+        </TabsContent>
+        
+        <TabsContent value="validation" className="space-y-6">
+          <AnalyticsValidationPanel
+            allData={cleanedData}
+            filteredData={filteredData}
+            selectedMonths={selectedMonths}
+            statusCounts={{
+              total: totalRequests,
+              completed: doneCompletedCount,
+              pending: pendingCount,
+              scheduled: scheduledCount,
+              cancelled: cancelledCount,
+              planned_nvd: plannedNVDCount
+            }}
+            useCompletedDate={false}
           />
         </TabsContent>
       </Tabs>
