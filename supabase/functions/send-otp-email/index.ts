@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { Resend } from "npm:resend@2.0.0";
+import { sendEmail } from "../_shared/email-smtp.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,10 +9,8 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-const resend = new Resend(resendApiKey);
 
 interface SendOTPRequest {
   email: string;
@@ -64,32 +62,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Generated OTP code for user:', normalizedEmail);
 
-    // Check if Resend API key exists
-    if (!resendApiKey) {
-      console.error('RESEND_API_KEY not found in environment');
-      // Do NOT expose OTP in responses under any circumstance
-      console.log('Email service not configured; OTP generated but not disclosed');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'OTP generated successfully'
-        }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders,
-          },
-        }
-      );
-    }
-
+    // Send OTP email using SMTP
     try {
-      // Send OTP email using Resend
-      const emailResponse = await resend.emails.send({
-        from: "MyClinic Support <noreply@resend.dev>",
-        to: [normalizedEmail],
-        subject: "Your Login Verification Code",
+      const result = await sendEmail({
+        to: normalizedEmail,
+        subject: 'Your My Clinic Verification Code',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
@@ -114,18 +91,38 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           </div>
         `,
+        text: `My Clinic - Verification Code\n\nYour verification code is: ${otpCode}\n\nThis code will expire in 2 minutes. Please do not share this code with anyone.\n\nIf you did not request this code, please ignore this email and contact your administrator.`
       });
 
-      if (emailResponse.error) {
-        console.error('Resend API error:', emailResponse.error);
-        throw new Error('Email service error: ' + emailResponse.error.message);
+      if (!result.ok) {
+        console.error('Failed to send OTP email:', result.error);
+        
+        // For development/testing - log OTP when email fails but don't show it visibly
+        console.log('=== OTP CODE (EMAIL FAILED) ===');
+        console.log('CODE:', otpCode);
+        console.log('EMAIL:', normalizedEmail);
+        console.log('===========================');
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            warning: true,
+            message: 'OTP generated. Email delivery failed - check console logs for code during development.',
+            debugMessage: 'Email sending failed, but OTP was generated successfully.'
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders,
+            },
+          }
+        );
       }
 
-      console.log('OTP email sent successfully via Resend to:', normalizedEmail);
-
-    } catch (emailError) {
-      console.error('Email sending failed:', emailError);
-      console.error('Full email error details:', JSON.stringify(emailError));
+      console.log(`OTP email sent successfully via ${result.provider}:`, result.messageId);
+    } catch (emailError: any) {
+      console.error('Email sending error:', emailError.message);
       
       // For development/testing - log OTP when email fails but don't show it visibly
       console.log('=== OTP CODE (EMAIL FAILED) ===');
@@ -133,7 +130,6 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('EMAIL:', normalizedEmail);
       console.log('===========================');
       
-      // Return success but with warning message for now
       return new Response(
         JSON.stringify({ 
           success: true, 
