@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
 import AdminAnalyticsFilters from "./analytics/AdminAnalyticsFilters";
 import FinanceAnalyticsTable from "./analytics/FinanceAnalyticsTable";
+import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
 
 import AdminMetricsCards from "./analytics/AdminMetricsCards";
 import AdminTopCharts from "./analytics/AdminTopCharts";
@@ -24,6 +27,7 @@ interface AdminAnalyticsProps {
 }
 
 export default function AdminAnalytics({ data, selectedDates, selectedWeeks, selectedMonths }: AdminAnalyticsProps) {
+  const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   console.log("AdminAnalytics rendering with data:", data.length, "items");
   
   // Apply month filter first - filter by selected months using robust date parsing
@@ -341,6 +345,10 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
     }
   ];
 
+  if (showMonthlyAnalytics) {
+    return <MonthlyAnalyticsDashboard onClose={() => setShowMonthlyAnalytics(false)} />;
+  }
+
   if (!data || data.length === 0) {
     return (
       <div className="space-y-6 mb-6">
@@ -356,6 +364,14 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
 
   return (
     <div className="space-y-6 mb-6">
+      {/* Action Buttons */}
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setShowMonthlyAnalytics(true)} className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Monthly Analytics
+        </Button>
+      </div>
+
       <Tabs defaultValue="analytics" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="analytics">Standard Analytics</TabsTrigger>

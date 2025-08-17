@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar } from "lucide-react";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
 import { useSIAAnalytics } from "@/hooks/useSIAAnalytics";
 import { DataExcelMigrationService } from "@/services/dataExcelMigration";
 import SIAFiltersBar from "./SIAFiltersBar";
 import SIAConfigurationModal from "./SIAConfigurationModal";
 import SIALossTreeModal from "./SIALossTreeModal";
+import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SIADashboard() {
@@ -16,6 +17,7 @@ export default function SIADashboard() {
   const { metrics, loading, error, refetch } = useSIAAnalytics(filters);
   const [showConversionConfig, setShowConversionConfig] = useState(false);
   const [showLossTreeConfig, setShowLossTreeConfig] = useState(false);
+  const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<string>('');
   const { toast } = useToast();
 
@@ -61,6 +63,10 @@ export default function SIADashboard() {
       });
     }
   };
+
+  if (showMonthlyAnalytics) {
+    return <MonthlyAnalyticsDashboard onClose={() => setShowMonthlyAnalytics(false)} />;
+  }
 
   if (loading) {
     return (
@@ -109,6 +115,14 @@ export default function SIADashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Action Buttons */}
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setShowMonthlyAnalytics(true)} className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Monthly Analytics
+        </Button>
+      </div>
 
       {/* Filters */}
       <SIAFiltersBar 
