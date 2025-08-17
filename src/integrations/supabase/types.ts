@@ -511,6 +511,15 @@ export type Database = {
       }
     }
     Views: {
+      monthly_analytics_cache: {
+        Row: {
+          analytics_data: Json | null
+          last_updated: string | null
+          month: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
       requests_v: {
         Row: {
           branch_code: string | null
@@ -556,6 +565,51 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_monthly_branch_stats: {
+        Args: { target_month: number; target_year: number }
+        Returns: {
+          branch_code: string
+          conversion_rate: number
+          done_cases: number
+          pending_cases: number
+          total_cases: number
+        }[]
+      }
+      get_monthly_conversion_trends: {
+        Args: { target_year: number }
+        Returns: {
+          completed_cases: number
+          conversion_rate: number
+          month_name: string
+          month_num: number
+          revenue_amount: number
+          total_cases: number
+        }[]
+      }
+      get_monthly_dashboard_data: {
+        Args: { target_month: number; target_year: number }
+        Returns: Json
+      }
+      get_monthly_hospital_stats: {
+        Args: { target_month: number; target_year: number }
+        Returns: {
+          done_cases: number
+          hospital_code: string
+          hospital_name: string
+          pending_cases: number
+          specialty_breakdown: Json
+          total_cases: number
+        }[]
+      }
+      get_monthly_top_specialties: {
+        Args: { target_month: number; target_year: number }
+        Returns: {
+          case_count: number
+          done_count: number
+          specialty: string
+          success_rate: number
+        }[]
       }
       get_sia_setting: {
         Args: { setting_key: string; setting_scope?: string }
@@ -607,6 +661,10 @@ export type Database = {
           user_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: Json
+      }
+      refresh_monthly_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       search_users: {
         Args: { search_term: string }
