@@ -38,6 +38,7 @@ interface AdminDashboardLayoutProps {
   onToggleSIASlide: () => void;
   onShowGeneralReport: () => void;
   onShowChart: () => void;
+  onShowMonthlyAnalytics: () => void;
   onShowFinanceAnalytics: () => void;
   onToggleNewUserRequests: () => void;
   onCloseFinanceAnalytics: () => void;
@@ -74,6 +75,7 @@ export default function AdminDashboardLayout({
   onToggleSIASlide,
   onShowGeneralReport,
   onShowChart,
+  onShowMonthlyAnalytics,
   onShowFinanceAnalytics,
   onToggleNewUserRequests,
   onCloseFinanceAnalytics,
@@ -118,6 +120,7 @@ export default function AdminDashboardLayout({
               onToggleAIAssistant={onToggleAIAssistant}
               onToggleSIASlide={onToggleSIASlide}
               onShowChart={onShowChart}
+              onShowMonthlyAnalytics={onShowMonthlyAnalytics}
             />
 
             {/* Main Content */}

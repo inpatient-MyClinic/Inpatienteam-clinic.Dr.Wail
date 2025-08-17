@@ -511,15 +511,6 @@ export type Database = {
       }
     }
     Views: {
-      monthly_analytics_cache: {
-        Row: {
-          analytics_data: Json | null
-          last_updated: string | null
-          month: number | null
-          year: number | null
-        }
-        Relationships: []
-      }
       requests_v: {
         Row: {
           branch_code: string | null
@@ -661,10 +652,6 @@ export type Database = {
           user_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: Json
-      }
-      refresh_monthly_analytics: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       search_users: {
         Args: { search_term: string }

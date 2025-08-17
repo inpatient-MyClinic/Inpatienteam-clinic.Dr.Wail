@@ -13,6 +13,7 @@ interface AdminFeatureButtonsProps {
   onToggleAIAssistant: () => void;
   onToggleSIASlide: () => void;
   onShowChart: () => void;
+  onShowMonthlyAnalytics: () => void;
 }
 
 export default function AdminFeatureButtons({
@@ -25,6 +26,7 @@ export default function AdminFeatureButtons({
   onToggleAIAssistant,
   onToggleSIASlide,
   onShowChart,
+  onShowMonthlyAnalytics,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -113,6 +115,12 @@ export default function AdminFeatureButtons({
           className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
         >
           📊 Lifecycle Chart
+        </button>
+        <button
+          onClick={onShowMonthlyAnalytics}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200"
+        >
+          📈 Monthly Analytics
         </button>
       </div>
 

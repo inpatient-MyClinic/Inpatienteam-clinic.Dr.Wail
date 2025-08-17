@@ -7,11 +7,13 @@ import { filterAdminData } from "@/utils/adminFilters";
 import { requestStorage } from "@/services/requestStorage";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
+import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
   const [allRequestsData, setAllRequestsData] = useState<any[]>([]);
   const [showChart, setShowChart] = useState(false);
+  const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
 
   const {
     activeFilter,
@@ -150,6 +152,12 @@ export default function AdminDashboard() {
     );
   }
 
+  if (showMonthlyAnalytics) {
+    return (
+      <MonthlyAnalyticsDashboard onClose={() => setShowMonthlyAnalytics(false)} />
+    );
+  }
+
   if (showSIASlide) {
     const dateOnlyFilteredForSIA = filterAdminData(
       cleanedData,
@@ -233,6 +241,7 @@ export default function AdminDashboard() {
       onToggleSIASlide={handleToggleSIASlide}
       onShowGeneralReport={handleShowGeneralReport}
       onShowChart={() => setShowChart(true)}
+      onShowMonthlyAnalytics={() => setShowMonthlyAnalytics(true)}
       onShowFinanceAnalytics={handleShowFinanceAnalytics}
       onToggleNewUserRequests={handleToggleNewUserRequests}
       onCloseFinanceAnalytics={handleCloseFinanceAnalytics}
