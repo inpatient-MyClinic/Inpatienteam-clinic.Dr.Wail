@@ -1,34 +1,14 @@
+// Minimal auth utilities for backward compatibility
+import { supabase } from "@/integrations/supabase/client";
 
 export const getCurrentUserRole = (): string | null => {
-  const currentUserEmail = Object.keys(localStorage)
-    .find(key => key.startsWith('user_'))
-    ?.replace('user_', '');
-  
-  if (currentUserEmail) {
-    // CRITICAL: Always check admin status FIRST before checking stored role
-    if (isAdmin(currentUserEmail)) {
-      console.log("getCurrentUserRole: Admin email detected, returning admin role");
-      return "admin";
-    }
-    
-    const userData = localStorage.getItem(`user_${currentUserEmail}`);
-    if (userData) {
-      const user = JSON.parse(userData);
-      console.log("getCurrentUserRole: User role from storage:", user.role);
-      return user.role;
-    }
-  }
-  
-  console.log("getCurrentUserRole: No user found");
+  // This is now handled by Supabase auth - return null to force proper auth flow
   return null;
 };
 
 export const getCurrentUserEmail = (): string | null => {
-  const currentUserEmail = Object.keys(localStorage)
-    .find(key => key.startsWith('user_'))
-    ?.replace('user_', '');
-  
-  return currentUserEmail || null;
+  // This is now handled by Supabase auth - return null to force proper auth flow
+  return null;
 };
 
 export const isAdmin = (email: string): boolean => {
@@ -37,18 +17,12 @@ export const isAdmin = (email: string): boolean => {
     "wail.ahmed@myclinic.com.sa",
     "inpatienteam@gmail.com"
   ];
-  
-  const isAdminUser = adminEmails.includes(email.toLowerCase().trim());
-  console.log("isAdmin check for", email, ":", isAdminUser);
-  return isAdminUser;
+  return adminEmails.includes(email.toLowerCase().trim());
 };
 
 export const canAccessRole = (userRole: string, requiredRole: string): boolean => {
-  // Admin can access everything
   if (userRole === 'admin') {
     return true;
   }
-  
-  // Users can only access their own role
   return userRole === requiredRole;
 };
