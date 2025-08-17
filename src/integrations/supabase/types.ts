@@ -517,6 +517,8 @@ export type Database = {
           hospital_name: string | null
           loss_reason: string | null
           paid_amount: number | null
+          patient_id: string | null
+          patient_name: string | null
           request_date: string | null
           source_type: string | null
           specialty: string | null
@@ -592,6 +594,15 @@ export type Database = {
           table_name: string
         }
         Returns: undefined
+      }
+      mask_patient_data: {
+        Args: {
+          patient_email: string
+          patient_name: string
+          patient_phone: string
+          user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: Json
       }
       search_users: {
         Args: { search_term: string }
