@@ -529,6 +529,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_reset_password: {
+        Args: { admin_email: string; new_password: string }
+        Returns: string
+      }
       approve_user: {
         Args: { user_id: string }
         Returns: undefined
