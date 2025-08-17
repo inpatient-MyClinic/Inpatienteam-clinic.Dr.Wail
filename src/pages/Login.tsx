@@ -6,7 +6,8 @@ import Footer from "@/components/Footer";
 import { EnvironmentBanner } from "@/components/auth/EnvironmentBanner";
 import { AuthHealthCheck } from "@/components/auth/AuthHealthCheck";
 import { NewLoginForm } from "@/components/auth/NewLoginForm";
-import { AdminBootstrap } from "@/components/auth/AdminBootstrap";
+import { InviteLink } from "@/components/auth/InviteLink";
+
 import { QATestRunner } from "@/components/auth/QATestRunner";
 
 const Login = () => {
@@ -60,7 +61,7 @@ const Login = () => {
             </div>
 
             <NewLoginForm />
-            <AdminBootstrap />
+            <InviteLink />
           </div>
         </div>
         <Footer />
