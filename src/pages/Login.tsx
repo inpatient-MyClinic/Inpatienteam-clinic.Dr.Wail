@@ -7,6 +7,7 @@ import PasswordCreationForm from "@/components/auth/PasswordCreationForm";
 import OTPLoginForm from "@/components/auth/OTPLoginForm";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import AdminLoginBypass from "@/components/auth/AdminLoginBypass";
+import AdminLoginDebug from "@/components/auth/AdminLoginDebug";
 import Footer from "@/components/Footer";
 import { useAuthLogic } from "@/hooks/useAuthLogic";
 import { getCurrentUserRole } from "@/utils/auth";
@@ -173,6 +174,9 @@ const Login = () => {
             </CardContent>
             </Card>
           )}
+          
+          {/* Debug Component - Remove in production */}
+          <AdminLoginDebug />
         </div>
       </div>
       

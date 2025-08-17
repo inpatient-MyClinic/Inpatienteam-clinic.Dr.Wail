@@ -34,6 +34,24 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     try {
       setIsLoading(true);
       
+      // First verify the user exists in the system
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('email, status')
+        .eq('email', email.trim().toLowerCase())
+        .single();
+
+      if (profileError || !profiles) {
+        toast.error("Email address not found in our system");
+        return;
+      }
+
+      if (profiles.status !== 'active') {
+        toast.error("Account is not active. Please contact administrator.");
+        return;
+      }
+
+      // Send password reset email
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
         redirectTo: `${window.location.origin}/change-password`
       });

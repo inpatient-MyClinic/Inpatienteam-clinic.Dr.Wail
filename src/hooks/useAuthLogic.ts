@@ -297,22 +297,36 @@ export const useAuthLogic = () => {
     try {
       console.log("Processing successful login for user:", userId);
       
-      // Fetch user profile from Supabase
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Add a small delay to ensure session is fully established
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Fetch user profile from Supabase with retry logic
+      let profile = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!profile && attempts < maxAttempts) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        toast.error("Error loading user profile");
-        return;
+        if (profileError) {
+          console.error(`Attempt ${attempts + 1} - Error fetching profile:`, profileError);
+          attempts++;
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } else {
+          profile = profileData;
+          break;
+        }
       }
 
       if (!profile) {
-        console.error("No profile found for user:", userId);
-        toast.error("User profile not found");
+        console.error("No profile found for user after all attempts:", userId);
+        toast.error("User profile not found. Please contact support.");
         return;
       }
 
@@ -325,19 +339,7 @@ export const useAuthLogic = () => {
         return;
       }
 
-      // Check if password has expired or must be changed
-      const { data: isExpired } = await supabase.rpc('is_password_expired', { 
-        user_id_param: userId 
-      });
-      
-      if (isExpired || profile.must_change_password || profile.force_password_change) {
-        console.log("Password expired or change required");
-        toast.info("Your password has expired or must be changed. Please set a new password.");
-        navigate('/change-password');
-        return;
-      }
-
-      // Store user data in localStorage for compatibility
+      // Store user data in localStorage for compatibility (immediately)
       const userData = {
         email: profile.email,
         role: profile.role,
@@ -349,8 +351,11 @@ export const useAuthLogic = () => {
       localStorage.setItem(`user_${profile.email}`, JSON.stringify(userData));
       localStorage.setItem('currentUser', profile.email);
       
-      console.log("User data stored, navigating to dashboard");
+      console.log("User data stored successfully");
       toast.success("Login successful!");
+      
+      // Small delay before navigation
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Navigate based on role
       switch (profile.role) {
@@ -380,7 +385,7 @@ export const useAuthLogic = () => {
       }
     } catch (error) {
       console.error("Error in handleSuccessfulLogin:", error);
-      toast.error("Error processing login");
+      toast.error("Error processing login. Please try again.");
     }
   };
 
