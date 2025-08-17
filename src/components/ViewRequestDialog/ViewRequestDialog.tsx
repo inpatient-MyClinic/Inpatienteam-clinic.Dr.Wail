@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Printer, Download, FileText, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditTrail } from "@/utils/userUtils";
-import { getCurrentUserRole } from "@/utils/auth";
+import { supabase } from '@/integrations/supabase/client';
 import { NotificationService } from "@/services/notificationService";
 import RequestTab from "./RequestTab";
 import CaseCoordinatorTab from "./CaseCoordinatorTab";

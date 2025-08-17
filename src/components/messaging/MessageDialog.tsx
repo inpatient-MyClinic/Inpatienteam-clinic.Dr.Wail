@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Upload, X, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUserRole } from "@/utils/auth";
+// Removed getCurrentUserRole import - using Supabase auth directly
 import UserSearchSelect from "./UserSearchSelect";
 
 interface User {

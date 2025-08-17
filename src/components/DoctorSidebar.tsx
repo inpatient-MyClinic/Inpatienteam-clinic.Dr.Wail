@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Logo from "@/components/Logo";
+import UserProfileHeader from "@/components/UserProfileHeader";
 
 interface DoctorSidebarProps {
   currentDoctorName: string;
@@ -28,61 +29,9 @@ export default function DoctorSidebar({
   const { toast } = useToast();
   const [justificationText, setJustificationText] = useState("");
 
-  const handleLogout = () => {
-    // Clear all user data from localStorage
-    const keys = Object.keys(localStorage);
-    keys.forEach(key => {
-      if (key.startsWith('user_') || key.startsWith('password_') || key.startsWith('lastPasswordUpdate_')) {
-        localStorage.removeItem(key);
-      }
-    });
-
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-
-    navigate("/");
-  };
-
-  // Calculate status counts
-  const statusCounts = {
-    pending: filteredRequests.filter(req => req.status === "Pending").length,
-    underProcess: filteredRequests.filter(req => req.status === "Under Process").length,
-    needJustification: filteredRequests.filter(req => req.status === "Need Justification").length,
-    done: filteredRequests.filter(req => req.status === "Done").length,
-    rejected: filteredRequests.filter(req => req.status === "Rejected").length,
-    delayed: filteredRequests.filter(req => req.isDelayed).length,
-  };
-
-  const getNeedJustificationRequests = () => {
-    return filteredRequests.filter(req => req.status === "Need Justification");
-  };
-
-  const getDelayedRequests = () => {
-    return filteredRequests.filter(req => req.isDelayed);
-  };
-
-  const submitJustification = (requestId: number) => {
-    if (!justificationText.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide justification text",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setJustificationText("");
-    toast({
-      title: "Justification Submitted",
-      description: "Request has been forwarded with additional justification",
-    });
-  };
-
   return (
     <aside className="w-[19rem] bg-blue-50 flex flex-col items-center p-6 border-r">
-      <Logo size="sm" showText={false} className="mb-4" />
+      <UserProfileHeader className="mb-6" />
       
       <div className="text-center mb-4">
         <h1 className="text-lg font-bold text-blue-900">Doctor Dashboard</h1>
@@ -99,10 +48,10 @@ export default function DoctorSidebar({
         <p className="text-sm font-semibold text-blue-900 mb-2">Filter by Status:</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Pending", value: statusCounts.pending, color: "bg-yellow-600", key: "Pending" },
-            { label: "Under Process", value: statusCounts.underProcess, color: "bg-blue-600", key: "Under Process" },
-            { label: "Done", value: statusCounts.done, color: "bg-green-600", key: "Done" },
-            { label: "Rejected", value: statusCounts.rejected, color: "bg-red-600", key: "Rejected" },
+            { label: "Pending", value: filteredRequests.filter(req => req.status === "Pending").length, color: "bg-yellow-600", key: "Pending" },
+            { label: "Under Process", value: filteredRequests.filter(req => req.status === "Under Process").length, color: "bg-blue-600", key: "Under Process" },
+            { label: "Done", value: filteredRequests.filter(req => req.status === "Done").length, color: "bg-green-600", key: "Done" },
+            { label: "Rejected", value: filteredRequests.filter(req => req.status === "Rejected").length, color: "bg-red-600", key: "Rejected" },
           ].map((stat) => (
             <button
               key={stat.key}
@@ -121,7 +70,7 @@ export default function DoctorSidebar({
         <Dialog>
           <DialogTrigger asChild>
             <div className="bg-pink-600 text-white p-3 rounded-lg text-center cursor-pointer transition-all duration-200 hover:opacity-80">
-              <div className="text-xl font-bold">{statusCounts.needJustification}</div>
+              <div className="text-xl font-bold">{filteredRequests.filter(req => req.status === "Need Justification").length}</div>
               <div className="text-xs">Need Justification</div>
             </div>
           </DialogTrigger>
@@ -134,10 +83,10 @@ export default function DoctorSidebar({
             </DialogHeader>
             
             <div className="space-y-4">
-              {getNeedJustificationRequests().length === 0 ? (
+              {filteredRequests.filter(req => req.status === "Need Justification").length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No requests currently need justification</p>
               ) : (
-                getNeedJustificationRequests().map((req) => (
+                filteredRequests.filter(req => req.status === "Need Justification").map((req) => (
                   <div key={req.id} className="border rounded-lg p-4 space-y-4">
                     <div className="flex justify-between items-start bg-pink-50 p-3 rounded">
                       <div>
@@ -167,7 +116,21 @@ export default function DoctorSidebar({
                       />
                       <div className="flex gap-2 mt-3">
                         <Button 
-                          onClick={() => submitJustification(req.id)}
+                          onClick={() => {
+                            if (!justificationText.trim()) {
+                              toast({
+                                title: "Error",
+                                description: "Please provide justification text",
+                                variant: "destructive"
+                              });
+                              return;
+                            }
+                            setJustificationText("");
+                            toast({
+                              title: "Justification Submitted",
+                              description: "Request has been forwarded with additional justification",
+                            });
+                          }}
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!justificationText.trim()}
                           size="sm"
@@ -188,7 +151,7 @@ export default function DoctorSidebar({
         <Dialog>
           <DialogTrigger asChild>
             <div className="bg-red-600 text-white p-3 rounded-lg text-center cursor-pointer transition-all duration-200 hover:opacity-80">
-              <div className="text-xl font-bold">{statusCounts.delayed}</div>
+              <div className="text-xl font-bold">{filteredRequests.filter(req => req.isDelayed).length}</div>
               <div className="text-xs">Delayed Cases</div>
             </div>
           </DialogTrigger>
@@ -201,10 +164,10 @@ export default function DoctorSidebar({
             </DialogHeader>
             
             <div className="space-y-4">
-              {getDelayedRequests().length === 0 ? (
+              {filteredRequests.filter(req => req.isDelayed).length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No delayed cases</p>
               ) : (
-                getDelayedRequests().map((req) => (
+                filteredRequests.filter(req => req.isDelayed).map((req) => (
                   <div key={req.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start bg-red-50 p-3 rounded">
                       <div>
@@ -256,15 +219,6 @@ export default function DoctorSidebar({
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Roles
-        </Button>
-
-        <Button 
-          variant="destructive"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
         </Button>
       </div>
     </aside>

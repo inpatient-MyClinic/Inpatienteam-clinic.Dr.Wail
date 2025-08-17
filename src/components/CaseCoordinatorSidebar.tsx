@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
+import UserProfileHeader from "@/components/UserProfileHeader";
 import ComplaintManager from "@/components/complaints/ComplaintManager";
 
 interface Stat {
@@ -30,36 +31,13 @@ export default function CaseCoordinatorSidebar({
 }: CaseCoordinatorSidebarProps) {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('userData');
-    navigate('/login');
-  };
-
-  const handleStatusClick = (status: string) => {
-    // If clicking the same status, clear the filter
-    if (activeStatusFilter === status) {
-      onStatusFilterClick(null);
-    } else {
-      onStatusFilterClick(status);
-    }
-  };
-
   return (
     <aside className="w-[22rem] bg-blue-50 flex flex-col p-6 border-r overflow-y-auto">
-      {/* Logo and Title */}
+      <UserProfileHeader className="mb-6" />
+      
       <div className="text-center mb-6">
-        <Logo />
-        <h1 className="text-xl font-bold text-blue-900 mt-2">Case Coordinator</h1>
+        <h1 className="text-xl font-bold text-blue-900">Case Coordinator</h1>
         <p className="text-sm text-blue-700">Dashboard</p>
-      </div>
-
-      {/* User Info */}
-      <div className="bg-white rounded-lg p-3 mb-6 border">
-        <div className="flex items-center gap-2">
-          <User className="w-4 h-4 text-blue-600" />
-          <span className="text-sm font-medium text-gray-700">Current User:</span>
-        </div>
-        <p className="text-sm text-blue-800 mt-1 font-semibold">{currentCoordinatorName}</p>
       </div>
 
       {/* Filter by Status */}
@@ -69,7 +47,13 @@ export default function CaseCoordinatorSidebar({
           {allStats.map((stat) => (
             <button
               key={stat.key}
-              onClick={() => handleStatusClick(stat.label)}
+              onClick={() => {
+                if (activeStatusFilter === stat.label) {
+                  onStatusFilterClick(null);
+                } else {
+                  onStatusFilterClick(stat.label);
+                }
+              }}
               className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-white transition-all hover:opacity-90 ${
                 activeStatusFilter === stat.label ? 'ring-2 ring-blue-400 ring-offset-1' : ''
               } ${stat.color}`}
@@ -114,15 +98,6 @@ export default function CaseCoordinatorSidebar({
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Roles
-        </Button>
-        
-        <Button 
-          variant="outline"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
         </Button>
       </div>
     </aside>

@@ -5,6 +5,7 @@ import { ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
+import UserProfileHeader from "@/components/UserProfileHeader";
 
 interface FinanceSidebarProps {
   currentFinanceName: string;
@@ -30,26 +31,9 @@ export default function FinanceSidebar({
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogout = () => {
-    // Clear all user data from localStorage
-    const keys = Object.keys(localStorage);
-    keys.forEach(key => {
-      if (key.startsWith('user_') || key.startsWith('password_') || key.startsWith('lastPasswordUpdate_')) {
-        localStorage.removeItem(key);
-      }
-    });
-
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    });
-
-    navigate("/");
-  };
-
   return (
     <aside className="w-[19rem] bg-green-50 flex flex-col items-center p-6 border-r">
-      <Logo size="sm" showText={false} className="mb-4" />
+      <UserProfileHeader className="mb-6" />
       
       <div className="text-center mb-4">
         <h1 className="text-lg font-bold text-green-900">Finance Dashboard</h1>
@@ -96,15 +80,6 @@ export default function FinanceSidebar({
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Roles
-        </Button>
-
-        <Button 
-          variant="destructive"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Logout
         </Button>
       </div>
     </aside>
