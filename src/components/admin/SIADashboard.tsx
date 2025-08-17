@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Settings, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { useSIAFilters } from "@/hooks/useSIAFilters";
+import { useSIAAnalytics } from "@/hooks/useSIAAnalytics";
+import { DataExcelMigrationService } from "@/services/dataExcelMigration";
+import SIAFiltersBar from "./SIAFiltersBar";
+import SIAConfigurationModal from "./SIAConfigurationModal";
+import SIALossTreeModal from "./SIALossTreeModal";
+import { useToast } from "@/hooks/use-toast";
+
+export default function SIADashboard() {
+  const { filters, updateFilter, clearFilters } = useSIAFilters();
+  const { metrics, loading, error, refetch } = useSIAAnalytics(filters);
+  const [showConversionConfig, setShowConversionConfig] = useState(false);
+  const [showLossTreeConfig, setShowLossTreeConfig] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<string>('');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    checkMigrationStatus();
+  }, []);
+
+  const checkMigrationStatus = async () => {
+    try {
+      const status = await DataExcelMigrationService.checkMigrationStatus();
+      if (status.hasLocalData && !status.hasSupabaseData) {
+        setMigrationStatus(`Found ${status.localCount} records in localStorage. Click to migrate to database.`);
+      } else if (status.hasSupabaseData) {
+        setMigrationStatus(`${status.supabaseCount} records available in database.`);
+      }
+    } catch (error) {
+      console.error('Error checking migration status:', error);
+    }
+  };
+
+  const handleMigration = async () => {
+    try {
+      const result = await DataExcelMigrationService.migrateLocalStorageToSupabase();
+      if (result.success) {
+        toast({
+          title: "Migration Successful",
+          description: `Migrated ${result.migratedCount} records to database.`,
+        });
+        await checkMigrationStatus();
+        refetch();
+      } else {
+        toast({
+          title: "Migration Failed",
+          description: result.error || "Unknown error occurred",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Migration Error",
+        description: error instanceof Error ? error.message : "Failed to migrate data",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Card className="border-destructive">
+          <CardContent className="p-6 text-center">
+            <p className="text-destructive mb-4">Error loading SIA dashboard: {error}</p>
+            <Button onClick={refetch} variant="outline">Retry</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Migration Status */}
+      {migrationStatus && (
+        <Card className="border-warning">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm">{migrationStatus}</p>
+              {migrationStatus.includes('localStorage') && (
+                <Button onClick={handleMigration} size="sm">
+                  Migrate Data
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Filters */}
+      <SIAFiltersBar 
+        filters={filters} 
+        onUpdateFilter={updateFilter} 
+        onClearFilters={clearFilters}
+      />
+
+      {/* Main KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Cases */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Cases
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.totalCases.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              MCJ1: {metrics.mcj1Cases} + MCJ2: {metrics.mcj2Cases}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* MCJ1 Cases */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              MCJ1 Cases
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.mcj1Cases.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {metrics.totalCases > 0 ? Math.round((metrics.mcj1Cases / metrics.totalCases) * 100) : 0}% of total
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* MCJ2 Cases */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              MCJ2 Cases
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.mcj2Cases.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {metrics.totalCases > 0 ? Math.round((metrics.mcj2Cases / metrics.totalCases) * 100) : 0}% of total
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Conversion Rate */}
+        <Card className="cursor-pointer hover:bg-accent/5" onClick={() => setShowConversionConfig(true)}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              Conversion Rate
+              <Settings className="h-3 w-3" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.conversionRate}%</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {metrics.doneCases} of {metrics.totalCases} cases
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Hospitals */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Top 5 Hospitals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {metrics.topHospitals.length > 0 ? (
+                metrics.topHospitals.map((hospital, index) => (
+                  <div key={hospital.name} className="flex items-center justify-between">
+                    <span className="text-sm truncate flex-1">{hospital.name}</span>
+                    <Badge variant="secondary">{hospital.count}</Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No data available</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Specialties */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Top 5 Specialties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {metrics.topSpecialties.length > 0 ? (
+                metrics.topSpecialties.map((specialty, index) => (
+                  <div key={specialty.name} className="flex items-center justify-between">
+                    <span className="text-sm truncate flex-1">{specialty.name}</span>
+                    <Badge variant="secondary">{specialty.count}</Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No data available</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Loss Tree */}
+        <Card className="cursor-pointer hover:bg-accent/5" onClick={() => setShowLossTreeConfig(true)}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              Loss Tree
+              <Settings className="h-3 w-3" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-destructive">Cancelled/Rejected</span>
+                  <span className="font-medium">{metrics.lossTree.cancelledTotal}</span>
+                </div>
+                <div className="text-xs text-muted-foreground ml-4 mt-1 space-y-1">
+                  {Object.entries(metrics.lossTree.cancelledBreakdown).map(([reason, count]) => (
+                    count > 0 && (
+                      <div key={reason} className="flex justify-between">
+                        <span>{reason}:</span>
+                        <span>{count}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-warning">Pending</span>
+                  <span className="font-medium">{metrics.lossTree.pendingTotal}</span>
+                </div>
+                <div className="text-xs text-muted-foreground ml-4 mt-1 space-y-1">
+                  {Object.entries(metrics.lossTree.pendingBreakdown).map(([reason, count]) => (
+                    count > 0 && (
+                      <div key={reason} className="flex justify-between">
+                        <span>{reason}:</span>
+                        <span>{count}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Revenue Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Paid Cases
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.revenue.paidCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {metrics.revenue.paidPercentage}% of total cases
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              SAR {metrics.revenue.paidSum.toLocaleString()}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Total payment amount
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Historical Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {metrics.conversionHistory.length > 0 ? (
+                <div className="flex items-center gap-1">
+                  <BarChart3 className="h-5 w-5" />
+                  <span>
+                    {metrics.conversionHistory[metrics.conversionHistory.length - 1]?.conversionRate || 0}%
+                  </span>
+                </div>
+              ) : (
+                'N/A'
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Last 6 months avg
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Configuration Modals */}
+      <SIAConfigurationModal 
+        open={showConversionConfig}
+        onOpenChange={setShowConversionConfig}
+        onSettingsUpdate={refetch}
+      />
+      
+      <SIALossTreeModal 
+        open={showLossTreeConfig}
+        onOpenChange={setShowLossTreeConfig}
+        onSettingsUpdate={refetch}
+      />
+    </div>
+  );
+}
