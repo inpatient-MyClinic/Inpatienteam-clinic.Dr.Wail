@@ -101,6 +101,71 @@ export type Database = {
         }
         Relationships: []
       }
+      excel_rows_raw: {
+        Row: {
+          Branch: string | null
+          Date: string | null
+          "Hospital Code": string | null
+          "Hospital Name": string | null
+          "Loss Reason": string | null
+          "Paid Amount": string | null
+          row_no: number
+          Specialty: string | null
+          Status: string | null
+          upload_id: string
+        }
+        Insert: {
+          Branch?: string | null
+          Date?: string | null
+          "Hospital Code"?: string | null
+          "Hospital Name"?: string | null
+          "Loss Reason"?: string | null
+          "Paid Amount"?: string | null
+          row_no: number
+          Specialty?: string | null
+          Status?: string | null
+          upload_id: string
+        }
+        Update: {
+          Branch?: string | null
+          Date?: string | null
+          "Hospital Code"?: string | null
+          "Hospital Name"?: string | null
+          "Loss Reason"?: string | null
+          "Paid Amount"?: string | null
+          row_no?: number
+          Specialty?: string | null
+          Status?: string | null
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excel_rows_raw_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "excel_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excel_uploads: {
+        Row: {
+          id: string
+          imported_at: string | null
+          source_file: string
+        }
+        Insert: {
+          id?: string
+          imported_at?: string | null
+          source_file: string
+        }
+        Update: {
+          id?: string
+          imported_at?: string | null
+          source_file?: string
+        }
+        Relationships: []
+      }
       finance_analytics_data: {
         Row: {
           category: string
@@ -180,6 +245,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hospitals: {
+        Row: {
+          code: string
+          name: string
+        }
+        Insert: {
+          code: string
+          name: string
+        }
+        Update: {
+          code?: string
+          name?: string
+        }
+        Relationships: []
       }
       medical_requests: {
         Row: {
@@ -615,6 +695,10 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      import_excel_rows: {
+        Args: { p_rows: Json; p_source_file: string }
+        Returns: number
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -652,6 +736,18 @@ export type Database = {
           user_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: Json
+      }
+      norm_status: {
+        Args: { s: string }
+        Returns: string
+      }
+      norm_text: {
+        Args: { t: string }
+        Returns: string
+      }
+      norm_upper: {
+        Args: { t: string }
+        Returns: string
       }
       search_users: {
         Args: { search_term: string }
