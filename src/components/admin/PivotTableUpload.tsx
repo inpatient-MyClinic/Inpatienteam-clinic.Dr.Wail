@@ -72,7 +72,8 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
   const usePivotData = () => {
     if (pivotData.length === 0) return;
     
-    // Replace current admin data with pivot table data
+    // Preserve original Excel data structure - do not modify the source data
+    // Store the exact pivot table data as-is from sheet 1
     localStorage.setItem('adminData', JSON.stringify(pivotData));
     localStorage.setItem('excel_data_imported', 'true');
     localStorage.setItem('pivot_table_active', 'true');

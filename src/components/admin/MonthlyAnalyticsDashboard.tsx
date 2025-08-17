@@ -251,9 +251,9 @@ export default function MonthlyAnalyticsDashboard({ onClose }: MonthlyAnalyticsD
       let requests;
       
       if (pivotTableActive && pivotTableData) {
-        console.log('Using pivot table data from sheet 3');
+        console.log('Using pivot table data from sheet 1');
         requests = JSON.parse(pivotTableData);
-        toast.success('Using pivot table data from sheet 3');
+        toast.success('Using pivot table data from sheet 1');
       } else {
         // Fall back to regular admin data
         const adminData = localStorage.getItem('adminData');
