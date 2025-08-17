@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          accessed_columns: string[] | null
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          record_id: string
+          table_name: string
+          timestamp: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accessed_columns?: string[] | null
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          record_id: string
+          table_name: string
+          timestamp?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accessed_columns?: string[] | null
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          record_id?: string
+          table_name?: string
+          timestamp?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       finance_analytics_data: {
         Row: {
           category: string
@@ -389,6 +428,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
+      can_access_patient_data: {
+        Args: { patient_request_id: string; required_access_level?: string }
+        Returns: boolean
+      }
       check_password_similarity: {
         Args: { new_password_hash: string; user_id_param: string }
         Returns: boolean
@@ -433,6 +476,15 @@ export type Database = {
       is_password_expired: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      log_sensitive_data_access: {
+        Args: {
+          accessed_columns?: string[]
+          action: string
+          record_id: string
+          table_name: string
+        }
+        Returns: undefined
       }
       search_users: {
         Args: { search_term: string }
