@@ -259,7 +259,7 @@ export default function MonthlyAnalyticsDashboard({ onClose }: MonthlyAnalyticsD
         const adminData = localStorage.getItem('adminData');
         
         if (!adminData) {
-          toast.error('No data found. Please upload Excel file with pivot table in sheet 3.');
+          toast.error('No data found. Please upload Excel file with pivot table in sheet 1.');
           setAnalyticsData(null);
           return;
         }

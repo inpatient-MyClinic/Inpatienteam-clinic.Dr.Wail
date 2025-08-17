@@ -49,7 +49,7 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
       
       toast({
         title: "Pivot Table Loaded",
-        description: `Successfully processed ${data.length} rows from sheet 3.`
+        description: `Successfully processed ${data.length} rows from sheet 1.`
       });
       
     } catch (error) {
@@ -61,7 +61,7 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
       
       toast({
         title: "Error",
-        description: "Failed to load pivot table from sheet 3. Please check the file format.",
+        description: "Failed to load pivot table from sheet 1. Please check the file format.",
         variant: "destructive"
       });
     } finally {
@@ -84,7 +84,7 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
     
     toast({
       title: "Pivot Data Applied",
-      description: "Monthly analytics will now use the pivot table data from sheet 3."
+      description: "Monthly analytics will now use the pivot table data from sheet 1."
     });
   };
 
@@ -94,10 +94,10 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Table className="w-5 h-5" />
-            Pivot Table Upload (Sheet 3)
+            Pivot Table Upload (Sheet 1)
           </CardTitle>
           <CardDescription>
-            Upload an Excel file and use the pivot table data from sheet 3 for monthly analytics.
+            Upload an Excel file and use the pivot table data from sheet 1 for monthly analytics.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -120,7 +120,7 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
                 >
                   <span>
                     <Upload className="w-4 h-4" />
-                    {isProcessing ? "Processing..." : file ? file.name : "Choose Excel File (Sheet 3)"}
+                    {isProcessing ? "Processing..." : file ? file.name : "Choose Excel File (Sheet 1)"}
                   </span>
                 </Button>
               </label>

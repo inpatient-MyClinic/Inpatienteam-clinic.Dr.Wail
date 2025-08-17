@@ -80,26 +80,17 @@ export const parseExcelFile = async (file: File, sheetIndex: number = 0): Promis
 };
 
 export const parseExcelPivotTable = async (file: File): Promise<{ data: any[], columns: string[] }> => {
-  console.log("Parsing pivot table from sheet 3:", file.name);
+  console.log("Parsing pivot table from sheet 1:", file.name);
   
   const data = await file.arrayBuffer();
   const workbook = XLSX.read(data, { type: 'array' });
   console.log("Available sheets:", workbook.SheetNames);
   
-  // Try to find sheet 3 (index 2) or any sheet with "pivot" in the name
-  let targetSheet = workbook.SheetNames[2]; // Sheet 3 (0-indexed)
+  // Use sheet 1 (index 0) for the pivot table
+  let targetSheet = workbook.SheetNames[0]; // Sheet 1 (0-indexed)
   
   if (!targetSheet) {
-    // Look for sheet with "pivot" in the name
-    targetSheet = workbook.SheetNames.find(name => 
-      name.toLowerCase().includes('pivot') || 
-      name.toLowerCase().includes('summary') ||
-      name.toLowerCase().includes('analytics')
-    );
-  }
-  
-  if (!targetSheet) {
-    throw new Error('Sheet 3 not found. Please ensure your Excel file has at least 3 sheets with pivot table data in sheet 3.');
+    throw new Error('Sheet 1 not found. Please ensure your Excel file has pivot table data in the first sheet.');
   }
   
   console.log(`Using sheet: ${targetSheet} for pivot table data`);
