@@ -6,6 +6,7 @@ import LoginForm from "@/components/auth/LoginForm";
 import PasswordCreationForm from "@/components/auth/PasswordCreationForm";
 import OTPLoginForm from "@/components/auth/OTPLoginForm";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
+import AdminLoginBypass from "@/components/auth/AdminLoginBypass";
 import Footer from "@/components/Footer";
 import { useAuthLogic } from "@/hooks/useAuthLogic";
 import { getCurrentUserRole } from "@/utils/auth";
@@ -13,6 +14,7 @@ import { getCurrentUserRole } from "@/utils/auth";
 const Login = () => {
   const navigate = useNavigate();
   const currentUserRole = getCurrentUserRole();
+  const [showAdminBypass, setShowAdminBypass] = React.useState(false);
   
   const {
     email,
@@ -86,7 +88,11 @@ const Login = () => {
           </div>
 
 
-          {showOTPLogin ? (
+          {showAdminBypass ? (
+            <AdminLoginBypass
+              onBackToLogin={() => setShowAdminBypass(false)}
+            />
+          ) : showOTPLogin ? (
             <OTPLoginForm
               email={email}
               onSuccess={handleOTPSuccess}
@@ -136,7 +142,7 @@ const Login = () => {
                 />
               )}
 
-              {!showForgotPassword && (
+              {!showForgotPassword && !showAdminBypass && (
                 <div className="mt-6 pt-6 border-t">
                   <div className="text-center">
                     <div className="bg-green-50 p-4 rounded-lg">
@@ -145,6 +151,19 @@ const Login = () => {
                         All users must create secure passwords that expire every 3 months
                       </p>
                     </div>
+                    
+                    {/* Admin Emergency Access */}
+                    {(email.includes('admin@myclinic.com.sa') || email === 'admin@myclinic.com.sa') && (
+                      <div className="mt-4">
+                        <button
+                          onClick={() => setShowAdminBypass(true)}
+                          className="text-xs text-orange-600 hover:text-orange-800 underline"
+                        >
+                          🚨 Admin Emergency Access
+                        </button>
+                      </div>
+                    )}
+                    
                     <p className="text-xs text-gray-500 mt-4">
                       Passwords are encrypted and protected using industry standards
                     </p>
