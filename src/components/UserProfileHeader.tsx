@@ -4,7 +4,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Key, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUserEmail, getCurrentUserRole } from '@/utils/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/Logo';
@@ -17,9 +16,42 @@ export default function UserProfileHeader({ className = "" }: UserProfileHeaderP
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
-  const userEmail = getCurrentUserEmail();
-  const userRole = getCurrentUserRole();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Get user data from Supabase auth
+  React.useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+        // Determine role based on email
+        if (session.user.email.includes('admin') || session.user.email === 'inpatienteam@gmail.com') {
+          setUserRole('admin');
+        } else {
+          setUserRole('user');
+        }
+      }
+    };
+    
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+        if (session.user.email.includes('admin') || session.user.email === 'inpatienteam@gmail.com') {
+          setUserRole('admin');
+        } else {
+          setUserRole('user');
+        }
+      } else {
+        setUserEmail(null);
+        setUserRole(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   // Get user's display name from email or stored data
   const getUserDisplayName = () => {
@@ -63,31 +95,24 @@ export default function UserProfileHeader({ className = "" }: UserProfileHeaderP
 
     setIsLoading(true);
     try {
-      // Set the must_change_password flag in the database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ must_change_password: true })
-          .eq('id', user.id);
+      // Send password reset email using Supabase
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
 
-        if (error) {
-          console.error('Error setting password change flag:', error);
-          toast({
-            title: "Error",
-            description: "Failed to initiate password change. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
+      if (error) {
+        console.error('Password reset error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to send password reset email. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
-
-      // Navigate to change password page
-      navigate('/change-password');
       
       toast({
-        title: "Redirecting",
-        description: "Redirecting to change password page...",
+        title: "Reset Email Sent",
+        description: "Check your email for the password reset link.",
       });
     } catch (error) {
       console.error('Password change request error:', error);

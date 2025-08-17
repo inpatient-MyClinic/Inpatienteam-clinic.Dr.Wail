@@ -23,7 +23,23 @@ export const AdminBootstrap = () => {
   // Only show if no user is logged in
   if (session) return null;
 
+  // Only allow admin emails
+  const allowedAdminEmails = [
+    'admin@myclinic.com.sa',
+    'inpatienteam@gmail.com',
+    'admin@inpatienteam.com'
+  ];
+
+  const isValidAdminEmail = (email: string) => {
+    return allowedAdminEmails.includes(email.toLowerCase());
+  };
+
   const handleSendInvite = async () => {
+    if (!isValidAdminEmail(email)) {
+      toast.error('This email is not authorized for admin access');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -56,12 +72,20 @@ export const AdminBootstrap = () => {
 
         <Button
           onClick={handleSendInvite}
-          disabled={isLoading}
+          disabled={isLoading || !isValidAdminEmail(email)}
           className="w-full"
           variant="outline"
         >
           {isLoading ? 'Processing...' : 'Send Invite'}
         </Button>
+
+        {!isValidAdminEmail(email) && email && (
+          <Alert className="border-red-200 bg-red-50">
+            <AlertDescription className="text-red-800 text-xs">
+              Only authorized admin emails can use this feature.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {showInstructions && (
           <Alert className="border-blue-200 bg-blue-50">
