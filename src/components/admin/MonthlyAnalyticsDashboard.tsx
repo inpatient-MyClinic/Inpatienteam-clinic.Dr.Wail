@@ -73,35 +73,204 @@ export default function MonthlyAnalyticsDashboard({ onClose }: MonthlyAnalyticsD
 
   const years = [2024, 2025, 2026].map(year => ({ value: year, label: year.toString() }));
 
+  // Helper function to process monthly data from localStorage
+  const processMonthlyData = (filteredRequests: any[]): MonthlyAnalyticsData => {
+    // Count by status
+    const statusCounts: Record<string, number> = {};
+    const branchCounts: Record<string, any> = {};
+    const hospitalCounts: Record<string, any> = {};
+    const specialtyCounts: Record<string, number> = {};
+    
+    let totalRevenue = 0;
+    let doneCount = 0;
+    let pendingCount = 0;
+    let cancelledCount = 0;
+
+    filteredRequests.forEach(request => {
+      const status = String(request.status || '').toLowerCase();
+      const normalizedStatus = normalizeStatus(status);
+      
+      statusCounts[normalizedStatus] = (statusCounts[normalizedStatus] || 0) + 1;
+      
+      // Count done cases (completed or done)
+      if (normalizedStatus === 'completed' || normalizedStatus === 'done') {
+        doneCount++;
+      } else if (normalizedStatus === 'pending' || normalizedStatus === 'scheduled') {
+        pendingCount++;
+      } else if (normalizedStatus === 'cancelled' || normalizedStatus === 'rejected') {
+        cancelledCount++;
+      }
+
+      // Revenue tracking
+      const paidAmount = parseFloat(request.paidAmount || request.paid_amount || 0);
+      totalRevenue += paidAmount;
+
+      // Branch counts
+      const branchCode = request.branchCode || request.branch_code || 'Unknown';
+      if (!branchCounts[branchCode]) {
+        branchCounts[branchCode] = { total: 0, done: 0, pending: 0 };
+      }
+      branchCounts[branchCode].total++;
+      if (normalizedStatus === 'completed' || normalizedStatus === 'done') {
+        branchCounts[branchCode].done++;
+      } else if (normalizedStatus === 'pending' || normalizedStatus === 'scheduled') {
+        branchCounts[branchCode].pending++;
+      }
+
+      // Hospital counts
+      const hospitalName = request.hospital || request.hospital_name || 'Unknown Hospital';
+      const hospitalCode = request.hospitalCode || request.hospital_code || 'UNK';
+      const hospitalKey = hospitalName;
+      if (!hospitalCounts[hospitalKey]) {
+        hospitalCounts[hospitalKey] = { 
+          name: hospitalName, 
+          code: hospitalCode, 
+          total: 0, 
+          done: 0, 
+          pending: 0,
+          specialties: {} 
+        };
+      }
+      hospitalCounts[hospitalKey].total++;
+      if (normalizedStatus === 'completed' || normalizedStatus === 'done') {
+        hospitalCounts[hospitalKey].done++;
+      } else if (normalizedStatus === 'pending' || normalizedStatus === 'scheduled') {
+        hospitalCounts[hospitalKey].pending++;
+      }
+
+      // Specialty tracking
+      const specialty = request.specialty || 'General';
+      specialtyCounts[specialty] = (specialtyCounts[specialty] || 0) + 1;
+      if (!hospitalCounts[hospitalKey].specialties[specialty]) {
+        hospitalCounts[hospitalKey].specialties[specialty] = 0;
+      }
+      hospitalCounts[hospitalKey].specialties[specialty]++;
+    });
+
+    const totalCases = filteredRequests.length;
+    const conversionRate = totalCases > 0 ? Math.round((doneCount / totalCases) * 100 * 100) / 100 : 0;
+    const averageCaseValue = totalCases > 0 ? totalRevenue / totalCases : 0;
+
+    // Transform data to expected format
+    const branches = Object.entries(branchCounts).map(([code, data]: [string, any]) => ({
+      branch_code: code,
+      total_cases: data.total,
+      done_cases: data.done,
+      pending_cases: data.pending,
+      conversion_rate: data.total > 0 ? Math.round((data.done / data.total) * 100 * 100) / 100 : 0
+    }));
+
+    const hospitals = Object.entries(hospitalCounts).map(([key, data]: [string, any]) => ({
+      hospital_name: data.name,
+      hospital_code: data.code,
+      total_cases: data.total,
+      done_cases: data.done,
+      pending_cases: data.pending,
+      specialty_breakdown: data.specialties
+    }));
+
+    const topSpecialties = Object.entries(specialtyCounts)
+      .map(([specialty, count]) => ({
+        specialty,
+        case_count: count,
+        done_count: Math.floor(count * (doneCount / totalCases)),
+        success_rate: Math.round((Math.floor(count * (doneCount / totalCases)) / count) * 100 * 100) / 100
+      }))
+      .sort((a, b) => b.case_count - a.case_count)
+      .slice(0, 10);
+
+    return {
+      month: selectedMonth,
+      year: selectedYear,
+      summary: {
+        total_cases: totalCases,
+        done_cases: doneCount,
+        pending_cases: pendingCount,
+        cancelled_cases: cancelledCount,
+        total_revenue: totalRevenue,
+        average_case_value: averageCaseValue,
+        conversion_rate: conversionRate
+      },
+      branches,
+      hospitals,
+      top_specialties: topSpecialties,
+      status_breakdown: statusCounts,
+      generated_at: new Date().toISOString()
+    };
+  };
+
+  // Helper function to normalize status values
+  const normalizeStatus = (status: string): string => {
+    const s = status.toLowerCase().trim();
+    if (s === 'completed' || s === 'done') return 'completed';
+    if (s === 'pending' || s === 'in-progress') return 'pending';
+    if (s === 'cancelled' || s === 'canceled' || s === 'rejected') return 'cancelled';
+    if (s === 'scheduled') return 'scheduled';
+    return s;
+  };
+
+  // Helper function to process yearly trends
+  const processYearlyTrends = (allRequests: any[], year: number) => {
+    const monthlyData: Record<number, { total: number; completed: number }> = {};
+    
+    // Initialize all months
+    for (let i = 1; i <= 12; i++) {
+      monthlyData[i] = { total: 0, completed: 0 };
+    }
+
+    allRequests.forEach(request => {
+      const requestDate = new Date(request.date || request.requestDate || request.created_at);
+      if (isNaN(requestDate.getTime()) || requestDate.getFullYear() !== year) return;
+      
+      const month = requestDate.getMonth() + 1;
+      const status = normalizeStatus(String(request.status || ''));
+      
+      monthlyData[month].total++;
+      if (status === 'completed' || status === 'done') {
+        monthlyData[month].completed++;
+      }
+    });
+
+    return Object.entries(monthlyData).map(([monthNum, data]) => ({
+      month_num: parseInt(monthNum),
+      month_name: months.find(m => m.value === parseInt(monthNum))?.label.slice(0, 3) || '',
+      total_cases: data.total,
+      completed_cases: data.completed,
+      conversion_rate: data.total > 0 ? Math.round((data.completed / data.total) * 100 * 100) / 100 : 0,
+      revenue_amount: 0
+    }));
+  };
+
   const loadAnalyticsData = async () => {
     setLoading(true);
     try {
-      // Get monthly dashboard data
-      const { data: monthlyData, error: monthlyError } = await supabase
-        .rpc('get_monthly_dashboard_data', {
-          target_month: selectedMonth,
-          target_year: selectedYear
-        });
-
-      if (monthlyError) {
-        console.error('Error loading monthly data:', monthlyError);
-        toast.error('Failed to load monthly analytics');
+      // Get data from localStorage since database tables are empty
+      const adminData = localStorage.getItem('adminData');
+      
+      if (!adminData) {
+        toast.error('No admin data found');
+        setAnalyticsData(null);
         return;
       }
 
-      setAnalyticsData(monthlyData as unknown as MonthlyAnalyticsData);
+      const requests = JSON.parse(adminData);
+      
+      // Filter data by selected month and year
+      const filteredRequests = requests.filter((request: any) => {
+        const requestDate = new Date(request.date || request.requestDate || request.created_at);
+        if (isNaN(requestDate.getTime())) return false;
+        
+        return requestDate.getMonth() + 1 === selectedMonth && 
+               requestDate.getFullYear() === selectedYear;
+      });
 
-      // Get conversion trends for the year
-      const { data: trendsData, error: trendsError } = await supabase
-        .rpc('get_monthly_conversion_trends', {
-          target_year: selectedYear
-        });
+      // Process the data to match the expected structure
+      const processedData = processMonthlyData(filteredRequests);
+      setAnalyticsData(processedData);
 
-      if (trendsError) {
-        console.error('Error loading trends data:', trendsError);
-      } else {
-        setConversionTrends(trendsData || []);
-      }
+      // Get conversion trends for the year from localStorage
+      const yearlyTrends = processYearlyTrends(requests, selectedYear);
+      setConversionTrends(yearlyTrends);
 
     } catch (error) {
       console.error('Error loading analytics:', error);
