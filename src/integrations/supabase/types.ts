@@ -53,6 +53,54 @@ export type Database = {
         }
         Relationships: []
       }
+      excel_requests: {
+        Row: {
+          branch_code: string | null
+          created_at: string | null
+          hospital_name: string | null
+          id: number
+          loss_reason: string | null
+          paid_amount: number | null
+          patient_id: string | null
+          patient_name: string | null
+          raw_data: Json | null
+          request_date: string | null
+          specialty: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_code?: string | null
+          created_at?: string | null
+          hospital_name?: string | null
+          id?: number
+          loss_reason?: string | null
+          paid_amount?: number | null
+          patient_id?: string | null
+          patient_name?: string | null
+          raw_data?: Json | null
+          request_date?: string | null
+          specialty?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_code?: string | null
+          created_at?: string | null
+          hospital_name?: string | null
+          id?: number
+          loss_reason?: string | null
+          paid_amount?: number | null
+          patient_id?: string | null
+          patient_name?: string | null
+          raw_data?: Json | null
+          request_date?: string | null
+          specialty?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       finance_analytics_data: {
         Row: {
           category: string
@@ -137,16 +185,21 @@ export type Database = {
         Row: {
           assigned_to: string | null
           attachments: Json | null
+          branch_code: string | null
           created_at: string | null
           created_by: string
           hospital_code: string
+          hospital_name: string | null
           id: string
+          loss_reason: string | null
           medical_condition: string
           notes: string | null
+          paid_amount: number | null
           patient_email: string | null
           patient_id: string | null
           patient_name: string
           patient_phone: string | null
+          request_date: string | null
           specialty: string
           status: Database["public"]["Enums"]["request_status"] | null
           updated_at: string | null
@@ -155,16 +208,21 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           attachments?: Json | null
+          branch_code?: string | null
           created_at?: string | null
           created_by: string
           hospital_code: string
+          hospital_name?: string | null
           id?: string
+          loss_reason?: string | null
           medical_condition: string
           notes?: string | null
+          paid_amount?: number | null
           patient_email?: string | null
           patient_id?: string | null
           patient_name: string
           patient_phone?: string | null
+          request_date?: string | null
           specialty: string
           status?: Database["public"]["Enums"]["request_status"] | null
           updated_at?: string | null
@@ -173,16 +231,21 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           attachments?: Json | null
+          branch_code?: string | null
           created_at?: string | null
           created_by?: string
           hospital_code?: string
+          hospital_name?: string | null
           id?: string
+          loss_reason?: string | null
           medical_condition?: string
           notes?: string | null
+          paid_amount?: number | null
           patient_email?: string | null
           patient_id?: string | null
           patient_name?: string
           patient_phone?: string | null
+          request_date?: string | null
           specialty?: string
           status?: Database["public"]["Enums"]["request_status"] | null
           updated_at?: string | null
@@ -419,9 +482,49 @@ export type Database = {
           },
         ]
       }
+      sia_settings: {
+        Row: {
+          created_at: string | null
+          id: number
+          key: string
+          scope: string | null
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          key: string
+          scope?: string | null
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          key?: string
+          scope?: string | null
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      requests_v: {
+        Row: {
+          branch_code: string | null
+          hospital_name: string | null
+          loss_reason: string | null
+          paid_amount: number | null
+          request_date: string | null
+          source_type: string | null
+          specialty: string | null
+          status: string | null
+          uid: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_user: {
@@ -447,6 +550,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_sia_setting: {
+        Args: { setting_key: string; setting_scope?: string }
+        Returns: Json
       }
       get_users_by_role: {
         Args: { target_role?: Database["public"]["Enums"]["user_role"] }
@@ -494,6 +601,14 @@ export type Database = {
           id: string
           role: Database["public"]["Enums"]["user_role"]
         }[]
+      }
+      update_sia_setting: {
+        Args: {
+          setting_key: string
+          setting_scope?: string
+          setting_value: Json
+        }
+        Returns: undefined
       }
       verify_otp: {
         Args: { submitted_code: string; user_email: string }
