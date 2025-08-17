@@ -122,6 +122,12 @@ export default function AdminFeatureButtons({
         >
           📈 Monthly Analytics
         </button>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('showPivotUpload'))}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200"
+        >
+          📊 Pivot Table Upload
+        </button>
       </div>
 
       {showNewUserRequests && (

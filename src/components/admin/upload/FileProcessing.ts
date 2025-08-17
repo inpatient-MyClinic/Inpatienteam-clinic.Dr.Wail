@@ -56,7 +56,7 @@ export const processUploadData = async (data: any[]): Promise<UploadResult> => {
   return { success, errors, warnings, details };
 };
 
-export const parseExcelFile = async (file: File): Promise<{ data: any[], columns: string[] }> => {
+export const parseExcelFile = async (file: File, sheetIndex: number = 0): Promise<{ data: any[], columns: string[], sheets: string[] }> => {
   console.log("File selected:", file.name, "Size:", file.size, "Type:", file.type);
   
   const data = await file.arrayBuffer();
@@ -65,16 +65,54 @@ export const parseExcelFile = async (file: File): Promise<{ data: any[], columns
   const workbook = XLSX.read(data, { type: 'array' });
   console.log("Workbook sheets:", workbook.SheetNames);
   
-  const sheetName = workbook.SheetNames[0];
+  const sheetName = workbook.SheetNames[sheetIndex] || workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
   const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-  console.log(`Parsed ${jsonData.length} rows from Excel file`);
+  console.log(`Parsed ${jsonData.length} rows from Excel sheet "${sheetName}"`);
   
   // Get column headers
   const columns = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
   console.log("Detected columns:", columns);
   console.log("Sample data (first 2 rows):", jsonData.slice(0, 2));
+
+  return { data: jsonData, columns, sheets: workbook.SheetNames };
+};
+
+export const parseExcelPivotTable = async (file: File): Promise<{ data: any[], columns: string[] }> => {
+  console.log("Parsing pivot table from sheet 3:", file.name);
+  
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: 'array' });
+  console.log("Available sheets:", workbook.SheetNames);
+  
+  // Try to find sheet 3 (index 2) or any sheet with "pivot" in the name
+  let targetSheet = workbook.SheetNames[2]; // Sheet 3 (0-indexed)
+  
+  if (!targetSheet) {
+    // Look for sheet with "pivot" in the name
+    targetSheet = workbook.SheetNames.find(name => 
+      name.toLowerCase().includes('pivot') || 
+      name.toLowerCase().includes('summary') ||
+      name.toLowerCase().includes('analytics')
+    );
+  }
+  
+  if (!targetSheet) {
+    throw new Error('Sheet 3 not found. Please ensure your Excel file has at least 3 sheets with pivot table data in sheet 3.');
+  }
+  
+  console.log(`Using sheet: ${targetSheet} for pivot table data`);
+  
+  const worksheet = workbook.Sheets[targetSheet];
+  const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+  console.log(`Parsed ${jsonData.length} rows from pivot table`);
+  
+  // Get column headers
+  const columns = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+  console.log("Pivot table columns:", columns);
+  console.log("Pivot table sample data:", jsonData.slice(0, 3));
 
   return { data: jsonData, columns };
 };

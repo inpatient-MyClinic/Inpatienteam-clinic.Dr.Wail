@@ -244,31 +244,46 @@ export default function MonthlyAnalyticsDashboard({ onClose }: MonthlyAnalyticsD
   const loadAnalyticsData = async () => {
     setLoading(true);
     try {
-      // Get data from localStorage since database tables are empty
-      const adminData = localStorage.getItem('adminData');
+      // Check if pivot table data is available and active
+      const pivotTableActive = localStorage.getItem('pivot_table_active') === 'true';
+      const pivotTableData = localStorage.getItem('pivotTableData');
       
-      if (!adminData) {
-        toast.error('No admin data found');
-        setAnalyticsData(null);
-        return;
-      }
+      let requests;
+      
+      if (pivotTableActive && pivotTableData) {
+        console.log('Using pivot table data from sheet 3');
+        requests = JSON.parse(pivotTableData);
+        toast.success('Using pivot table data from sheet 3');
+      } else {
+        // Fall back to regular admin data
+        const adminData = localStorage.getItem('adminData');
+        
+        if (!adminData) {
+          toast.error('No data found. Please upload Excel file with pivot table in sheet 3.');
+          setAnalyticsData(null);
+          return;
+        }
 
-      const requests = JSON.parse(adminData);
+        requests = JSON.parse(adminData);
+        console.log('Using regular admin data');
+      }
       
       // Filter data by selected month and year
       const filteredRequests = requests.filter((request: any) => {
-        const requestDate = new Date(request.date || request.requestDate || request.created_at);
-        if (isNaN(requestDate.getTime())) return false;
+        const requestDate = getRequestDate(request);
+        if (!requestDate || isNaN(requestDate.getTime())) return false;
         
         return requestDate.getMonth() + 1 === selectedMonth && 
                requestDate.getFullYear() === selectedYear;
       });
 
+      console.log(`Filtered ${filteredRequests.length} requests for ${selectedMonth}/${selectedYear}`);
+
       // Process the data to match the expected structure
       const processedData = processMonthlyData(filteredRequests);
       setAnalyticsData(processedData);
 
-      // Get conversion trends for the year from localStorage
+      // Get conversion trends for the year
       const yearlyTrends = processYearlyTrends(requests, selectedYear);
       setConversionTrends(yearlyTrends);
 
@@ -278,6 +293,52 @@ export default function MonthlyAnalyticsDashboard({ onClose }: MonthlyAnalyticsD
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to get request date from various possible fields
+  const getRequestDate = (request: any): Date | null => {
+    const dateFields = [
+      'date', 'Date', 'requestDate', 'request_date', 'created_at', 
+      'dateCreated', 'Date of Request:', 'Request Date'
+    ];
+    
+    for (const field of dateFields) {
+      const dateValue = request[field];
+      if (dateValue) {
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+    }
+    
+    // If no date found, try to construct from Month field
+    const monthField = request['Month'] || request['month'] || request['Months'];
+    if (monthField) {
+      const monthIndex = getMonthIndex(monthField);
+      if (monthIndex !== null) {
+        return new Date(selectedYear, monthIndex, 1);
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper function to convert month name/number to index
+  const getMonthIndex = (monthValue: any): number | null => {
+    if (typeof monthValue === 'number') {
+      return monthValue >= 1 && monthValue <= 12 ? monthValue - 1 : null;
+    }
+    
+    const monthStr = String(monthValue).toLowerCase().trim();
+    const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                       'july', 'august', 'september', 'october', 'november', 'december'];
+    
+    const fullMatch = monthNames.findIndex(month => month === monthStr);
+    if (fullMatch !== -1) return fullMatch;
+    
+    const shortMatch = monthNames.findIndex(month => month.startsWith(monthStr.slice(0, 3)));
+    return shortMatch !== -1 ? shortMatch : null;
   };
 
   useEffect(() => {

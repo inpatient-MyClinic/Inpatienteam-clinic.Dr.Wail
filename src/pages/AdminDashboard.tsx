@@ -8,12 +8,14 @@ import { requestStorage } from "@/services/requestStorage";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
+import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
   const [allRequestsData, setAllRequestsData] = useState<any[]>([]);
   const [showChart, setShowChart] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
+  const [showPivotUpload, setShowPivotUpload] = useState(false);
 
   const {
     activeFilter,
@@ -100,15 +102,18 @@ export default function AdminDashboard() {
       console.log('Admin Dashboard - Requests updated, reloading...');
       loadAllData();
     };
+    const handleShowPivotUpload = () => setShowPivotUpload(true);
     
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('requestsUpdated', handleRequestsUpdate);
     window.addEventListener('adminDataCleared', handleRequestsUpdate);
+    window.addEventListener('showPivotUpload', handleShowPivotUpload);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('requestsUpdated', handleRequestsUpdate);
       window.removeEventListener('adminDataCleared', handleRequestsUpdate);
+      window.removeEventListener('showPivotUpload', handleShowPivotUpload);
     };
   }, []);
 
@@ -155,6 +160,29 @@ export default function AdminDashboard() {
   if (showMonthlyAnalytics) {
     return (
       <MonthlyAnalyticsDashboard onClose={() => setShowMonthlyAnalytics(false)} />
+    );
+  }
+
+  if (showPivotUpload) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button 
+              onClick={() => setShowPivotUpload(false)}
+              variant="outline"
+            >
+              ← Back to Dashboard
+            </Button>
+          </div>
+          <PivotTableUpload 
+            onPivotDataLoaded={(data) => {
+              console.log('Pivot data loaded:', data.length, 'rows');
+              setAllRequestsData([]);
+            }} 
+          />
+        </div>
+      </div>
     );
   }
 
