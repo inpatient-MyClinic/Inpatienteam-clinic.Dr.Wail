@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
@@ -207,9 +208,8 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
-            <Input
+            <PasswordInput
               id="newPassword"
-              type="password"
               placeholder="Enter new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -220,9 +220,8 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-            <Input
+            <PasswordInput
               id="confirmNewPassword"
-              type="password"
               placeholder="Confirm new password"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
