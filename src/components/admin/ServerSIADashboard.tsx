@@ -13,6 +13,40 @@ import SIALossTreeModal from "./SIALossTreeModal";
 import SIAFiltersBar from "./SIAFiltersBar";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
 
+// Type definitions for KPI function returns
+interface ConversionRateData {
+  denominator: number;
+  conversion_rate: number;
+}
+
+interface BranchCountData {
+  branch_code: string;
+  cnt: number;
+}
+
+interface TopHospitalData {
+  hospital_name: string;
+  cnt: number;
+}
+
+interface TopSpecialtyData {
+  specialty: string;
+  cnt: number;
+}
+
+interface LossTreeData {
+  cancelled_total: number;
+  pending_total: number;
+  cancelled_doc: number;
+  cancelled_medical: number;
+  cancelled_ins: number;
+  cancelled_other: number;
+  pending_doc: number;
+  pending_medical: number;
+  pending_ins: number;
+  pending_other: number;
+}
+
 interface ServerSIADashboardProps {
   onBack: () => void;
 }
@@ -49,7 +83,7 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
 
       // Call all KPI functions in parallel
       const [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData] = await Promise.all([
-        supabase.rpc('kpi_conversion_rate', {
+        supabase.rpc('kpi_conversion_rate' as any, {
           p_start: startDate,
           p_end: endDate,
           p_statuses: statuses,
@@ -57,7 +91,7 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
           p_specs: specialties,
           p_branches: branches
         }),
-        supabase.rpc('kpi_branch_counts', {
+        supabase.rpc('kpi_branch_counts' as any, {
           p_start: startDate,
           p_end: endDate,
           p_statuses: statuses,
@@ -65,7 +99,7 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
           p_specs: specialties,
           p_branches: branches
         }),
-        supabase.rpc('kpi_top_hospitals', {
+        supabase.rpc('kpi_top_hospitals' as any, {
           p_start: startDate,
           p_end: endDate,
           p_statuses: statuses,
@@ -73,7 +107,7 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
           p_specs: specialties,
           p_branches: branches
         }),
-        supabase.rpc('kpi_top_specialties', {
+        supabase.rpc('kpi_top_specialties' as any, {
           p_start: startDate,
           p_end: endDate,
           p_statuses: statuses,
@@ -81,7 +115,7 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
           p_specs: specialties,
           p_branches: branches
         }),
-        supabase.rpc('kpi_loss_tree', {
+        supabase.rpc('kpi_loss_tree' as any, {
           p_start: startDate,
           p_end: endDate,
           p_statuses: statuses,
@@ -97,33 +131,40 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
       if (topSpecialtiesData.error) throw topSpecialtiesData.error;
       if (lossTreeData.error) throw lossTreeData.error;
 
-      // Process branch data for MCJ1/MCJ2
-      const mcj1Cases = branchData.data?.find(b => b.branch_code === 'MCJ1')?.cnt || 0;
-      const mcj2Cases = branchData.data?.find(b => b.branch_code === 'MCJ2')?.cnt || 0;
+      // Process branch data for MCJ1/MCJ2 with proper type assertions
+      const branchArray = (branchData.data as BranchCountData[]) || [];
+      const mcj1Cases = branchArray.find(b => b.branch_code === 'MCJ1')?.cnt || 0;
+      const mcj2Cases = branchArray.find(b => b.branch_code === 'MCJ2')?.cnt || 0;
+
+      // Type assertions for other data
+      const conversionArray = (conversionData.data as ConversionRateData[]) || [];
+      const hospitalArray = (topHospitalsData.data as TopHospitalData[]) || [];
+      const specialtyArray = (topSpecialtiesData.data as TopSpecialtyData[]) || [];
+      const lossArray = (lossTreeData.data as LossTreeData[]) || [];
 
       const analytics = {
-        totalCases: conversionData.data?.[0]?.denominator || 0,
+        totalCases: conversionArray[0]?.denominator || 0,
         mcj1Cases,
         mcj2Cases,
-        conversionRate: conversionData.data?.[0]?.conversion_rate || 0,
-        topHospitals: topHospitalsData.data?.map(h => ({ name: h.hospital_name, count: h.cnt })) || [],
-        topSpecialties: topSpecialtiesData.data?.map(s => ({ name: s.specialty, count: s.cnt })) || [],
+        conversionRate: conversionArray[0]?.conversion_rate || 0,
+        topHospitals: hospitalArray.map(h => ({ name: h.hospital_name, count: h.cnt })),
+        topSpecialties: specialtyArray.map(s => ({ name: s.specialty, count: s.cnt })),
         paidCases: 0, // TODO: Add revenue calculation if needed
         revenue: 0,
         lossTreeData: {
-          cancelled: lossTreeData.data?.[0]?.cancelled_total || 0,
-          pending: lossTreeData.data?.[0]?.pending_total || 0,
+          cancelled: lossArray[0]?.cancelled_total || 0,
+          pending: lossArray[0]?.pending_total || 0,
           cancelledBreakdown: {
-            documentation: lossTreeData.data?.[0]?.cancelled_doc || 0,
-            medical: lossTreeData.data?.[0]?.cancelled_medical || 0,
-            insurance: lossTreeData.data?.[0]?.cancelled_ins || 0,
-            other: lossTreeData.data?.[0]?.cancelled_other || 0
+            documentation: lossArray[0]?.cancelled_doc || 0,
+            medical: lossArray[0]?.cancelled_medical || 0,
+            insurance: lossArray[0]?.cancelled_ins || 0,
+            other: lossArray[0]?.cancelled_other || 0
           },
           pendingBreakdown: {
-            documentation: lossTreeData.data?.[0]?.pending_doc || 0,
-            medical: lossTreeData.data?.[0]?.pending_medical || 0,
-            insurance: lossTreeData.data?.[0]?.pending_ins || 0,
-            other: lossTreeData.data?.[0]?.pending_other || 0
+            documentation: lossArray[0]?.pending_doc || 0,
+            medical: lossArray[0]?.pending_medical || 0,
+            insurance: lossArray[0]?.pending_ins || 0,
+            other: lossArray[0]?.pending_other || 0
           }
         }
       };
@@ -156,7 +197,7 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       
       // Add __row index for each row (required by import function)
-      const rowsWithIndex = jsonData.map((row, index) => ({
+      const rowsWithIndex = jsonData.map((row: any, index) => ({
         ...row,
         __row: index + 1
       }));
