@@ -2,21 +2,38 @@
 import React, { useState, useEffect } from "react";
 import AdminDashboardLayout from "@/components/admin/AdminDashboardLayout";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
-import { adminData } from "@/data/adminData";
+import { useIntegratedData } from "@/hooks/useIntegratedData";
 import { filterAdminData } from "@/utils/adminFilters";
-import { requestStorage } from "@/services/requestStorage";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Database, Users, FileText, DollarSign } from "lucide-react";
 
 export default function AdminDashboard() {
-  const [allRequestsData, setAllRequestsData] = useState<any[]>([]);
   const [showChart, setShowChart] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   const [showPivotUpload, setShowPivotUpload] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
 
+  // Integrated data management
+  const {
+    currentUser,
+    users,
+    requests,
+    transactions,
+    isLoading,
+    loadAllData,
+    importExcelData,
+    getAnalytics,
+    canManageUsers,
+    canViewFinance,
+    canImportData
+  } = useIntegratedData();
+
+  // Local dashboard state
   const {
     activeFilter,
     selectedDates,
@@ -35,7 +52,6 @@ export default function AdminDashboard() {
     setSelectedMonths,
     handleStatusFilter,
     handleClearAllDateFilters,
-    handleExcelUpload,
     handleExport,
     handlePrint,
     handleToggleAnalytics,
@@ -49,88 +65,57 @@ export default function AdminDashboard() {
     handleToggleNewUserRequests,
   } = useAdminDashboard();
 
-  // Load request data from centralized storage
+  // Load analytics data
   useEffect(() => {
-    requestStorage.initializeSampleData();
-    
-    const loadAllData = () => {
-      // Check if Excel data was imported
-      const excelDataImported = localStorage.getItem('excel_data_imported') === 'true';
-      const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
-      
-      const requests = requestStorage.getAllRequests();
-      console.log('Admin Dashboard - All stored requests:', requests);
-      console.log('Excel data imported:', excelDataImported);
-      console.log('Sample data cleared:', dataCleared);
-      
-      if (requests.length === 0) {
-        console.log('No requests found in storage');
-        setAllRequestsData([]);
-        return;
+    const loadAnalytics = async () => {
+      if (currentUser?.role === 'admin') {
+        const data = await getAnalytics();
+        setAnalyticsData(data);
       }
-      
-      // Convert requests to admin format with proper field mapping for analytics
-      const requestAdminData = requests.map(req => ({
-        id: `REQ${req.id}`,
-        patientMRN: req.patientMRN || req.hospitalMRN || "Unknown MRN",
-        type: req.admissionType === "In-Patient" ? "IP" : "OP", // Map admission type to IP/OP
-        description: req.serviceDescription || "Medical Request",
-        user: req.createdBy || "Unknown",
-        status: req.operationStatus === "Done" ? "Completed" : (req.operationStatus || req.status || "Pending"),
-        date: req.dateCreated || new Date().toISOString().split('T')[0],
-        specialty: req.specialty || "General",
-        hospital: req.hospitalName || req.referredToHospital || "Unknown Hospital",
-        caseCoordinator: req.assignedCoordinator || req.caseManager || "Unassigned",
-        requestDate: req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}` : null,
-        completionDate: req.status === "Done" || req.status === "Completed" ? new Date() : null,
-        serviceDescription: req.serviceDescription || "Unknown Service",
-        // Additional fields for SIASlide analytics
-        referredFrom: req.clinicBranch || req.referredFrom || "Unknown",
-        admissionType: req.admissionType || "Unknown",
-        clinicBranch: req.clinicBranch || "Unknown"
-      }));
-      
-      console.log(`Loading ${requestAdminData.length} requests from storage`);
-      setAllRequestsData(requestAdminData);
     };
-
-    loadAllData();
     
-    // Set up storage change listener and custom request update listener
-    const handleStorageChange = () => loadAllData();
-    const handleRequestsUpdate = () => {
-      console.log('Admin Dashboard - Requests updated, reloading...');
-      loadAllData();
-    };
-    const handleShowPivotUpload = () => setShowPivotUpload(true);
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('requestsUpdated', handleRequestsUpdate);
-    window.addEventListener('adminDataCleared', handleRequestsUpdate);
-    window.addEventListener('showPivotUpload', handleShowPivotUpload);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
-      window.removeEventListener('adminDataCleared', handleRequestsUpdate);
-      window.removeEventListener('showPivotUpload', handleShowPivotUpload);
-    };
-  }, []);
+    loadAnalytics();
+  }, [currentUser, getAnalytics]);
 
-  console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
-  console.log("All data length:", allRequestsData.length);
+  // Excel upload handler
+  const handleExcelUpload = async (excelData: any[]) => {
+    if (!canImportData) {
+      return;
+    }
+    
+    try {
+      await importExcelData(excelData);
+      // Refresh analytics after import
+      const data = await getAnalytics();
+      setAnalyticsData(data);
+    } catch (error) {
+      console.error('Excel upload failed:', error);
+    }
+  };
 
-  // Clean case coordinator data: normalize "saud"/"Saud" and handle "No" entries
-  const cleanedData = allRequestsData.map(item => ({
-    ...item,
-    caseCoordinator: item.caseCoordinator === "No" ? "Unassigned" : 
-                     item.caseCoordinator === "saud" ? "Saud" : 
-                     item.caseCoordinator || "Unassigned"
+  // Transform integrated requests to admin format for compatibility
+  const adminFormattedData = requests.map(req => ({
+    id: req.id,
+    patientMRN: req.patient_id || "Unknown MRN",
+    type: "OP", // Default to outpatient
+    description: req.notes || "Medical Request",
+    user: req.created_by || "Unknown",
+    status: req.status || "Pending",
+    date: req.request_date,
+    specialty: req.specialty || "General",
+    hospital: req.hospital_name || "Unknown Hospital",
+    caseCoordinator: req.assigned_to || "Unassigned",
+    requestDate: req.request_date,
+    completionDate: req.status === "completed" ? new Date() : null,
+    serviceDescription: req.notes || "Unknown Service",
+    referredFrom: req.hospital_name || "Unknown",
+    admissionType: "Unknown",
+    clinicBranch: "Unknown"
   }));
 
   // Filter data based on active filter and date filters
   const filteredData = filterAdminData(
-    cleanedData, 
+    adminFormattedData, 
     activeFilter, 
     selectedDates, 
     selectedWeeks, 
@@ -178,7 +163,6 @@ export default function AdminDashboard() {
           <PivotTableUpload 
             onPivotDataLoaded={(data) => {
               console.log('Pivot data loaded:', data.length, 'rows');
-              setAllRequestsData([]);
             }} 
           />
         </div>
@@ -188,7 +172,7 @@ export default function AdminDashboard() {
 
   if (showSIASlide) {
     const dateOnlyFilteredForSIA = filterAdminData(
-      cleanedData,
+      adminFormattedData,
       null,
       selectedDates,
       selectedWeeks,
@@ -213,8 +197,8 @@ export default function AdminDashboard() {
         initialMonth = m;
         // Pick the most frequent year for that month from the available data
         const yearCounts: Record<number, number> = {};
-        cleanedData.forEach((it) => {
-          const raw = it.date || it.requestDate || it.dateCreated || it.created_at || it.createdAt;
+        adminFormattedData.forEach((it) => {
+          const raw = it.date || it.requestDate;
           if (!raw) return;
           const d = new Date(typeof raw === 'string' ? raw : String(raw));
           if (isNaN(d.getTime())) return;
@@ -237,6 +221,41 @@ export default function AdminDashboard() {
     );
   }
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Database className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+          <h2 className="text-xl font-semibold mb-2">Loading Dashboard</h2>
+          <p className="text-muted-foreground">Initializing integrated data system...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication required for non-admin users
+  if (!currentUser || currentUser.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
+            <CardTitle>Access Restricted</CardTitle>
+            <CardDescription>
+              Administrator privileges required to access this dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Current role: {currentUser?.role || 'Not authenticated'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <AdminDashboardLayout
       activeFilter={activeFilter}
@@ -251,7 +270,7 @@ export default function AdminDashboard() {
       showSIASlide={showSIASlide}
       showFinanceAnalytics={showFinanceAnalytics}
       showNewUserRequests={showNewUserRequests}
-      adminData={allRequestsData}
+      adminData={adminFormattedData}
       filteredData={filteredData}
       unreadCount={unreadCount}
       onStatusFilter={handleStatusFilter}
