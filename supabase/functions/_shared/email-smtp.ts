@@ -16,7 +16,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   const { to, subject, html, text } = options;
 
   // Validate required environment variables
-  const requiredEnvs = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
+  const requiredEnvs = ['SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'];
   const missing = requiredEnvs.filter(env => !Deno.env.get(env));
   
   if (missing.length > 0) {
@@ -25,11 +25,12 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     throw new Error(error);
   }
 
-  const smtpHost = Deno.env.get('SMTP_HOST')!;
-  const smtpPort = Number(Deno.env.get('SMTP_PORT'));
+  // Get configuration with defaults
+  const smtpHost = Deno.env.get('SMTP_HOST') || 'smtp.gmail.com';
+  const smtpPort = Number(Deno.env.get('SMTP_PORT')) || 587;
   const smtpUser = Deno.env.get('SMTP_USER')!;
   const smtpPass = Deno.env.get('SMTP_PASS')!;
-  const smtpSecure = Deno.env.get('SMTP_SECURE') === 'true';
+  const smtpSecure = Deno.env.get('SMTP_SECURE') === 'true' || smtpPort === 465;
   const emailFrom = Deno.env.get('EMAIL_FROM')!;
   const emailReplyTo = Deno.env.get('EMAIL_REPLY_TO');
 
