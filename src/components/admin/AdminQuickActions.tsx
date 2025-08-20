@@ -8,6 +8,7 @@ import AdminRequestsUpload from "./AdminRequestsUpload";
 import DataBackupManager from "./DataBackupManager";
 import TaskCreationDialog from "./TaskCreationDialog";
 import { EmailTestDialog } from "./EmailTestDialog";
+import { EmailHealthCheck } from "./EmailHealthCheck";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -144,10 +145,7 @@ export default function AdminQuickActions({ onShowGeneralReport, onShowFinanceAn
               <span className="text-xs">System Settings</span>
             </Button>
             
-            <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={() => setShowEmailTestDialog(true)}>
-              <Mail className="w-5 h-5" />
-              <span className="text-xs">Send Test Email</span>
-            </Button>
+            <EmailHealthCheck />
             
             <Button variant="outline" className="flex flex-col h-20 gap-2" onClick={handleHealthCheck}>
               <Activity className="w-5 h-5" />

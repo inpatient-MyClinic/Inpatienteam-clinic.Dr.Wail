@@ -1,52 +1,58 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// supabase/functions/email-debug/index.ts
+// Deno edge function to verify SMTP secrets and send a test email
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-};
+import { SmtpClient } from "https://deno.land/x/smtp/mod.ts";
 
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      status: 200,
-      headers: corsHeaders 
-    });
+function env(name: string, required = true): string {
+  const v = Deno.env.get(name) ?? "";
+  if (required && !v) throw new Error(`Missing env: ${name}`);
+  return v;
+}
+
+async function sendTestEmail(to: string, body: string) {
+  const client = new SmtpClient();
+
+  const hostname = env("SMTP_HOST");
+  const port = Number(env("SMTP_PORT"));
+  const username = env("SMTP_USER");
+  const password = env("SMTP_PASS");
+  const secure = (env("SMTP_SECURE") || "true").toLowerCase() === "true";
+  const from = env("EMAIL_FROM");
+
+  if (secure) {
+    await client.connectTLS({ hostname, port, username, password });
+  } else {
+    await client.connect({ hostname, port, username, password });
   }
 
+  await client.send({
+    from,
+    to,
+    subject: "My Clinic – SMTP Test",
+    content: body || "SMTP is configured and working ✅",
+  });
+
+  await client.close();
+}
+
+Deno.serve(async (req) => {
   try {
-    // Check for environment variables (return booleans only, no secrets)
-    const diagnostics = {
-      smtpHost: !!Deno.env.get('SMTP_HOST'),
-      smtpPort: !!Deno.env.get('SMTP_PORT'),
-      smtpUser: !!Deno.env.get('SMTP_USER'),
-      smtpPass: !!Deno.env.get('SMTP_PASS'),
-      smtpSecure: !!Deno.env.get('SMTP_SECURE'),
-      emailFrom: !!Deno.env.get('EMAIL_FROM'),
-      emailReplyTo: !!Deno.env.get('EMAIL_REPLY_TO'),
-      resendApiKey: !!Deno.env.get('RESEND_API_KEY')
-    };
+    const { to, body } = await req.json().catch(() => ({ to: "", body: "" }));
+    const testTo = to || env("EMAIL_FROM"); // default to self if not provided
 
-    console.log('[Email Debug] Diagnostics check:', diagnostics);
+    // Validate all envs before trying to send
+    ["SMTP_HOST","SMTP_PORT","SMTP_USER","SMTP_PASS","SMTP_SECURE","EMAIL_FROM"].forEach(k => env(k));
 
-    return new Response(JSON.stringify(diagnostics), {
+    await sendTestEmail(testTo, body);
+
+    return new Response(JSON.stringify({ ok: true, message: "Email sent" }), {
+      headers: { "Content-Type": "application/json" },
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders,
-      },
     });
-  } catch (error: any) {
-    console.error('[Email Debug] Error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
-    );
+  } catch (e) {
+    return new Response(JSON.stringify({ ok: false, error: String(e.message || e) }), {
+      headers: { "Content-Type": "application/json" },
+      status: 500,
+    });
   }
-};
-
-serve(handler);
+});
