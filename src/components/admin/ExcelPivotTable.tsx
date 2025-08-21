@@ -72,6 +72,22 @@ export default function ExcelPivotTable() {
   const loadExcelData = async () => {
     setLoading(true);
     try {
+      console.log('🔍 Loading Excel data from excel_rows_raw...');
+      
+      // First, let's check what's actually in the table
+      const { data: allData, error: allError } = await supabase
+        .from('excel_rows_raw')
+        .select('*');
+        
+      if (allError) {
+        console.error('❌ Error fetching all data:', allError);
+        throw allError;
+      }
+      
+      console.log('📊 Total rows in excel_rows_raw:', allData?.length || 0);
+      console.log('📝 Sample raw data:', allData?.slice(0, 3));
+      
+      // Now get filtered data
       const { data, error } = await supabase
         .from('excel_rows_raw')
         .select('*')
@@ -80,68 +96,115 @@ export default function ExcelPivotTable() {
 
       if (error) throw error;
 
+      console.log('✅ Filtered Excel data loaded:', data?.length || 0, 'records');
+
       const processedData: PivotData[] = (data || []).map((row, index) => {
-        // Parse Excel date
+        console.log(`🔄 Processing row ${index + 1}:`, {
+          Date: row.Date,
+          Status: row.Status,
+          Branch: row.Branch,
+          'Hospital Name': row['Hospital Name']
+        });
+        
+        // Parse Excel date with better logging
         const parseExcelDate = (dateValue: any): { date: string; month: string } => {
-          if (!dateValue) return { date: '', month: '' };
+          if (!dateValue) {
+            console.log('⚠️ Empty date value for row', index + 1);
+            return { date: '', month: '' };
+          }
           
           let parsedDate: Date | null = null;
           
-          // Handle Excel serial numbers
+          // Handle Excel serial numbers (common case: 45677 = 2025-01-01)
           if (typeof dateValue === 'string' && dateValue.match(/^\d+$/)) {
             const serialNumber = parseInt(dateValue);
+            console.log(`📅 Excel serial date detected: ${serialNumber}`);
             if (serialNumber > 25000) {
+              // Excel serial date formula: (serial - 25569) * 86400 * 1000
               parsedDate = new Date((serialNumber - 25569) * 86400 * 1000);
+              console.log(`✅ Converted serial ${serialNumber} to date:`, parsedDate);
             }
+          }
+          
+          // Handle regular numbers that might be serial dates
+          if (!parsedDate && typeof dateValue === 'number' && dateValue > 25000) {
+            parsedDate = new Date((dateValue - 25569) * 86400 * 1000);
+            console.log(`✅ Converted number ${dateValue} to date:`, parsedDate);
           }
           
           // Handle date strings
           if (!parsedDate && typeof dateValue === 'string') {
+            // Try direct parsing first
             parsedDate = new Date(dateValue);
             if (isNaN(parsedDate.getTime())) {
               // Try MM/DD/YYYY format
               const parts = dateValue.split('/');
               if (parts.length === 3) {
-                parsedDate = new Date(`${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`);
+                const [month, day, year] = parts;
+                parsedDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+                console.log(`✅ Parsed date string ${dateValue} as:`, parsedDate);
               }
             }
           }
           
           if (!parsedDate || isNaN(parsedDate.getTime())) {
+            console.log('❌ Could not parse date:', dateValue, 'for row', index + 1);
             return { date: '', month: '' };
           }
           
           const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           
-          return {
+          const result = {
             date: parsedDate.toISOString().split('T')[0],
             month: monthNames[parsedDate.getMonth()]
           };
+          
+          console.log(`📅 Final parsed date for row ${index + 1}:`, result);
+          return result;
         };
 
         const { date, month } = parseExcelDate(row.Date);
         
-        return {
+        const processedRow = {
           date,
           month,
-          status: row.Status || '',
-          branch: row.Branch || '',
-          hospital: row['Hospital Name'] || '',
-          specialty: row.Specialty || '',
+          status: (row.Status || '').toString().trim(),
+          branch: (row.Branch || '').toString().trim(),
+          hospital: (row['Hospital Name'] || '').toString().trim(),
+          specialty: (row.Specialty || '').toString().trim(),
           paidAmount: parseFloat(row['Paid Amount'] || '0'),
           patientMRN: `MRN-${index + 1}` // Generate MRN for counting
         };
-      }).filter(item => item.date && item.month); // Only include valid dates
+        
+        console.log(`✅ Processed row ${index + 1}:`, processedRow);
+        return processedRow;
+      }).filter((item, index) => {
+        const isValid = item.date && item.month && item.status;
+        if (!isValid) {
+          console.log(`❌ Filtered out row ${index + 1} - missing required data:`, item);
+        }
+        return isValid;
+      });
 
       setRawData(processedData);
+      console.log('📈 Final processed data:', processedData.length, 'valid records');
+      console.log('🎯 Sample processed records:', processedData.slice(0, 5));
 
       // Extract unique values for filters
-      const months = [...new Set(processedData.map(item => item.month))].sort();
+      const months = [...new Set(processedData.map(item => item.month))].filter(Boolean).sort();
       const statuses = [...new Set(processedData.map(item => item.status))].filter(Boolean).sort();
       const branches = [...new Set(processedData.map(item => item.branch))].filter(Boolean).sort();
       const hospitals = [...new Set(processedData.map(item => item.hospital))].filter(Boolean).sort();
       const specialties = [...new Set(processedData.map(item => item.specialty))].filter(Boolean).sort();
+
+      console.log('🔧 Available filter options:', {
+        months,
+        statuses,
+        branches,
+        hospitals,
+        specialties
+      });
 
       setAvailableFilters({
         months,
@@ -168,28 +231,63 @@ export default function ExcelPivotTable() {
     }
   };
 
-  // Filter data based on current filters
+  // Filter data based on current filters with debugging
   const filteredData = useMemo(() => {
-    return rawData.filter(item => {
-      if (filters.months.length > 0 && !filters.months.includes(item.month)) return false;
-      if (filters.statuses.length > 0 && !filters.statuses.includes(item.status)) return false;
-      if (filters.branches.length > 0 && !filters.branches.includes(item.branch)) return false;
-      if (filters.hospitals.length > 0 && !filters.hospitals.includes(item.hospital)) return false;
-      if (filters.specialties.length > 0 && !filters.specialties.includes(item.specialty)) return false;
+    console.log('🔍 Applying filters:', filters);
+    console.log('📊 Raw data count:', rawData.length);
+    
+    const result = rawData.filter(item => {
+      // Month filter
+      if (filters.months.length > 0 && !filters.months.includes(item.month)) {
+        console.log(`❌ Item filtered out by month: ${item.month} not in`, filters.months);
+        return false;
+      }
+      
+      // Status filter
+      if (filters.statuses.length > 0 && !filters.statuses.includes(item.status)) {
+        console.log(`❌ Item filtered out by status: ${item.status} not in`, filters.statuses);
+        return false;
+      }
+      
+      // Branch filter
+      if (filters.branches.length > 0 && !filters.branches.includes(item.branch)) {
+        console.log(`❌ Item filtered out by branch: ${item.branch} not in`, filters.branches);
+        return false;
+      }
+      
+      // Hospital filter
+      if (filters.hospitals.length > 0 && !filters.hospitals.includes(item.hospital)) {
+        return false;
+      }
+      
+      // Specialty filter
+      if (filters.specialties.length > 0 && !filters.specialties.includes(item.specialty)) {
+        return false;
+      }
+      
       return true;
     });
+    
+    console.log('✅ Filtered data count:', result.length);
+    console.log('🎯 Sample filtered data:', result.slice(0, 3));
+    
+    return result;
   }, [rawData, filters]);
 
-  // Calculate pivot summary
+  // Calculate pivot summary with debugging
   const pivotSummary: PivotSummary = useMemo(() => {
+    console.log('🧮 Calculating pivot summary for', filteredData.length, 'filtered records');
+    
     const statusBreakdown: Record<string, number> = {};
     const branchBreakdown: Record<string, number> = {};
     const hospitalBreakdown: Record<string, number> = {};
     const specialtyBreakdown: Record<string, number> = {};
 
-    filteredData.forEach(item => {
+    filteredData.forEach((item, index) => {
       // Count by status
-      statusBreakdown[item.status] = (statusBreakdown[item.status] || 0) + 1;
+      if (item.status) {
+        statusBreakdown[item.status] = (statusBreakdown[item.status] || 0) + 1;
+      }
       
       // Count by branch
       if (item.branch) {
@@ -207,23 +305,34 @@ export default function ExcelPivotTable() {
       }
     });
 
-    return {
+    const summary = {
       grandTotal: filteredData.length,
       statusBreakdown,
       branchBreakdown,
       hospitalBreakdown,
       specialtyBreakdown
     };
+    
+    console.log('📊 Pivot Summary:', summary);
+    
+    return summary;
   }, [filteredData]);
 
-  // Update filter
+  // Update filter with debugging
   const updateFilter = (filterType: keyof PivotFilters, value: string, checked: boolean) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: checked 
-        ? [...prev[filterType], value]
-        : prev[filterType].filter(item => item !== value)
-    }));
+    console.log(`🔧 Updating filter: ${filterType} = ${value} (${checked ? 'ADD' : 'REMOVE'})`);
+    
+    setFilters(prev => {
+      const newFilters = {
+        ...prev,
+        [filterType]: checked 
+          ? [...prev[filterType], value]
+          : prev[filterType].filter(item => item !== value)
+      };
+      
+      console.log('🔧 New filters state:', newFilters);
+      return newFilters;
+    });
   };
 
   // Clear all filters
