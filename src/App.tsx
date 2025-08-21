@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import UnifiedDashboard from "./components/unified/UnifiedDashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import NurseDashboard from "./pages/NurseDashboard";
 import HospitalDashboard from "./pages/HospitalDashboard";
