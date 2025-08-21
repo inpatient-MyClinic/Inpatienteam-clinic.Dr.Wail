@@ -628,7 +628,7 @@ class UnifiedDataService {
               patient_id: request.patientId,
               patient_phone: request.patientPhone,
               patient_email: request.patientEmail,
-              medical_condition: request.medicalCondition,
+              medical_condition: request.medicalCondition || request.medical_condition || 'Unknown',
               specialty: request.specialty,
               urgency: request.urgency || 'normal',
               hospital_code: request.hospitalCode || currentUser.hospital_code || 'UNKNOWN',
