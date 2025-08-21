@@ -124,19 +124,23 @@ export default function SIADashboard() {
         </Button>
       </div>
 
-      {/* Filters */}
-          <EnhancedSIAFilters
-            filters={filters}
-            onUpdateFilter={updateFilter}
-            onClearFilters={clearFilters}
-            onAnalyze={(analysis) => {
-              console.log('SIA Analysis Result:', analysis);
-              toast({
-                title: "Analysis Complete",
-                description: `Found ${analysis.monthData.totalCases} cases for ${analysis.selectedMonth}`,
-              });
-            }}
-          />
+      {/* Enhanced Filters */}
+      <Card className="p-4">
+        <EnhancedSIAFilters
+          filters={filters}
+          onUpdateFilter={updateFilter}
+          onClearFilters={clearFilters}
+          onAnalyze={(analysis) => {
+            console.log('SIA Analysis Result:', analysis);
+            toast({
+              title: "Analysis Complete",
+              description: `Found ${analysis.monthData.totalCases} cases for ${analysis.selectedMonth}`,
+            });
+            // Trigger refetch to update dashboard with filtered data
+            refetch();
+          }}
+        />
+      </Card>
 
       {/* Main KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

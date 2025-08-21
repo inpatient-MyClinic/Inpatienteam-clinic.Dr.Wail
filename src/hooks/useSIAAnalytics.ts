@@ -154,7 +154,7 @@ async function fetchConversionRate(filters: any) {
     .select('value')
     .eq('key', 'numerator_statuses')
     .eq('scope', 'global')
-    .single();
+    .maybeSingle();
 
   const numeratorStatuses = (settings?.value as string[]) || ['Completed', 'Scheduled', 'Planned NVD'];
 
@@ -348,7 +348,7 @@ async function fetchConversionHistory(): Promise<Array<{
     .select('value')
     .eq('key', 'numerator_statuses')
     .eq('scope', 'global')
-    .single();
+    .maybeSingle();
 
   const numeratorStatuses = (settings?.value as string[]) || ['Completed', 'Scheduled', 'Planned NVD'];
 
