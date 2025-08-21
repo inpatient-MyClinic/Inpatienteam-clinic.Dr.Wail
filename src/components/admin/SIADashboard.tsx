@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar, FileSpreadsheet } from "lucide-react";
+import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar, FileSpreadsheet, Table2 } from "lucide-react";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
 import { useSIAAnalytics } from "@/hooks/useSIAAnalytics";
 import { DataExcelMigrationService } from "@/services/dataExcelMigration";
 import EnhancedSIAFilters from "./EnhancedSIAFilters";
 import ExcelDataAnalyzer from "./ExcelDataAnalyzer";
+import ExcelPivotTable from "./ExcelPivotTable";
 import SIAConfigurationModal from "./SIAConfigurationModal";
 import SIALossTreeModal from "./SIALossTreeModal";
 import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
@@ -20,6 +21,7 @@ export default function SIADashboard() {
   const [showLossTreeConfig, setShowLossTreeConfig] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   const [showExcelAnalyzer, setShowExcelAnalyzer] = useState(false);
+  const [showPivotTable, setShowPivotTable] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<string>('');
   const { toast } = useToast();
 
@@ -84,6 +86,20 @@ export default function SIADashboard() {
     );
   }
 
+  if (showPivotTable) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Excel Pivot Table Analyzer</h1>
+          <Button variant="outline" onClick={() => setShowPivotTable(false)}>
+            Back to SIA Dashboard
+          </Button>
+        </div>
+        <ExcelPivotTable />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -134,6 +150,14 @@ export default function SIADashboard() {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-2 mb-4">
+        <Button 
+          variant="outline" 
+          onClick={() => setShowPivotTable(true)} 
+          className="flex items-center gap-2"
+        >
+          <Table2 className="h-4 w-4" />
+          Pivot Table
+        </Button>
         <Button 
           variant="outline" 
           onClick={() => setShowExcelAnalyzer(true)} 
