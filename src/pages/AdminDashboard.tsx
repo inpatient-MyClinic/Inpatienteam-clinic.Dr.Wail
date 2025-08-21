@@ -5,6 +5,7 @@ import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
 import { requestStorage } from "@/services/requestStorage";
+import { dataIntegrationService } from "@/services/dataIntegrationService";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
@@ -49,49 +50,47 @@ export default function AdminDashboard() {
     handleToggleNewUserRequests,
   } = useAdminDashboard();
 
-  // Load request data from centralized storage
+  // Load request data from integrated data service
   useEffect(() => {
     requestStorage.initializeSampleData();
     
-    const loadAllData = () => {
-      // Check if Excel data was imported
-      const excelDataImported = localStorage.getItem('excel_data_imported') === 'true';
-      const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
-      
-      const requests = requestStorage.getAllRequests();
-      console.log('Admin Dashboard - All stored requests:', requests);
-      console.log('Excel data imported:', excelDataImported);
-      console.log('Sample data cleared:', dataCleared);
-      
-      if (requests.length === 0) {
-        console.log('No requests found in storage');
+    const loadAllData = async () => {
+      try {
+        // Check if Excel data was imported
+        const excelDataImported = localStorage.getItem('excel_data_imported') === 'true';
+        const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
+        
+        console.log('Excel data imported:', excelDataImported);
+        console.log('Sample data cleared:', dataCleared);
+        
+        // Get unified data from the integration service
+        const analyticsData = dataIntegrationService.getAnalyticsData();
+        
+        console.log('Admin Dashboard - Unified analytics data:', analyticsData);
+        
+        if (analyticsData.length === 0) {
+          console.log('No requests found in unified data');
+          setAllRequestsData([]);
+          return;
+        }
+        
+        console.log(`Loading ${analyticsData.length} requests from unified service`);
+        setAllRequestsData(analyticsData);
+        
+        // Sync to Supabase if we have data
+        if (analyticsData.length > 0) {
+          try {
+            await dataIntegrationService.syncLocalStorageToSupabase();
+          } catch (error) {
+            console.warn('Supabase sync failed:', error);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error loading unified data:', error);
+        // Fallback to empty array
         setAllRequestsData([]);
-        return;
       }
-      
-      // Convert requests to admin format with proper field mapping for analytics
-      const requestAdminData = requests.map(req => ({
-        id: `REQ${req.id}`,
-        patientMRN: req.patientMRN || req.hospitalMRN || "Unknown MRN",
-        type: req.admissionType === "In-Patient" ? "IP" : "OP", // Map admission type to IP/OP
-        description: req.serviceDescription || "Medical Request",
-        user: req.createdBy || "Unknown",
-        status: req.operationStatus === "Done" ? "Completed" : (req.operationStatus || req.status || "Pending"),
-        date: req.dateCreated || new Date().toISOString().split('T')[0],
-        specialty: req.specialty || "General",
-        hospital: req.hospitalName || req.referredToHospital || "Unknown Hospital",
-        caseCoordinator: req.assignedCoordinator || req.caseManager || "Unassigned",
-        requestDate: req.dateCreated ? `${req.dateCreated}T${req.timeCreated || '00:00'}` : null,
-        completionDate: req.status === "Done" || req.status === "Completed" ? new Date() : null,
-        serviceDescription: req.serviceDescription || "Unknown Service",
-        // Additional fields for SIASlide analytics
-        referredFrom: req.clinicBranch || req.referredFrom || "Unknown",
-        admissionType: req.admissionType || "Unknown",
-        clinicBranch: req.clinicBranch || "Unknown"
-      }));
-      
-      console.log(`Loading ${requestAdminData.length} requests from storage`);
-      setAllRequestsData(requestAdminData);
     };
 
     loadAllData();
