@@ -260,50 +260,67 @@ export default function EnhancedSIAFilters({
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Total Cases */}
+            {/* Total Cases - Grand Total */}
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-2">Total Cases</h4>
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">Grand Total</h4>
               <div className="text-2xl font-bold text-primary">
                 {analysisResult.monthData.totalCases}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">Total Patient MRNs</p>
             </div>
 
-            {/* Status Breakdown */}
+            {/* Status Breakdown - Excel Style */}
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-2">Status Breakdown</h4>
-              <div className="space-y-1">
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">Count of Patient's MRN by Status</h4>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
                 {Object.entries(analysisResult.monthData.statusBreakdown)
                   .sort(([,a], [,b]) => b - a)
                   .map(([status, count]) => (
-                    <div key={status} className="flex justify-between text-sm">
-                      <span className="truncate">{status}</span>
-                      <span className="font-medium">{count}</span>
+                    <div key={status} className="flex justify-between text-sm py-1 px-2 hover:bg-muted/50 rounded">
+                      <span className="truncate font-medium">{status}</span>
+                      <span className="font-bold text-primary">{count}</span>
                     </div>
                   ))}
+                <div className="border-t pt-1 mt-2">
+                  <div className="flex justify-between text-sm font-bold bg-primary/10 py-1 px-2 rounded">
+                    <span>Grand Total</span>
+                    <span className="text-primary">{analysisResult.monthData.totalCases}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Branch Breakdown */}
+            {/* Branch Breakdown - My Clinic Branch */}
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-2">Branch Breakdown</h4>
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">My Clinic Branch Distribution</h4>
               <div className="space-y-1">
                 {Object.entries(analysisResult.monthData.branchBreakdown)
                   .sort(([,a], [,b]) => b - a)
                   .map(([branch, count]) => (
-                    <div key={branch} className="flex justify-between text-sm">
-                      <span className="truncate">{branch}</span>
-                      <span className="font-medium">{count}</span>
+                    <div key={branch} className="flex justify-between text-sm py-1 px-2 hover:bg-muted/50 rounded">
+                      <span className="truncate font-medium">{branch}</span>
+                      <span className="font-bold text-secondary-foreground">{count}</span>
                     </div>
                   ))}
+                <div className="border-t pt-1 mt-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>MCJ1 + MCJ2 Combined</span>
+                    <span>{analysisResult.monthData.totalCases}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="mt-4 p-3 bg-muted/50 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              <strong>Analysis Workflow:</strong> 
-              1. Month selected → 2. Status counts calculated → 3. Branch distribution shown → 4. Filters applied to SIA dashboard
+              <strong>Excel Pivot Table Analysis:</strong> 
+              Month: {analysisResult.selectedMonth} | Grand Total: {analysisResult.monthData.totalCases} Patient MRNs | 
+              Status Distribution → Branch Distribution → SIA Dashboard Updates
             </p>
+            <div className="mt-2 text-xs text-muted-foreground">
+              This matches your Excel pivot table structure with Count of Patient's MRN by status and branch.
+            </div>
           </div>
         </Card>
       )}
