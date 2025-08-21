@@ -152,7 +152,10 @@ export default function SIADashboard() {
       <div className="flex justify-end gap-2 mb-4">
         <Button 
           variant="outline" 
-          onClick={() => setShowPivotTable(true)} 
+          onClick={() => {
+            console.log('🎯 Opening Pivot Table...');
+            setShowPivotTable(true);
+          }} 
           className="flex items-center gap-2"
         >
           <Table2 className="h-4 w-4" />
@@ -160,13 +163,19 @@ export default function SIADashboard() {
         </Button>
         <Button 
           variant="outline" 
-          onClick={() => setShowExcelAnalyzer(true)} 
+          onClick={() => {
+            console.log('📊 Opening Excel Analyzer...');
+            setShowExcelAnalyzer(true);
+          }} 
           className="flex items-center gap-2"
         >
           <FileSpreadsheet className="h-4 w-4" />
           Excel Analyzer
         </Button>
-        <Button onClick={() => setShowMonthlyAnalytics(true)} className="flex items-center gap-2">
+        <Button onClick={() => {
+          console.log('📅 Opening Monthly Analytics...');
+          setShowMonthlyAnalytics(true);
+        }} className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           Monthly Analytics
         </Button>

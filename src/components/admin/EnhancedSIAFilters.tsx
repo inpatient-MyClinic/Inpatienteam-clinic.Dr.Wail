@@ -83,103 +83,107 @@ export default function EnhancedSIAFilters({
     if (!filters.month) return;
 
     try {
-      const startOfMonth = new Date(filters.month.getFullYear(), filters.month.getMonth(), 1);
-      const endOfMonth = new Date(filters.month.getFullYear(), filters.month.getMonth() + 1, 0);
+      console.log('🔍 SIA Analysis - Loading Excel data directly...');
+      
+      // Use the same accurate data source as the pivot table
+      const { data: excelRawData, error: excelError } = await supabase
+        .from('excel_rows_raw')
+        .select('*')
+        .not('Status', 'is', null)
+        .not('Date', 'is', null);
 
-      // Get data for the selected month from both tables AND excel raw data
-      const [medicalData, excelData, excelRawData] = await Promise.all([
-        supabase
-          .from('medical_requests')
-          .select('status, branch_code, created_at')
-          .gte('created_at', startOfMonth.toISOString())
-          .lte('created_at', endOfMonth.toISOString()),
-        
-        supabase
-          .from('excel_requests')
-          .select('status, branch_code, created_at')
-          .gte('created_at', startOfMonth.toISOString())
-          .lte('created_at', endOfMonth.toISOString()),
+      if (excelError) throw excelError;
 
-        // Get excel raw data with column mapping AP (month) and AI (status)
-        supabase
-          .from('excel_rows_raw')
-          .select('Status, Branch, Date, "Hospital Name", Specialty')
-          .not('Status', 'is', null)
-      ]);
+      console.log('📊 Total Excel rows loaded:', excelRawData?.length || 0);
 
-      if (medicalData.error) throw medicalData.error;
-      if (excelData.error) throw excelData.error;
-      if (excelRawData.error) throw excelRawData.error;
-
-      // Helper function to parse Excel date from column AP
+      // Helper function to parse Excel date from column AP (same as pivot table)
       const parseExcelDate = (dateValue: any): Date | null => {
         if (!dateValue) return null;
         
-        // Handle Excel serial numbers
-        if (typeof dateValue === 'number' && dateValue > 25000) {
-          return new Date((dateValue - 25569) * 86400 * 1000);
+        let parsedDate: Date | null = null;
+        
+        // Handle Excel serial numbers (45839 = July 2025)
+        if (typeof dateValue === 'string' && dateValue.match(/^\d+$/)) {
+          const serialNumber = parseInt(dateValue);
+          if (serialNumber > 25000) {
+            parsedDate = new Date((serialNumber - 25569) * 86400 * 1000);
+            console.log(`📅 Converted serial ${serialNumber} to:`, parsedDate);
+          }
+        }
+        
+        // Handle numeric serial dates
+        if (!parsedDate && typeof dateValue === 'number' && dateValue > 25000) {
+          parsedDate = new Date((dateValue - 25569) * 86400 * 1000);
         }
         
         // Handle date strings
-        if (typeof dateValue === 'string') {
-          const parsed = new Date(dateValue);
-          return !isNaN(parsed.getTime()) ? parsed : null;
+        if (!parsedDate && typeof dateValue === 'string') {
+          parsedDate = new Date(dateValue);
+          if (isNaN(parsedDate.getTime())) {
+            const parts = dateValue.split('/');
+            if (parts.length === 3) {
+              parsedDate = new Date(`${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`);
+            }
+          }
         }
         
-        return null;
+        return parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null;
       };
 
-      // Filter excel raw data by month (column AP) to match selected month
-      const filteredExcelRaw = (excelRawData.data || []).filter(item => {
+      // Filter Excel raw data by month (Column AP) to match selected month
+      const filteredExcelRaw = (excelRawData || []).filter(item => {
         const itemDate = parseExcelDate(item.Date);
         if (!itemDate) return false;
         
-        return itemDate.getMonth() === filters.month.getMonth() && 
-               itemDate.getFullYear() === filters.month.getFullYear();
+        const matchesMonth = itemDate.getMonth() === filters.month.getMonth() && 
+                            itemDate.getFullYear() === filters.month.getFullYear();
+        
+        if (matchesMonth) {
+          console.log(`✅ Date match: ${item.Date} -> ${itemDate} for ${filters.month}`);
+        }
+        
+        return matchesMonth;
       });
 
-      // Combine all data sources
-      const monthData = [
-        ...(medicalData.data || []), 
-        ...(excelData.data || []),
-        ...filteredExcelRaw.map(item => ({
-          status: item.Status, // Column AI - Status
-          branch_code: item.Branch,
-          created_at: parseExcelDate(item.Date)?.toISOString()
-        }))
-      ];
+      console.log(`🎯 Filtered to ${filteredExcelRaw.length} records for ${filters.month.toLocaleDateString()}`);
 
-      // Calculate status breakdown from column AI (Status)
+      // Calculate status breakdown from column AI (Status)  
       const statusBreakdown: Record<string, number> = {};
-      monthData.forEach(item => {
-        if (item.status) {
-          statusBreakdown[item.status] = (statusBreakdown[item.status] || 0) + 1;
+      filteredExcelRaw.forEach(item => {
+        if (item.Status) {
+          const status = item.Status.toString().trim();
+          statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
         }
       });
 
       // Calculate branch breakdown
       const branchBreakdown: Record<string, number> = {};
-      monthData.forEach(item => {
-        if (item.branch_code) {
-          branchBreakdown[item.branch_code] = (branchBreakdown[item.branch_code] || 0) + 1;
+      filteredExcelRaw.forEach(item => {
+        if (item.Branch) {
+          const branch = item.Branch.toString().trim();
+          branchBreakdown[branch] = (branchBreakdown[branch] || 0) + 1;
         }
       });
 
       const result: AnalysisResult = {
         monthData: {
-          totalCases: monthData.length,
+          totalCases: filteredExcelRaw.length,
           statusBreakdown,
           branchBreakdown
         },
         selectedMonth: format(filters.month, 'MMM yyyy')
       };
 
+      console.log('📊 SIA Analysis Result:', result);
       setAnalysisResult(result);
       onAnalyze?.(result);
+      
     } catch (error) {
-      console.error('Error performing analysis:', error);
+      console.error('❌ SIA analysis error:', error);
     }
   };
+
+
 
   const hasActiveFilters = filters.month || 
     filters.statuses?.length > 0 || 
