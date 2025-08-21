@@ -305,8 +305,8 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     console.log('Selected Month:', selectedMonth, 'Selected Year:', selectedYear);
     console.log('Sample current month data:', currentMonthData.slice(0, 3));
 
-    // MC branch counts based on current month data with enhanced detection
-    const mcj1Cases = currentMonthData.filter((req: any) => {
+    // Filter to only include referred cases (exclude direct admissions)
+    const referredCases = currentMonthData.filter((req: any) => {
       const possibleFields = [
         req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
         req['My Clinic Branch'], req.clinicBranch, req['Column H'],
@@ -324,26 +324,37 @@ const currentMonthData = consolidatedData.filter((item: any) => {
       
       const valueStr = String(columnHValue).toLowerCase().trim();
       
-      // Enhanced MCJ1 detection including exact match from your data
-      const mcj1Patterns = [
-        'mcj1 - (mc al muhammadiyah)',
-        'mcj1',
-        'mc j1',
-        'mc1',
-        'al muhammadiyah',
-        'muhammadiyah',
-        'mc al muhammadiyah',
-        'myclinic muhammadiyah'
+      // Only count cases that are actually referred from MC branches
+      return valueStr.includes('mcj') || valueStr.includes('mc j') || 
+             valueStr.includes('muhammadiyah') || valueStr.includes('safa') ||
+             valueStr.includes('mc al');
+    });
+
+    // MC branch counts based on referred cases only
+    const mcj1Cases = referredCases.filter((req: any) => {
+      const possibleFields = [
+        req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
+        req['My Clinic Branch'], req.clinicBranch, req['Column H'],
+        req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
+        req['Referred From'], req['Hospital Code'], req.source, req.origin,
+        req['Branch'], req['Clinic Branch'], req['MC Branch'],
+        req.branchCode, req.branch_code, req['Branch Code']
       ];
       
-      const isMatch = mcj1Patterns.some(pattern => 
-        valueStr.includes(pattern) || valueStr === pattern
-      );
+      const columnHValue = possibleFields.find((val: any) => {
+        if (val === undefined || val === null || val === '') return false;
+        const str = String(val).trim();
+        return str.length > 0;
+      }) || '';
       
-      return isMatch;
+      const valueStr = String(columnHValue).toLowerCase().trim();
+      
+      // MCJ1 detection - exact patterns matching Excel sheet
+      return valueStr.includes('mcj1') || valueStr.includes('mc j1') || 
+             valueStr.includes('muhammadiyah') || valueStr.includes('mc al muhammadiyah');
     });
     
-    const mcj2Cases = currentMonthData.filter((req: any) => {
+    const mcj2Cases = referredCases.filter((req: any) => {
       const possibleFields = [
         req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
         req['My Clinic Branch'], req.clinicBranch, req['Column H'],
@@ -361,60 +372,47 @@ const currentMonthData = consolidatedData.filter((item: any) => {
       
       const valueStr = String(columnHValue).toLowerCase().trim();
       
-      // Enhanced MCJ2 detection
-      const mcj2Patterns = [
-        'mcj2',
-        'mc j2',
-        'mc2',
-        'al safa',
-        'safa',
-        'mc al safa',
-        'myclinic safa'
-      ];
-      
-      const isMatch = mcj2Patterns.some(pattern => 
-        valueStr.includes(pattern) || valueStr === pattern
-      );
-      
-      return isMatch;
+      // MCJ2 detection - exact patterns matching Excel sheet
+      return valueStr.includes('mcj2') || valueStr.includes('mc j2') || 
+             valueStr.includes('safa') || valueStr.includes('mc al safa');
     });
 
     console.log('MCJ1 Cases found:', mcj1Cases.length);
     console.log('MCJ2 Cases found:', mcj2Cases.length);
     
-    // Status distribution and conversion counts from current month data
+    // Status distribution and conversion counts from REFERRED cases only
     const statusCounts = {
-      completed: currentMonthData.filter((req: any) => {
+      completed: referredCases.filter((req: any) => {
         const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
         return s.includes('done') || s.includes('completed') || s.includes('complete');
       }).length,
-      pending: currentMonthData.filter((req: any) => {
+      pending: referredCases.filter((req: any) => {
         const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
         return s.includes('pending') || s.includes('waiting');
       }).length,
-      cancelled: currentMonthData.filter((req: any) => {
+      cancelled: referredCases.filter((req: any) => {
         const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
         return s.includes('cancelled') || s.includes('canceled');
       }).length,
-      rejected: currentMonthData.filter((req: any) => {
+      rejected: referredCases.filter((req: any) => {
         const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
         return s.includes('rejected') || s.includes('declined');
       }).length,
-      scheduled: currentMonthData.filter((req: any) => {
+      scheduled: referredCases.filter((req: any) => {
         const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
         return s.includes('scheduled') || s.includes('booked');
       }).length,
-      plannedNVD: currentMonthData.filter((req: any) => {
+      plannedNVD: referredCases.filter((req: any) => {
         const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
@@ -422,21 +420,21 @@ const currentMonthData = consolidatedData.filter((item: any) => {
       }).length
     };
     
-    // Calculate conversion metrics matching your expected values
+    // Calculate conversion metrics using referred cases total
     const doneCount = statusCounts.completed;
     const scheduledCount = statusCounts.scheduled;
     const plannedNVDCount = statusCounts.plannedNVD;
     const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount; // This should be 165 for July
     
-    // Total cases should be all referred cases (209 for July)
-    const totalCasesCount = currentMonthData.length;
+    // Total cases should be only referred cases (209 for July)
+    const totalReferredCases = referredCases.length;
     
     // Conversion rate: (done + scheduled + planned NVD) / total referred cases * 100
-    const conversionRateValue = totalCasesCount > 0 ? (totalDoneAndScheduled / totalCasesCount) * 100 : 0;
+    const conversionRateValue = totalReferredCases > 0 ? (totalDoneAndScheduled / totalReferredCases) * 100 : 0;
     
     console.log(`SIA Calculation Debug:
       Month: ${selectedMonth}/${selectedYear}
-      Total Cases: ${totalCasesCount}
+      Total Referred Cases: ${totalReferredCases}
       MCJ1 Cases: ${mcj1Cases.length}
       MCJ2 Cases: ${mcj2Cases.length}
       Done: ${doneCount}
@@ -490,13 +488,13 @@ const currentMonthData = consolidatedData.filter((item: any) => {
       consolidatedData,
       financeData: currentMonthFinance,
       customerCareData,
-      totalCases: totalCasesCount,
+      totalCases: totalReferredCases,
       mcj1Cases: mcj1Cases.length,
       mcj2Cases: mcj2Cases.length,
       mcBranchCounts: { mcj1: mcj1Cases.length, mcj2: mcj2Cases.length, total: mcj1Cases.length + mcj2Cases.length },
       conversionData: {
         done: totalDoneAndScheduled,
-        total: totalCasesCount,
+        total: totalReferredCases,
         rate: conversionRateValue.toFixed(1),
         breakdown: { doneCount, scheduledCount, plannedNVDCount }
       },
