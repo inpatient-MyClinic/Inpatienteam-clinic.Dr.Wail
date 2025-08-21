@@ -148,6 +148,51 @@ export type Database = {
           },
         ]
       }
+      excel_upload_batches: {
+        Row: {
+          column_mappings: Json | null
+          error_count: number
+          filename: string
+          id: string
+          processed_rows: number
+          processing_log: Json | null
+          status: string
+          success_count: number
+          total_rows: number
+          uploaded_at: string
+          uploaded_by: string
+          warnings_count: number
+        }
+        Insert: {
+          column_mappings?: Json | null
+          error_count?: number
+          filename: string
+          id?: string
+          processed_rows?: number
+          processing_log?: Json | null
+          status?: string
+          success_count?: number
+          total_rows?: number
+          uploaded_at?: string
+          uploaded_by: string
+          warnings_count?: number
+        }
+        Update: {
+          column_mappings?: Json | null
+          error_count?: number
+          filename?: string
+          id?: string
+          processed_rows?: number
+          processing_log?: Json | null
+          status?: string
+          success_count?: number
+          total_rows?: number
+          uploaded_at?: string
+          uploaded_by?: string
+          warnings_count?: number
+        }
+        Relationships: []
+      }
       excel_uploads: {
         Row: {
           id: string
@@ -241,7 +286,7 @@ export type Database = {
             foreignKeyName: "finance_transactions_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
-            referencedRelation: "medical_requests"
+            referencedRelation: "unified_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -463,17 +508,21 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           created_at: string | null
+          department: string | null
           email: string
           force_password_change: boolean | null
           full_name: string | null
           hospital_code: string | null
           id: string
+          last_login: string | null
           last_password_change: string | null
           must_change_password: boolean | null
           password_change_required_at: string | null
           password_changed_at: string | null
           password_expires_at: string | null
+          permissions: Json | null
           phone: string | null
+          preferences: Json | null
           role: Database["public"]["Enums"]["user_role"]
           specialty: string | null
           status: Database["public"]["Enums"]["user_status"]
@@ -483,17 +532,21 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string | null
+          department?: string | null
           email: string
           force_password_change?: boolean | null
           full_name?: string | null
           hospital_code?: string | null
           id: string
+          last_login?: string | null
           last_password_change?: string | null
           must_change_password?: boolean | null
           password_change_required_at?: string | null
           password_changed_at?: string | null
           password_expires_at?: string | null
+          permissions?: Json | null
           phone?: string | null
+          preferences?: Json | null
           role?: Database["public"]["Enums"]["user_role"]
           specialty?: string | null
           status?: Database["public"]["Enums"]["user_status"]
@@ -503,17 +556,21 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string | null
+          department?: string | null
           email?: string
           force_password_change?: boolean | null
           full_name?: string | null
           hospital_code?: string | null
           id?: string
+          last_login?: string | null
           last_password_change?: string | null
           must_change_password?: boolean | null
           password_change_required_at?: string | null
           password_changed_at?: string | null
           password_expires_at?: string | null
+          permissions?: Json | null
           phone?: string | null
+          preferences?: Json | null
           role?: Database["public"]["Enums"]["user_role"]
           specialty?: string | null
           status?: Database["public"]["Enums"]["user_status"]
@@ -586,6 +643,93 @@ export type Database = {
           scope?: string | null
           updated_at?: string | null
           value?: Json
+        }
+        Relationships: []
+      }
+      unified_requests: {
+        Row: {
+          assigned_to: string | null
+          attachments: Json | null
+          branch_code: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          custom_fields: Json | null
+          excel_row_number: number | null
+          excel_upload_id: string | null
+          hospital_code: string
+          hospital_name: string | null
+          id: string
+          loss_reason: string | null
+          medical_condition: string
+          notes: string | null
+          paid_amount: number | null
+          patient_email: string | null
+          patient_id: string | null
+          patient_name: string
+          patient_phone: string | null
+          request_date: string
+          source_type: string
+          specialty: string
+          status: string
+          updated_at: string
+          urgency: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          branch_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          custom_fields?: Json | null
+          excel_row_number?: number | null
+          excel_upload_id?: string | null
+          hospital_code: string
+          hospital_name?: string | null
+          id?: string
+          loss_reason?: string | null
+          medical_condition: string
+          notes?: string | null
+          paid_amount?: number | null
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name: string
+          patient_phone?: string | null
+          request_date?: string
+          source_type?: string
+          specialty: string
+          status?: string
+          updated_at?: string
+          urgency?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          branch_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          custom_fields?: Json | null
+          excel_row_number?: number | null
+          excel_upload_id?: string | null
+          hospital_code?: string
+          hospital_name?: string | null
+          id?: string
+          loss_reason?: string | null
+          medical_condition?: string
+          notes?: string | null
+          paid_amount?: number | null
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string
+          patient_phone?: string | null
+          request_date?: string
+          source_type?: string
+          specialty?: string
+          status?: string
+          updated_at?: string
+          urgency?: string | null
         }
         Relationships: []
       }
