@@ -176,6 +176,7 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
       achievement: integratedData.metrics.achievement,
       ytdGrowth: integratedData.metrics.ytdGrowth,
       mtdGrowth: integratedData.metrics.mtdGrowth,
+      mcBranchCases: integratedData.totalCases,
       doneCases: integratedData.conversionData.done,
       totalCases: integratedData.conversionData.total,
       conversionRate: parseFloat(integratedData.conversionData.rate)
@@ -304,21 +305,41 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     console.log('Selected Month:', selectedMonth, 'Selected Year:', selectedYear);
     console.log('Sample current month data:', currentMonthData.slice(0, 3));
 
-    // MC branch counts based on current month data
+    // MC branch counts based on current month data with enhanced detection
     const mcj1Cases = currentMonthData.filter((req: any) => {
       const possibleFields = [
         req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
         req['My Clinic Branch'], req.clinicBranch, req['Column H'],
         req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
         req['Referred From'], req['Hospital Code'], req.source, req.origin,
-        req['Branch'], req['Clinic Branch'], req['MC Branch']
+        req['Branch'], req['Clinic Branch'], req['MC Branch'],
+        req.branchCode, req.branch_code, req['Branch Code']
       ];
-      const columnHValue = possibleFields.find((val: any) => val !== undefined && val !== null && val !== '') || '';
+      
+      const columnHValue = possibleFields.find((val: any) => {
+        if (val === undefined || val === null || val === '') return false;
+        const str = String(val).trim();
+        return str.length > 0;
+      }) || '';
+      
       const valueStr = String(columnHValue).toLowerCase().trim();
-      const isMatch = valueStr.includes('al muhammadiyah') || valueStr.includes('muhammadiyah') || valueStr.includes('mc al muhammadiyah') || valueStr.includes('mcj1') || valueStr.includes('mc j1') || valueStr === 'mcj1' || valueStr.includes('mc1') || valueStr.includes('myclinic muhammadiyah');
-      if (isMatch) {
-        console.log('MCJ1 Match found:', valueStr, 'from fields:', possibleFields);
-      }
+      
+      // Enhanced MCJ1 detection including exact match from your data
+      const mcj1Patterns = [
+        'mcj1 - (mc al muhammadiyah)',
+        'mcj1',
+        'mc j1',
+        'mc1',
+        'al muhammadiyah',
+        'muhammadiyah',
+        'mc al muhammadiyah',
+        'myclinic muhammadiyah'
+      ];
+      
+      const isMatch = mcj1Patterns.some(pattern => 
+        valueStr.includes(pattern) || valueStr === pattern
+      );
+      
       return isMatch;
     });
     
@@ -328,14 +349,33 @@ const currentMonthData = consolidatedData.filter((item: any) => {
         req['My Clinic Branch'], req.clinicBranch, req['Column H'],
         req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
         req['Referred From'], req['Hospital Code'], req.source, req.origin,
-        req['Branch'], req['Clinic Branch'], req['MC Branch']
+        req['Branch'], req['Clinic Branch'], req['MC Branch'],
+        req.branchCode, req.branch_code, req['Branch Code']
       ];
-      const columnHValue = possibleFields.find((val: any) => val !== undefined && val !== null && val !== '') || '';
+      
+      const columnHValue = possibleFields.find((val: any) => {
+        if (val === undefined || val === null || val === '') return false;
+        const str = String(val).trim();
+        return str.length > 0;
+      }) || '';
+      
       const valueStr = String(columnHValue).toLowerCase().trim();
-      const isMatch = valueStr.includes('al safa') || valueStr.includes('safa') || valueStr.includes('mc al safa') || valueStr.includes('mcj2') || valueStr.includes('mc j2') || valueStr === 'mcj2' || valueStr.includes('mc2') || valueStr.includes('myclinic safa');
-      if (isMatch) {
-        console.log('MCJ2 Match found:', valueStr, 'from fields:', possibleFields);
-      }
+      
+      // Enhanced MCJ2 detection
+      const mcj2Patterns = [
+        'mcj2',
+        'mc j2',
+        'mc2',
+        'al safa',
+        'safa',
+        'mc al safa',
+        'myclinic safa'
+      ];
+      
+      const isMatch = mcj2Patterns.some(pattern => 
+        valueStr.includes(pattern) || valueStr === pattern
+      );
+      
       return isMatch;
     });
 
@@ -382,12 +422,29 @@ const currentMonthData = consolidatedData.filter((item: any) => {
       }).length
     };
     
+    // Calculate conversion metrics matching your expected values
     const doneCount = statusCounts.completed;
     const scheduledCount = statusCounts.scheduled;
     const plannedNVDCount = statusCounts.plannedNVD;
+    const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount; // This should be 165 for July
+    
+    // Total cases should be all referred cases (209 for July)
     const totalCasesCount = currentMonthData.length;
-    const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount;
-    const conversionRate = totalCasesCount > 0 ? ((totalDoneAndScheduled / totalCasesCount) * 100).toFixed(2) : '0.00';
+    
+    // Conversion rate: (done + scheduled + planned NVD) / total referred cases * 100
+    const conversionRateValue = totalCasesCount > 0 ? (totalDoneAndScheduled / totalCasesCount) * 100 : 0;
+    
+    console.log(`SIA Calculation Debug:
+      Month: ${selectedMonth}/${selectedYear}
+      Total Cases: ${totalCasesCount}
+      MCJ1 Cases: ${mcj1Cases.length}
+      MCJ2 Cases: ${mcj2Cases.length}
+      Done: ${doneCount}
+      Scheduled: ${scheduledCount}
+      Planned NVD: ${plannedNVDCount}
+      Total Done+Scheduled+Planned: ${totalDoneAndScheduled}
+      Conversion Rate: ${conversionRateValue.toFixed(1)}%
+    `);
     
     // Top hospitals/specialties based on current month data (with normalization)
     const hospitalCounts = currentMonthData.reduce((acc: any, req: any) => {
@@ -431,13 +488,16 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     
     return {
       consolidatedData,
-financeData: currentMonthFinance,
-customerCareData,
-mcBranchCounts: { mcj1: mcj1Cases.length, mcj2: mcj2Cases.length, total: mcj1Cases.length + mcj2Cases.length },
-conversionData: {
-  done: totalDoneAndScheduled,
-  total: totalCasesCount,
-  rate: conversionRate,
+      financeData: currentMonthFinance,
+      customerCareData,
+      totalCases: totalCasesCount,
+      mcj1Cases: mcj1Cases.length,
+      mcj2Cases: mcj2Cases.length,
+      mcBranchCounts: { mcj1: mcj1Cases.length, mcj2: mcj2Cases.length, total: mcj1Cases.length + mcj2Cases.length },
+      conversionData: {
+        done: totalDoneAndScheduled,
+        total: totalCasesCount,
+        rate: conversionRateValue.toFixed(1),
         breakdown: { doneCount, scheduledCount, plannedNVDCount }
       },
       metrics: {
