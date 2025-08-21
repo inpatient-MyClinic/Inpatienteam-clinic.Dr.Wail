@@ -6,7 +6,7 @@ import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
 import { requestStorage } from "@/services/requestStorage";
 import { dataIntegrationService } from "@/services/dataIntegrationService";
-import { DataDebugger } from "@/components/admin/DataDebugger";
+
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
@@ -256,9 +256,6 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="fixed top-4 right-4 z-50">
-        <DataDebugger />
-      </div>
       <AdminDashboardLayout
       activeFilter={activeFilter}
       selectedDates={selectedDates}
