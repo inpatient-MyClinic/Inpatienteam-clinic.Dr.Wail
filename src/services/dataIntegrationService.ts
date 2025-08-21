@@ -407,9 +407,44 @@ class DataIntegrationService {
 
   // Real-time sync between local storage and Supabase
   async syncLocalStorageToSupabase(): Promise<void> {
-    // Disabled - using unified data service instead
-    console.log('Legacy sync disabled - using unified data service');
-    return;
+    try {
+      const localRequests = requestStorage.getAllRequests();
+      const currentUser = await this.getCurrentUser();
+      
+      if (!currentUser) {
+        console.warn('No authenticated user for sync');
+        return;
+      }
+
+      for (const localRequest of localRequests) {
+        // Check if this request already exists in Supabase
+        const { data: existing } = await supabase
+          .from('medical_requests')
+          .select('id')
+          .eq('patient_name', localRequest.patientName)
+          .eq('request_date', localRequest.dateCreated)
+          .single();
+
+        if (!existing) {
+          // Create in Supabase
+          await this.createMedicalRequest({
+            patient_name: localRequest.patientName || 'Unknown',
+            patient_id: localRequest.patientNationalId || '',
+            hospital_code: localRequest.hospitalMRN || 'UNK',
+            hospital_name: localRequest.hospitalName || 'Unknown',
+            specialty: localRequest.specialty || 'General',
+            
+            status: this.normalizeStatus(localRequest.status || 'pending') as any,
+            created_by: currentUser.id,
+            request_date: localRequest.dateCreated || new Date().toISOString().split('T')[0],
+            paid_amount: 0,
+            notes: localRequest.notes || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing local storage to Supabase:', error);
+    }
   }
 }
 

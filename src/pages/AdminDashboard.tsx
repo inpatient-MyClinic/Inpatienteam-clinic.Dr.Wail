@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import AdminDashboardLayout from "@/components/admin/AdminDashboardLayout";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
-import { useUnifiedData } from "@/hooks/useUnifiedData";
+import { useIntegratedData } from "@/hooks/useIntegratedData";
 import { filterAdminData } from "@/utils/adminFilters";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
@@ -18,20 +18,20 @@ export default function AdminDashboard() {
   const [showPivotUpload, setShowPivotUpload] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>(null);
 
-  // Unified data management
+  // Integrated data management
   const {
     currentUser,
-    allUsers,
+    users,
     requests,
-    analytics,
+    transactions,
     isLoading,
-    refreshData,
+    loadAllData,
     importExcelData,
-    getFinanceTransactions,
+    getAnalytics,
     canManageUsers,
     canViewFinance,
     canImportData
-  } = useUnifiedData();
+  } = useIntegratedData();
 
   // Local dashboard state
   const {
@@ -67,10 +67,15 @@ export default function AdminDashboard() {
 
   // Load analytics data
   useEffect(() => {
-    if (currentUser?.role === 'admin' && analytics) {
-      setAnalyticsData(analytics);
-    }
-  }, [currentUser, analytics]);
+    const loadAnalytics = async () => {
+      if (currentUser?.role === 'admin') {
+        const data = await getAnalytics();
+        setAnalyticsData(data);
+      }
+    };
+    
+    loadAnalytics();
+  }, [currentUser, getAnalytics]);
 
   // Excel upload handler
   const handleExcelUpload = async (excelData: any[]) => {
@@ -79,21 +84,10 @@ export default function AdminDashboard() {
     }
     
     try {
-      // Create basic column mappings for legacy data
-      const columnMappings = {
-        'Patient Name': 'patient_name',
-        'Patient ID': 'patient_id', 
-        'Specialty': 'specialty',
-        'Hospital Code': 'hospital_code',
-        'Hospital Name': 'hospital_name',
-        'Status': 'status',
-        'Date': 'request_date',
-        'Paid Amount': 'paid_amount'
-      };
-      
-      await importExcelData('admin-upload.xlsx', excelData, columnMappings);
-      // Refresh data after import
-      await refreshData();
+      await importExcelData(excelData);
+      // Refresh analytics after import
+      const data = await getAnalytics();
+      setAnalyticsData(data);
     } catch (error) {
       console.error('Excel upload failed:', error);
     }
