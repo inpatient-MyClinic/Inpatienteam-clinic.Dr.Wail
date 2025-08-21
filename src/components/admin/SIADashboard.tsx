@@ -6,7 +6,7 @@ import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar } from "lucide-
 import { useSIAFilters } from "@/hooks/useSIAFilters";
 import { useSIAAnalytics } from "@/hooks/useSIAAnalytics";
 import { DataExcelMigrationService } from "@/services/dataExcelMigration";
-import SIAFiltersBar from "./SIAFiltersBar";
+import EnhancedSIAFilters from "./EnhancedSIAFilters";
 import SIAConfigurationModal from "./SIAConfigurationModal";
 import SIALossTreeModal from "./SIALossTreeModal";
 import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
@@ -125,11 +125,18 @@ export default function SIADashboard() {
       </div>
 
       {/* Filters */}
-      <SIAFiltersBar 
-        filters={filters} 
-        onUpdateFilter={updateFilter} 
-        onClearFilters={clearFilters}
-      />
+          <EnhancedSIAFilters
+            filters={filters}
+            onUpdateFilter={updateFilter}
+            onClearFilters={clearFilters}
+            onAnalyze={(analysis) => {
+              console.log('SIA Analysis Result:', analysis);
+              toast({
+                title: "Analysis Complete",
+                description: `Found ${analysis.monthData.totalCases} cases for ${analysis.selectedMonth}`,
+              });
+            }}
+          />
 
       {/* Main KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
