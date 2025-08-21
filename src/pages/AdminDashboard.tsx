@@ -6,6 +6,7 @@ import { adminData } from "@/data/adminData";
 import { filterAdminData } from "@/utils/adminFilters";
 import { requestStorage } from "@/services/requestStorage";
 import { dataIntegrationService } from "@/services/dataIntegrationService";
+import { DataDebugger } from "@/components/admin/DataDebugger";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
@@ -49,6 +50,23 @@ export default function AdminDashboard() {
     handleCloseFinanceAnalytics,
     handleToggleNewUserRequests,
   } = useAdminDashboard();
+
+  // Custom Excel upload handler
+  const customHandleExcelUpload = (data: any[]) => {
+    console.log('Admin Dashboard: Processing Excel upload with', data.length, 'rows');
+    dataIntegrationService.processExcelData(data).then(result => {
+      console.log('Excel processing result:', result);
+      // Trigger data refresh
+      const loadAllData = async () => {
+        const analyticsData = dataIntegrationService.getAnalyticsData();
+        console.log('Admin Dashboard - Excel upload complete, reloading data...');
+        setAllRequestsData(analyticsData);
+      };
+      loadAllData();
+    }).catch(error => {
+      console.error('Excel upload error:', error);
+    });
+  };
 
   // Load request data from integrated data service
   useEffect(() => {
@@ -237,7 +255,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <AdminDashboardLayout
+    <div>
+      <div className="fixed top-4 right-4 z-50">
+        <DataDebugger />
+      </div>
+      <AdminDashboardLayout
       activeFilter={activeFilter}
       selectedDates={selectedDates}
       selectedWeeks={selectedWeeks}
@@ -259,7 +281,7 @@ export default function AdminDashboard() {
       onWeekSelect={setSelectedWeeks}
       onMonthSelect={setSelectedMonths}
       onClearAllDateFilters={handleClearAllDateFilters}
-      onExcelUpload={handleExcelUpload}
+      onExcelUpload={customHandleExcelUpload}
       onExport={handleExport}
       onPrint={handlePrint}
       onTogglePrivilegesSearch={handleTogglePrivilegesSearch}
@@ -273,5 +295,6 @@ export default function AdminDashboard() {
       onToggleNewUserRequests={handleToggleNewUserRequests}
       onCloseFinanceAnalytics={handleCloseFinanceAnalytics}
     />
+    </div>
   );
 }

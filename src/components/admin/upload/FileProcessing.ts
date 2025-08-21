@@ -15,41 +15,60 @@ export const processUploadData = async (data: any[]): Promise<UploadResult> => {
   const details: string[] = [];
 
   console.log(`Processing ${data.length} requests from Excel file`);
+  console.log('Sample row columns:', Object.keys(data[0] || {}));
 
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     
-    // Check for essential fields with flexible column names
-    const requestId = row["Request ID"] || row["ID"] || row["Request Id"] || row["request_id"];
-    const patientName = row["Patient Name"] || row["Name"] || row["patient_name"] || row["PatientName"];
+    // Check for patient name with very flexible column matching
+    const patientName = row["Patient Name"] || row["Patient's Name:"] || row["Name"] || 
+                       row["patient_name"] || row["PatientName"] || row["PATIENT_NAME"] ||
+                       row["Patient's Name"] || row["Patient"] || row["Full Name"];
     
-    if (!requestId) {
+    if (!patientName || patientName.toString().trim() === '') {
       errors++;
-      details.push(`Row ${i + 1}: Missing Request ID (tried: Request ID, ID, Request Id, request_id)`);
+      details.push(`Row ${i + 1}: Missing Patient Name - please check column names`);
       continue;
     }
 
-    if (!patientName) {
-      errors++;
-      details.push(`Row ${i + 1}: Missing Patient Name (tried: Patient Name, Name, patient_name, PatientName)`);
-      continue;
-    }
-
-    // Check date fields
-    const creationDate = row["Request Creation Date"] || row["Creation Date"] || row["Date Created"] || row["date_created"];
-    if (creationDate) {
-      const date = new Date(creationDate);
-      if (isNaN(date.getTime())) {
-        warnings++;
-        details.push(`Row ${i + 1}: Invalid date format for Request Creation Date: ${creationDate}`);
-      }
-    } else {
+    // Check for specialty
+    const specialty = row["Specialty"] || row["Medical Specialty"] || row["Department"] || 
+                     row["SPECIALTY"] || row["Service"] || row["specialty"];
+    
+    if (!specialty || specialty.toString().trim() === '') {
       warnings++;
-      details.push(`Row ${i + 1}: No creation date found`);
+      details.push(`Row ${i + 1}: Missing Specialty - will default to 'General'`);
+    }
+
+    // Check date fields with flexible matching
+    const creationDate = row["Request Creation Date"] || row["Date of Request:"] ||
+                        row["Creation Date"] || row["Date Created"] || row["Date"] ||
+                        row["REQUEST_DATE"] || row["Created At"] || row["date"];
+    
+    if (!creationDate) {
+      warnings++;
+      details.push(`Row ${i + 1}: No creation date found - will use current date`);
+    } else {
+      // Try to parse the date
+      const dateStr = creationDate.toString();
+      let parsedDate = null;
+      
+      // Handle Excel serial numbers
+      if (!isNaN(Number(dateStr)) && Number(dateStr) > 25000) {
+        const excelDate = Number(dateStr);
+        parsedDate = new Date((excelDate - 25569) * 86400 * 1000);
+      } else {
+        parsedDate = new Date(dateStr);
+      }
+      
+      if (isNaN(parsedDate.getTime())) {
+        warnings++;
+        details.push(`Row ${i + 1}: Invalid date format: ${dateStr}`);
+      }
     }
 
     success++;
-    details.push(`Row ${i + 1}: Request ${requestId} - ${patientName} processed successfully`);
+    details.push(`Row ${i + 1}: ${patientName} - Ready for processing`);
   }
 
   console.log(`Processing complete: ${success} success, ${errors} errors, ${warnings} warnings`);

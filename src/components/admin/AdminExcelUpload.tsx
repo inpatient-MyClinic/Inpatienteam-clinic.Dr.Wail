@@ -63,15 +63,24 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+      console.log(`Excel file processed: ${jsonData.length} rows found`);
+      console.log('Sample data:', jsonData.slice(0, 2));
+
       // Validate and process data
       const result = await processUploadData(jsonData);
       setUploadResult(result);
       setPreviewData(jsonData);
+
+      toast({
+        title: "File Processed",
+        description: `${jsonData.length} rows found in Excel file`,
+      });
       
     } catch (error) {
+      console.error('Excel upload error:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to process the Excel file. Please check the format.",
+        description: `Failed to process the Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -85,28 +94,38 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
     let warnings = 0;
     const details: string[] = [];
 
+    console.log(`Validating ${data.length} rows for Excel upload...`);
+
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       
-      // Validate required fields
-      if (!row["Unified ID"]) {
+      // Check for patient name (flexible column names)
+      const patientName = row['Patient Name'] || row["Patient's Name:"] || row['PatientName'] || row['Name'];
+      if (!patientName || patientName.trim() === '') {
         errors++;
-        details.push(`Row ${i + 1}: Missing Unified ID`);
+        details.push(`Row ${i + 1}: Missing Patient Name`);
         continue;
       }
 
-      // Check for existing record
-      const existingRecord = await checkExistingRecord(row["Unified ID"]);
-      if (existingRecord) {
+      // Check for specialty
+      const specialty = row['Specialty'] || row['Medical Specialty'];
+      if (!specialty || specialty.trim() === '') {
         warnings++;
-        details.push(`Row ${i + 1}: Updated existing record ${row["Unified ID"]}`);
-      } else {
-        details.push(`Row ${i + 1}: Created new record ${row["Unified ID"]}`);
+        details.push(`Row ${i + 1}: Missing Specialty - will use 'General'`);
+      }
+
+      // Check date fields
+      const creationDate = row['Request Creation Date'] || row['Date Created'] || row['Date'];
+      if (!creationDate) {
+        warnings++;
+        details.push(`Row ${i + 1}: No creation date found - will use current date`);
       }
 
       success++;
+      details.push(`Row ${i + 1}: ${patientName} - Ready for import`);
     }
 
+    console.log(`Validation complete: ${success} valid, ${errors} errors, ${warnings} warnings`);
     return { success, errors, warnings, details };
   };
 
@@ -149,10 +168,19 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
 
   const handleSave = () => {
     if (uploadResult && uploadResult.success > 0) {
+      console.log(`Admin Excel Upload: Saving ${previewData.length} rows to data integration service`);
       onUpload(previewData);
+      
+      // Mark Excel data as imported
+      localStorage.setItem('excel_data_imported', 'true');
+      
+      // Trigger data refresh events
+      window.dispatchEvent(new CustomEvent('requestsUpdated'));
+      window.dispatchEvent(new Event('storage'));
+      
       toast({
         title: "Upload Successful",
-        description: `${uploadResult.success} records processed successfully.`,
+        description: `${uploadResult.success} records imported successfully.`,
       });
       handleCancel();
     }
