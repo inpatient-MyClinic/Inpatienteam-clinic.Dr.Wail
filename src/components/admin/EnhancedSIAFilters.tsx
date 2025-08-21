@@ -86,8 +86,8 @@ export default function EnhancedSIAFilters({
       const startOfMonth = new Date(filters.month.getFullYear(), filters.month.getMonth(), 1);
       const endOfMonth = new Date(filters.month.getFullYear(), filters.month.getMonth() + 1, 0);
 
-      // Get data for the selected month from both tables
-      const [medicalData, excelData] = await Promise.all([
+      // Get data for the selected month from both tables AND excel raw data
+      const [medicalData, excelData, excelRawData] = await Promise.all([
         supabase
           .from('medical_requests')
           .select('status, branch_code, created_at')
@@ -98,15 +98,58 @@ export default function EnhancedSIAFilters({
           .from('excel_requests')
           .select('status, branch_code, created_at')
           .gte('created_at', startOfMonth.toISOString())
-          .lte('created_at', endOfMonth.toISOString())
+          .lte('created_at', endOfMonth.toISOString()),
+
+        // Get excel raw data with column mapping AP (month) and AI (status)
+        supabase
+          .from('excel_rows_raw')
+          .select('Status, Branch, Date, "Hospital Name", Specialty')
+          .not('Status', 'is', null)
       ]);
 
       if (medicalData.error) throw medicalData.error;
       if (excelData.error) throw excelData.error;
+      if (excelRawData.error) throw excelRawData.error;
 
-      const monthData = [...(medicalData.data || []), ...(excelData.data || [])];
+      // Helper function to parse Excel date from column AP
+      const parseExcelDate = (dateValue: any): Date | null => {
+        if (!dateValue) return null;
+        
+        // Handle Excel serial numbers
+        if (typeof dateValue === 'number' && dateValue > 25000) {
+          return new Date((dateValue - 25569) * 86400 * 1000);
+        }
+        
+        // Handle date strings
+        if (typeof dateValue === 'string') {
+          const parsed = new Date(dateValue);
+          return !isNaN(parsed.getTime()) ? parsed : null;
+        }
+        
+        return null;
+      };
 
-      // Calculate status breakdown
+      // Filter excel raw data by month (column AP) to match selected month
+      const filteredExcelRaw = (excelRawData.data || []).filter(item => {
+        const itemDate = parseExcelDate(item.Date);
+        if (!itemDate) return false;
+        
+        return itemDate.getMonth() === filters.month.getMonth() && 
+               itemDate.getFullYear() === filters.month.getFullYear();
+      });
+
+      // Combine all data sources
+      const monthData = [
+        ...(medicalData.data || []), 
+        ...(excelData.data || []),
+        ...filteredExcelRaw.map(item => ({
+          status: item.Status, // Column AI - Status
+          branch_code: item.Branch,
+          created_at: parseExcelDate(item.Date)?.toISOString()
+        }))
+      ];
+
+      // Calculate status breakdown from column AI (Status)
       const statusBreakdown: Record<string, number> = {};
       monthData.forEach(item => {
         if (item.status) {
@@ -314,12 +357,11 @@ export default function EnhancedSIAFilters({
 
           <div className="mt-4 p-3 bg-muted/50 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              <strong>Excel Pivot Table Analysis:</strong> 
-              Month: {analysisResult.selectedMonth} | Grand Total: {analysisResult.monthData.totalCases} Patient MRNs | 
-              Status Distribution → Branch Distribution → SIA Dashboard Updates
+              <strong>Excel Column Analysis:</strong> 
+              Month: {analysisResult.selectedMonth} (Column AP) | Status: Column AI | Grand Total: {analysisResult.monthData.totalCases} Patient MRNs
             </p>
             <div className="mt-2 text-xs text-muted-foreground">
-              This matches your Excel pivot table structure with Count of Patient's MRN by status and branch.
+              Analysis combines data from database tables + Excel raw data filtered by Column AP (Month) and Column AI (Status).
             </div>
           </div>
         </Card>
