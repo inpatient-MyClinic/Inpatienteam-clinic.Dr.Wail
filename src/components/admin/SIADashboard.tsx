@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar } from "lucide-react";
+import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar, FileSpreadsheet } from "lucide-react";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
 import { useSIAAnalytics } from "@/hooks/useSIAAnalytics";
 import { DataExcelMigrationService } from "@/services/dataExcelMigration";
 import EnhancedSIAFilters from "./EnhancedSIAFilters";
+import ExcelDataAnalyzer from "./ExcelDataAnalyzer";
 import SIAConfigurationModal from "./SIAConfigurationModal";
 import SIALossTreeModal from "./SIALossTreeModal";
 import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
@@ -18,6 +19,7 @@ export default function SIADashboard() {
   const [showConversionConfig, setShowConversionConfig] = useState(false);
   const [showLossTreeConfig, setShowLossTreeConfig] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
+  const [showExcelAnalyzer, setShowExcelAnalyzer] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<string>('');
   const { toast } = useToast();
 
@@ -66,6 +68,20 @@ export default function SIADashboard() {
 
   if (showMonthlyAnalytics) {
     return <MonthlyAnalyticsDashboard onClose={() => setShowMonthlyAnalytics(false)} />;
+  }
+
+  if (showExcelAnalyzer) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Excel Data Analyzer</h1>
+          <Button variant="outline" onClick={() => setShowExcelAnalyzer(false)}>
+            Back to SIA Dashboard
+          </Button>
+        </div>
+        <ExcelDataAnalyzer />
+      </div>
+    );
   }
 
   if (loading) {
@@ -117,7 +133,15 @@ export default function SIADashboard() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end gap-2 mb-4">
+        <Button 
+          variant="outline" 
+          onClick={() => setShowExcelAnalyzer(true)} 
+          className="flex items-center gap-2"
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          Excel Analyzer
+        </Button>
         <Button onClick={() => setShowMonthlyAnalytics(true)} className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           Monthly Analytics
