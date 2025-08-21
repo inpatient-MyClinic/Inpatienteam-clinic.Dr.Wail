@@ -326,9 +326,68 @@ class UnifiedDataService {
   private mapExcelRow(row: any, mappings: Record<string, string>): any {
     const mapped: any = {};
     for (const [excelColumn, dbField] of Object.entries(mappings)) {
-      mapped[dbField] = row[excelColumn];
+      let value = row[excelColumn];
+      
+      // Convert Excel date serial numbers to proper dates
+      if (dbField === 'request_date' && value) {
+        value = this.convertExcelDate(value);
+      }
+      
+      mapped[dbField] = value;
     }
     return mapped;
+  }
+
+  private convertExcelDate(value: any): string {
+    // If it's already a proper date string, return it
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+    
+    // If it's a JS Date object, convert to YYYY-MM-DD
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return value.toISOString().split('T')[0];
+    }
+    
+    // Handle Excel serial date numbers
+    if (typeof value === 'number' || (typeof value === 'string' && /^\d+(\.\d+)?$/.test(value))) {
+      const excelDate = typeof value === 'number' ? value : parseFloat(value);
+      
+      // Excel dates start from 1900-01-01 (with 1900 incorrectly treated as leap year)
+      // Excel serial 1 = 1900-01-01, but we need to adjust for the 1900 leap year bug
+      if (excelDate >= 1 && excelDate <= 2958465) { // Valid Excel date range
+        const jsDate = new Date((excelDate - 25569) * 86400 * 1000); // 25569 = days between 1900-01-01 and 1970-01-01
+        if (!isNaN(jsDate.getTime())) {
+          return jsDate.toISOString().split('T')[0];
+        }
+      }
+    }
+    
+    // Try to parse various date formats
+    if (typeof value === 'string') {
+      // Try DD/MM/YYYY format
+      const ddmmyyyy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+      if (ddmmyyyy) {
+        const [, day, month, year] = ddmmyyyy;
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      }
+      
+      // Try MM/DD/YYYY format
+      const mmddyyyy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+      if (mmddyyyy) {
+        const [, month, day, year] = mmddyyyy;
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      }
+    }
+    
+    // If all else fails, return today's date
+    return new Date().toISOString().split('T')[0];
   }
 
   private validateExcelRow(data: any, rowNumber: number): { isValid: boolean; errors: string[] } {
@@ -563,7 +622,7 @@ class UnifiedDataService {
             // Convert local storage format to unified format
             const unifiedRequest: any = {
               source_type: 'manual',
-              request_date: request.requestDate || new Date().toISOString().split('T')[0],
+              request_date: this.convertExcelDate(request.requestDate) || new Date().toISOString().split('T')[0],
               created_by: currentUser.id,
               patient_name: request.patientName,
               patient_id: request.patientId,
