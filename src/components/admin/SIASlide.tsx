@@ -383,40 +383,41 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     // Status distribution and conversion counts from REFERRED cases only
     const statusCounts = {
       completed: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
-        return s.includes('done') || s.includes('completed') || s.includes('complete');
+        // Match exact status patterns from Excel
+        return s === 'done' || s === 'completed' || s === 'complete' || s === 'finished';
       }).length,
       pending: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
-        return s.includes('pending') || s.includes('waiting');
+        return s === 'pending' || s === 'waiting' || s === 'review' || s === 'under review';
       }).length,
       cancelled: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
-        return s.includes('cancelled') || s.includes('canceled');
+        return s === 'cancelled' || s === 'canceled' || s === 'cancel';
       }).length,
       rejected: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
-        return s.includes('rejected') || s.includes('declined');
+        return s === 'rejected' || s === 'declined' || s === 'deny' || s === 'denied';
       }).length,
       scheduled: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
-        return s.includes('scheduled') || s.includes('booked');
+        return s === 'scheduled' || s === 'booked' || s === 'appointment' || s === 'confirmed';
       }).length,
       plannedNVD: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status']];
+        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
         const status = statusFields.find((s: any) => s) || '';
         const s = String(status).toLowerCase().trim();
-        return s.includes('planned') || s.includes('nvd');
+        return s === 'planned' || s === 'nvd' || s === 'planned nvd' || s === 'planning';
       }).length
     };
     
@@ -431,6 +432,14 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     
     // Conversion rate: (done + scheduled + planned NVD) / total referred cases * 100
     const conversionRateValue = totalReferredCases > 0 ? (totalDoneAndScheduled / totalReferredCases) * 100 : 0;
+    
+    // Debug: log unique status values found
+    const uniqueStatuses = [...new Set(referredCases.map((req: any) => {
+      const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
+      const status = statusFields.find((s: any) => s) || '';
+      return String(status).trim();
+    }).filter(s => s))];
+    console.log('Unique status values found:', uniqueStatuses);
     
     console.log(`SIA Calculation Debug:
       Month: ${selectedMonth}/${selectedYear}
