@@ -109,41 +109,60 @@ export function useSIAAnalytics(filters: any) {
 }
 
 async function fetchBranchCases(filters: any) {
-  // Get both medical_requests and excel_requests data
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('branch_code, created_at, status, hospital_name, specialty')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31'),
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return { total: 0, mcj1: 0, mcj2: 0 };
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
     
-    supabase
-      .from('excel_requests')
-      .select('branch_code, created_at, status, hospital_name, specialty')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31')
-  ]);
+    if (typeof dateValue === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  // Combine data
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+  // Filter by selected month/year if specified
+  let filteredData = excelData;
   
+  if (filters.month && filters.year) {
+    filteredData = excelData.filter(row => {
+      const dateValue = row.Date;
+      if (!dateValue) return false;
+      
+      const date = parseExcelDate(dateValue);
+      if (!date) return false;
+      
+      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+    });
+  }
+
   // Apply additional filters
-  const filteredData = allData.filter(item => {
-    if (filters.statuses?.length > 0 && !filters.statuses.includes(item.status)) return false;
-    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(item.hospital_name)) return false;
-    if (filters.specialties?.length > 0 && !filters.specialties.includes(item.specialty)) return false;
-    if (filters.branches?.length > 0 && !filters.branches.includes(item.branch_code)) return false;
+  const finalFilteredData = filteredData.filter(row => {
+    if (filters.statuses?.length > 0 && !filters.statuses.includes(row.Status)) return false;
+    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(row["Hospital Name"])) return false;
+    if (filters.specialties?.length > 0 && !filters.specialties.includes(row.Specialty)) return false;
+    if (filters.branches?.length > 0 && !filters.branches.includes(row.Branch)) return false;
     return true;
   });
 
   const result = { total: 0, mcj1: 0, mcj2: 0 };
   
-  result.total = filteredData.length;
-  result.mcj1 = filteredData.filter(r => r.branch_code === 'MCJ1').length;
-  result.mcj2 = filteredData.filter(r => r.branch_code === 'MCJ2').length;
+  result.total = finalFilteredData.length;
+  result.mcj1 = finalFilteredData.filter(r => r.Branch === 'MCJ1').length;
+  result.mcj2 = finalFilteredData.filter(r => r.Branch === 'MCJ2').length;
 
   return result;
 }
@@ -225,37 +244,60 @@ async function fetchConversionRate(filters: any) {
 }
 
 async function fetchTopHospitals(filters: any): Promise<Array<{ name: string; count: number }>> {
-  // Get combined data
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('hospital_name, created_at, status, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31'),
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return [];
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
     
-    supabase
-      .from('excel_requests')
-      .select('hospital_name, created_at, status, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31')
-  ]);
+    if (typeof dateValue === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+  // Filter by selected month/year if specified
+  let filteredData = excelData;
   
-  // Apply filters and count
+  if (filters.month && filters.year) {
+    filteredData = excelData.filter(row => {
+      const dateValue = row.Date;
+      if (!dateValue) return false;
+      
+      const date = parseExcelDate(dateValue);
+      if (!date) return false;
+      
+      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+    });
+  }
+
+  // Apply additional filters and count hospitals
   const hospitalCounts: Record<string, number> = {};
   
-  allData.forEach(item => {
-    if (!item.hospital_name) return;
-    if (filters.statuses?.length > 0 && !filters.statuses.includes(item.status)) return;
-    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(item.hospital_name)) return;
-    if (filters.specialties?.length > 0 && !filters.specialties.includes(item.specialty)) return;
-    if (filters.branches?.length > 0 && !filters.branches.includes(item.branch_code)) return;
+  filteredData.forEach(row => {
+    const hospitalName = row["Hospital Name"];
+    if (!hospitalName) return;
     
-    hospitalCounts[item.hospital_name] = (hospitalCounts[item.hospital_name] || 0) + 1;
+    // Apply status filter if specified
+    if (filters.statuses?.length > 0 && !filters.statuses.includes(row.Status)) return;
+    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(hospitalName)) return;
+    if (filters.specialties?.length > 0 && !filters.specialties.includes(row.Specialty)) return;
+    if (filters.branches?.length > 0 && !filters.branches.includes(row.Branch)) return;
+    
+    hospitalCounts[hospitalName] = (hospitalCounts[hospitalName] || 0) + 1;
   });
 
   return Object.entries(hospitalCounts)
@@ -265,37 +307,60 @@ async function fetchTopHospitals(filters: any): Promise<Array<{ name: string; co
 }
 
 async function fetchTopSpecialties(filters: any): Promise<Array<{ name: string; count: number }>> {
-  // Get combined data
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('specialty, created_at, status, hospital_name, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31'),
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return [];
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
     
-    supabase
-      .from('excel_requests')
-      .select('specialty, created_at, status, hospital_name, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31')
-  ]);
+    if (typeof dateValue === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+  // Filter by selected month/year if specified
+  let filteredData = excelData;
   
-  // Apply filters and count
+  if (filters.month && filters.year) {
+    filteredData = excelData.filter(row => {
+      const dateValue = row.Date;
+      if (!dateValue) return false;
+      
+      const date = parseExcelDate(dateValue);
+      if (!date) return false;
+      
+      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+    });
+  }
+
+  // Apply additional filters and count specialties
   const specialtyCounts: Record<string, number> = {};
   
-  allData.forEach(item => {
-    if (!item.specialty) return;
-    if (filters.statuses?.length > 0 && !filters.statuses.includes(item.status)) return;
-    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(item.hospital_name)) return;
-    if (filters.specialties?.length > 0 && !filters.specialties.includes(item.specialty)) return;
-    if (filters.branches?.length > 0 && !filters.branches.includes(item.branch_code)) return;
+  filteredData.forEach(row => {
+    const specialty = row.Specialty;
+    if (!specialty) return;
     
-    specialtyCounts[item.specialty] = (specialtyCounts[item.specialty] || 0) + 1;
+    // Apply filters
+    if (filters.statuses?.length > 0 && !filters.statuses.includes(row.Status)) return;
+    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(row["Hospital Name"])) return;
+    if (filters.specialties?.length > 0 && !filters.specialties.includes(specialty)) return;
+    if (filters.branches?.length > 0 && !filters.branches.includes(row.Branch)) return;
+    
+    specialtyCounts[specialty] = (specialtyCounts[specialty] || 0) + 1;
   });
 
   return Object.entries(specialtyCounts)
