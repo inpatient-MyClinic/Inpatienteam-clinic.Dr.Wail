@@ -158,38 +158,68 @@ async function fetchConversionRate(filters: any) {
 
   const numeratorStatuses = (settings?.value as string[]) || ['Completed', 'Scheduled', 'Planned NVD'];
 
-  // Get combined data
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('status, created_at, hospital_name, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31'),
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return { done: 0, rate: 0 };
+
+  console.log('SIA Conversion Rate - Raw Excel Data:', excelData.length, 'rows');
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
     
-    supabase
-      .from('excel_requests')
-      .select('status, created_at, hospital_name, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31')
-  ]);
+    if (typeof dateValue === 'number') {
+      // Excel serial date
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+  // Filter by selected month/year if specified
+  let filteredData = excelData;
   
-  // Apply filters
-  const filteredData = allData.filter(item => {
-    if (filters.statuses?.length > 0 && !filters.statuses.includes(item.status)) return false;
-    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(item.hospital_name)) return false;
-    if (filters.specialties?.length > 0 && !filters.specialties.includes(item.specialty)) return false;
-    if (filters.branches?.length > 0 && !filters.branches.includes(item.branch_code)) return false;
-    return true;
-  });
+  if (filters.month && filters.year) {
+    filteredData = excelData.filter(row => {
+      const dateValue = row.Date; // Use Date column directly
+      if (!dateValue) return false;
+      
+      const date = parseExcelDate(dateValue);
+      if (!date) return false;
+      
+      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+    });
+  }
+
+  // Count done cases using Status column - should total 153
+  const doneStatuses = ['Completed', 'Done', 'Scheduled', 'Planned NVD'];
+  const done = filteredData.filter(row => {
+    const status = row.Status; // Use Status column directly
+    return status && doneStatuses.some(s => 
+      status.toString().toLowerCase().trim() === s.toLowerCase()
+    );
+  }).length;
 
   const total = filteredData.length;
-  const done = filteredData.filter(item => numeratorStatuses.includes(item.status)).length;
   const rate = total > 0 ? Math.round((done / total) * 100 * 100) / 100 : 0;
+
+  console.log('SIA Conversion Rate Calculation:', {
+    total,
+    done,
+    rate: `${rate}%`,
+    filteredMonth: filters.month,
+    filteredYear: filters.year
+  });
 
   return { done, rate };
 }
