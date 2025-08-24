@@ -747,23 +747,23 @@ export type Database = {
           upload_id: string | null
         }
         Insert: {
-          branch?: never
+          branch?: string | null
           case_date?: never
-          hospital?: never
-          paid_amount_text?: never
+          hospital?: string | null
+          paid_amount_text?: string | null
           row_no?: number | null
-          specialty?: never
-          status?: never
+          specialty?: string | null
+          status?: string | null
           upload_id?: string | null
         }
         Update: {
-          branch?: never
+          branch?: string | null
           case_date?: never
-          hospital?: never
-          paid_amount_text?: never
+          hospital?: string | null
+          paid_amount_text?: string | null
           row_no?: number | null
-          specialty?: never
-          status?: never
+          specialty?: string | null
+          status?: string | null
           upload_id?: string | null
         }
         Relationships: [
