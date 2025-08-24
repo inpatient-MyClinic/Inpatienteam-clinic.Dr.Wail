@@ -134,10 +134,11 @@ async function fetchBranchCases(filters: any) {
     return null;
   };
 
-  // Filter by selected month/year if specified
+  // Filter by selected month/year if specified - FIX: July should be month 7
   let filteredData = excelData;
   
   if (filters.month && filters.year) {
+    console.log('Filtering by month/year:', filters.month, filters.year);
     filteredData = excelData.filter(row => {
       const dateValue = row.Date;
       if (!dateValue) return false;
@@ -145,8 +146,22 @@ async function fetchBranchCases(filters: any) {
       const date = parseExcelDate(dateValue);
       if (!date) return false;
       
-      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+      const rowMonth = date.getMonth() + 1; // getMonth() is 0-based, so add 1
+      const rowYear = date.getFullYear();
+      
+      console.log('Date check:', { 
+        dateValue, 
+        parsedDate: date, 
+        rowMonth, 
+        rowYear, 
+        targetMonth: filters.month, 
+        targetYear: filters.year,
+        matches: rowMonth === filters.month && rowYear === filters.year 
+      });
+      
+      return rowMonth === filters.month && rowYear === filters.year;
     });
+    console.log(`Filtered data: ${filteredData.length} rows for ${filters.month}/${filters.year}`);
   }
 
   // Apply additional filters
@@ -220,27 +235,45 @@ async function fetchConversionRate(filters: any) {
     });
   }
 
-  // Count done cases using Status column - should total 153
-  const doneStatuses = ['Completed', 'Done', 'Scheduled', 'Planned NVD'];
+  // Count done cases using exact status mapping from Excel - should total 153
+  const doneStatuses = ['Done']; // Only 'Done' status counts as completed
+  const scheduledStatuses = ['Scheduled']; // 'Scheduled' is separate
+  const plannedStatuses = ['Planned NVD']; // 'Planned NVD' is separate
+  
   const done = filteredData.filter(row => {
-    const status = row.Status; // Use Status column directly
-    return status && doneStatuses.some(s => 
-      status.toString().toLowerCase().trim() === s.toLowerCase()
-    );
+    const status = row.Status?.toString().trim();
+    return status && doneStatuses.includes(status);
   }).length;
 
+  const scheduled = filteredData.filter(row => {
+    const status = row.Status?.toString().trim();
+    return status && scheduledStatuses.includes(status);
+  }).length;
+
+  const planned = filteredData.filter(row => {
+    const status = row.Status?.toString().trim();
+    return status && plannedStatuses.includes(status);
+  }).length;
+
+  // Total "conversion" includes Done + Scheduled + Planned NVD
+  const totalDone = done + scheduled + planned;
+
   const total = filteredData.length;
-  const rate = total > 0 ? Math.round((done / total) * 100 * 100) / 100 : 0;
+  const rate = total > 0 ? Math.round((totalDone / total) * 100 * 100) / 100 : 0;
 
   console.log('SIA Conversion Rate Calculation:', {
     total,
     done,
+    scheduled,
+    planned,
+    totalDone,
     rate: `${rate}%`,
     filteredMonth: filters.month,
-    filteredYear: filters.year
+    filteredYear: filters.year,
+    sampleStatuses: filteredData.slice(0, 10).map(r => r.Status)
   });
 
-  return { done, rate };
+  return { done: totalDone, rate };
 }
 
 async function fetchTopHospitals(filters: any): Promise<Array<{ name: string; count: number }>> {
@@ -376,8 +409,10 @@ async function fetchLossTree(filters: any) {
     .in('key', ['loss_cancelled_statuses', 'loss_pending_statuses'])
     .eq('scope', 'global');
 
-  const cancelledStatuses = (settings?.find(s => s.key === 'loss_cancelled_statuses')?.value as string[]) || ['Cancelled', 'Case Canceled'];
+  const cancelledStatuses = (settings?.find(s => s.key === 'loss_cancelled_statuses')?.value as string[]) || ['Case Canceled'];
   const pendingStatuses = (settings?.find(s => s.key === 'loss_pending_statuses')?.value as string[]) || ['Pending', 'Under Process'];
+
+  console.log('Loss tree statuses:', { cancelledStatuses, pendingStatuses });
 
   // Get raw Excel data for accurate calculation
   const { data: excelData, error } = await supabase
