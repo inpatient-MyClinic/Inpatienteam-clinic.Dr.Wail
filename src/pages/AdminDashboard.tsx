@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, FileSpreadsheet, Table2, Bug } from "lucide-react";
+import { useSIAFilters } from "@/hooks/useSIAFilters";
 import { useToast } from "@/hooks/use-toast";
 
 import { useExcelMonthlyAnalytics } from "@/hooks/useExcelMonthlyAnalytics";
@@ -11,7 +11,7 @@ import { mapExcelSliceToMetrics } from "@/lib/mapExcelSliceToMetrics";
 import { STATUS_KEYS, pickCount } from "@/lib/statusSynonyms";
 
 export default function AdminDashboard() {
-  // Use local state for month/year instead of SIA filters to avoid type issues
+  // Direct month/year state (no need to sync with SIA filters for this simpler approach)
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1); // 1..12
@@ -79,8 +79,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Left sidebar cards in your design are unchanged; below are the KPI counters */}
-
       {/* Status Counters Row (Excel-sourced) */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
         <Card className="bg-emerald-50">
@@ -121,12 +119,7 @@ export default function AdminDashboard() {
           <span className="font-medium">Admin Requests</span> —{" "}
           <span>{totalCases.toLocaleString()} total requests</span>
         </div>
-        {/* keep your gear/menu if you have one */}
       </div>
-
-      {/* Your table component (leave as-is).
-          If you also want the TABLE rows to be month-filtered,
-          bind its data to a month-filtered rows hook or source. */}
 
       {/* Top 5s from Excel slice */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
