@@ -376,51 +376,78 @@ async function fetchLossTree(filters: any) {
     .in('key', ['loss_cancelled_statuses', 'loss_pending_statuses'])
     .eq('scope', 'global');
 
-  const cancelledStatuses = (settings?.find(s => s.key === 'loss_cancelled_statuses')?.value as string[]) || [];
-  const pendingStatuses = (settings?.find(s => s.key === 'loss_pending_statuses')?.value as string[]) || [];
+  const cancelledStatuses = (settings?.find(s => s.key === 'loss_cancelled_statuses')?.value as string[]) || ['Cancelled', 'Case Canceled'];
+  const pendingStatuses = (settings?.find(s => s.key === 'loss_pending_statuses')?.value as string[]) || ['Pending', 'Under Process'];
 
-  // Get combined data
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('status, loss_reason, created_at, hospital_name, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31'),
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return {
+    cancelledTotal: 0,
+    pendingTotal: 0,
+    cancelledBreakdown: {},
+    pendingBreakdown: {}
+  };
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
     
-    supabase
-      .from('excel_requests')
-      .select('status, loss_reason, created_at, hospital_name, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31')
-  ]);
+    if (typeof dateValue === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+  // Filter by selected month/year if specified
+  let filteredData = excelData;
   
-  // Apply filters
-  const filteredData = allData.filter(item => {
-    if (filters.statuses?.length > 0 && !filters.statuses.includes(item.status)) return false;
-    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(item.hospital_name)) return false;
-    if (filters.specialties?.length > 0 && !filters.specialties.includes(item.specialty)) return false;
-    if (filters.branches?.length > 0 && !filters.branches.includes(item.branch_code)) return false;
+  if (filters.month && filters.year) {
+    filteredData = excelData.filter(row => {
+      const dateValue = row.Date;
+      if (!dateValue) return false;
+      
+      const date = parseExcelDate(dateValue);
+      if (!date) return false;
+      
+      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+    });
+  }
+
+  // Apply additional filters
+  const finalFilteredData = filteredData.filter(row => {
+    if (filters.statuses?.length > 0 && !filters.statuses.includes(row.Status)) return false;
+    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(row["Hospital Name"])) return false;
+    if (filters.specialties?.length > 0 && !filters.specialties.includes(row.Specialty)) return false;
+    if (filters.branches?.length > 0 && !filters.branches.includes(row.Branch)) return false;
     return true;
   });
 
   // Calculate totals and breakdowns
-  const cancelledTotal = filteredData.filter(item => cancelledStatuses.includes(item.status)).length;
-  const pendingTotal = filteredData.filter(item => pendingStatuses.includes(item.status)).length;
+  const cancelledTotal = finalFilteredData.filter(row => cancelledStatuses.includes(row.Status)).length;
+  const pendingTotal = finalFilteredData.filter(row => pendingStatuses.includes(row.Status)).length;
 
   const cancelledBreakdown: Record<string, number> = {};
   const pendingBreakdown: Record<string, number> = {};
 
-  filteredData.forEach(item => {
-    if (cancelledStatuses.includes(item.status) && item.loss_reason) {
-      cancelledBreakdown[item.loss_reason] = (cancelledBreakdown[item.loss_reason] || 0) + 1;
+  finalFilteredData.forEach(row => {
+    if (cancelledStatuses.includes(row.Status) && row["Loss Reason"]) {
+      const reason = row["Loss Reason"];
+      cancelledBreakdown[reason] = (cancelledBreakdown[reason] || 0) + 1;
     }
-    if (pendingStatuses.includes(item.status) && item.loss_reason) {
-      pendingBreakdown[item.loss_reason] = (pendingBreakdown[item.loss_reason] || 0) + 1;
+    if (pendingStatuses.includes(row.Status) && row["Loss Reason"]) {
+      const reason = row["Loss Reason"];
+      pendingBreakdown[reason] = (pendingBreakdown[reason] || 0) + 1;
     }
   });
 
@@ -445,39 +472,62 @@ async function fetchConversionHistory(): Promise<Array<{
     .eq('scope', 'global')
     .maybeSingle();
 
-  const numeratorStatuses = (settings?.value as string[]) || ['Completed', 'Scheduled', 'Planned NVD'];
+  const numeratorStatuses = (settings?.value as string[]) || ['Completed', 'Done', 'Scheduled', 'Planned NVD'];
+
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return [];
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
+    
+    if (typeof dateValue === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
   // Get last 6 months of data
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('status, created_at')
-      .gte('created_at', sixMonthsAgo.toISOString()),
+  // Filter data by date and parse
+  const filteredData = excelData.filter(row => {
+    const dateValue = row.Date;
+    if (!dateValue) return false;
     
-    supabase
-      .from('excel_requests')
-      .select('status, created_at')
-      .gte('created_at', sixMonthsAgo.toISOString())
-  ]);
-
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+    const date = parseExcelDate(dateValue);
+    if (!date) return false;
+    
+    return date >= sixMonthsAgo;
+  });
   
   // Group by month
   const monthlyData: Record<string, { total: number; done: number }> = {};
   
-  allData.forEach(item => {
-    const month = new Date(item.created_at).toISOString().substring(0, 7); // YYYY-MM
+  filteredData.forEach(row => {
+    const dateValue = row.Date;
+    const date = parseExcelDate(dateValue);
+    if (!date) return;
+    
+    const month = date.toISOString().substring(0, 7); // YYYY-MM
     if (!monthlyData[month]) {
       monthlyData[month] = { total: 0, done: 0 };
     }
     monthlyData[month].total++;
-    if (numeratorStatuses.includes(item.status)) {
+    if (numeratorStatuses.some(s => s.toLowerCase() === row.Status?.toString().toLowerCase())) {
       monthlyData[month].done++;
     }
   });
@@ -493,43 +543,82 @@ async function fetchConversionHistory(): Promise<Array<{
 }
 
 async function fetchRevenue(filters: any) {
-  // Get combined data
-  const [medicalData, excelData] = await Promise.all([
-    supabase
-      .from('medical_requests')
-      .select('paid_amount, created_at, status, hospital_name, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31'),
+  // Get raw Excel data for accurate calculation
+  const { data: excelData, error } = await supabase
+    .from('excel_rows_raw')
+    .select('*');
+
+  if (error) throw error;
+  if (!excelData) return {
+    paidCount: 0,
+    paidSum: 0,
+    paidPercentage: 0,
+    mtdGrowth: 0
+  };
+
+  // Parse Excel date function
+  const parseExcelDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
     
-    supabase
-      .from('excel_requests')
-      .select('paid_amount, created_at, status, hospital_name, specialty, branch_code')
-      .gte('created_at', filters.dateRange?.start || '1900-01-01')
-      .lte('created_at', filters.dateRange?.end || '2999-12-31')
-  ]);
+    if (typeof dateValue === 'number') {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+    }
+    
+    if (typeof dateValue === 'string') {
+      const parsed = new Date(dateValue);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    
+    return null;
+  };
 
-  if (medicalData.error) throw medicalData.error;
-  if (excelData.error) throw excelData.error;
-
-  const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+  // Filter by selected month/year if specified
+  let filteredData = excelData;
   
-  // Apply filters
-  const filteredData = allData.filter(item => {
-    if (filters.statuses?.length > 0 && !filters.statuses.includes(item.status)) return false;
-    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(item.hospital_name)) return false;
-    if (filters.specialties?.length > 0 && !filters.specialties.includes(item.specialty)) return false;
-    if (filters.branches?.length > 0 && !filters.branches.includes(item.branch_code)) return false;
+  if (filters.month && filters.year) {
+    filteredData = excelData.filter(row => {
+      const dateValue = row.Date;
+      if (!dateValue) return false;
+      
+      const date = parseExcelDate(dateValue);
+      if (!date) return false;
+      
+      return date.getMonth() + 1 === filters.month && date.getFullYear() === filters.year;
+    });
+  }
+
+  // Apply additional filters
+  const finalFilteredData = filteredData.filter(row => {
+    if (filters.statuses?.length > 0 && !filters.statuses.includes(row.Status)) return false;
+    if (filters.hospitals?.length > 0 && !filters.hospitals.includes(row["Hospital Name"])) return false;
+    if (filters.specialties?.length > 0 && !filters.specialties.includes(row.Specialty)) return false;
+    if (filters.branches?.length > 0 && !filters.branches.includes(row.Branch)) return false;
     return true;
   });
 
-  const paidCount = filteredData.filter(item => (item.paid_amount || 0) > 0).length;
-  const paidSum = filteredData.reduce((sum, item) => sum + (item.paid_amount || 0), 0);
-  const paidPercentage = filteredData.length > 0 ? Math.round((paidCount / filteredData.length) * 100 * 100) / 100 : 0;
+  // Calculate revenue metrics
+  const paidAmounts = finalFilteredData.map(row => {
+    const amount = row["Paid Amount"];
+    if (!amount) return 0;
+    
+    // Parse amount (handle both string and number formats)
+    if (typeof amount === 'number') return amount;
+    if (typeof amount === 'string') {
+      const parsed = parseFloat(amount.replace(/[^0-9.-]/g, ''));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  });
+
+  const paidCount = paidAmounts.filter(amount => amount > 0).length;
+  const paidSum = paidAmounts.reduce((sum, amount) => sum + amount, 0);
+  const paidPercentage = finalFilteredData.length > 0 ? Math.round((paidCount / finalFilteredData.length) * 100 * 100) / 100 : 0;
 
   return {
     paidCount,
     paidSum: parseFloat(paidSum.toString()),
     paidPercentage,
-    mtdGrowth: 0 // TODO: Implement MTD growth calculation
+    mtdGrowth: 0 // TODO: Implement MTD growth calculation with historical data
   };
 }
