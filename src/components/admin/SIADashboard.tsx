@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, TrendingUp, TrendingDown, BarChart3, Calendar, FileSpreadsheet, Table2, Bug } from "lucide-react";
+import { Settings, BarChart3, Calendar, FileSpreadsheet, Table2, Bug } from "lucide-react";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
-import { useSIAAnalytics } from "@/hooks/useSIAAnalytics";
 import { DataExcelMigrationService } from "@/services/dataExcelMigration";
 import EnhancedSIAFilters from "./EnhancedSIAFilters";
 import ExcelDataAnalyzer from "./ExcelDataAnalyzer";
@@ -15,9 +14,23 @@ import SIALossTreeModal from "./SIALossTreeModal";
 import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
 import { useToast } from "@/hooks/use-toast";
 
+// NEW: Excel-only monthly analytics
+import { useExcelMonthlyAnalytics } from "@/hooks/useExcelMonthlyAnalytics";
+import { mapExcelSliceToMetrics } from "@/lib/mapExcelSliceToMetrics";
+
 export default function SIADashboard() {
   const { filters, updateFilter, clearFilters } = useSIAFilters();
-  const { metrics, loading, error, refetch } = useSIAAnalytics(filters);
+
+  // Derive year/month from filters (fallback to now)
+  const now = new Date();
+  const year = filters.month ? filters.month.getFullYear() : now.getFullYear();
+  const month = filters.month ? (filters.month.getMonth() + 1) : (now.getMonth() + 1); // 1..12
+
+  // nonce lets us "refetch" manually
+  const [nonce, setNonce] = useState(0);
+  const { data: excelSlice, loading, error } = useExcelMonthlyAnalytics(year, month, nonce);
+  const metrics = mapExcelSliceToMetrics(excelSlice);
+  const refetch = () => setNonce(n => n + 1);
   const [showConversionConfig, setShowConversionConfig] = useState(false);
   const [showLossTreeConfig, setShowLossTreeConfig] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
@@ -218,10 +231,12 @@ export default function SIADashboard() {
             console.log('SIA Analysis Result:', analysis);
             toast({
               title: "Analysis Complete",
-              description: `Found ${analysis.monthData.totalCases} cases for ${analysis.selectedMonth}`,
+              description: analysis?.selectedMonth
+                ? `Found ${analysis.monthData.totalCases} cases for ${analysis.selectedMonth}`
+                : `Analysis updated`,
             });
-            // Trigger refetch to update dashboard with filtered data
-            refetch();
+            // Force refresh to update dashboard with new filter selection
+            setNonce(n => n + 1);
           }}
         />
       </Card>
@@ -350,14 +365,14 @@ export default function SIADashboard() {
                   <span className="font-medium">{metrics.lossTree.cancelledTotal}</span>
                 </div>
                 <div className="text-xs text-muted-foreground ml-4 mt-1 space-y-1">
-                  {Object.entries(metrics.lossTree.cancelledBreakdown).map(([reason, count]) => (
-                    count > 0 && (
+                  {Object.entries(metrics.lossTree.cancelledBreakdown).map(([reason, count]) => 
+                    count > 0 ? (
                       <div key={reason} className="flex justify-between">
                         <span>{reason}:</span>
                         <span>{count}</span>
                       </div>
-                    )
-                  ))}
+                    ) : null
+                  )}
                 </div>
               </div>
               
@@ -367,14 +382,14 @@ export default function SIADashboard() {
                   <span className="font-medium">{metrics.lossTree.pendingTotal}</span>
                 </div>
                 <div className="text-xs text-muted-foreground ml-4 mt-1 space-y-1">
-                  {Object.entries(metrics.lossTree.pendingBreakdown).map(([reason, count]) => (
-                    count > 0 && (
+                  {Object.entries(metrics.lossTree.pendingBreakdown).map(([reason, count]) => 
+                    count > 0 ? (
                       <div key={reason} className="flex justify-between">
                         <span>{reason}:</span>
                         <span>{count}</span>
                       </div>
-                    )
-                  ))}
+                    ) : null
+                  )}
                 </div>
               </div>
             </div>

@@ -735,6 +735,47 @@ export type Database = {
       }
     }
     Views: {
+      excel_cases_clean: {
+        Row: {
+          branch: string | null
+          case_date: string | null
+          hospital: string | null
+          paid_amount_text: string | null
+          row_no: number | null
+          specialty: string | null
+          status: string | null
+          upload_id: string | null
+        }
+        Insert: {
+          branch?: never
+          case_date?: never
+          hospital?: never
+          paid_amount_text?: never
+          row_no?: number | null
+          specialty?: never
+          status?: never
+          upload_id?: string | null
+        }
+        Update: {
+          branch?: never
+          case_date?: never
+          hospital?: never
+          paid_amount_text?: never
+          row_no?: number | null
+          specialty?: never
+          status?: never
+          upload_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excel_rows_raw_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "excel_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requests_v: {
         Row: {
           branch_code: string | null
@@ -756,6 +797,16 @@ export type Database = {
       admin_reset_password: {
         Args: { admin_email: string; new_password: string }
         Returns: string
+      }
+      analyze_excel_cases_monthly: {
+        Args: { p_month: number; p_year: number }
+        Returns: {
+          branch_breakdown: Json
+          hospital_breakdown: Json
+          specialty_breakdown: Json
+          status_breakdown: Json
+          total_cases: number
+        }[]
       }
       analyze_excel_data_by_month: {
         Args: { target_month: number; target_year: number }
@@ -900,6 +951,10 @@ export type Database = {
       }
       norm_upper: {
         Args: { t: string }
+        Returns: string
+      }
+      parse_excel_date: {
+        Args: { raw: string }
         Returns: string
       }
       search_users: {
