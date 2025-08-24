@@ -56,8 +56,20 @@ const pickFirst = (obj: Breakdown, keys: string[]) => {
 // ---------- The hook your UI already uses ----------
 export function useSIAAnalytics(filters: any) {
   const now = new Date();
-  const year  = Number(filters?.year)  || now.getFullYear();
-  const month = Number(filters?.month) || (now.getMonth() + 1); // 1..12
+  
+  // Handle filters.month which can be a Date object or numbers
+  let year: number;
+  let month: number; // 1..12
+  
+  if (filters?.month instanceof Date) {
+    year = filters.month.getFullYear();
+    month = filters.month.getMonth() + 1; // Convert 0-11 to 1-12
+  } else {
+    year = Number(filters?.year) || now.getFullYear();
+    month = Number(filters?.month) || (now.getMonth() + 1);
+  }
+  
+  console.log(`🎯 SIA Analytics: Using year=${year}, month=${month} from filters:`, filters);
 
   const [metrics, setMetrics] = useState<SIAMetrics>({
     totalCases: 0, mcj1Cases: 0, mcj2Cases: 0, doneCases: 0, conversionRate: 0,

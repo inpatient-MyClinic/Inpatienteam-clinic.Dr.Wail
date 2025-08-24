@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import { DataExcelMigrationService } from "@/services/dataExcelMigration";
 
 interface AdminExcelUploadProps {
   onUpload: (data: any[]) => void;
@@ -166,23 +167,47 @@ export default function AdminExcelUpload({ onUpload }: AdminExcelUploadProps) {
     XLSX.writeFile(wb, "admin_upload_template.xlsx");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (uploadResult && uploadResult.success > 0) {
-      console.log(`Admin Excel Upload: Saving ${previewData.length} rows to data integration service`);
-      onUpload(previewData);
+      setIsUploading(true);
+      console.log(`Admin Excel Upload: Uploading ${previewData.length} rows to Supabase`);
       
-      // Mark Excel data as imported
-      localStorage.setItem('excel_data_imported', 'true');
-      
-      // Trigger data refresh events
-      window.dispatchEvent(new CustomEvent('requestsUpdated'));
-      window.dispatchEvent(new Event('storage'));
-      
-      toast({
-        title: "Upload Successful",
-        description: `${uploadResult.success} records imported successfully.`,
-      });
-      handleCancel();
+      try {
+        // Upload directly to Supabase using the new service
+        const result = await DataExcelMigrationService.uploadExcelToSupabase(
+          previewData, 
+          `AdminUpload_${new Date().toISOString()}`
+        );
+        
+        if (result.success) {
+          // Also call the original onUpload for backward compatibility
+          onUpload(previewData);
+          
+          // Mark Excel data as imported
+          localStorage.setItem('excel_data_imported', 'true');
+          
+          // Trigger data refresh events
+          window.dispatchEvent(new CustomEvent('requestsUpdated'));
+          window.dispatchEvent(new Event('storage'));
+          
+          toast({
+            title: "Upload Successful",
+            description: `${result.migratedCount} records uploaded to database successfully.`,
+          });
+          handleCancel();
+        } else {
+          throw new Error(result.error || 'Upload failed');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: "Upload Failed",
+          description: error instanceof Error ? error.message : 'Unknown error occurred',
+          variant: "destructive"
+        });
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 

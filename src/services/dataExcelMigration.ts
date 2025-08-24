@@ -39,44 +39,82 @@ export class DataExcelMigrationService {
 
       console.log(`Found ${allRequests.length} records to migrate`);
 
-      // Batch insert to excel_requests table
-      const mappedRecords = allRequests.map(record => ({
-        request_date: this.parseDate(record.dateCreated),
-        branch_code: this.normalizeBranchCode(record.clinicBranch),
-        hospital_name: record.hospitalName || 'Unknown',
-        specialty: record.specialty || 'Unknown',
-        status: this.normalizeStatus(record.operationStatus),
-        loss_reason: record.reasonPendingCancellation,
-        paid_amount: this.calculatePaidAmount(record.paymentStatus),
-        patient_name: record.patientName,
-        patient_id: record.patientMRN || record.patientNationalId,
-        raw_data: record
+      // First, upload to excel_rows_raw using the import function
+      const rawRows = allRequests.map((record, index) => ({
+        __row: index + 1,
+        Date: this.extractDateString(record),
+        Branch: this.extractBranchString(record),
+        "Hospital Code": this.extractHospitalCode(record),
+        "Hospital Name": record.hospitalName || 'Unknown',
+        Specialty: record.specialty || 'Unknown',
+        Status: record.operationStatus || 'Pending',
+        "Loss Reason": record.reasonPendingCancellation || '',
+        "Paid Amount": this.extractPaidAmountString(record)
       }));
 
-      // Insert in batches of 50 to avoid limits
-      const batchSize = 50;
-      let totalInserted = 0;
+      // Use the import function to process the data
+      const { data, error } = await supabase.rpc('import_excel_rows', {
+        p_source_file: `LocalStorage_Migration_${new Date().toISOString()}`,
+        p_rows: rawRows
+      });
 
-      for (let i = 0; i < mappedRecords.length; i += batchSize) {
-        const batch = mappedRecords.slice(i, i + batchSize);
-        
-        const { error } = await supabase
-          .from('excel_requests')
-          .insert(batch);
-
-        if (error) {
-          console.error('Error inserting batch:', error);
-          throw error;
-        }
-
-        totalInserted += batch.length;
-        console.log(`Migrated ${totalInserted}/${mappedRecords.length} records`);
+      if (error) {
+        console.error('Error importing rows:', error);
+        throw error;
       }
 
-      return { success: true, migratedCount: totalInserted };
+      console.log(`Successfully migrated ${data} records to Excel tables`);
+
+      return { success: true, migratedCount: data };
 
     } catch (error) {
       console.error('Migration failed:', error);
+      return {
+        success: false,
+        migratedCount: 0,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  static async uploadExcelToSupabase(excelData: any[], filename: string): Promise<{
+    success: boolean;
+    migratedCount: number;
+    error?: string;
+  }> {
+    try {
+      console.log(`Uploading ${excelData.length} rows from ${filename}`);
+
+      // Map Excel data to the expected raw format
+      const rawRows = excelData.map((row, index) => ({
+        __row: index + 1,
+        Date: this.extractExcelDate(row),
+        Branch: this.extractExcelBranch(row),
+        "Hospital Code": this.extractExcelHospitalCode(row),
+        "Hospital Name": this.extractExcelHospitalName(row),
+        Specialty: this.extractExcelSpecialty(row),
+        Status: this.extractExcelStatus(row),
+        "Loss Reason": this.extractExcelLossReason(row),
+        "Paid Amount": this.extractExcelPaidAmount(row)
+      }));
+
+      // Use the import function to process the data
+      const { data, error } = await supabase.rpc('import_excel_rows', {
+        p_source_file: filename,
+        p_rows: rawRows
+      });
+
+      if (error) {
+        console.error('Error importing Excel rows:', error);
+        throw error;
+      }
+
+      console.log(`Successfully uploaded ${data} records to Excel tables`);
+
+      return { success: true, migratedCount: data };
+
+    } catch (error) {
+      console.error('Excel upload failed:', error);
       return {
         success: false,
         migratedCount: 0,
@@ -220,6 +258,97 @@ export class DataExcelMigrationService {
     return 0;
   }
 
+  // Extraction methods for localStorage records
+  private static extractDateString(record: ExcelRecord): string {
+    const date = record.dateCreated || record.date || record['Date'] || record['Request Creation Date'];
+    if (!date) return new Date().toISOString().split('T')[0];
+    
+    // Handle Excel serial numbers
+    if (typeof date === 'number' && date > 25000) {
+      return new Date((date - 25569) * 86400 * 1000).toISOString().split('T')[0];
+    }
+    
+    return this.parseDate(String(date)) || new Date().toISOString().split('T')[0];
+  }
+
+  private static extractBranchString(record: ExcelRecord): string {
+    const branch = record.clinicBranch || record.referredFrom || record.branch || record['My Clinic Branch'] || record['Branch'];
+    return this.normalizeBranchCode(String(branch)) || 'Unknown';
+  }
+
+  private static extractHospitalCode(record: ExcelRecord): string {
+    return record.hospitalCode || record['Hospital Code'] || 'UNK';
+  }
+
+  private static extractPaidAmountString(record: ExcelRecord): string {
+    const amount = this.calculatePaidAmount(record.paymentStatus);
+    return String(amount);
+  }
+
+  // Extraction methods for Excel rows
+  private static extractExcelDate(row: any): string {
+    const dateFields = ['Date', 'Month', 'AP', 'Request Creation Date', 'Created Date'];
+    for (const field of dateFields) {
+      if (row[field]) {
+        // Handle Excel serial numbers
+        if (typeof row[field] === 'number' && row[field] > 25000) {
+          return new Date((row[field] - 25569) * 86400 * 1000).toISOString().split('T')[0];
+        }
+        const parsed = this.parseDate(String(row[field]));
+        if (parsed) return parsed;
+      }
+    }
+    return new Date().toISOString().split('T')[0];
+  }
+
+  private static extractExcelBranch(row: any): string {
+    const branchFields = ['Branch', 'My Clinic Branch', 'Clinic Branch', 'Referred From'];
+    for (const field of branchFields) {
+      if (row[field]) {
+        const normalized = this.normalizeBranchCode(String(row[field]));
+        if (normalized) return normalized;
+      }
+    }
+    return 'Unknown';
+  }
+
+  private static extractExcelHospitalCode(row: any): string {
+    return row['Hospital Code'] || row['Code'] || 'UNK';
+  }
+
+  private static extractExcelHospitalName(row: any): string {
+    return row['Hospital Name'] || row['Hospital'] || 'Unknown Hospital';
+  }
+
+  private static extractExcelSpecialty(row: any): string {
+    return row['Specialty'] || row['Service Specialty'] || 'General';
+  }
+
+  private static extractExcelStatus(row: any): string {
+    const statusFields = ['Status', 'AI', 'Operation Status', 'Request Status'];
+    for (const field of statusFields) {
+      if (row[field]) {
+        return this.normalizeStatus(String(row[field]));
+      }
+    }
+    return 'Pending';
+  }
+
+  private static extractExcelLossReason(row: any): string {
+    return row['Loss Reason'] || row['Reason Pending Cancellation'] || '';
+  }
+
+  private static extractExcelPaidAmount(row: any): string {
+    const amountFields = ['Paid Amount', 'Amount', 'Revenue', 'Actual Revenue'];
+    for (const field of amountFields) {
+      if (row[field]) {
+        const amount = String(row[field]).replace(/[^\d.]/g, ''); // Remove non-numeric characters
+        return amount || '0';
+      }
+    }
+    return '0';
+  }
+
   static async checkMigrationStatus(): Promise<{
     hasLocalData: boolean;
     hasSupabaseData: boolean;
@@ -229,7 +358,7 @@ export class DataExcelMigrationService {
     const localRequests = this.getAllLocalStorageRequests();
     
     const { count } = await supabase
-      .from('excel_requests')
+      .from('excel_rows_raw')
       .select('*', { count: 'exact', head: true });
 
     return {

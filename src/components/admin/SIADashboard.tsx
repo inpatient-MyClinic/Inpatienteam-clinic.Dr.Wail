@@ -47,32 +47,39 @@ export default function SIADashboard() {
   const checkMigrationStatus = async () => {
     try {
       const status = await DataExcelMigrationService.checkMigrationStatus();
+      console.log('📊 Migration Status Check:', status);
+      
       if (status.hasLocalData && !status.hasSupabaseData) {
-        setMigrationStatus(`Found ${status.localCount} records in localStorage. Click to migrate to database.`);
+        setMigrationStatus(`Found ${status.localCount} records in localStorage. Click to migrate to database for Excel analytics.`);
       } else if (status.hasSupabaseData) {
-        setMigrationStatus(`${status.supabaseCount} records available in database.`);
+        setMigrationStatus(`✅ ${status.supabaseCount} records available in database. Excel analytics ready.`);
+      } else if (!status.hasLocalData && !status.hasSupabaseData) {
+        setMigrationStatus('No Excel data found. Upload Excel files through Admin Excel Upload to enable analytics.');
       }
     } catch (error) {
       console.error('Error checking migration status:', error);
+      setMigrationStatus('Error checking data status.');
     }
   };
 
   const handleMigration = async () => {
     try {
+      setMigrationStatus('Migrating data...');
       const result = await DataExcelMigrationService.migrateLocalStorageToSupabase();
       if (result.success) {
         toast({
           title: "Migration Successful",
-          description: `Migrated ${result.migratedCount} records to database.`,
+          description: `Migrated ${result.migratedCount} records to database. Excel analytics now available.`,
         });
         await checkMigrationStatus();
-        refetch();
+        refetch(); // This will refresh the Excel analytics
       } else {
         toast({
           title: "Migration Failed",
           description: result.error || "Unknown error occurred",
           variant: "destructive"
         });
+        setMigrationStatus('Migration failed. Please try again.');
       }
     } catch (error) {
       toast({
@@ -80,6 +87,7 @@ export default function SIADashboard() {
         description: error instanceof Error ? error.message : "Failed to migrate data",
         variant: "destructive"
       });
+      setMigrationStatus('Migration error occurred.');
     }
   };
 
