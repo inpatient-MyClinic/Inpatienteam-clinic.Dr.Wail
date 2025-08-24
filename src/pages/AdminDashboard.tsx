@@ -1,176 +1,297 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, FileSpreadsheet, Table2, Bug } from "lucide-react";
-import { useSIAFilters } from "@/hooks/useSIAFilters";
-import { useToast } from "@/hooks/use-toast";
 
-import { useExcelMonthlyAnalytics } from "@/hooks/useExcelMonthlyAnalytics";
-import { mapExcelSliceToMetrics } from "@/lib/mapExcelSliceToMetrics";
-import { STATUS_KEYS, pickCount } from "@/lib/statusSynonyms";
+import React, { useState, useEffect } from "react";
+import AdminDashboardLayout from "@/components/admin/AdminDashboardLayout";
+import { useAdminDashboard } from "@/hooks/useAdminDashboard";
+import { adminData } from "@/data/adminData";
+import { filterAdminData } from "@/utils/adminFilters";
+import { requestStorage } from "@/services/requestStorage";
+import { dataIntegrationService } from "@/services/dataIntegrationService";
+
+import RequestLifecycleChart from "@/components/RequestLifecycleChart";
+import SIASlide from "@/components/admin/SIASlide";
+import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
+import PivotTableUpload from "@/components/admin/PivotTableUpload";
+import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
-  // Direct month/year state (no need to sync with SIA filters for this simpler approach)
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1); // 1..12
+  const [allRequestsData, setAllRequestsData] = useState<any[]>([]);
+  const [showChart, setShowChart] = useState(false);
+  const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
+  const [showPivotUpload, setShowPivotUpload] = useState(false);
 
-  // Excel-only analytics for the selected month/year
-  const [nonce, setNonce] = useState(0);
-  const { data: excelSlice, loading, error } = useExcelMonthlyAnalytics(year, month, nonce);
-  const metrics = mapExcelSliceToMetrics(excelSlice);
-  const { toast } = useToast();
+  const {
+    activeFilter,
+    selectedDates,
+    selectedWeeks,
+    selectedMonths,
+    showAnalytics,
+    showPrivilegesSearch,
+    showTeamMonitoring,
+    showGeneralReport,
+    showAIAssistant,
+    showSIASlide,
+    showFinanceAnalytics,
+    showNewUserRequests,
+    setSelectedDates,
+    setSelectedWeeks,
+    setSelectedMonths,
+    handleStatusFilter,
+    handleClearAllDateFilters,
+    handleExcelUpload,
+    handleExport,
+    handlePrint,
+    handleToggleAnalytics,
+    handleShowGeneralReport,
+    handleTogglePrivilegesSearch,
+    handleToggleTeamMonitoring,
+    handleToggleAIAssistant,
+    handleToggleSIASlide,
+    handleShowFinanceAnalytics,
+    handleCloseFinanceAnalytics,
+    handleToggleNewUserRequests,
+  } = useAdminDashboard();
 
-  // Quick status lookups from the Excel slice
-  const st = excelSlice?.byStatus ?? {};
-  const totalCases = metrics.totalCases;
-  const completed = pickCount(st, STATUS_KEYS.completed);
-  const scheduled = pickCount(st, STATUS_KEYS.scheduled);
-  const plannedNVD = pickCount(st, STATUS_KEYS.plannedNvd);
-  const pending = pickCount(st, STATUS_KEYS.pending);
-  const cancelled = STATUS_KEYS.cancelled.reduce((acc, k) => acc + (st[k] ?? 0), 0);
+  // Custom Excel upload handler
+  const customHandleExcelUpload = (data: any[]) => {
+    console.log('Admin Dashboard: Processing Excel upload with', data.length, 'rows');
+    dataIntegrationService.processExcelData(data).then(result => {
+      console.log('Excel processing result:', result);
+      // Trigger data refresh
+      const loadAllData = async () => {
+        const analyticsData = dataIntegrationService.getAnalyticsData();
+        console.log('Admin Dashboard - Excel upload complete, reloading data...');
+        setAllRequestsData(analyticsData);
+      };
+      loadAllData();
+    }).catch(error => {
+      console.error('Excel upload error:', error);
+    });
+  };
 
-  const refetch = () => setNonce(n => n + 1);
-
+  // Load request data from integrated data service
   useEffect(() => {
-    // optional: toast on load problems
-    if (error) {
-      toast({ title: "SIA Excel Analysis Error", description: error, variant: "destructive" });
+    requestStorage.initializeSampleData();
+    
+    const loadAllData = async () => {
+      try {
+        // Check if Excel data was imported
+        const excelDataImported = localStorage.getItem('excel_data_imported') === 'true';
+        const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
+        
+        console.log('Excel data imported:', excelDataImported);
+        console.log('Sample data cleared:', dataCleared);
+        
+        // Get unified data from the integration service
+        const analyticsData = dataIntegrationService.getAnalyticsData();
+        
+        console.log('Admin Dashboard - Unified analytics data:', analyticsData);
+        
+        if (analyticsData.length === 0) {
+          console.log('No requests found in unified data');
+          setAllRequestsData([]);
+          return;
+        }
+        
+        console.log(`Loading ${analyticsData.length} requests from unified service`);
+        setAllRequestsData(analyticsData);
+        
+        // Sync to Supabase if we have data
+        if (analyticsData.length > 0) {
+          try {
+            await dataIntegrationService.syncLocalStorageToSupabase();
+          } catch (error) {
+            console.warn('Supabase sync failed:', error);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error loading unified data:', error);
+        // Fallback to empty array
+        setAllRequestsData([]);
+      }
+    };
+
+    loadAllData();
+    
+    // Set up storage change listener and custom request update listener
+    const handleStorageChange = () => loadAllData();
+    const handleRequestsUpdate = () => {
+      console.log('Admin Dashboard - Requests updated, reloading...');
+      loadAllData();
+    };
+    const handleShowPivotUpload = () => setShowPivotUpload(true);
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('requestsUpdated', handleRequestsUpdate);
+    window.addEventListener('adminDataCleared', handleRequestsUpdate);
+    window.addEventListener('showPivotUpload', handleShowPivotUpload);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+      window.removeEventListener('adminDataCleared', handleRequestsUpdate);
+      window.removeEventListener('showPivotUpload', handleShowPivotUpload);
+    };
+  }, []);
+
+  console.log("AdminDashboard rendering, showAnalytics:", showAnalytics);
+  console.log("All data length:", allRequestsData.length);
+
+  // Clean case coordinator data: normalize "saud"/"Saud" and handle "No" entries
+  const cleanedData = allRequestsData.map(item => ({
+    ...item,
+    caseCoordinator: item.caseCoordinator === "No" ? "Unassigned" : 
+                     item.caseCoordinator === "saud" ? "Saud" : 
+                     item.caseCoordinator || "Unassigned"
+  }));
+
+  // Filter data based on active filter and date filters
+  const filteredData = filterAdminData(
+    cleanedData, 
+    activeFilter, 
+    selectedDates, 
+    selectedWeeks, 
+    selectedMonths
+  );
+
+  // Calculate unread messages for admin role
+  const unreadCount = 12;
+
+  if (showChart) {
+    return (
+      <div className="min-h-screen">
+        <div className="absolute top-4 left-4 z-10">
+          <Button 
+            onClick={() => setShowChart(false)}
+            variant="outline"
+            className="bg-white shadow-md"
+          >
+            ← Back to Dashboard
+          </Button>
+        </div>
+        <RequestLifecycleChart />
+      </div>
+    );
+  }
+
+  if (showMonthlyAnalytics) {
+    return (
+      <MonthlyAnalyticsDashboard onClose={() => setShowMonthlyAnalytics(false)} />
+    );
+  }
+
+  if (showPivotUpload) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button 
+              onClick={() => setShowPivotUpload(false)}
+              variant="outline"
+            >
+              ← Back to Dashboard
+            </Button>
+          </div>
+          <PivotTableUpload 
+            onPivotDataLoaded={(data) => {
+              console.log('Pivot data loaded:', data.length, 'rows');
+              setAllRequestsData([]);
+            }} 
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (showSIASlide) {
+    const dateOnlyFilteredForSIA = filterAdminData(
+      cleanedData,
+      null,
+      selectedDates,
+      selectedWeeks,
+      selectedMonths
+    );
+
+    // Determine initial month/year for SIA from current filters
+    const monthNameToNumber: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+    };
+
+    let initialMonth: number | undefined;
+    let initialYear: number | undefined;
+
+    if (selectedDates.length > 0) {
+      initialMonth = selectedDates[0].getMonth() + 1;
+      initialYear = selectedDates[0].getFullYear();
+    } else if (selectedMonths.length > 0) {
+      const m = monthNameToNumber[selectedMonths[0]];
+      if (m) {
+        initialMonth = m;
+        // Pick the most frequent year for that month from the available data
+        const yearCounts: Record<number, number> = {};
+        cleanedData.forEach((it) => {
+          const raw = it.date || it.requestDate || it.dateCreated || it.created_at || it.createdAt;
+          if (!raw) return;
+          const d = new Date(typeof raw === 'string' ? raw : String(raw));
+          if (isNaN(d.getTime())) return;
+          if (d.getMonth() + 1 !== m) return;
+          const y = d.getFullYear();
+          yearCounts[y] = (yearCounts[y] || 0) + 1;
+        });
+        const top = Object.entries(yearCounts).sort((a, b) => b[1] - a[1])[0];
+        initialYear = top ? Number(top[0]) : new Date().getFullYear();
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [error]);
+
+    return (
+      <SIASlide 
+        data={dateOnlyFilteredForSIA} 
+        initialMonth={initialMonth}
+        initialYear={initialYear}
+        onClose={() => handleToggleSIASlide()} 
+      />
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Top toolbar (keep your existing design; this is a minimal example) */}
-      <div className="flex items-center gap-2">
-        <select
-          className="border rounded px-2 py-1"
-          value={month}
-          onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-          aria-label="Select Month"
-        >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <option key={i+1} value={i + 1}>{new Date(2000, i, 1).toLocaleString(undefined, { month: "long" })}</option>
-          ))}
-        </select>
-        <input
-          className="border rounded px-2 py-1 w-24"
-          type="number"
-          value={year}
-          onChange={(e) => setYear(parseInt(e.target.value, 10))}
-          aria-label="Select Year"
-        />
-        <Button variant="outline" onClick={refetch} className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" /> Apply
-        </Button>
-
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Bug className="h-4 w-4" /> Data Debugger
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Table2 className="h-4 w-4" /> Pivot Table
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4" /> Excel Analyzer
-          </Button>
-        </div>
-      </div>
-
-      {/* Status Counters Row (Excel-sourced) */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <Card className="bg-emerald-50">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Done/Completed</div>
-            <div className="text-2xl font-bold">{completed.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-amber-50">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Pending</div>
-            <div className="text-2xl font-bold">{pending.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-blue-50">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Scheduled</div>
-            <div className="text-2xl font-bold">{scheduled.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-rose-50">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Cancelled</div>
-            <div className="text-2xl font-bold">{cancelled.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-50">
-          <CardContent className="p-4">
-            <div className="text-sm text-muted-foreground">Planned NVD</div>
-            <div className="text-2xl font-bold">{plannedNVD.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Admin Requests header — show Excel-slice total instead of stale 213 */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          <span className="font-medium">Admin Requests</span> —{" "}
-          <span>{totalCases.toLocaleString()} total requests</span>
-        </div>
-      </div>
-
-      {/* Top 5s from Excel slice */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Top 5 Hospitals</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {(metrics.topHospitals ?? []).map(h => (
-                <div key={h.name} className="flex items-center justify-between">
-                  <span className="text-sm truncate flex-1">{h.name}</span>
-                  <Badge variant="secondary">{h.count}</Badge>
-                </div>
-              ))}
-              {(!metrics.topHospitals || metrics.topHospitals.length === 0) && (
-                <p className="text-sm text-muted-foreground">No data</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Top 5 Specialties</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {(metrics.topSpecialties ?? []).map(s => (
-                <div key={s.name} className="flex items-center justify-between">
-                  <span className="text-sm truncate flex-1">{s.name}</span>
-                  <Badge variant="secondary">{s.count}</Badge>
-                </div>
-              ))}
-              {(!metrics.topSpecialties || metrics.topSpecialties.length === 0) && (
-                <p className="text-sm text-muted-foreground">No data</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Conversion</CardTitle></CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.conversionRate}%</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {(completed + scheduled + plannedNVD).toLocaleString()} of {totalCases.toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Errors/Loading feedback */}
-      {loading && <div className="text-sm text-muted-foreground">Loading Excel analytics…</div>}
-      {error && <div className="text-sm text-destructive">Error: {error}</div>}
+    <div>
+      <AdminDashboardLayout
+      activeFilter={activeFilter}
+      selectedDates={selectedDates}
+      selectedWeeks={selectedWeeks}
+      selectedMonths={selectedMonths}
+      showAnalytics={showAnalytics}
+      showPrivilegesSearch={showPrivilegesSearch}
+      showTeamMonitoring={showTeamMonitoring}
+      showGeneralReport={showGeneralReport}
+      showAIAssistant={showAIAssistant}
+      showSIASlide={showSIASlide}
+      showFinanceAnalytics={showFinanceAnalytics}
+      showNewUserRequests={showNewUserRequests}
+      adminData={allRequestsData}
+      filteredData={filteredData}
+      unreadCount={unreadCount}
+      onStatusFilter={handleStatusFilter}
+      onToggleAnalytics={handleToggleAnalytics}
+      onDateSelect={setSelectedDates}
+      onWeekSelect={setSelectedWeeks}
+      onMonthSelect={setSelectedMonths}
+      onClearAllDateFilters={handleClearAllDateFilters}
+      onExcelUpload={customHandleExcelUpload}
+      onExport={handleExport}
+      onPrint={handlePrint}
+      onTogglePrivilegesSearch={handleTogglePrivilegesSearch}
+      onToggleTeamMonitoring={handleToggleTeamMonitoring}
+      onToggleAIAssistant={handleToggleAIAssistant}
+      onToggleSIASlide={handleToggleSIASlide}
+      onShowGeneralReport={handleShowGeneralReport}
+      onShowChart={() => setShowChart(true)}
+      onShowMonthlyAnalytics={() => setShowMonthlyAnalytics(true)}
+      onShowFinanceAnalytics={handleShowFinanceAnalytics}
+      onToggleNewUserRequests={handleToggleNewUserRequests}
+      onCloseFinanceAnalytics={handleCloseFinanceAnalytics}
+    />
     </div>
   );
 }
