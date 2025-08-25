@@ -50,15 +50,15 @@ export default function SIADashboard() {
       console.log('📊 Migration Status Check:', status);
       
       if (status.hasLocalData && !status.hasSupabaseData) {
-        setMigrationStatus(`Found ${status.localCount} records in localStorage. Click to migrate to database for Excel analytics.`);
+        setMigrationStatus(`⚠️ CRITICAL: Found ${status.localCount} records in localStorage but 0 in database. You MUST migrate to see correct analytics!`);
       } else if (status.hasSupabaseData) {
         setMigrationStatus(`✅ ${status.supabaseCount} records available in database. Excel analytics ready.`);
       } else if (!status.hasLocalData && !status.hasSupabaseData) {
-        setMigrationStatus('No Excel data found. Upload Excel files through Admin Excel Upload to enable analytics.');
+        setMigrationStatus('❌ No Excel data found. Upload Excel files through Admin Excel Upload to enable analytics.');
       }
     } catch (error) {
       console.error('Error checking migration status:', error);
-      setMigrationStatus('Error checking data status.');
+      setMigrationStatus('⚠️ Error checking data status - analytics may be incorrect.');
     }
   };
 
@@ -171,13 +171,19 @@ export default function SIADashboard() {
     <div className="p-6 space-y-6">
       {/* Migration Status */}
       {migrationStatus && (
-        <Card className="border-warning">
+        <Card className={migrationStatus.includes('CRITICAL') ? "border-destructive bg-destructive/5" : "border-warning"}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm">{migrationStatus}</p>
-              {migrationStatus.includes('localStorage') && (
-                <Button onClick={handleMigration} size="sm">
-                  Migrate Data
+              <p className={`text-sm ${migrationStatus.includes('CRITICAL') ? 'text-destructive font-medium' : ''}`}>
+                {migrationStatus}
+              </p>
+              {(migrationStatus.includes('localStorage') || migrationStatus.includes('CRITICAL')) && (
+                <Button 
+                  onClick={handleMigration} 
+                  size="sm"
+                  variant={migrationStatus.includes('CRITICAL') ? "destructive" : "default"}
+                >
+                  Migrate Data Now
                 </Button>
               )}
             </div>
