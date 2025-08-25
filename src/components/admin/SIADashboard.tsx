@@ -48,18 +48,28 @@ export default function SIADashboard() {
 
   const checkMigrationStatus = async () => {
     try {
+      console.log('🔍 Checking migration status...');
       const status = await DataExcelMigrationService.checkMigrationStatus();
       console.log('📊 Migration Status Check:', status);
       
       if (status.hasLocalData && !status.hasSupabaseData) {
-        setMigrationStatus(`⚠️ CRITICAL: Found ${status.localCount} records in localStorage but 0 in database. You MUST migrate to see correct analytics!`);
+        const message = `⚠️ CRITICAL: Found ${status.localCount} records in localStorage but 0 in database. You MUST migrate to see correct analytics!`;
+        setMigrationStatus(message);
+        console.log('🚨 CRITICAL: Migration needed!', message);
       } else if (status.hasSupabaseData) {
-        setMigrationStatus(`✅ ${status.supabaseCount} records available in database. Excel analytics ready.`);
+        const message = `✅ ${status.supabaseCount} records available in database. Excel analytics ready.`;
+        setMigrationStatus(message);
+        console.log('✅ Database has data:', message);
       } else if (!status.hasLocalData && !status.hasSupabaseData) {
-        setMigrationStatus('❌ No Excel data found. Upload Excel files through Admin Excel Upload to enable analytics.');
+        const message = '❌ No Excel data found. Upload Excel files through Admin Excel Upload to enable analytics.';
+        setMigrationStatus(message);
+        console.log('❌ No data found:', message);
+      } else {
+        console.log('🤔 Unexpected status:', status);
+        setMigrationStatus(`Debug: Local=${status.localCount}, DB=${status.supabaseCount}`);
       }
     } catch (error) {
-      console.error('Error checking migration status:', error);
+      console.error('❌ Error checking migration status:', error);
       setMigrationStatus('⚠️ Error checking data status - analytics may be incorrect.');
     }
   };
@@ -185,7 +195,38 @@ export default function SIADashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Migration Status */}
+      {/* Debug Migration Status - Always show for testing */}
+      <Card className="border-blue-500 bg-blue-50">
+        <CardContent className="p-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">🔧 Migration Debug Info:</p>
+              <Button onClick={checkMigrationStatus} size="sm" variant="outline">
+                🔄 Refresh Status
+              </Button>
+            </div>
+            <p className="text-sm">Status: {migrationStatus || 'Loading...'}</p>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowMigrationDebugger(true)} 
+                size="sm"
+                variant="outline"
+              >
+                🔧 Open Migration Debugger
+              </Button>
+              <Button 
+                onClick={handleMigration} 
+                size="sm"
+                variant="default"
+              >
+                🚀 Run Migration Now
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Original Migration Status */}
       {migrationStatus && (
         <Card className={migrationStatus.includes('CRITICAL') ? "border-destructive bg-destructive/5" : "border-warning"}>
           <CardContent className="p-4">
