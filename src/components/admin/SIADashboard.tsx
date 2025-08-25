@@ -194,13 +194,22 @@ export default function SIADashboard() {
                 {migrationStatus}
               </p>
               {(migrationStatus.includes('localStorage') || migrationStatus.includes('CRITICAL')) && (
-                <Button 
-                  onClick={handleMigration} 
-                  size="sm"
-                  variant={migrationStatus.includes('CRITICAL') ? "destructive" : "default"}
-                >
-                  Migrate Data Now
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setShowMigrationDebugger(true)} 
+                    size="sm"
+                    variant="outline"
+                  >
+                    🔧 Debug Migration
+                  </Button>
+                  <Button 
+                    onClick={handleMigration} 
+                    size="sm"
+                    variant={migrationStatus.includes('CRITICAL') ? "destructive" : "default"}
+                  >
+                    Migrate Data Now
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>
