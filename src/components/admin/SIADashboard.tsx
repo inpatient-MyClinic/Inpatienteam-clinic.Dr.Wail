@@ -12,6 +12,7 @@ import DataAnalysisDebugger from "./DataAnalysisDebugger";
 import SIAConfigurationModal from "./SIAConfigurationModal";
 import SIALossTreeModal from "./SIALossTreeModal";
 import MonthlyAnalyticsDashboard from "./MonthlyAnalyticsDashboard";
+import { DataMigrationDebugger } from "./DataMigrationDebugger";
 import { useToast } from "@/hooks/use-toast";
 
 // NEW: Excel-only monthly analytics
@@ -37,6 +38,7 @@ export default function SIADashboard() {
   const [showExcelAnalyzer, setShowExcelAnalyzer] = useState(false);
   const [showPivotTable, setShowPivotTable] = useState(false);
   const [showDataDebugger, setShowDataDebugger] = useState(false);
+  const [showMigrationDebugger, setShowMigrationDebugger] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<string>('');
   const { toast } = useToast();
 
@@ -137,6 +139,20 @@ export default function SIADashboard() {
     );
   }
 
+  if (showMigrationDebugger) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Data Migration Debugger</h1>
+          <Button variant="outline" onClick={() => setShowMigrationDebugger(false)}>
+            Back to SIA Dashboard
+          </Button>
+        </div>
+        <DataMigrationDebugger />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -193,6 +209,14 @@ export default function SIADashboard() {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-2 mb-4">
+        <Button 
+          variant="outline" 
+          onClick={() => setShowMigrationDebugger(true)} 
+          className="flex items-center gap-2"
+        >
+          <Bug className="h-4 w-4" />
+          Migration Debugger
+        </Button>
         <Button 
           variant="outline" 
           onClick={() => {

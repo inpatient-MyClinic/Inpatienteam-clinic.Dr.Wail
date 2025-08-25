@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { useLocalStorageAnalytics } from './useLocalStorageAnalytics';
 
 // ---------- Types your UI already expects ----------
 type TopItem = { name: string; count: number };
@@ -81,24 +82,38 @@ export function useSIAAnalytics(filters: any) {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
+  const [useDatabase, setUseDatabase] = useState(true);
   const refetch = () => setNonce(n => n + 1);
+
+  // Fallback to localStorage analytics
+  const localStorageAnalytics = useLocalStorageAnalytics(year, month);
 
   useEffect(() => {
     let cancel = false;
+    
+    if (!useDatabase) {
+      // Use localStorage fallback
+      console.log('📊 Using localStorage fallback for analytics');
+      return;
+    }
+    
     (async () => {
       setLoading(true); setError(null);
 
       try {
-        // Single source of truth: Excel monthly RPC
+        // Try database first
         const { data, error } = await supabase.rpc("analyze_excel_cases_monthly", {
           p_year: year, p_month: month
         });
 
         if (cancel) return;
-        if (error) { 
-          setError(error.message); 
-          setLoading(false); 
-          return; 
+        
+        if (error) {
+          console.error('Database analytics error:', error);
+          setError(`Database error: ${error.message}. Falling back to localStorage.`);
+          setUseDatabase(false);
+          setLoading(false);
+          return;
         }
 
         const row: ExcelRPCRow = (data ?? [])[0] as any || {
@@ -106,6 +121,15 @@ export function useSIAAnalytics(filters: any) {
         };
 
         const total = Number(row.total_cases ?? 0);
+        
+        // If no data in database, fall back to localStorage
+        if (total === 0) {
+          console.log('📊 No data in database, falling back to localStorage analytics');
+          setUseDatabase(false);
+          setLoading(false);
+          return;
+        }
+
         const st = row.status_breakdown ?? {};
         const br = row.branch_breakdown ?? {};
         const hosp = row.hospital_breakdown ?? {};
@@ -135,6 +159,8 @@ export function useSIAAnalytics(filters: any) {
         const pendingBreakdown = Object.fromEntries(pendingKeys.map(k => [k, st[k] ?? 0]));
         const pendingTotal = pendingKeys.reduce((a, k) => a + (st[k] ?? 0), 0);
 
+        console.log(`📊 Database analytics: ${total} total cases for ${year}-${month.toString().padStart(2, '0')}`);
+
         setMetrics({
           totalCases: total,
           mcj1Cases: mcj1,
@@ -157,12 +183,81 @@ export function useSIAAnalytics(filters: any) {
         setLoading(false);
       } catch (err) {
         if (cancel) return;
-        setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
+        console.error('Analytics error:', err);
+        setError(`Failed to fetch analytics: ${err instanceof Error ? err.message : 'Unknown error'}. Falling back to localStorage.`);
+        setUseDatabase(false);
         setLoading(false);
       }
     })();
     return () => { cancel = true; };
-  }, [year, month, nonce]);
+  }, [year, month, nonce, useDatabase]);
+  
+  // Use localStorage analytics when database is not available
+  useEffect(() => {
+    if (!useDatabase && !localStorageAnalytics.loading) {
+      const { metrics: localMetrics } = localStorageAnalytics;
+      
+      // Transform localStorage metrics to match SIAMetrics interface
+      const st = localMetrics.byStatus;
+      const br = localMetrics.byBranch; 
+      const hosp = localMetrics.byHospital;
+      const spec = localMetrics.bySpecialty;
+      
+      // MCJ1/MCJ2 (from Branch column)
+      const mcj1 = Object.entries(br).reduce((acc, [k, v]) => /\bmcj\s*1\b/i.test(k) ? acc + (v ?? 0) : acc, 0);
+      const mcj2 = Object.entries(br).reduce((acc, [k, v]) => /\bmcj\s*2\b/i.test(k) ? acc + (v ?? 0) : acc, 0);
 
-  return { metrics, loading, error, refetch };
+      // "Done" = Completed + Scheduled + Planned NVD
+      const done =
+        pickFirst(st, STATUS.completed) +
+        pickFirst(st, STATUS.scheduled) +
+        pickFirst(st, STATUS.plannedNVD);
+      const conversionRate = localMetrics.totalCases ? Math.round((done / localMetrics.totalCases) * 100) : 0;
+
+      // Loss tree groupings
+      const cancelledTotal = sumKeys(st, STATUS.cancelledAny);
+      const cancelledBreakdown = Object.fromEntries(STATUS.cancelledAny
+        .filter(k => (st[k] ?? 0) > 0)
+        .map(k => [k, st[k]]));
+      const pendingKeys = Object.keys(st).filter(k =>
+        ![...STATUS.completed, ...STATUS.scheduled, ...STATUS.plannedNVD, ...STATUS.cancelledAny].some(x =>
+          new RegExp(`^${x}$`, "i").test(k)
+        )
+      );
+      const pendingBreakdown = Object.fromEntries(pendingKeys.map(k => [k, st[k] ?? 0]));
+      const pendingTotal = pendingKeys.reduce((a, k) => a + (st[k] ?? 0), 0);
+      
+      console.log(`📊 localStorage analytics: ${localMetrics.totalCases} total cases for ${year}-${month.toString().padStart(2, '0')}`);
+      
+      setMetrics({
+        totalCases: localMetrics.totalCases,
+        mcj1Cases: mcj1,
+        mcj2Cases: mcj2,
+        doneCases: done,
+        conversionRate,
+        topHospitals: topN(hosp, 5),
+        topSpecialties: topN(spec, 5),
+        lossTree: {
+          cancelledTotal,
+          cancelledBreakdown,
+          pendingTotal,
+          pendingBreakdown
+        },
+        revenue: { paidCount: 0, paidPercentage: 0, paidSum: 0, mtdGrowth: 0 },
+        conversionHistory: [],
+      });
+      setLoading(false);
+    }
+  }, [useDatabase, localStorageAnalytics.metrics, localStorageAnalytics.loading, year, month]);
+
+  return { 
+    metrics, 
+    loading: loading || localStorageAnalytics.loading, 
+    error, 
+    refetch: () => {
+      setUseDatabase(true);
+      refetch();
+    },
+    usingLocalStorage: !useDatabase
+  };
 }

@@ -28,6 +28,12 @@ export class DataExcelMigrationService {
     success: boolean;
     migratedCount: number;
     error?: string;
+    validationResults?: {
+      totalProcessed: number;
+      withValidDates: number;
+      julyRecords: number;
+      sampleDates: string[];
+    };
   }> {
     try {
       // Get all Excel data from localStorage
@@ -37,20 +43,46 @@ export class DataExcelMigrationService {
         return { success: true, migratedCount: 0 };
       }
 
-      console.log(`Found ${allRequests.length} records to migrate`);
+      console.log(`🔄 Migration: Found ${allRequests.length} records to migrate`);
 
-      // First, upload to excel_rows_raw using the import function
-      const rawRows = allRequests.map((record, index) => ({
-        __row: index + 1,
-        Date: this.extractDateString(record),
-        Branch: this.extractBranchString(record),
-        "Hospital Code": this.extractHospitalCode(record),
-        "Hospital Name": record.hospitalName || 'Unknown',
-        Specialty: record.specialty || 'Unknown',
-        Status: record.operationStatus || 'Pending',
-        "Loss Reason": record.reasonPendingCancellation || '',
-        "Paid Amount": this.extractPaidAmountString(record)
-      }));
+      // Validation: Count July records and parse dates
+      let withValidDates = 0;
+      let julyRecords = 0;
+      const sampleDates: string[] = [];
+      
+      // Enhanced row processing with better date parsing
+      const rawRows = allRequests.map((record, index) => {
+        const dateStr = this.extractDateString(record);
+        const parsedDate = this.parseDate(dateStr);
+        
+        if (parsedDate) {
+          withValidDates++;
+          if (sampleDates.length < 10) {
+            sampleDates.push(`${dateStr} -> ${parsedDate}`);
+          }
+          
+          // Count July records for validation
+          const date = new Date(parsedDate);
+          if (date.getMonth() === 6) { // July is month 6 (0-based)
+            julyRecords++;
+          }
+        }
+        
+        return {
+          __row: index + 1,
+          Date: dateStr,
+          Branch: this.extractBranchString(record),
+          "Hospital Code": this.extractHospitalCode(record),
+          "Hospital Name": record.hospitalName || 'Unknown',
+          Specialty: record.specialty || 'Unknown',
+          Status: this.normalizeStatus(record.operationStatus || 'Pending'),
+          "Loss Reason": record.reasonPendingCancellation || '',
+          "Paid Amount": this.extractPaidAmountString(record)
+        };
+      });
+
+      console.log(`📊 Migration validation: ${withValidDates}/${allRequests.length} records with valid dates, ${julyRecords} July records found`);
+      console.log('📋 Sample date parsing:', sampleDates);
 
       // Use the import function to process the data
       const { data, error } = await supabase.rpc('import_excel_rows', {
@@ -63,9 +95,21 @@ export class DataExcelMigrationService {
         throw error;
       }
 
-      console.log(`Successfully migrated ${data} records to Excel tables`);
+      console.log(`✅ Successfully migrated ${data} records to Excel tables`);
 
-      return { success: true, migratedCount: data };
+      // Validate migration by checking the database
+      await this.validateMigration(julyRecords);
+
+      return { 
+        success: true, 
+        migratedCount: data,
+        validationResults: {
+          totalProcessed: allRequests.length,
+          withValidDates,
+          julyRecords,
+          sampleDates
+        }
+      };
 
     } catch (error) {
       console.error('Migration failed:', error);
@@ -74,6 +118,35 @@ export class DataExcelMigrationService {
         migratedCount: 0,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
+    }
+  }
+
+  private static async validateMigration(expectedJulyRecords: number): Promise<void> {
+    try {
+      console.log('🔍 Validating migration...');
+      
+      // Check current year July records in database
+      const currentYear = new Date().getFullYear();
+      const { data, error } = await supabase.rpc('analyze_excel_cases_monthly', {
+        p_year: currentYear,
+        p_month: 7
+      });
+      
+      if (error) {
+        console.warn('Validation query failed:', error);
+        return;
+      }
+      
+      const dbJulyCount = data?.[0]?.total_cases || 0;
+      console.log(`📊 Validation: Expected ${expectedJulyRecords} July records, database shows ${dbJulyCount}`);
+      
+      if (dbJulyCount !== expectedJulyRecords && expectedJulyRecords > 0) {
+        console.warn(`⚠️ Validation mismatch: Expected ${expectedJulyRecords} July records but database shows ${dbJulyCount}`);
+      } else if (dbJulyCount === expectedJulyRecords && expectedJulyRecords > 0) {
+        console.log('✅ Validation passed: July record counts match');
+      }
+    } catch (error) {
+      console.warn('Migration validation failed:', error);
     }
   }
 
@@ -170,25 +243,50 @@ export class DataExcelMigrationService {
     if (!dateStr) return null;
     
     try {
+      // Handle Excel serial numbers first (common range 40000-50000 for 2009-2037)
+      if (/^\d+$/.test(dateStr)) {
+        const serialNumber = Number(dateStr);
+        if (serialNumber > 25000 && serialNumber < 60000) {
+          const date = new Date((serialNumber - 25569) * 86400 * 1000);
+          return date.toISOString().split('T')[0];
+        }
+      }
+      
       // Try multiple date formats
-      const formats = [
-        /^\d{4}-\d{2}-\d{2}$/,  // YYYY-MM-DD
-        /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
-        /^\d{2}-\d{2}-\d{4}$/,  // MM-DD-YYYY
-      ];
-
-      if (formats[0].test(dateStr)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
         return dateStr; // Already in correct format
       }
 
-      if (formats[1].test(dateStr)) {
-        const [month, day, year] = dateStr.split('/');
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+        const parts = dateStr.split('/');
+        const [month, day, year] = parts.map(Number);
+        
+        // Validate ranges
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        }
+        
+        // Try DD/MM/YYYY if MM/DD/YYYY doesn't make sense
+        if (Number(parts[0]) > 12 && Number(parts[1]) <= 12) {
+          const [day, month, year] = parts.map(Number);
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        }
       }
 
-      if (formats[2].test(dateStr)) {
-        const [month, day, year] = dateStr.split('-');
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) {
+        const [month, day, year] = dateStr.split('-').map(Number);
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        }
+      }
+
+      // Try short year formats
+      if (/^\d{1,2}\/\d{1,2}\/\d{2}$/.test(dateStr)) {
+        const [month, day, shortYear] = dateStr.split('/').map(Number);
+        const year = shortYear < 50 ? 2000 + shortYear : 1900 + shortYear; // Y2K-like logic
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        }
       }
 
       // Try to parse as Date object
@@ -263,12 +361,8 @@ export class DataExcelMigrationService {
     const date = record.dateCreated || record.date || record['Date'] || record['Request Creation Date'];
     if (!date) return new Date().toISOString().split('T')[0];
     
-    // Handle Excel serial numbers
-    if (typeof date === 'number' && date > 25000) {
-      return new Date((date - 25569) * 86400 * 1000).toISOString().split('T')[0];
-    }
-    
-    return this.parseDate(String(date)) || new Date().toISOString().split('T')[0];
+    // Return the raw date string for processing by parseDate
+    return String(date);
   }
 
   private static extractBranchString(record: ExcelRecord): string {
