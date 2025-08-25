@@ -14,8 +14,8 @@ export function DataMigrationDebugger() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const currentYear = new Date().getFullYear();
   
-  // Test July 2024 specifically since user mentioned 209 cases
-  const localStorageJuly = useLocalStorageAnalytics(2024, 7);
+  // Test July 2025 specifically since user mentioned 209 cases
+  const localStorageJuly = useLocalStorageAnalytics(2025, 7);
 
   useEffect(() => {
     checkStatus();
@@ -26,14 +26,14 @@ export function DataMigrationDebugger() {
       const status = await DataExcelMigrationService.checkMigrationStatus();
       setMigrationStatus(status);
       
-      // Also check database July 2024 data
+      // Also check database July 2025 data
       const { data, error } = await supabase.rpc('analyze_excel_cases_monthly', {
-        p_year: 2024,
+        p_year: 2025,
         p_month: 7
       });
       
       setDebugInfo({
-        dbJuly2024: data?.[0] || null,
+        dbJuly2025: data?.[0] || null,
         dbError: error?.message || null
       });
     } catch (error) {
@@ -75,9 +75,9 @@ export function DataMigrationDebugger() {
 
   const testDatabaseFunction = async () => {
     try {
-      console.log('🧪 Testing database function for July 2024...');
+      console.log('🧪 Testing database function for July 2025...');
       const { data, error } = await supabase.rpc('analyze_excel_cases_monthly', {
-        p_year: 2024,
+        p_year: 2025,
         p_month: 7
       });
       
@@ -87,7 +87,7 @@ export function DataMigrationDebugger() {
         title: "Database Test",
         description: error 
           ? `Error: ${error.message}` 
-          : `Success: ${data?.[0]?.total_cases || 0} July 2024 cases found`,
+          : `Success: ${data?.[0]?.total_cases || 0} July 2025 cases found`,
         variant: error ? "destructive" : "default",
       });
       
@@ -129,12 +129,12 @@ export function DataMigrationDebugger() {
             </div>
           </div>
 
-          {/* July 2024 Comparison */}
+          {/* July 2025 Comparison */}
           <div className="border-t pt-4">
-            <h4 className="font-medium mb-2">🎯 July 2024 Analysis (User Expected: 209 cases)</h4>
+            <h4 className="font-medium mb-2">🎯 July 2025 Analysis (User Expected: 209 cases)</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">LocalStorage July 2024:</p>
+                <p className="text-sm text-muted-foreground">LocalStorage July 2025:</p>
                 <Badge variant="outline" className="text-lg">
                   {localStorageJuly.loading ? "Loading..." : localStorageJuly.metrics.totalCases}
                 </Badge>
@@ -145,9 +145,9 @@ export function DataMigrationDebugger() {
                 )}
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Database July 2024:</p>
+                <p className="text-sm text-muted-foreground">Database July 2025:</p>
                 <Badge variant="outline" className="text-lg">
-                  {debugInfo?.dbJuly2024?.total_cases || 0}
+                  {debugInfo?.dbJuly2025?.total_cases || 0}
                 </Badge>
                 {debugInfo?.dbError && (
                   <div className="text-xs text-destructive mt-1">
@@ -194,7 +194,7 @@ export function DataMigrationDebugger() {
           {/* LocalStorage Breakdown */}
           {!localStorageJuly.loading && localStorageJuly.metrics.totalCases > 0 && (
             <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">📋 LocalStorage July 2024 Breakdown</h4>
+              <h4 className="font-medium mb-2">📋 LocalStorage July 2025 Breakdown</h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <strong>Status:</strong>

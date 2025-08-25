@@ -61,9 +61,9 @@ export class DataExcelMigrationService {
             sampleDates.push(`${dateStr} -> ${parsedDate}`);
           }
           
-          // Count July records for validation
+          // Count July 2025 records for validation
           const date = new Date(parsedDate);
-          if (date.getMonth() === 6) { // July is month 6 (0-based)
+          if (date.getFullYear() === 2025 && date.getMonth() === 6) { // July is month 6 (0-based)
             julyRecords++;
           }
         }
@@ -81,7 +81,7 @@ export class DataExcelMigrationService {
         };
       });
 
-      console.log(`📊 Migration validation: ${withValidDates}/${allRequests.length} records with valid dates, ${julyRecords} July records found`);
+      console.log(`📊 Migration validation: ${withValidDates}/${allRequests.length} records with valid dates, ${julyRecords} July 2025 records found`);
       console.log('📋 Sample date parsing:', sampleDates);
 
       // Use the import function to process the data
@@ -125,10 +125,9 @@ export class DataExcelMigrationService {
     try {
       console.log('🔍 Validating migration...');
       
-      // Check current year July records in database
-      const currentYear = new Date().getFullYear();
+      // Check July 2025 records in database
       const { data, error } = await supabase.rpc('analyze_excel_cases_monthly', {
-        p_year: currentYear,
+        p_year: 2025,
         p_month: 7
       });
       
@@ -138,12 +137,12 @@ export class DataExcelMigrationService {
       }
       
       const dbJulyCount = data?.[0]?.total_cases || 0;
-      console.log(`📊 Validation: Expected ${expectedJulyRecords} July records, database shows ${dbJulyCount}`);
+      console.log(`📊 Validation: Expected ${expectedJulyRecords} July 2025 records, database shows ${dbJulyCount}`);
       
       if (dbJulyCount !== expectedJulyRecords && expectedJulyRecords > 0) {
-        console.warn(`⚠️ Validation mismatch: Expected ${expectedJulyRecords} July records but database shows ${dbJulyCount}`);
+        console.warn(`⚠️ Validation mismatch: Expected ${expectedJulyRecords} July 2025 records but database shows ${dbJulyCount}`);
       } else if (dbJulyCount === expectedJulyRecords && expectedJulyRecords > 0) {
-        console.log('✅ Validation passed: July record counts match');
+        console.log('✅ Validation passed: July 2025 record counts match');
       }
     } catch (error) {
       console.warn('Migration validation failed:', error);
