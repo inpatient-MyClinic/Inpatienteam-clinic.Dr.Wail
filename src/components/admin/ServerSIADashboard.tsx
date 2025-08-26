@@ -81,8 +81,22 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
       const specialties = filters.specialties.length > 0 ? filters.specialties : null;
       const branches = filters.branches.length > 0 ? filters.branches.map(b => b.toUpperCase()) : null;
 
-      // Call all KPI functions in parallel
-      const [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData] = await Promise.all([
+      // First test database connection
+      try {
+        await supabase.rpc('health_ping' as any);
+        console.log('Database connection verified');
+      } catch (healthError) {
+        console.error('Database connection failed:', healthError);
+        toast({
+          title: "Database Connection Failed",
+          description: "Unable to connect to Supabase database",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Try calling KPI functions with Promise.allSettled to handle missing functions gracefully
+      const [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData] = await Promise.allSettled([
         supabase.rpc('kpi_conversion_rate' as any, {
           p_start: startDate,
           p_end: endDate,
@@ -125,51 +139,59 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
         })
       ]);
 
-      if (conversionData.error) throw conversionData.error;
-      if (branchData.error) throw branchData.error;
-      if (topHospitalsData.error) throw topHospitalsData.error;
-      if (topSpecialtiesData.error) throw topSpecialtiesData.error;
-      if (lossTreeData.error) throw lossTreeData.error;
+      // Check if any functions are missing
+      const hasErrors = [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData]
+        .some(result => result.status === 'rejected');
 
-      // Process branch data for MCJ1/MCJ2 with proper type assertions
-      const branchArray = (branchData.data as BranchCountData[]) || [];
-      const mcj1Cases = branchArray.find(b => b.branch_code === 'MCJ1')?.cnt || 0;
-      const mcj2Cases = branchArray.find(b => b.branch_code === 'MCJ2')?.cnt || 0;
+      if (hasErrors) {
+        const rejectedReasons = [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData]
+          .filter(result => result.status === 'rejected')
+          .map(result => (result as PromiseRejectedResult).reason);
+        
+        const hasNoFunction = rejectedReasons.some(reason => 
+          reason?.message?.includes('does not exist')
+        );
 
-      // Type assertions for other data
-      const conversionArray = (conversionData.data as ConversionRateData[]) || [];
-      const hospitalArray = (topHospitalsData.data as TopHospitalData[]) || [];
-      const specialtyArray = (topSpecialtiesData.data as TopSpecialtyData[]) || [];
-      const lossArray = (lossTreeData.data as LossTreeData[]) || [];
-
-      const analytics = {
-        totalCases: conversionArray[0]?.denominator || 0,
-        mcj1Cases,
-        mcj2Cases,
-        conversionRate: conversionArray[0]?.conversion_rate || 0,
-        topHospitals: hospitalArray.map(h => ({ name: h.hospital_name, count: h.cnt })),
-        topSpecialties: specialtyArray.map(s => ({ name: s.specialty, count: s.cnt })),
-        paidCases: 0, // TODO: Add revenue calculation if needed
-        revenue: 0,
-        lossTreeData: {
-          cancelled: lossArray[0]?.cancelled_total || 0,
-          pending: lossArray[0]?.pending_total || 0,
-          cancelledBreakdown: {
-            documentation: lossArray[0]?.cancelled_doc || 0,
-            medical: lossArray[0]?.cancelled_medical || 0,
-            insurance: lossArray[0]?.cancelled_ins || 0,
-            other: lossArray[0]?.cancelled_other || 0
-          },
-          pendingBreakdown: {
-            documentation: lossArray[0]?.pending_doc || 0,
-            medical: lossArray[0]?.pending_medical || 0,
-            insurance: lossArray[0]?.pending_ins || 0,
-            other: lossArray[0]?.pending_other || 0
-          }
+        if (hasNoFunction) {
+          toast({
+            title: "Analytics Functions Missing",
+            description: "Database KPI functions not found. Please deploy the analytics SQL setup.",
+            variant: "destructive"
+          });
+          
+          // Set empty data instead of throwing error
+          setKpiData({
+            conversionRate: null,
+            branchCounts: [],
+            topHospitals: [],
+            topSpecialties: [],
+            lossTree: []
+          });
+          return;
         }
-      };
+      }
 
-      setKpiData(analytics);
+      // Process successful results from Promise.allSettled
+      const conversionResult = conversionData.status === 'fulfilled' ? conversionData.value : null;
+      const branchResult = branchData.status === 'fulfilled' ? branchData.value : null;
+      const hospitalResult = topHospitalsData.status === 'fulfilled' ? topHospitalsData.value : null;
+      const specialtyResult = topSpecialtiesData.status === 'fulfilled' ? topSpecialtiesData.value : null;
+      const lossResult = lossTreeData.status === 'fulfilled' ? lossTreeData.value : null;
+
+      // Extract data safely
+      const conversionArray = conversionResult?.data || [];
+      const branchArray = branchResult?.data || [];
+      const hospitalArray = hospitalResult?.data || [];
+      const specialtyArray = specialtyResult?.data || [];
+      const lossArray = lossResult?.data || [];
+
+      setKpiData({
+        conversionRate: conversionArray[0] || null,
+        branchCounts: branchArray,
+        topHospitals: hospitalArray,
+        topSpecialties: specialtyArray,
+        lossTree: lossArray
+      });
     } catch (error) {
       console.error('Error fetching KPI data:', error);
       toast.error('Failed to fetch analytics data');
@@ -294,7 +316,9 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Cases</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentAnalytics.totalCases}</div>
+                <div className="text-2xl font-bold">
+                  {(currentAnalytics.branchCounts || []).reduce((sum: number, b: any) => sum + (b.count || 0), 0)}
+                </div>
               </CardContent>
             </Card>
 
@@ -303,7 +327,9 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
                 <CardTitle className="text-sm font-medium text-muted-foreground">MCJ1 Cases</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{currentAnalytics.mcj1Cases}</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {(currentAnalytics.branchCounts || []).find((b: any) => b.branch === 'MCJ1')?.count || 0}
+                </div>
               </CardContent>
             </Card>
 
@@ -312,7 +338,9 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
                 <CardTitle className="text-sm font-medium text-muted-foreground">MCJ2 Cases</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{currentAnalytics.mcj2Cases}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {(currentAnalytics.branchCounts || []).find((b: any) => b.branch === 'MCJ2')?.count || 0}
+                </div>
               </CardContent>
             </Card>
 
@@ -331,8 +359,10 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-600">{currentAnalytics.conversionRate}%</div>
-                <Progress value={currentAnalytics.conversionRate} className="mt-2" />
+                <div className="text-2xl font-bold text-emerald-600">
+                  {currentAnalytics.conversionRate?.conversion_rate?.toFixed(1) || '0'}%
+                </div>
+                <Progress value={currentAnalytics.conversionRate?.conversion_rate || 0} className="mt-2" />
               </CardContent>
             </Card>
           </div>

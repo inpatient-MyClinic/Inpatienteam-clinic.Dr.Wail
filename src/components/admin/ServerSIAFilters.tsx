@@ -50,10 +50,51 @@ export default function ServerSIAFilters({ onFiltersChange }: ServerSIAFiltersPr
 
   // Load available filter options
   useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        // Since analytics tables are reset, use unified_requests for basic filters
+        const { data: statusData } = await supabase
+          .from('unified_requests')
+          .select('status')
+          .not('status', 'is', null);
+
+        const { data: branchData } = await supabase
+          .from('unified_requests')
+          .select('branch_code')
+          .not('branch_code', 'is', null);
+
+        const { data: hospitalData } = await supabase
+          .from('unified_requests')
+          .select('hospital_name')
+          .not('hospital_name', 'is', null);
+
+        const { data: specialtyData } = await supabase
+          .from('unified_requests')
+          .select('specialty')
+          .not('specialty', 'is', null);
+
+        setAvailableOptions({
+          statuses: [...new Set(statusData?.map(d => d.status).filter(Boolean))] as string[],
+          hospitals: [...new Set(hospitalData?.map(d => d.hospital_name).filter(Boolean))] as string[],
+          specialties: [...new Set(specialtyData?.map(d => d.specialty).filter(Boolean))] as string[],
+          branches: [...new Set(branchData?.map(d => d.branch_code).filter(Boolean))] as string[]
+        });
+      } catch (error) {
+        console.error('Error loading filter options:', error);
+        // Set default options if tables don't exist
+        setAvailableOptions({
+          statuses: ['pending', 'completed', 'cancelled', 'rejected'],
+          hospitals: [],
+          specialties: [],
+          branches: ['MCJ1', 'MCJ2']
+        });
+      }
+    };
+
     loadFilterOptions();
   }, []);
 
-  // Update filters when month changes
+  // Update filters when month changes  
   useEffect(() => {
     let startDate: string;
     let endDate: string;
@@ -70,40 +111,6 @@ export default function ServerSIAFilters({ onFiltersChange }: ServerSIAFiltersPr
     setFilters(newFilters);
     onFiltersChange(newFilters);
   }, [selectedMonth]);
-
-  const loadFilterOptions = async () => {
-    try {
-      // Get unique values for each filter type
-      const { data: statusData } = await supabase
-        .from('excel_rows_raw')
-        .select('Status')
-        .not('Status', 'is', null);
-
-      const { data: hospitalData } = await supabase
-        .from('excel_rows_raw')
-        .select('Hospital Name')
-        .not('Hospital Name', 'is', null);
-
-      const { data: specialtyData } = await supabase
-        .from('excel_rows_raw')
-        .select('Specialty')
-        .not('Specialty', 'is', null);
-
-      const { data: branchData } = await supabase
-        .from('excel_rows_raw')
-        .select('Branch')
-        .not('Branch', 'is', null);
-
-      setAvailableOptions({
-        statuses: [...new Set(statusData?.map(d => d.Status).filter(Boolean))] as string[],
-        hospitals: [...new Set(hospitalData?.map(d => d['Hospital Name']).filter(Boolean))] as string[],
-        specialties: [...new Set(specialtyData?.map(d => d.Specialty).filter(Boolean))] as string[],
-        branches: [...new Set(branchData?.map(d => d.Branch).filter(Boolean))] as string[]
-      });
-    } catch (error) {
-      console.error('Error loading filter options:', error);
-    }
-  };
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     if (key === 'startDate' || key === 'endDate') {

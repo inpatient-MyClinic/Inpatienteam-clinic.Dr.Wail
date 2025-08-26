@@ -53,101 +53,6 @@ export type Database = {
         }
         Relationships: []
       }
-      excel_requests: {
-        Row: {
-          branch_code: string | null
-          created_at: string | null
-          hospital_name: string | null
-          id: number
-          loss_reason: string | null
-          paid_amount: number | null
-          patient_id: string | null
-          patient_name: string | null
-          raw_data: Json | null
-          request_date: string | null
-          specialty: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          branch_code?: string | null
-          created_at?: string | null
-          hospital_name?: string | null
-          id?: number
-          loss_reason?: string | null
-          paid_amount?: number | null
-          patient_id?: string | null
-          patient_name?: string | null
-          raw_data?: Json | null
-          request_date?: string | null
-          specialty?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          branch_code?: string | null
-          created_at?: string | null
-          hospital_name?: string | null
-          id?: number
-          loss_reason?: string | null
-          paid_amount?: number | null
-          patient_id?: string | null
-          patient_name?: string | null
-          raw_data?: Json | null
-          request_date?: string | null
-          specialty?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      excel_rows_raw: {
-        Row: {
-          Branch: string | null
-          Date: string | null
-          "Hospital Code": string | null
-          "Hospital Name": string | null
-          "Loss Reason": string | null
-          "Paid Amount": string | null
-          row_no: number
-          Specialty: string | null
-          Status: string | null
-          upload_id: string
-        }
-        Insert: {
-          Branch?: string | null
-          Date?: string | null
-          "Hospital Code"?: string | null
-          "Hospital Name"?: string | null
-          "Loss Reason"?: string | null
-          "Paid Amount"?: string | null
-          row_no: number
-          Specialty?: string | null
-          Status?: string | null
-          upload_id: string
-        }
-        Update: {
-          Branch?: string | null
-          Date?: string | null
-          "Hospital Code"?: string | null
-          "Hospital Name"?: string | null
-          "Loss Reason"?: string | null
-          "Paid Amount"?: string | null
-          row_no?: number
-          Specialty?: string | null
-          Status?: string | null
-          upload_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "excel_rows_raw_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "excel_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       excel_upload_batches: {
         Row: {
           column_mappings: Json | null
@@ -190,24 +95,6 @@ export type Database = {
           uploaded_at?: string
           uploaded_by?: string
           warnings_count?: number
-        }
-        Relationships: []
-      }
-      excel_uploads: {
-        Row: {
-          id: string
-          imported_at: string | null
-          source_file: string
-        }
-        Insert: {
-          id?: string
-          imported_at?: string | null
-          source_file: string
-        }
-        Update: {
-          id?: string
-          imported_at?: string | null
-          source_file?: string
         }
         Relationships: []
       }
@@ -619,33 +506,6 @@ export type Database = {
           },
         ]
       }
-      sia_settings: {
-        Row: {
-          created_at: string | null
-          id: number
-          key: string
-          scope: string | null
-          updated_at: string | null
-          value: Json
-        }
-        Insert: {
-          created_at?: string | null
-          id?: number
-          key: string
-          scope?: string | null
-          updated_at?: string | null
-          value: Json
-        }
-        Update: {
-          created_at?: string | null
-          id?: number
-          key?: string
-          scope?: string | null
-          updated_at?: string | null
-          value?: Json
-        }
-        Relationships: []
-      }
       unified_requests: {
         Row: {
           assigned_to: string | null
@@ -735,63 +595,7 @@ export type Database = {
       }
     }
     Views: {
-      excel_cases_clean: {
-        Row: {
-          branch: string | null
-          case_date: string | null
-          hospital: string | null
-          paid_amount_text: string | null
-          row_no: number | null
-          specialty: string | null
-          status: string | null
-          upload_id: string | null
-        }
-        Insert: {
-          branch?: string | null
-          case_date?: never
-          hospital?: string | null
-          paid_amount_text?: string | null
-          row_no?: number | null
-          specialty?: string | null
-          status?: string | null
-          upload_id?: string | null
-        }
-        Update: {
-          branch?: string | null
-          case_date?: never
-          hospital?: string | null
-          paid_amount_text?: string | null
-          row_no?: number | null
-          specialty?: string | null
-          status?: string | null
-          upload_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "excel_rows_raw_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "excel_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      requests_v: {
-        Row: {
-          branch_code: string | null
-          hospital_name: string | null
-          loss_reason: string | null
-          paid_amount: number | null
-          patient_id: string | null
-          patient_name: string | null
-          request_date: string | null
-          source_type: string | null
-          specialty: string | null
-          status: string | null
-          uid: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_reset_password: {
@@ -899,9 +703,12 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
-      import_excel_rows: {
-        Args: { p_rows: Json; p_source_file: string }
-        Returns: number
+      health_ping: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          db: string
+          now_utc: string
+        }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never>
