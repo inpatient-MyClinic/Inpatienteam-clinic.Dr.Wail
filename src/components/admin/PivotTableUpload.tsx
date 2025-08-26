@@ -3,90 +3,113 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, AlertCircle, CheckCircle, Table } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { parseExcelPivotTable } from "./upload/FileProcessing";
+import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from 'xlsx';
 
 interface PivotTableUploadProps {
   onPivotDataLoaded: (data: any[]) => void;
+  onDataImported?: () => void;
 }
 
-export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUploadProps) {
+export default function PivotTableUpload({ onPivotDataLoaded, onDataImported }: PivotTableUploadProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [pivotData, setPivotData] = useState<any[]>([]);
-  const [columns, setColumns] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; count?: number } | null>(null);
+  const [showDatabaseError, setShowDatabaseError] = useState(false);
   const { toast } = useToast();
+
+  const parseFileToJSON = async (file: File) => {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    
+    // Add __row index (1..N)
+    const rowsWithIndex = jsonData.map((row: any, index: number) => ({
+      ...row,
+      __row: index + 1
+    }));
+    
+    return rowsWithIndex;
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0];
     if (!uploadedFile) return;
 
-    setFile(uploadedFile);
-    setIsProcessing(true);
-    
-    try {
-      const { data, columns } = await parseExcelPivotTable(uploadedFile);
-      
-      if (data.length === 0) {
-        throw new Error('No data found in the pivot table sheet');
-      }
-      
-      setPivotData(data);
-      setColumns(columns);
-      
-      // Store pivot table data in localStorage for the monthly analytics
-      localStorage.setItem('pivotTableData', JSON.stringify(data));
-      localStorage.setItem('pivotTableColumns', JSON.stringify(columns));
-      localStorage.setItem('pivotTableLastUpdated', new Date().toISOString());
-      
-      // Notify parent component
-      onPivotDataLoaded(data);
-      
-      setUploadResult({
-        success: true,
-        message: `Successfully loaded ${data.length} rows from pivot table with ${columns.length} columns`
-      });
-      
-      toast({
-        title: "Pivot Table Loaded",
-        description: `Successfully processed ${data.length} rows from sheet 1.`
-      });
-      
-    } catch (error) {
-      console.error('Error processing pivot table:', error);
+    // Validate file type
+    if (!uploadedFile.name.endsWith('.xlsx') && !uploadedFile.name.endsWith('.csv')) {
       setUploadResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to process pivot table'
+        message: 'Please upload a .xlsx or .csv file only'
+      });
+      return;
+    }
+
+    setFile(uploadedFile);
+    setIsProcessing(true);
+    setUploadResult(null);
+    setShowDatabaseError(false);
+    
+    try {
+      // Parse file to JSON
+      const rowsJson = await parseFileToJSON(uploadedFile);
+      
+      if (rowsJson.length === 0) {
+        throw new Error('No data found in the uploaded file');
+      }
+
+      // Call Supabase RPC
+      const { data, error } = await supabase.rpc('import_excel_rows', {
+        p_source_file: uploadedFile.name,
+        p_rows: rowsJson
+      });
+
+      if (error) {
+        if (error.message.includes('function import_excel_rows does not exist')) {
+          setShowDatabaseError(true);
+          setUploadResult({
+            success: false,
+            message: 'Database setup not found. Please run the Pivot-Parity SQL in Supabase.'
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        const importedCount = data || rowsJson.length;
+        
+        setUploadResult({
+          success: true,
+          message: `Successfully imported ${importedCount} rows to Supabase`,
+          count: importedCount
+        });
+        
+        toast({
+          title: "Import Successful",
+          description: `Imported ${importedCount} rows to Supabase`,
+        });
+        
+        // Notify parent components
+        onPivotDataLoaded(rowsJson);
+        onDataImported?.();
+      }
+      
+    } catch (error) {
+      console.error('Error uploading pivot table:', error);
+      setUploadResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to process file'
       });
       
       toast({
-        title: "Error",
-        description: "Failed to load pivot table from sheet 1. Please check the file format.",
+        title: "Upload Failed",
+        description: "Failed to import data to Supabase",
         variant: "destructive"
       });
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const usePivotData = () => {
-    if (pivotData.length === 0) return;
-    
-    // Preserve original Excel data structure - do not modify the source data
-    // Store the exact pivot table data as-is from sheet 1
-    localStorage.setItem('adminData', JSON.stringify(pivotData));
-    localStorage.setItem('excel_data_imported', 'true');
-    localStorage.setItem('pivot_table_active', 'true');
-    
-    // Trigger events to update all components
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new CustomEvent('requestsUpdated'));
-    window.dispatchEvent(new CustomEvent('adminDataCleared'));
-    
-    toast({
-      title: "Pivot Data Applied",
-      description: "Monthly analytics will now use the pivot table data from sheet 1."
-    });
   };
 
   return (
@@ -95,10 +118,10 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Table className="w-5 h-5" />
-            Pivot Table Upload (Sheet 1)
+            Pivot Table Upload (Excel → Supabase)
           </CardTitle>
           <CardDescription>
-            Upload an Excel file and use the pivot table data from sheet 1 for monthly analytics.
+            Upload .xlsx or .csv files to import data directly to Supabase database.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -106,7 +129,7 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
             <div className="flex-1 min-w-48">
               <input
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 onChange={handleFileUpload}
                 className="hidden"
                 id="pivot-upload"
@@ -121,7 +144,7 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
                 >
                   <span>
                     <Upload className="w-4 h-4" />
-                    {isProcessing ? "Processing..." : file ? file.name : "Choose Excel File (Sheet 1)"}
+                    {isProcessing ? "Processing..." : file ? file.name : "Choose Excel/CSV File"}
                   </span>
                 </Button>
               </label>
@@ -130,6 +153,22 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
         </CardContent>
       </Card>
 
+      {/* Database Error Banner */}
+      {showDatabaseError && (
+        <Card className="border-red-500 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-5 h-5" />
+              <div>
+                <p className="font-medium">Database setup not found.</p>
+                <p className="text-sm">Please run the Pivot-Parity SQL in Supabase (provided earlier).</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload Results */}
       {uploadResult && (
         <Card>
           <CardHeader>
@@ -142,48 +181,17 @@ export default function PivotTableUpload({ onPivotDataLoaded }: PivotTableUpload
               Upload Results
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <p className={uploadResult.success ? "text-green-700" : "text-red-700"}>
               {uploadResult.message}
             </p>
             
-            {uploadResult.success && pivotData.length > 0 && (
-              <>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Pivot Table Preview:</h4>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Found {pivotData.length} rows with columns: {columns.join(', ')}
-                  </p>
-                  
-                  {/* Show first few rows as preview */}
-                  <div className="max-h-40 overflow-auto">
-                    <table className="w-full text-xs border">
-                      <thead>
-                        <tr className="bg-gray-100">
-                          {columns.slice(0, 5).map(col => (
-                            <th key={col} className="border p-1 text-left">{col}</th>
-                          ))}
-                          {columns.length > 5 && <th className="border p-1">...</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pivotData.slice(0, 3).map((row, idx) => (
-                          <tr key={idx}>
-                            {columns.slice(0, 5).map(col => (
-                              <td key={col} className="border p-1">{String(row[col] || '')}</td>
-                            ))}
-                            {columns.length > 5 && <td className="border p-1">...</td>}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                <Button onClick={usePivotData} className="w-full">
-                  Use This Pivot Data for Monthly Analytics
-                </Button>
-              </>
+            {uploadResult.success && uploadResult.count && (
+              <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-800">
+                  ✅ Data has been imported to Supabase database. Analytics will now use server-side data.
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

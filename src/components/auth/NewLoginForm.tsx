@@ -36,8 +36,9 @@ export const NewLoginForm = () => {
           setError('Please confirm your email first.');
         } else if (error.message.includes('redirect')) {
           setError('Redirect URL not allowed. Add this domain to Additional Redirect URLs in Supabase.');
-        } else if (error.message.includes('CORS')) {
-          setError(`Network/CORS error. Origin: ${window.location.origin}, Supabase: ${import.meta.env.VITE_SUPABASE_URL}`);
+        } else if (error.message.includes('redirect')) {
+          const redirectUrl = `${window.location.origin}/admin`;
+          setError(`Redirect not allowed. Add this URL to Supabase Auth → URL Configuration: ${redirectUrl}`);
         } else {
           setError(error.message);
         }

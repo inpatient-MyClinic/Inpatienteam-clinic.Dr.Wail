@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, BarChart3, Calendar, FileSpreadsheet, Table2, Bug } from "lucide-react";
+import { Settings, BarChart3, Calendar, FileSpreadsheet, Table2, Bug, Upload } from "lucide-react";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
 import { DataExcelMigrationService } from "@/services/dataExcelMigration";
 import EnhancedSIAFilters from "./EnhancedSIAFilters";
@@ -266,6 +266,17 @@ export default function SIADashboard() {
         >
           <Bug className="h-4 w-4" />
           Migration Debugger
+        </Button>
+        <Button 
+          variant="default" 
+          onClick={() => {
+            // Navigate to Server SIA Dashboard
+            window.location.href = '/admin?view=server-sia';
+          }} 
+          className="flex items-center gap-2"
+        >
+          <Upload className="h-4 w-4" />
+          Pivot Table Upload
         </Button>
         <Button 
           variant="outline" 

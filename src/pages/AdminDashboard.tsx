@@ -11,6 +11,7 @@ import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
+import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
@@ -18,6 +19,7 @@ export default function AdminDashboard() {
   const [showChart, setShowChart] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   const [showPivotUpload, setShowPivotUpload] = useState(false);
+  const [showServerSIA, setShowServerSIA] = useState(false);
 
   const {
     activeFilter,
@@ -154,8 +156,20 @@ export default function AdminDashboard() {
     selectedMonths
   );
 
+  // Check URL parameters for server SIA view
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('view') === 'server-sia') {
+      setShowServerSIA(true);
+    }
+  }, []);
+
   // Calculate unread messages for admin role
   const unreadCount = 12;
+
+  if (showServerSIA) {
+    return <ServerSIADashboard onBack={() => setShowServerSIA(false)} />;
+  }
 
   if (showChart) {
     return (
