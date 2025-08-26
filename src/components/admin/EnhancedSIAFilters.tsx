@@ -49,8 +49,8 @@ export default function EnhancedSIAFilters({
 
   const loadFilterOptions = async () => {
     try {
-      // Get unique statuses and branches from both tables
-      const [medicalData, excelData] = await Promise.all([
+      // Load from available tables only (medical_requests and unified_requests)
+      const [medicalData, unifiedData] = await Promise.all([
         supabase
           .from('medical_requests')
           .select('status, branch_code')
@@ -58,16 +58,16 @@ export default function EnhancedSIAFilters({
           .not('branch_code', 'is', null),
         
         supabase
-          .from('excel_requests')
+          .from('unified_requests')
           .select('status, branch_code')
           .not('status', 'is', null)
           .not('branch_code', 'is', null)
       ]);
 
       if (medicalData.error) throw medicalData.error;
-      if (excelData.error) throw excelData.error;
+      if (unifiedData.error) throw unifiedData.error;
 
-      const allData = [...(medicalData.data || []), ...(excelData.data || [])];
+      const allData = [...(medicalData.data || []), ...(unifiedData.data || [])];
       
       const statuses = [...new Set(allData.map(item => item.status).filter(Boolean))];
       const branches = [...new Set(allData.map(item => item.branch_code).filter(Boolean))];
@@ -83,98 +83,19 @@ export default function EnhancedSIAFilters({
     if (!filters.month) return;
 
     try {
-      console.log('🔍 SIA Analysis - Loading Excel data directly...');
+      console.log('🔍 SIA Analysis - Tables reset, showing empty state...');
       
-      // Use the same accurate data source as the pivot table
-      const { data: excelRawData, error: excelError } = await supabase
-        .from('excel_rows_raw')
-        .select('*')
-        .not('Status', 'is', null)
-        .not('Date', 'is', null);
-
-      if (excelError) throw excelError;
-
-      console.log('📊 Total Excel rows loaded:', excelRawData?.length || 0);
-
-      // Helper function to parse Excel date from column AP (same as pivot table)
-      const parseExcelDate = (dateValue: any): Date | null => {
-        if (!dateValue) return null;
-        
-        let parsedDate: Date | null = null;
-        
-        // Handle Excel serial numbers (45839 = July 2025)
-        if (typeof dateValue === 'string' && dateValue.match(/^\d+$/)) {
-          const serialNumber = parseInt(dateValue);
-          if (serialNumber > 25000) {
-            parsedDate = new Date((serialNumber - 25569) * 86400 * 1000);
-            console.log(`📅 Converted serial ${serialNumber} to:`, parsedDate);
-          }
-        }
-        
-        // Handle numeric serial dates
-        if (!parsedDate && typeof dateValue === 'number' && dateValue > 25000) {
-          parsedDate = new Date((dateValue - 25569) * 86400 * 1000);
-        }
-        
-        // Handle date strings
-        if (!parsedDate && typeof dateValue === 'string') {
-          parsedDate = new Date(dateValue);
-          if (isNaN(parsedDate.getTime())) {
-            const parts = dateValue.split('/');
-            if (parts.length === 3) {
-              parsedDate = new Date(`${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`);
-            }
-          }
-        }
-        
-        return parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null;
-      };
-
-      // Filter Excel raw data by month (Column AP) to match selected month
-      const filteredExcelRaw = (excelRawData || []).filter(item => {
-        const itemDate = parseExcelDate(item.Date);
-        if (!itemDate) return false;
-        
-        const matchesMonth = itemDate.getMonth() === filters.month.getMonth() && 
-                            itemDate.getFullYear() === filters.month.getFullYear();
-        
-        if (matchesMonth) {
-          console.log(`✅ Date match: ${item.Date} -> ${itemDate} for ${filters.month}`);
-        }
-        
-        return matchesMonth;
-      });
-
-      console.log(`🎯 Filtered to ${filteredExcelRaw.length} records for ${filters.month.toLocaleDateString()}`);
-
-      // Calculate status breakdown from column AI (Status)  
-      const statusBreakdown: Record<string, number> = {};
-      filteredExcelRaw.forEach(item => {
-        if (item.Status) {
-          const status = item.Status.toString().trim();
-          statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
-        }
-      });
-
-      // Calculate branch breakdown
-      const branchBreakdown: Record<string, number> = {};
-      filteredExcelRaw.forEach(item => {
-        if (item.Branch) {
-          const branch = item.Branch.toString().trim();
-          branchBreakdown[branch] = (branchBreakdown[branch] || 0) + 1;
-        }
-      });
-
+      // Since excel_rows_raw was dropped in the reset, show empty results
       const result: AnalysisResult = {
         monthData: {
-          totalCases: filteredExcelRaw.length,
-          statusBreakdown,
-          branchBreakdown
+          totalCases: 0,
+          statusBreakdown: {},
+          branchBreakdown: {}
         },
         selectedMonth: format(filters.month, 'MMM yyyy')
       };
 
-      console.log('📊 SIA Analysis Result:', result);
+      console.log('📊 SIA Analysis Result (after reset):', result);
       setAnalysisResult(result);
       onAnalyze?.(result);
       

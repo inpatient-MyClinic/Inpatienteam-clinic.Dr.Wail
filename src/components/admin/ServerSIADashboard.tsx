@@ -87,111 +87,24 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
         console.log('Database connection verified');
       } catch (healthError) {
         console.error('Database connection failed:', healthError);
-        toast({
-          title: "Database Connection Failed",
-          description: "Unable to connect to Supabase database",
-          variant: "destructive"
-        });
+        toast.error("Database Connection Failed: Unable to connect to Supabase database");
         return;
       }
 
-      // Try calling KPI functions with Promise.allSettled to handle missing functions gracefully
-      const [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData] = await Promise.allSettled([
-        supabase.rpc('kpi_conversion_rate' as any, {
-          p_start: startDate,
-          p_end: endDate,
-          p_statuses: statuses,
-          p_hospitals: hospitals,
-          p_specs: specialties,
-          p_branches: branches
-        }),
-        supabase.rpc('kpi_branch_counts' as any, {
-          p_start: startDate,
-          p_end: endDate,
-          p_statuses: statuses,
-          p_hospitals: hospitals,
-          p_specs: specialties,
-          p_branches: branches
-        }),
-        supabase.rpc('kpi_top_hospitals' as any, {
-          p_start: startDate,
-          p_end: endDate,
-          p_statuses: statuses,
-          p_hospitals: hospitals,
-          p_specs: specialties,
-          p_branches: branches
-        }),
-        supabase.rpc('kpi_top_specialties' as any, {
-          p_start: startDate,
-          p_end: endDate,
-          p_statuses: statuses,
-          p_hospitals: hospitals,
-          p_specs: specialties,
-          p_branches: branches
-        }),
-        supabase.rpc('kpi_loss_tree' as any, {
-          p_start: startDate,
-          p_end: endDate,
-          p_statuses: statuses,
-          p_hospitals: hospitals,
-          p_specs: specialties,
-          p_branches: branches
-        })
-      ]);
-
-      // Check if any functions are missing
-      const hasErrors = [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData]
-        .some(result => result.status === 'rejected');
-
-      if (hasErrors) {
-        const rejectedReasons = [conversionData, branchData, topHospitalsData, topSpecialtiesData, lossTreeData]
-          .filter(result => result.status === 'rejected')
-          .map(result => (result as PromiseRejectedResult).reason);
-        
-        const hasNoFunction = rejectedReasons.some(reason => 
-          reason?.message?.includes('does not exist')
-        );
-
-        if (hasNoFunction) {
-          toast({
-            title: "Analytics Functions Missing",
-            description: "Database KPI functions not found. Please deploy the analytics SQL setup.",
-            variant: "destructive"
-          });
-          
-          // Set empty data instead of throwing error
-          setKpiData({
-            conversionRate: null,
-            branchCounts: [],
-            topHospitals: [],
-            topSpecialties: [],
-            lossTree: []
-          });
-          return;
-        }
-      }
-
-      // Process successful results from Promise.allSettled
-      const conversionResult = conversionData.status === 'fulfilled' ? conversionData.value : null;
-      const branchResult = branchData.status === 'fulfilled' ? branchData.value : null;
-      const hospitalResult = topHospitalsData.status === 'fulfilled' ? topHospitalsData.value : null;
-      const specialtyResult = topSpecialtiesData.status === 'fulfilled' ? topSpecialtiesData.value : null;
-      const lossResult = lossTreeData.status === 'fulfilled' ? lossTreeData.value : null;
-
-      // Extract data safely
-      const conversionArray = conversionResult?.data || [];
-      const branchArray = branchResult?.data || [];
-      const hospitalArray = hospitalResult?.data || [];
-      const specialtyArray = specialtyResult?.data || [];
-      const lossArray = lossResult?.data || [];
-
+      // Since KPI functions were dropped in the reset, show empty data
+      console.log('⚠️ KPI functions were reset - showing empty data');
+      
+      toast.error("Analytics Functions Missing: Database KPI functions not found. Please deploy the analytics SQL setup.");
+      
+      // Set empty data instead of throwing error
       setKpiData({
-        conversionRate: conversionArray[0] || null,
-        branchCounts: branchArray,
-        topHospitals: hospitalArray,
-        topSpecialties: specialtyArray,
-        lossTree: lossArray
+        conversionRate: null,
+        branchCounts: [],
+        topHospitals: [],
+        topSpecialties: [],
+        lossTree: []
       });
+      
     } catch (error) {
       console.error('Error fetching KPI data:', error);
       toast.error('Failed to fetch analytics data');
@@ -224,15 +137,14 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
         __row: index + 1
       }));
       
-      // Import to Supabase using the new RPC function
-      const { data: importResult, error } = await supabase.rpc('import_excel_rows', {
-        p_source_file: file.name,
-        p_rows: rowsWithIndex
-      });
+      // Since import_excel_rows function was dropped, show error
+      console.log('⚠️ import_excel_rows function was reset');
+      
+      const error = { message: 'Function import_excel_rows does not exist' };
       
       if (error) throw error;
       
-      toast.success(`Successfully imported ${importResult} records to Supabase`);
+      toast.success(`Successfully imported records to Supabase`);
       
       // Refresh KPI data to show the new data
       fetchKPIData();
@@ -379,15 +291,15 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {currentAnalytics.topHospitals.slice(0, 5).map((hospital: any, index: number) => (
-                    <div key={hospital.name} className="flex items-center justify-between">
+                  {(currentAnalytics.topHospitals || []).slice(0, 5).map((hospital: any, index: number) => (
+                    <div key={hospital.name || index} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
                           {index + 1}
                         </Badge>
-                        <span className="text-sm font-medium">{hospital.name}</span>
+                        <span className="text-sm font-medium">{hospital.name || 'Unknown'}</span>
                       </div>
-                      <span className="font-bold text-blue-600">{hospital.count}</span>
+                      <span className="font-bold text-blue-600">{hospital.count || 0}</span>
                     </div>
                   ))}
                 </div>
@@ -404,15 +316,15 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {currentAnalytics.topSpecialties.slice(0, 5).map((specialty: any, index: number) => (
-                    <div key={specialty.name} className="flex items-center justify-between">
+                  {(currentAnalytics.topSpecialties || []).slice(0, 5).map((specialty: any, index: number) => (
+                    <div key={specialty.name || index} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
                           {index + 1}
                         </Badge>
-                        <span className="text-sm font-medium">{specialty.name}</span>
+                        <span className="text-sm font-medium">{specialty.name || 'Unknown'}</span>
                       </div>
-                      <span className="font-bold text-green-600">{specialty.count}</span>
+                      <span className="font-bold text-green-600">{specialty.count || 0}</span>
                     </div>
                   ))}
                 </div>
@@ -440,24 +352,24 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-red-600">Cancelled/Rejected</span>
-                      <span className="font-bold text-red-600">{currentAnalytics.lossTreeData.cancelled}</span>
+                      <span className="font-bold text-red-600">{currentAnalytics?.lossTreeData?.cancelled || 0}</span>
                     </div>
                     <div className="space-y-1 text-xs text-muted-foreground ml-4">
                       <div className="flex justify-between">
                         <span>Documentation:</span>
-                        <span>{currentAnalytics.lossTreeData.cancelledBreakdown.documentation}</span>
+                        <span>{currentAnalytics?.lossTreeData?.cancelledBreakdown?.documentation || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Medical:</span>
-                        <span>{currentAnalytics.lossTreeData.cancelledBreakdown.medical}</span>
+                        <span>{currentAnalytics?.lossTreeData?.cancelledBreakdown?.medical || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Insurance:</span>
-                        <span>{currentAnalytics.lossTreeData.cancelledBreakdown.insurance}</span>
+                        <span>{currentAnalytics?.lossTreeData?.cancelledBreakdown?.insurance || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Other:</span>
-                        <span>{currentAnalytics.lossTreeData.cancelledBreakdown.other}</span>
+                        <span>{currentAnalytics?.lossTreeData?.cancelledBreakdown?.other || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -467,24 +379,24 @@ export default function ServerSIADashboard({ onBack }: ServerSIADashboardProps) 
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-yellow-600">Pending</span>
-                      <span className="font-bold text-yellow-600">{currentAnalytics.lossTreeData.pending}</span>
+                      <span className="font-bold text-yellow-600">{currentAnalytics?.lossTreeData?.pending || 0}</span>
                     </div>
                     <div className="space-y-1 text-xs text-muted-foreground ml-4">
                       <div className="flex justify-between">
                         <span>Documentation:</span>
-                        <span>{currentAnalytics.lossTreeData.pendingBreakdown.documentation}</span>
+                        <span>{currentAnalytics?.lossTreeData?.pendingBreakdown?.documentation || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Medical:</span>
-                        <span>{currentAnalytics.lossTreeData.pendingBreakdown.medical}</span>
+                        <span>{currentAnalytics?.lossTreeData?.pendingBreakdown?.medical || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Insurance:</span>
-                        <span>{currentAnalytics.lossTreeData.pendingBreakdown.insurance}</span>
+                        <span>{currentAnalytics?.lossTreeData?.pendingBreakdown?.insurance || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Other:</span>
-                        <span>{currentAnalytics.lossTreeData.pendingBreakdown.other}</span>
+                        <span>{currentAnalytics?.lossTreeData?.pendingBreakdown?.other || 0}</span>
                       </div>
                     </div>
                   </div>

@@ -84,21 +84,21 @@ export class DataExcelMigrationService {
       console.log(`📊 Migration validation: ${withValidDates}/${allRequests.length} records with valid dates, ${julyRecords} July 2025 records found`);
       console.log('📋 Sample date parsing:', sampleDates);
 
-      // Use the import function to process the data
-      const { data, error } = await supabase.rpc('import_excel_rows', {
-        p_source_file: `LocalStorage_Migration_${new Date().toISOString()}`,
-        p_rows: rawRows
-      });
+      // Since import_excel_rows function was dropped, show error
+      console.log('⚠️ import_excel_rows function was reset - migration not available');
+      
+      const error = { message: 'Function import_excel_rows does not exist' };
+      const data = 0;
 
       if (error) {
-        console.error('Error importing rows:', error);
-        throw error;
+        console.error('Migration not available after database reset:', error);
+        throw new Error('Database migration functions not available after reset');
       }
 
       console.log(`✅ Successfully migrated ${data} records to Excel tables`);
 
-      // Validate migration by checking the database
-      await this.validateMigration(julyRecords);
+      // Skip validation since tables don't exist
+      // await this.validateMigration(julyRecords);
 
       return { 
         success: true, 
@@ -170,15 +170,15 @@ export class DataExcelMigrationService {
         "Paid Amount": this.extractExcelPaidAmount(row)
       }));
 
-      // Use the import function to process the data
-      const { data, error } = await supabase.rpc('import_excel_rows', {
-        p_source_file: filename,
-        p_rows: rawRows
-      });
+      // Since import_excel_rows function was dropped, show error
+      console.log('⚠️ import_excel_rows function was reset');
+      
+      const error = { message: 'Function import_excel_rows does not exist' };
+      const data = 0;
 
       if (error) {
-        console.error('Error importing Excel rows:', error);
-        throw error;
+        console.error('Excel upload not available after database reset:', error);
+        throw new Error('Database import functions not available after reset');
       }
 
       console.log(`Successfully uploaded ${data} records to Excel tables`);
@@ -450,9 +450,8 @@ export class DataExcelMigrationService {
   }> {
     const localRequests = this.getAllLocalStorageRequests();
     
-    const { count } = await supabase
-      .from('excel_rows_raw')
-      .select('*', { count: 'exact', head: true });
+    // Since excel_rows_raw was dropped, return 0 count
+    const count = 0;
 
     return {
       hasLocalData: localRequests.length > 0,

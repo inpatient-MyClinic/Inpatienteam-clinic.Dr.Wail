@@ -68,22 +68,18 @@ export default function DataAnalysisDebugger() {
     console.log('🔍 === DATA ANALYSIS DEBUGGER STARTED ===');
     
     try {
-      // Step 1: Load raw data
-      console.log('📊 Step 1: Loading raw data from excel_rows_raw...');
-      const { data: rawRows, error: rawError } = await supabase
-        .from('excel_rows_raw')
-        .select('*');
-
-      if (rawError) throw rawError;
-
-      console.log(`✅ Raw data loaded: ${rawRows?.length || 0} rows`);
-      console.log('📝 Sample raw rows:', rawRows?.slice(0, 3));
+      // Check if analytics tables are available after reset
+      console.log('📊 Step 1: Checking for analytics tables...');
       
-      setRawData(rawRows || []);
+      // Since excel_rows_raw was dropped in the reset, show appropriate message
+      console.log('⚠️ Analytics tables were reset. No Excel data available for analysis.');
+      
+      const emptyData: RawDataRow[] = [];
+      setRawData(emptyData);
 
       // Step 2: Process data
       console.log('🔄 Step 2: Processing data...');
-      const processed = processRawData(rawRows || []);
+      const processed = processRawData(emptyData);
       setProcessedData(processed);
 
       // Step 3: Analyze data
