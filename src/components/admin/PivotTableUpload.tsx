@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
 
 interface PivotTableUploadProps {
-  onPivotDataLoaded?: (data: any[]) => void;
+  onPivotDataLoaded: (data: any[]) => void;
   onDataImported?: () => void;
 }
 
@@ -60,26 +60,20 @@ export default function PivotTableUpload({ onPivotDataLoaded, onDataImported }: 
         throw new Error('No data found in the uploaded file');
       }
 
-      // For now, simulate successful upload since RPC functions are being rebuilt
-      // This will be replaced with actual import_excel_rows RPC call
-      console.log('Parsed data:', rowsJson);
+      // Since import_excel_rows function was dropped in the reset, show database error
+      console.log('⚠️ import_excel_rows function was reset - showing database error banner');
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      setShowDatabaseError(true);
       setUploadResult({
-        success: true,
-        message: `Processed ${rowsJson.length} rows from ${uploadedFile.name}`,
-        count: rowsJson.length
+        success: false,
+        message: 'Database setup not found. Please run the Pivot-Parity SQL in Supabase.'
       });
-
-      onPivotDataLoaded?.(rowsJson);
-      onDataImported?.();
-
-      toast({
-        title: "Upload Successful",
-        description: `Processed ${rowsJson.length} rows from ${uploadedFile.name}`,
-      });
+      
+      const importedCount = 0;
+      
+      // Don't set success result since database error should be shown
+      // onPivotDataLoaded(rowsJson);
+      // onDataImported?.();
       
     } catch (error) {
       console.error('Error uploading pivot table:', error);
