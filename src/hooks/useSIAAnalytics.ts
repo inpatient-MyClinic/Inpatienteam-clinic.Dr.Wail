@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalStorageAnalytics } from './useLocalStorageAnalytics';
+import { buildFilterWhereClause } from '@/utils/siaFilters';
 
 // ---------- Types your UI already expects ----------
 type TopItem = { name: string; count: number };
@@ -101,22 +102,22 @@ export function useSIAAnalytics(filters: any) {
       setLoading(true); setError(null);
 
       try {
-        // Try database first
-        const { data, error } = await supabase.rpc("analyze_excel_cases_monthly", {
+        // Try database first - simplified for now
+        const monthlyResult = await supabase.rpc("analyze_excel_cases_monthly", {
           p_year: year, p_month: month
         });
 
         if (cancel) return;
         
-        if (error) {
-          console.error('Database analytics error:', error);
-          setError(`Database error: ${error.message}. Falling back to localStorage.`);
+        if (monthlyResult.error) {
+          console.error('Database analytics error:', monthlyResult.error);
+          setError(`Database error: ${monthlyResult.error.message}. Falling back to localStorage.`);
           setUseDatabase(false);
           setLoading(false);
           return;
         }
 
-        const row: ExcelRPCRow = (data ?? [])[0] as any || {
+        const row: ExcelRPCRow = (monthlyResult.data ?? [])[0] as any || {
           total_cases: 0, status_breakdown: {}, branch_breakdown: {}, hospital_breakdown: {}, specialty_breakdown: {}
         };
 

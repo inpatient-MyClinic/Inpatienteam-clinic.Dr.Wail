@@ -11,6 +11,7 @@ import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
+import ExcelDataInspector from "@/components/admin/ExcelDataInspector";
 import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +20,7 @@ export default function AdminDashboard() {
   const [showChart, setShowChart] = useState(false);
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   const [showPivotUpload, setShowPivotUpload] = useState(false);
+  const [showExcelInspector, setShowExcelInspector] = useState(false);
   const [showServerSIA, setShowServerSIA] = useState(false);
 
   const {
@@ -210,8 +212,37 @@ export default function AdminDashboard() {
             onPivotDataLoaded={(data) => {
               console.log('Pivot data loaded:', data.length, 'rows');
               setAllRequestsData([]);
-            }} 
+            }}
+            onDataImported={() => {
+              console.log('Data imported to database, refreshing...');
+              // Refresh analytics data after import
+              setTimeout(() => {
+                const loadAllData = async () => {
+                  const analyticsData = dataIntegrationService.getAnalyticsData();
+                  setAllRequestsData(analyticsData);
+                };
+                loadAllData();
+              }, 1000);
+            }}
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (showExcelInspector) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <Button 
+              onClick={() => setShowExcelInspector(false)}
+              variant="outline"
+            >
+              ← Back to Dashboard
+            </Button>
+          </div>
+          <ExcelDataInspector />
         </div>
       </div>
     );
@@ -305,6 +336,8 @@ export default function AdminDashboard() {
       onShowFinanceAnalytics={handleShowFinanceAnalytics}
       onToggleNewUserRequests={handleToggleNewUserRequests}
       onCloseFinanceAnalytics={handleCloseFinanceAnalytics}
+      onShowPivotUpload={() => setShowPivotUpload(true)}
+      onShowExcelInspector={() => setShowExcelInspector(true)}
     />
     </div>
   );

@@ -60,20 +60,68 @@ export default function PivotTableUpload({ onPivotDataLoaded, onDataImported }: 
         throw new Error('No data found in the uploaded file');
       }
 
-      // Since import_excel_rows function was dropped in the reset, show database error
-      console.log('⚠️ import_excel_rows function was reset - showing database error banner');
+      console.log(`📊 Uploading ${rowsJson.length} rows to Supabase...`);
+
+      // Create upload record first - using excel_upload_batches which exists
+      const { data: uploadData, error: uploadError } = await supabase
+        .from('excel_upload_batches')
+        .insert({
+          filename: uploadedFile.name,
+          total_rows: rowsJson.length,
+          status: 'processing',
+          uploaded_by: (await supabase.auth.getUser()).data.user?.id || ''
+        })
+        .select()
+        .single();
+
+      if (uploadError) {
+        throw new Error(`Failed to create upload record: ${uploadError.message}`);
+      }
+
+      console.log('📝 Created upload record:', uploadData.id);
+
+      // Try to import rows using the database function (may fail if migration not run)
+      try {
+        const { data: importResult, error: importError } = await supabase
+          .rpc('import_excel_rows' as any, {
+            p_upload_id: uploadData.id,
+            p_rows: rowsJson
+          });
+
+        if (importError) {
+          throw new Error(`Failed to import rows: ${importError.message}`);
+        }
+
+        const importedCount = (importResult as any)?.imported_count || rowsJson.length;
+      } catch (rpcError) {
+        // If RPC fails, show database setup error
+        console.log('⚠️ import_excel_rows function not available - please run database migration');
+        setShowDatabaseError(true);
+        setUploadResult({
+          success: false,
+          message: 'Database setup incomplete. Please run the SQL migration first.'
+        });
+        return;
+      }
+
+      const importedCount = rowsJson.length;
       
-      setShowDatabaseError(true);
+      console.log(`✅ Successfully imported ${importedCount} rows`);
+      
       setUploadResult({
-        success: false,
-        message: 'Database setup not found. Please run the Pivot-Parity SQL in Supabase.'
+        success: true,
+        message: `Successfully imported ${importedCount} rows to database`,
+        count: importedCount
       });
-      
-      const importedCount = 0;
-      
-      // Don't set success result since database error should be shown
-      // onPivotDataLoaded(rowsJson);
-      // onDataImported?.();
+
+      toast({
+        title: "Upload Success",
+        description: `Imported ${importedCount} rows to Supabase database`,
+        variant: "default"
+      });
+
+      onPivotDataLoaded(rowsJson);
+      onDataImported?.();
       
     } catch (error) {
       console.error('Error uploading pivot table:', error);

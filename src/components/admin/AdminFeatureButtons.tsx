@@ -14,6 +14,8 @@ interface AdminFeatureButtonsProps {
   onToggleSIASlide: () => void;
   onShowChart: () => void;
   onShowMonthlyAnalytics: () => void;
+  onShowPivotUpload?: () => void;
+  onShowExcelInspector?: () => void;
 }
 
 export default function AdminFeatureButtons({
@@ -27,6 +29,8 @@ export default function AdminFeatureButtons({
   onToggleSIASlide,
   onShowChart,
   onShowMonthlyAnalytics,
+  onShowPivotUpload,
+  onShowExcelInspector,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -122,12 +126,22 @@ export default function AdminFeatureButtons({
         >
           📈 Monthly Analytics
         </button>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('showPivotUpload'))}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200"
-        >
-          📊 Pivot Table Upload
-        </button>
+        {onShowPivotUpload && (
+          <button
+            onClick={onShowPivotUpload}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200"
+          >
+            📊 Excel Upload
+          </button>
+        )}
+        {onShowExcelInspector && (
+          <button
+            onClick={onShowExcelInspector}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-100 text-orange-700 hover:bg-orange-200"
+          >
+            📋 Data Inspector
+          </button>
+        )}
       </div>
 
       {showNewUserRequests && (

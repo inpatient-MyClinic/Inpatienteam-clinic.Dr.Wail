@@ -72,12 +72,29 @@ export default function ExcelPivotTable() {
   const loadExcelData = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Excel tables were reset - no data available...');
+      console.log('🔍 Loading Excel data from database...');
       
-      // Since excel_rows_raw was dropped in the reset, show empty state
-      console.log('⚠️ excel_rows_raw table was reset. Please upload Excel data first.');
-      
-      const data: any[] = [];
+      // Try to load raw Excel data - may fail if migration not run
+      let data: any[] = [];
+      try {
+        const result = await supabase
+          .from('excel_rows_raw' as any)
+          .select('*')
+          .order('upload_id', { ascending: false })
+          .order('row_number', { ascending: true });
+
+        if (result.error) {
+          console.log('⚠️ excel_rows_raw table not available - please run database migration');
+          data = [];
+        } else {
+          data = result.data || [];
+        }
+      } catch (error) {
+        console.log('⚠️ Database migration required for Excel data access');
+        data = [];
+      }
+
+      console.log('✅ Loaded Excel data:', data?.length || 0, 'records');
 
       console.log('✅ Filtered Excel data loaded:', data?.length || 0, 'records');
 
