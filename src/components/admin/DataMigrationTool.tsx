@@ -20,8 +20,8 @@ export default function DataMigrationTool() {
     setMigrationResult(null);
 
     try {
-      // Check multiple possible localStorage keys
-      const possibleKeys = ['allData', 'adminData', 'requests', 'excelData'];
+      // Check multiple possible localStorage keys - including the correct medical_requests key
+      const possibleKeys = ['medical_requests', 'excel_data_imported', 'allData', 'adminData', 'requests', 'excelData'];
       let allData: any[] = [];
       let sourceKey = '';
 
@@ -33,6 +33,7 @@ export default function DataMigrationTool() {
             if (Array.isArray(parsed) && parsed.length > 0) {
               allData = parsed;
               sourceKey = key;
+              console.log(`Found ${parsed.length} records in localStorage key: ${key}`);
               break;
             }
           } catch (e) {
