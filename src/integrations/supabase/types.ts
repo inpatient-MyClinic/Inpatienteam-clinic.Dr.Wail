@@ -53,6 +53,71 @@ export type Database = {
         }
         Relationships: []
       }
+      excel_rows_raw: {
+        Row: {
+          Branch: string | null
+          created_at: string | null
+          Currency: string | null
+          Date: string | null
+          "Hospital Name": string | null
+          id: string
+          "Medical Condition": string | null
+          Notes: string | null
+          "Paid Amount": string | null
+          "Patient ID": string | null
+          "Patient Name": string | null
+          raw_data: Json | null
+          row_number: number
+          Specialty: string | null
+          Status: string | null
+          upload_batch_id: string | null
+        }
+        Insert: {
+          Branch?: string | null
+          created_at?: string | null
+          Currency?: string | null
+          Date?: string | null
+          "Hospital Name"?: string | null
+          id?: string
+          "Medical Condition"?: string | null
+          Notes?: string | null
+          "Paid Amount"?: string | null
+          "Patient ID"?: string | null
+          "Patient Name"?: string | null
+          raw_data?: Json | null
+          row_number: number
+          Specialty?: string | null
+          Status?: string | null
+          upload_batch_id?: string | null
+        }
+        Update: {
+          Branch?: string | null
+          created_at?: string | null
+          Currency?: string | null
+          Date?: string | null
+          "Hospital Name"?: string | null
+          id?: string
+          "Medical Condition"?: string | null
+          Notes?: string | null
+          "Paid Amount"?: string | null
+          "Patient ID"?: string | null
+          "Patient Name"?: string | null
+          raw_data?: Json | null
+          row_number?: number
+          Specialty?: string | null
+          Status?: string | null
+          upload_batch_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excel_rows_raw_upload_batch_id_fkey"
+            columns: ["upload_batch_id"]
+            isOneToOne: false
+            referencedRelation: "excel_upload_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excel_upload_batches: {
         Row: {
           column_mappings: Json | null
@@ -709,6 +774,10 @@ export type Database = {
           db: string
           now_utc: string
         }[]
+      }
+      import_excel_rows: {
+        Args: { batch_id: string; rows_data: Json[] }
+        Returns: undefined
       }
       is_admin: {
         Args: Record<PropertyKey, never>

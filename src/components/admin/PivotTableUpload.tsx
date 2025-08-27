@@ -80,19 +80,19 @@ export default function PivotTableUpload({ onPivotDataLoaded, onDataImported }: 
 
       console.log('📝 Created upload record:', uploadData.id);
 
-      // Try to import rows using the database function (may fail if migration not run)
+      // Try to import rows using the database function
       try {
-        const { data: importResult, error: importError } = await supabase
-          .rpc('import_excel_rows' as any, {
-            p_upload_id: uploadData.id,
-            p_rows: rowsJson
+        const { error: importError } = await supabase
+          .rpc('import_excel_rows', {
+            batch_id: uploadData.id,
+            rows_data: rowsJson
           });
 
         if (importError) {
           throw new Error(`Failed to import rows: ${importError.message}`);
         }
 
-        const importedCount = (importResult as any)?.imported_count || rowsJson.length;
+        console.log(`✅ Successfully imported ${rowsJson.length} rows`);
       } catch (rpcError) {
         // If RPC fails, show database setup error
         console.log('⚠️ import_excel_rows function not available - please run database migration');

@@ -12,6 +12,7 @@ import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import ExcelDataInspector from "@/components/admin/ExcelDataInspector";
+import ExcelDataVerifier from "@/components/admin/ExcelDataVerifier";
 import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import { Button } from "@/components/ui/button";
 
@@ -243,6 +244,9 @@ export default function AdminDashboard() {
             </Button>
           </div>
           <ExcelDataInspector />
+          <div className="mt-6">
+            <ExcelDataVerifier />
+          </div>
         </div>
       </div>
     );
