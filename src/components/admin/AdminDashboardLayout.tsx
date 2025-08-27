@@ -44,6 +44,7 @@ interface AdminDashboardLayoutProps {
   onCloseFinanceAnalytics: () => void;
   onShowPivotUpload: () => void;
   onShowExcelInspector: () => void;
+  onShowExcelAnalyzer: () => void;
 }
 
 export default function AdminDashboardLayout({
@@ -83,6 +84,7 @@ export default function AdminDashboardLayout({
   onCloseFinanceAnalytics,
   onShowPivotUpload,
   onShowExcelInspector,
+  onShowExcelAnalyzer,
 }: AdminDashboardLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
@@ -127,6 +129,7 @@ export default function AdminDashboardLayout({
               onShowMonthlyAnalytics={onShowMonthlyAnalytics}
               onShowPivotUpload={onShowPivotUpload}
               onShowExcelInspector={onShowExcelInspector}
+              onShowExcelAnalyzer={onShowExcelAnalyzer}
             />
 
             {/* Main Content */}

@@ -16,6 +16,7 @@ interface AdminFeatureButtonsProps {
   onShowMonthlyAnalytics: () => void;
   onShowPivotUpload?: () => void;
   onShowExcelInspector?: () => void;
+  onShowExcelAnalyzer?: () => void;
 }
 
 export default function AdminFeatureButtons({
@@ -31,6 +32,7 @@ export default function AdminFeatureButtons({
   onShowMonthlyAnalytics,
   onShowPivotUpload,
   onShowExcelInspector,
+  onShowExcelAnalyzer,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -140,6 +142,14 @@ export default function AdminFeatureButtons({
             className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-100 text-orange-700 hover:bg-orange-200"
           >
             📋 Data Inspector
+          </button>
+        )}
+        {onShowExcelAnalyzer && (
+          <button
+            onClick={onShowExcelAnalyzer}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+          >
+            📊 Excel Month Analysis
           </button>
         )}
       </div>

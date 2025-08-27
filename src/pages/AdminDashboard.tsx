@@ -13,6 +13,7 @@ import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashbo
 import DataMigrationTool from "@/components/admin/DataMigrationTool";
 import ExcelDataInspector from "@/components/admin/ExcelDataInspector";
 import ExcelDataVerifier from "@/components/admin/ExcelDataVerifier";
+import ExcelDataAnalyzer from "@/components/admin/ExcelDataAnalyzer";
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export default function AdminDashboard() {
   const [showMonthlyAnalytics, setShowMonthlyAnalytics] = useState(false);
   const [showPivotUpload, setShowPivotUpload] = useState(false);
   const [showExcelInspector, setShowExcelInspector] = useState(false);
+  const [showExcelAnalyzer, setShowExcelAnalyzer] = useState(false);
   const [showServerSIA, setShowServerSIA] = useState(false);
 
   const {
@@ -251,6 +253,27 @@ export default function AdminDashboard() {
           <div className="mt-6">
             <ExcelDataVerifier />
           </div>
+          <div className="mt-6">
+            <ExcelDataAnalyzer />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showExcelAnalyzer) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button 
+              onClick={() => setShowExcelAnalyzer(false)}
+              variant="outline"
+            >
+              ← Back to Dashboard
+            </Button>
+          </div>
+          <ExcelDataAnalyzer />
         </div>
       </div>
     );
@@ -346,6 +369,7 @@ export default function AdminDashboard() {
       onCloseFinanceAnalytics={handleCloseFinanceAnalytics}
       onShowPivotUpload={() => setShowPivotUpload(true)}
       onShowExcelInspector={() => setShowExcelInspector(true)}
+      onShowExcelAnalyzer={() => setShowExcelAnalyzer(true)}
     />
     </div>
   );
