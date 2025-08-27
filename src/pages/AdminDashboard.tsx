@@ -13,6 +13,7 @@ import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashbo
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import ExcelDataInspector from "@/components/admin/ExcelDataInspector";
 import ExcelDataVerifier from "@/components/admin/ExcelDataVerifier";
+import DataMigrationTool from "@/components/admin/DataMigrationTool";
 import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import { Button } from "@/components/ui/button";
 
@@ -243,7 +244,10 @@ export default function AdminDashboard() {
               ← Back to Dashboard
             </Button>
           </div>
-          <ExcelDataInspector />
+          <DataMigrationTool />
+          <div className="mt-6">
+            <ExcelDataInspector />
+          </div>
           <div className="mt-6">
             <ExcelDataVerifier />
           </div>
