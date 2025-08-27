@@ -2,18 +2,43 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Database, Upload, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { Database, Upload, AlertCircle, CheckCircle, RefreshCw, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { EnhancedAnalyticsService } from "@/services/enhancedAnalyticsService";
 
 export default function DataMigrationTool() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<{
+    hasLocalData: boolean;
+    hasSupabaseData: boolean;
+    localCount: number;
+    supabaseCount: number;
+    migrationNeeded: boolean;
+  } | null>(null);
   const [migrationResult, setMigrationResult] = useState<{
     success: boolean;
     message: string;
     imported?: number;
   } | null>(null);
   const { toast } = useToast();
+
+  // Check migration status on component mount
+  React.useEffect(() => {
+    checkMigrationStatus();
+  }, []);
+
+  const checkMigrationStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      const status = await EnhancedAnalyticsService.checkMigrationStatus();
+      setMigrationStatus(status);
+    } catch (error) {
+      console.error('Error checking migration status:', error);
+    }
+    setIsCheckingStatus(false);
+  };
 
   const migrateLocalDataToDatabase = async () => {
     setIsLoading(true);
@@ -64,21 +89,42 @@ export default function DataMigrationTool() {
         throw new Error(`Failed to create upload record: ${uploadError.message}`);
       }
 
-      // Transform localStorage data to match excel_rows_raw format
-      const transformedData = allData.map((item: any, index: number) => ({
-        __row: index + 1,
-        'Date': item.date?.toString() || item.requestDate || '',
-        'Status': item.operationStatus || item.status || '',
-        'Branch': item.clinicBranch || item.referredFrom || '',
-        'Hospital Name': item.hospitalName || item.hospital || '',
-        'Specialty': item.specialty || '',
-        'Patient Name': item.patientName || '',
-        'Patient ID': item.patientMRN || item.patientId || '',
-        'Medical Condition': item.serviceDescription || item.medicalCondition || item.description || '',
-        'Paid Amount': item.paidAmount?.toString() || '',
-        'Currency': item.currency || 'SAR',
-        'Notes': item.notes || ''
-      }));
+      // Transform localStorage data to match excel_rows_raw format with proper date handling
+      const transformedData = allData.map((item: any, index: number) => {
+        // Enhanced date parsing to handle various formats
+        let dateValue = item.date || item.dateCreated || item.requestDate || item.created_at;
+        
+        // Handle Excel serial date numbers
+        if (typeof dateValue === 'number' && dateValue > 25000) {
+          const excelEpoch = new Date(1900, 0, 1);
+          const convertedDate = new Date(excelEpoch.getTime() + (dateValue - 2) * 24 * 60 * 60 * 1000);
+          dateValue = convertedDate.toISOString().split('T')[0];
+        } else if (typeof dateValue === 'string' && dateValue.includes('/')) {
+          // Handle MM/DD/YYYY format
+          const parts = dateValue.split('/');
+          if (parts.length === 3) {
+            const month = parts[0].padStart(2, '0');
+            const day = parts[1].padStart(2, '0');
+            const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+            dateValue = `${year}-${month}-${day}`;
+          }
+        }
+
+        return {
+          __row: index + 1,
+          'Date': dateValue?.toString() || '',
+          'Status': item.operationStatus || item.status || 'Pending',
+          'Branch': item.clinicBranch || item.referredFrom || item.branchCode || '',
+          'Hospital Name': item.hospitalName || item.hospital || '',
+          'Specialty': item.specialty || '',
+          'Patient Name': item.patientName || '',
+          'Patient ID': item.patientMRN || item.patientId || '',
+          'Medical Condition': item.serviceDescription || item.medicalCondition || item.description || '',
+          'Paid Amount': item.paidAmount?.toString() || '',
+          'Currency': item.currency || 'SAR',
+          'Notes': item.notes || ''
+        };
+      });
 
       // Import to database using RPC function
       const { error: importError } = await supabase
@@ -113,6 +159,9 @@ export default function DataMigrationTool() {
         variant: "default"
       });
 
+      // Refresh migration status after successful migration
+      await checkMigrationStatus();
+
     } catch (error) {
       console.error('Migration error:', error);
       setMigrationResult({
@@ -142,6 +191,50 @@ export default function DataMigrationTool() {
         <div className="text-sm text-muted-foreground">
           Migrate existing localStorage data to Supabase database for accurate analytics.
         </div>
+        
+        {/* Migration Status Display */}
+        {migrationStatus && (
+          <div className={`p-3 rounded-lg border ${
+            migrationStatus.migrationNeeded 
+              ? 'border-orange-200 bg-orange-50' 
+              : migrationStatus.hasSupabaseData
+              ? 'border-green-200 bg-green-50'
+              : 'border-blue-200 bg-blue-50'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                <span className="text-sm font-medium">Migration Status</span>
+              </div>
+              <Button 
+                onClick={checkMigrationStatus}
+                disabled={isCheckingStatus}
+                size="sm"
+                variant="outline"
+              >
+                {isCheckingStatus ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  'Refresh'
+                )}
+              </Button>
+            </div>
+            <div className="mt-2 text-sm">
+              <p>Local Storage: {migrationStatus.localCount} records</p>
+              <p>Database: {migrationStatus.supabaseCount} records</p>
+              {migrationStatus.migrationNeeded && (
+                <p className="text-orange-700 font-medium mt-1">
+                  ⚠️ Migration recommended for complete analytics
+                </p>
+              )}
+              {migrationStatus.hasSupabaseData && !migrationStatus.migrationNeeded && (
+                <p className="text-green-700 font-medium mt-1">
+                  ✅ Data is synchronized
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         
         <Button 
           onClick={migrateLocalDataToDatabase}

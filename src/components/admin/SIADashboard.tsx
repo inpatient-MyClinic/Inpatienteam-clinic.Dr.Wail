@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Settings, BarChart3, Calendar, FileSpreadsheet, Table2, Bug, Upload } from "lucide-react";
 import { useSIAFilters } from "@/hooks/useSIAFilters";
-import { DataExcelMigrationService } from "@/services/dataExcelMigration";
+import { EnhancedAnalyticsService } from "@/services/enhancedAnalyticsService";
 import EnhancedSIAFilters from "./EnhancedSIAFilters";
 import ExcelDataAnalyzer from "./ExcelDataAnalyzer";
 import ExcelPivotTable from "./ExcelPivotTable";
@@ -49,7 +49,7 @@ export default function SIADashboard() {
   const checkMigrationStatus = async () => {
     try {
       console.log('🔍 Checking migration status...');
-      const status = await DataExcelMigrationService.checkMigrationStatus();
+      const status = await EnhancedAnalyticsService.checkMigrationStatus();
       console.log('📊 Migration Status Check:', status);
       
       if (status.hasLocalData && !status.hasSupabaseData) {
@@ -76,23 +76,14 @@ export default function SIADashboard() {
 
   const handleMigration = async () => {
     try {
-      setMigrationStatus('Migrating data...');
-      const result = await DataExcelMigrationService.migrateLocalStorageToSupabase();
-      if (result.success) {
-        toast({
-          title: "Migration Successful",
-          description: `Migrated ${result.migratedCount} records to database. Excel analytics now available.`,
-        });
-        await checkMigrationStatus();
-        refetch(); // This will refresh the Excel analytics
-      } else {
-        toast({
-          title: "Migration Failed",
-          description: result.error || "Unknown error occurred",
-          variant: "destructive"
-        });
-        setMigrationStatus('Migration failed. Please try again.');
-      }
+      setMigrationStatus('Please use the Data Migration Tool below...');
+      toast({
+        title: "Migration Required",
+        description: "Please use the Data Migration Tool in the Admin Dashboard to migrate your data.",
+        variant: "default"
+      });
+      await checkMigrationStatus();
+      refetch();
     } catch (error) {
       toast({
         title: "Migration Error",

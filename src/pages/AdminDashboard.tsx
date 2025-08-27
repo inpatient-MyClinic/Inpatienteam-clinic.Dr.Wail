@@ -10,10 +10,10 @@ import { dataIntegrationService } from "@/services/dataIntegrationService";
 import RequestLifecycleChart from "@/components/RequestLifecycleChart";
 import SIASlide from "@/components/admin/SIASlide";
 import MonthlyAnalyticsDashboard from "@/components/admin/MonthlyAnalyticsDashboard";
-import PivotTableUpload from "@/components/admin/PivotTableUpload";
+import DataMigrationTool from "@/components/admin/DataMigrationTool";
 import ExcelDataInspector from "@/components/admin/ExcelDataInspector";
 import ExcelDataVerifier from "@/components/admin/ExcelDataVerifier";
-import DataMigrationTool from "@/components/admin/DataMigrationTool";
+import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import { Button } from "@/components/ui/button";
 
