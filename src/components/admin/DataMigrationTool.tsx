@@ -20,18 +20,32 @@ export default function DataMigrationTool() {
     setMigrationResult(null);
 
     try {
-      // Get data from localStorage
-      const localStorageData = localStorage.getItem('allData');
-      if (!localStorageData) {
-        throw new Error('No data found in localStorage');
+      // Check multiple possible localStorage keys
+      const possibleKeys = ['allData', 'adminData', 'requests', 'excelData'];
+      let allData: any[] = [];
+      let sourceKey = '';
+
+      for (const key of possibleKeys) {
+        const data = localStorage.getItem(key);
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              allData = parsed;
+              sourceKey = key;
+              break;
+            }
+          } catch (e) {
+            console.warn(`Failed to parse localStorage key ${key}:`, e);
+          }
+        }
       }
 
-      const allData = JSON.parse(localStorageData);
-      if (!Array.isArray(allData) || allData.length === 0) {
-        throw new Error('No valid data found in localStorage');
+      if (allData.length === 0) {
+        throw new Error('No data found in localStorage. Checked keys: ' + possibleKeys.join(', '));
       }
 
-      console.log(`Found ${allData.length} records in localStorage`);
+      console.log(`Found ${allData.length} records in localStorage under key '${sourceKey}'`);
 
       // Create upload batch record
       const { data: uploadData, error: uploadError } = await supabase
