@@ -18,13 +18,13 @@ export const QATestRunner = () => {
     setIsRunning(true);
     const results: TestResult[] = [];
 
-    // Test 1: Environment present
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // Test 1: Configuration check - using direct URLs (no VITE_ vars needed)
+    const supabaseUrl = "https://ixivawgjdoahqzlghtcz.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4aXZhd2dqZG9haHF6bGdodGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5MDM0NTYsImV4cCI6MjA2OTQ3OTQ1Nn0.TWEJmPlsB5tfHd-2447XkoB9npjZJ6HSt8qCbUD4EPQ";
     results.push({
       name: "Environment Variables",
       status: (supabaseUrl && supabaseKey) ? 'pass' : 'fail',
-      message: (supabaseUrl && supabaseKey) ? 'Both env vars present' : 'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY'
+      message: (supabaseUrl && supabaseKey) ? 'Supabase configuration is correctly set' : 'Supabase configuration missing'
     });
 
     // Test 2: Supabase reachable

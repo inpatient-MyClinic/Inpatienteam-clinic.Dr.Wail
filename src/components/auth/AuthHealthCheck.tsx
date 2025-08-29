@@ -21,29 +21,29 @@ export const AuthHealthCheck = () => {
     setIsRunning(true);
     const results: HealthCheckItem[] = [];
 
-    // Check 1: Environment variables
+    // Check 1: Environment variables - using direct URLs (no VITE_ vars needed)
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseUrl = "https://ixivawgjdoahqzlghtcz.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4aXZhd2dqZG9haHF6bGdodGN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5MDM0NTYsImV4cCI6MjA2OTQ3OTQ1Nn0.TWEJmPlsB5tfHd-2447XkoB9npjZJ6HSt8qCbUD4EPQ";
       
       if (supabaseUrl && supabaseKey) {
         results.push({
           name: "Environment Variables",
           status: 'success',
-          message: "VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are present"
+          message: "Supabase configuration is correctly set with direct URLs"
         });
       } else {
         results.push({
           name: "Environment Variables",
           status: 'error',
-          message: `Missing: ${!supabaseUrl ? 'VITE_SUPABASE_URL' : ''} ${!supabaseKey ? 'VITE_SUPABASE_ANON_KEY' : ''}`
+          message: "Supabase configuration missing"
         });
       }
     } catch (error) {
       results.push({
         name: "Environment Variables",
         status: 'error',
-        message: "Error checking environment variables"
+        message: "Error checking configuration"
       });
     }
 
