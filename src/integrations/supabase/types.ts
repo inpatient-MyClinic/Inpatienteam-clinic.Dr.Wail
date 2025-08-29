@@ -55,57 +55,114 @@ export type Database = {
       }
       excel_rows_raw: {
         Row: {
+          "Agreed Booked Date": string | null
+          "Approval Number": string | null
+          "Approval Status": string | null
           Branch: string | null
+          "Case Coordinator": string | null
+          "Case Manager": string | null
+          "Category of Failure": string | null
           created_at: string | null
           Currency: string | null
           Date: string | null
+          "Date of File Opening": string | null
+          "Date of Order Submission": string | null
+          Email: string | null
+          "Expected Surgery Date": string | null
+          "Hospital File Number": string | null
           "Hospital Name": string | null
           id: string
+          "Insurance Cash": string | null
+          "Insurance Number": string | null
           "Medical Condition": string | null
           Notes: string | null
           "Paid Amount": string | null
           "Patient ID": string | null
+          "Patient Mobile": string | null
           "Patient Name": string | null
+          "Patient National ID": string | null
           raw_data: Json | null
+          "Reason of Pending Cancellation": string | null
           row_number: number
+          "Service Description": string | null
           Specialty: string | null
           Status: string | null
+          "Treating Doctor Name": string | null
+          "Type of Admission": string | null
           upload_batch_id: string | null
         }
         Insert: {
+          "Agreed Booked Date"?: string | null
+          "Approval Number"?: string | null
+          "Approval Status"?: string | null
           Branch?: string | null
+          "Case Coordinator"?: string | null
+          "Case Manager"?: string | null
+          "Category of Failure"?: string | null
           created_at?: string | null
           Currency?: string | null
           Date?: string | null
+          "Date of File Opening"?: string | null
+          "Date of Order Submission"?: string | null
+          Email?: string | null
+          "Expected Surgery Date"?: string | null
+          "Hospital File Number"?: string | null
           "Hospital Name"?: string | null
           id?: string
+          "Insurance Cash"?: string | null
+          "Insurance Number"?: string | null
           "Medical Condition"?: string | null
           Notes?: string | null
           "Paid Amount"?: string | null
           "Patient ID"?: string | null
+          "Patient Mobile"?: string | null
           "Patient Name"?: string | null
+          "Patient National ID"?: string | null
           raw_data?: Json | null
+          "Reason of Pending Cancellation"?: string | null
           row_number: number
+          "Service Description"?: string | null
           Specialty?: string | null
           Status?: string | null
+          "Treating Doctor Name"?: string | null
+          "Type of Admission"?: string | null
           upload_batch_id?: string | null
         }
         Update: {
+          "Agreed Booked Date"?: string | null
+          "Approval Number"?: string | null
+          "Approval Status"?: string | null
           Branch?: string | null
+          "Case Coordinator"?: string | null
+          "Case Manager"?: string | null
+          "Category of Failure"?: string | null
           created_at?: string | null
           Currency?: string | null
           Date?: string | null
+          "Date of File Opening"?: string | null
+          "Date of Order Submission"?: string | null
+          Email?: string | null
+          "Expected Surgery Date"?: string | null
+          "Hospital File Number"?: string | null
           "Hospital Name"?: string | null
           id?: string
+          "Insurance Cash"?: string | null
+          "Insurance Number"?: string | null
           "Medical Condition"?: string | null
           Notes?: string | null
           "Paid Amount"?: string | null
           "Patient ID"?: string | null
+          "Patient Mobile"?: string | null
           "Patient Name"?: string | null
+          "Patient National ID"?: string | null
           raw_data?: Json | null
+          "Reason of Pending Cancellation"?: string | null
           row_number?: number
+          "Service Description"?: string | null
           Specialty?: string | null
           Status?: string | null
+          "Treating Doctor Name"?: string | null
+          "Type of Admission"?: string | null
           upload_batch_id?: string | null
         }
         Relationships: [
