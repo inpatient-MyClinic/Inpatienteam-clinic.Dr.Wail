@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, FileSpreadsheet, TrendingUp } from "lucide-react";
+import { CalendarIcon, FileSpreadsheet, TrendingUp, Users, Building, Stethoscope, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,10 @@ interface ExcelAnalysisResult {
   totalCases: number;
   statusBreakdown: Record<string, number>;
   branchBreakdown: Record<string, number>;
+  specialtyBreakdown: Record<string, number>;
+  insuranceBreakdown: Record<string, number>;
+  operationStatusBreakdown: Record<string, number>;
+  approvalStatusBreakdown: Record<string, number>;
   rawData: any[];
 }
 
@@ -26,8 +30,8 @@ export default function ExcelDataAnalyzer() {
   const performExcelAnalysis = async () => {
     if (!selectedMonth) {
       toast({
-        title: "Month Required",
-        description: "Please select a month to analyze",
+        title: "الشهر مطلوب",
+        description: "يرجى اختيار شهر للتحليل",
         variant: "destructive"
       });
       return;
@@ -37,56 +41,91 @@ export default function ExcelDataAnalyzer() {
     setError(null);
 
     try {
-      const targetMonth = selectedMonth.getMonth() + 1; // JavaScript months are 0-indexed
+      const targetMonth = selectedMonth.getMonth() + 1;
       const targetYear = selectedMonth.getFullYear();
 
-      console.log(`Analyzing Excel data for ${targetMonth}/${targetYear}`);
-
-      const { data, error: queryError } = await supabase
-        .rpc('analyze_excel_data_by_month', {
-          target_month: targetMonth,
-          target_year: targetYear
-        });
+      // Fetch raw Excel data
+      const { data: rawData, error: queryError } = await supabase
+        .from('excel_rows_raw')
+        .select('*')
+        .not('raw_data', 'is', null);
 
       if (queryError) throw queryError;
 
-      if (data && data.length > 0) {
-        const result = data[0];
-        const analysisData: ExcelAnalysisResult = {
-          totalCases: Number(result.total_cases) || 0,
-          statusBreakdown: (result.status_breakdown as Record<string, number>) || {},
-          branchBreakdown: (result.branch_breakdown as Record<string, number>) || {},
-          rawData: (result.raw_data as any[]) || []
-        };
+      // Filter data by the selected month
+      const filteredData = rawData?.filter(row => {
+        const dateFields = [
+          row['Date of Request:'],
+          row.Date,
+          row['Date of File Opening'],
+          row['Agreed - Booked - OR date(mm/dd/yyyy)']
+        ];
 
-        setAnalysisResult(analysisData);
-        
-        console.log('Excel Analysis Result:', analysisData);
-        
-        toast({
-          title: "Analysis Complete",
-          description: `Found ${analysisData.totalCases} cases in Excel data for ${format(selectedMonth, 'MMM yyyy')}`,
+        return dateFields.some(dateStr => {
+          if (!dateStr) return false;
+          const date = new Date(dateStr);
+          return date.getFullYear() === targetYear && date.getMonth() + 1 === targetMonth;
         });
-      } else {
-        setAnalysisResult({
-          totalCases: 0,
-          statusBreakdown: {},
-          branchBreakdown: {},
-          rawData: []
-        });
-        
-        toast({
-          title: "No Data Found",
-          description: `No Excel data found for ${format(selectedMonth, 'MMM yyyy')}`,
-          variant: "destructive"
-        });
-      }
+      }) || [];
+
+      // Analyze the filtered data
+      const analysisData: ExcelAnalysisResult = {
+        totalCases: filteredData.length,
+        statusBreakdown: {},
+        branchBreakdown: {},
+        specialtyBreakdown: {},
+        insuranceBreakdown: {},
+        operationStatusBreakdown: {},
+        approvalStatusBreakdown: {},
+        rawData: filteredData.slice(0, 10) // Keep sample for debugging
+      };
+
+      // Process each row for analysis
+      filteredData.forEach(row => {
+        // Status of operation breakdown
+        const operationStatus = row['Status of operation'] || 'غير محدد';
+        analysisData.operationStatusBreakdown[operationStatus] = 
+          (analysisData.operationStatusBreakdown[operationStatus] || 0) + 1;
+
+        // My Clinic Branch breakdown
+        const branch = row['My Clinic Branch'] || 'غير محدد';
+        analysisData.branchBreakdown[branch] = 
+          (analysisData.branchBreakdown[branch] || 0) + 1;
+
+        // Specialty breakdown
+        const specialty = row['Specialty'] || 'غير محدد';
+        analysisData.specialtyBreakdown[specialty] = 
+          (analysisData.specialtyBreakdown[specialty] || 0) + 1;
+
+        // Insurance/Cash breakdown
+        const insuranceType = row['Insurance/Cash'] || 'غير محدد';
+        analysisData.insuranceBreakdown[insuranceType] = 
+          (analysisData.insuranceBreakdown[insuranceType] || 0) + 1;
+
+        // Approval Status breakdown
+        const approvalStatus = row['Approval Status'] || 'غير محدد';
+        analysisData.approvalStatusBreakdown[approvalStatus] = 
+          (analysisData.approvalStatusBreakdown[approvalStatus] || 0) + 1;
+
+        // General status (could be from multiple fields)
+        const generalStatus = row['Status of operation'] || row['Approval Status'] || 'غير محدد';
+        analysisData.statusBreakdown[generalStatus] = 
+          (analysisData.statusBreakdown[generalStatus] || 0) + 1;
+      });
+
+      setAnalysisResult(analysisData);
+      
+      toast({
+        title: "اكتمل التحليل",
+        description: `تم العثور على ${analysisData.totalCases} حالة في بيانات Excel لشهر ${format(selectedMonth, 'MMM yyyy')}`,
+      });
+
     } catch (err) {
       console.error('Excel analysis error:', err);
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      setError(err instanceof Error ? err.message : 'فشل في التحليل');
       toast({
-        title: "Analysis Failed",
-        description: err instanceof Error ? err.message : 'Failed to analyze Excel data',
+        title: "فشل التحليل",
+        description: err instanceof Error ? err.message : 'فشل في تحليل بيانات Excel',
         variant: "destructive"
       });
     } finally {
@@ -94,16 +133,59 @@ export default function ExcelDataAnalyzer() {
     }
   };
 
+  const BreakdownCard = ({ 
+    title, 
+    icon: Icon, 
+    data, 
+    variant = "secondary" 
+  }: { 
+    title: string; 
+    icon: any; 
+    data: Record<string, number>; 
+    variant?: "secondary" | "outline" | "default" 
+  }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Icon className="h-4 w-4" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {Object.entries(data)
+            .sort(([,a], [,b]) => b - a)
+            .map(([key, count]) => (
+              <div key={key} className="flex justify-between items-center py-2 px-3 hover:bg-muted/50 rounded">
+                <span className="font-medium text-sm">{key}</span>
+                <Badge variant={variant} className="font-bold">
+                  {count}
+                </Badge>
+              </div>
+            ))}
+          
+          {Object.keys(data).length > 0 && (
+            <div className="border-t pt-2 mt-3">
+              <div className="text-xs text-muted-foreground text-center">
+                الإجمالي: {Object.values(data).reduce((sum, count) => sum + count, 0)}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
-            Excel Data Analyzer
+            محلل بيانات Excel - الأعمدة المخصصة
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Direct analysis from uploaded Excel sheets (Column AP = Date, Column AI = Status)
+            تحليل مباشر من ملفات Excel المرفوعة بناءً على الأعمدة المحددة
           </p>
         </CardHeader>
         <CardContent>
@@ -112,7 +194,7 @@ export default function ExcelDataAnalyzer() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  {selectedMonth ? format(selectedMonth, 'MMM yyyy') : 'Select Month'}
+                  {selectedMonth ? format(selectedMonth, 'MMM yyyy') : 'اختر الشهر'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -131,7 +213,7 @@ export default function ExcelDataAnalyzer() {
               className="gap-2"
             >
               <TrendingUp className="h-4 w-4" />
-              {loading ? 'Analyzing...' : 'Analyze Excel Data'}
+              {loading ? 'جاري التحليل...' : 'تحليل بيانات Excel'}
             </Button>
           </div>
         </CardContent>
@@ -147,11 +229,11 @@ export default function ExcelDataAnalyzer() {
 
       {analysisResult && (
         <div className="grid gap-6">
-          {/* Grand Total - Excel Style */}
+          {/* Grand Total */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
-                Excel Analysis for {selectedMonth ? format(selectedMonth, 'MMM yyyy') : ''}
+                تحليل Excel لشهر {selectedMonth ? format(selectedMonth, 'MMM yyyy') : ''}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -160,88 +242,72 @@ export default function ExcelDataAnalyzer() {
                   {analysisResult.totalCases}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Grand Total (Count of Patient's MRN)
+                  إجمالي الحالات (عدد Patient's MRN)
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Status Breakdown - Column AI */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Status Distribution (Column AI)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(analysisResult.statusBreakdown)
-                    .sort(([,a], [,b]) => b - a)
-                    .map(([status, count]) => (
-                      <div key={status} className="flex justify-between items-center py-2 px-3 hover:bg-muted/50 rounded">
-                        <span className="font-medium">{status}</span>
-                        <Badge variant="secondary" className="font-bold">
-                          {count}
-                        </Badge>
-                      </div>
-                    ))}
-                  
-                  {Object.keys(analysisResult.statusBreakdown).length > 0 && (
-                    <div className="border-t pt-2 mt-3">
-                      <div className="flex justify-between items-center py-2 px-3 bg-primary/10 rounded font-bold">
-                        <span>Grand Total</span>
-                        <Badge variant="default">
-                          {analysisResult.totalCases}
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+          {/* Analysis Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <BreakdownCard
+              title="حالة العملية"
+              icon={TrendingUp}
+              data={analysisResult.operationStatusBreakdown}
+              variant="default"
+            />
 
-            {/* Branch Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">My Clinic Branch Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(analysisResult.branchBreakdown)
-                    .sort(([,a], [,b]) => b - a)
-                    .map(([branch, count]) => (
-                      <div key={branch} className="flex justify-between items-center py-2 px-3 hover:bg-muted/50 rounded">
-                        <span className="font-medium">{branch}</span>
-                        <Badge variant="outline" className="font-bold">
-                          {count}
-                        </Badge>
-                      </div>
-                    ))}
-                  
-                  {Object.keys(analysisResult.branchBreakdown).length > 0 && (
-                    <div className="border-t pt-2 mt-3">
-                      <div className="text-xs text-muted-foreground text-center">
-                        Total across all branches: {analysisResult.totalCases}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <BreakdownCard
+              title="فرع العيادة"
+              icon={Building}
+              data={analysisResult.branchBreakdown}
+              variant="secondary"
+            />
+
+            <BreakdownCard
+              title="التخصص"
+              icon={Stethoscope}
+              data={analysisResult.specialtyBreakdown}
+              variant="outline"
+            />
+
+            <BreakdownCard
+              title="نوع التأمين"
+              icon={CreditCard}
+              data={analysisResult.insuranceBreakdown}
+              variant="secondary"
+            />
+
+            <BreakdownCard
+              title="حالة الموافقة"
+              icon={FileSpreadsheet}
+              data={analysisResult.approvalStatusBreakdown}
+              variant="outline"
+            />
+
+            <BreakdownCard
+              title="الحالة العامة"
+              icon={Users}
+              data={analysisResult.statusBreakdown}
+              variant="default"
+            />
           </div>
 
-          {/* Debug Information */}
+          {/* Sample Data */}
           {analysisResult.rawData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Sample Data (Debug)</CardTitle>
+                <CardTitle className="text-base">عينة من البيانات (للمراجعة)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {analysisResult.rawData.slice(0, 5).map((item, index) => (
-                    <div key={index} className="text-xs bg-muted p-2 rounded">
-                      <div>Status: {item.status} | Branch: {item.branch}</div>
-                      <div>Date Raw: {item.date_raw} | Parsed: {item.date_parsed}</div>
-                      <div>Hospital: {item.hospital} | Specialty: {item.specialty}</div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {analysisResult.rawData.slice(0, 3).map((item, index) => (
+                    <div key={index} className="text-xs bg-muted p-3 rounded">
+                      <div><strong>اسم المريض:</strong> {item["Patient's Name:"] || 'غير محدد'}</div>
+                      <div><strong>التخصص:</strong> {item["Specialty"] || 'غير محدد'}</div>
+                      <div><strong>فرع العيادة:</strong> {item["My Clinic Branch"] || 'غير محدد'}</div>
+                      <div><strong>حالة العملية:</strong> {item["Status of operation"] || 'غير محدد'}</div>
+                      <div><strong>نوع التأمين:</strong> {item["Insurance/Cash"] || 'غير محدد'}</div>
                     </div>
                   ))}
                 </div>
