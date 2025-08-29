@@ -52,18 +52,33 @@ export default function ExcelDataAnalyzer() {
 
       if (queryError) throw queryError;
 
-      // Filter data by the selected month using exact Excel column names
+      // Filter data by the selected month using column AP and other date fields
       const filteredData = rawData?.filter(row => {
-        const dateFields = [
-          row['Date of Request:'],
+        // Column AP is the primary date field for filtering - access via raw_data
+        const rawDataObj = typeof row.raw_data === 'object' ? row.raw_data as Record<string, any> : null;
+        const columnAP = rawDataObj?.AP || row['Date of Request:'];
+        const otherDateFields = [
           row['Date of File Opening'],
           row['Agreed - Booked - OR date(mm/dd/yyyy)']
         ];
 
-        return dateFields.some(dateStr => {
+        // Check column AP first (primary)
+        if (columnAP) {
+          const date = new Date(columnAP);
+          if (!isNaN(date.getTime()) && 
+              date.getFullYear() === targetYear && 
+              date.getMonth() + 1 === targetMonth) {
+            return true;
+          }
+        }
+
+        // Fallback to other date fields if column AP is not available
+        return otherDateFields.some(dateStr => {
           if (!dateStr) return false;
           const date = new Date(dateStr);
-          return date.getFullYear() === targetYear && date.getMonth() + 1 === targetMonth;
+          return !isNaN(date.getTime()) && 
+                 date.getFullYear() === targetYear && 
+                 date.getMonth() + 1 === targetMonth;
         });
       }) || [];
 
@@ -81,8 +96,9 @@ export default function ExcelDataAnalyzer() {
 
       // Process each row for analysis
       filteredData.forEach(row => {
-        // Status of operation breakdown
-        const operationStatus = row['Status of operation'] || 'غير محدد';
+        // Status of operation breakdown - use column AI from raw_data
+        const rawDataObj = typeof row.raw_data === 'object' ? row.raw_data as Record<string, any> : null;
+        const operationStatus = rawDataObj?.AI || row['Status of operation'] || 'غير محدد';
         analysisData.statusOperationBreakdown[operationStatus] = 
           (analysisData.statusOperationBreakdown[operationStatus] || 0) + 1;
 
