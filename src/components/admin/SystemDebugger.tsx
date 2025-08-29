@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExcelDataValidator } from './ExcelDataValidator';
+import { ExcelDebugger } from './ExcelDebugger';
 
 export default function SystemDebugger() {
   const [isOpen, setIsOpen] = useState(false);
@@ -153,7 +154,8 @@ export default function SystemDebugger() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="storage">Storage</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
-            <TabsTrigger value="actions">Actions</TabsTrigger>
+        <TabsTrigger value="actions">Actions</TabsTrigger>
+        <TabsTrigger value="excel">Excel Debug</TabsTrigger>
             <TabsTrigger value="validation">Data Validation</TabsTrigger>
           </TabsList>
           
@@ -382,9 +384,13 @@ export default function SystemDebugger() {
 
           <TabsContent value="validation">
             <ExcelDataValidator />
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
+        </TabsContent>
+
+        <TabsContent value="excel" className="space-y-4">
+          <ExcelDebugger />
+        </TabsContent>
+      </Tabs>
+    </DialogContent>
     </Dialog>
   );
 }
