@@ -85,20 +85,24 @@ export class EnhancedAnalyticsService {
     };
     
     filteredRequests.forEach(request => {
-      // Status breakdown
-      const status = this.normalizeStatus(request.status || request.operationStatus || 'Unknown');
+      // Status breakdown - prioritize Excel column names
+      const status = this.normalizeStatus(
+        request['Status of operation'] || request.status || request.operationStatus || 'Unknown'
+      );
       analytics.byStatus[status] = (analytics.byStatus[status] || 0) + 1;
       
-      // Branch breakdown
-      const branch = this.normalizeBranch(request.clinicBranch || request.referredFrom || request.branchCode || 'Unknown');
+      // Branch breakdown - use exact Excel column name
+      const branch = this.normalizeBranch(
+        request['My Clinic Branch'] || request.clinicBranch || request.referredFrom || request.branchCode || 'Unknown'
+      );
       analytics.byBranch[branch] = (analytics.byBranch[branch] || 0) + 1;
       
-      // Hospital breakdown
-      const hospital = request.hospitalName || request.hospital || 'Unknown Hospital';
+      // Hospital breakdown - use exact Excel column name
+      const hospital = request['Referred Hospital'] || request.hospitalName || request.hospital || 'Unknown Hospital';
       analytics.byHospital[hospital] = (analytics.byHospital[hospital] || 0) + 1;
       
-      // Specialty breakdown
-      const specialty = request.specialty || 'General';
+      // Specialty breakdown - use exact Excel column name
+      const specialty = request['Specialty'] || request.specialty || 'General';
       analytics.bySpecialty[specialty] = (analytics.bySpecialty[specialty] || 0) + 1;
     });
     
@@ -154,8 +158,9 @@ export class EnhancedAnalyticsService {
    */
   private static parseRequestDate(request: any): Date | null {
     const dateFields = [
+      'Date of Request:', 'Date of File Opening', 'Agreed - Booked - OR date(mm/dd/yyyy)',
       'date', 'Date', 'requestDate', 'request_date', 'created_at', 
-      'dateCreated', 'Date of Request:', 'Request Date'
+      'dateCreated', 'Request Date'
     ];
     
     for (const field of dateFields) {
