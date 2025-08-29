@@ -5,6 +5,7 @@ import { Download, Printer } from "lucide-react";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import AdminExcelUpload from "@/components/admin/AdminExcelUpload";
+import SystemDebugger from "@/components/admin/SystemDebugger";
 
 interface AdminHeaderProps {
   selectedDates: Date[];
@@ -52,6 +53,7 @@ export default function AdminHeader({
 
       <div className="flex gap-2">
         <MessagingIcons currentUserRole="admin" unreadCount={unreadCount} />
+        <SystemDebugger />
         <AdminExcelUpload onUpload={onExcelUpload} />
         <Button onClick={onExport} variant="outline">
           <Download className="w-4 h-4 mr-2" />
