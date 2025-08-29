@@ -73,14 +73,14 @@ export const QATestRunner = () => {
     // Test 4: Magic link test
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email: 'test@example.com',
+        email: 'inpatienteam@gmail.com',
         options: { emailRedirectTo: `${window.location.origin}/admin` }
       });
       
       results.push({
         name: "Magic Link Test",
         status: error ? 'fail' : 'pass',
-        message: error ? `Magic link failed: ${error.message}` : 'Magic link request accepted'
+        message: error ? `Magic link failed: ${error.message}` : 'Magic link request sent to inpatienteam@gmail.com'
       });
     } catch (error) {
       results.push({
@@ -90,9 +90,9 @@ export const QATestRunner = () => {
       });
     }
 
-    // Test 5: Admin login test (if credentials available)
-    const adminEmail = 'admin@myclinic.com.sa';
-    const adminPassword = 'TempAdmin123!';
+    // Test 5: Admin login test (using correct credentials)
+    const adminEmail = 'inpatienteam@gmail.com';
+    const adminPassword = 'Ww0911200200$';
     
     try {
       const { error } = await supabase.auth.signInWithPassword({
