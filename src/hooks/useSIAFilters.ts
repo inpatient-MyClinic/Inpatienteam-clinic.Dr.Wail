@@ -43,28 +43,28 @@ export function useSIAFilters() {
 
   const buildWhereClause = useMemo(() => {
     const conditions: string[] = [
-      `request_date >= '${dateRange.start}'`,
-      `request_date <= '${dateRange.end}'`
+      `parse_excel_date("Date") >= '${dateRange.start}'::date`,
+      `parse_excel_date("Date") <= '${dateRange.end}'::date`
     ];
 
     if (filters.statuses.length > 0) {
       const statusList = filters.statuses.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`status IN (${statusList})`);
+      conditions.push(`"Status" IN (${statusList})`);
     }
 
     if (filters.hospitals.length > 0) {
       const hospitalList = filters.hospitals.map(h => `'${h.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`hospital_name IN (${hospitalList})`);
+      conditions.push(`"Hospital Name" IN (${hospitalList})`);
     }
 
     if (filters.specialties.length > 0) {
       const specialtyList = filters.specialties.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`specialty IN (${specialtyList})`);
+      conditions.push(`"Specialty" IN (${specialtyList})`);
     }
 
     if (filters.branches.length > 0) {
       const branchList = filters.branches.map(b => `'${b.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`branch_code IN (${branchList})`);
+      conditions.push(`"Branch" IN (${branchList})`);
     }
 
     return conditions.join(' AND ');
