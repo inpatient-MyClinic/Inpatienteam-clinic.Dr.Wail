@@ -52,11 +52,10 @@ export default function ExcelDataAnalyzer() {
 
       if (queryError) throw queryError;
 
-      // Filter data by the selected month
+      // Filter data by the selected month using exact Excel column names
       const filteredData = rawData?.filter(row => {
         const dateFields = [
           row['Date of Request:'],
-          row.Date,
           row['Date of File Opening'],
           row['Agreed - Booked - OR date(mm/dd/yyyy)']
         ];
