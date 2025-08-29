@@ -13,6 +13,7 @@ export default function TemplateDownload() {
     const templateData = [
       {
         "Request ID": "REQ001",
+        "Month": "January 2025",
         "Patient Name": "Ahmed Mohammed",
         "Patient National ID": "1234567890",
         "Patient Mobile No": "966501234567",
