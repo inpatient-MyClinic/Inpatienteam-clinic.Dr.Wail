@@ -11,12 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ExcelAnalysisResult {
   totalCases: number;
-  statusBreakdown: Record<string, number>;
+  statusOperationBreakdown: Record<string, number>;
   branchBreakdown: Record<string, number>;
   specialtyBreakdown: Record<string, number>;
-  insuranceBreakdown: Record<string, number>;
-  operationStatusBreakdown: Record<string, number>;
-  approvalStatusBreakdown: Record<string, number>;
+  caseCoordinatorBreakdown: Record<string, number>;
+  referredHospitalBreakdown: Record<string, number>;
   rawData: any[];
 }
 
@@ -70,12 +69,11 @@ export default function ExcelDataAnalyzer() {
       // Analyze the filtered data
       const analysisData: ExcelAnalysisResult = {
         totalCases: filteredData.length,
-        statusBreakdown: {},
+        statusOperationBreakdown: {},
         branchBreakdown: {},
         specialtyBreakdown: {},
-        insuranceBreakdown: {},
-        operationStatusBreakdown: {},
-        approvalStatusBreakdown: {},
+        caseCoordinatorBreakdown: {},
+        referredHospitalBreakdown: {},
         rawData: filteredData.slice(0, 10) // Keep sample for debugging
       };
 
@@ -83,8 +81,8 @@ export default function ExcelDataAnalyzer() {
       filteredData.forEach(row => {
         // Status of operation breakdown
         const operationStatus = row['Status of operation'] || 'غير محدد';
-        analysisData.operationStatusBreakdown[operationStatus] = 
-          (analysisData.operationStatusBreakdown[operationStatus] || 0) + 1;
+        analysisData.statusOperationBreakdown[operationStatus] = 
+          (analysisData.statusOperationBreakdown[operationStatus] || 0) + 1;
 
         // My Clinic Branch breakdown
         const branch = row['My Clinic Branch'] || 'غير محدد';
@@ -96,20 +94,15 @@ export default function ExcelDataAnalyzer() {
         analysisData.specialtyBreakdown[specialty] = 
           (analysisData.specialtyBreakdown[specialty] || 0) + 1;
 
-        // Insurance/Cash breakdown
-        const insuranceType = row['Insurance/Cash'] || 'غير محدد';
-        analysisData.insuranceBreakdown[insuranceType] = 
-          (analysisData.insuranceBreakdown[insuranceType] || 0) + 1;
+        // Case coordinator breakdown
+        const caseCoordinator = row['Case coordinator'] || 'غير محدد';
+        analysisData.caseCoordinatorBreakdown[caseCoordinator] = 
+          (analysisData.caseCoordinatorBreakdown[caseCoordinator] || 0) + 1;
 
-        // Approval Status breakdown
-        const approvalStatus = row['Approval Status'] || 'غير محدد';
-        analysisData.approvalStatusBreakdown[approvalStatus] = 
-          (analysisData.approvalStatusBreakdown[approvalStatus] || 0) + 1;
-
-        // General status (prioritize Status of operation)
-        const generalStatus = row['Status of operation'] || 'غير محدد';
-        analysisData.statusBreakdown[generalStatus] = 
-          (analysisData.statusBreakdown[generalStatus] || 0) + 1;
+        // Referred Hospital breakdown
+        const referredHospital = row['Referred Hospital'] || 'غير محدد';
+        analysisData.referredHospitalBreakdown[referredHospital] = 
+          (analysisData.referredHospitalBreakdown[referredHospital] || 0) + 1;
       });
 
       setAnalysisResult(analysisData);
@@ -252,7 +245,7 @@ export default function ExcelDataAnalyzer() {
             <BreakdownCard
               title="حالة العملية"
               icon={TrendingUp}
-              data={analysisResult.operationStatusBreakdown}
+              data={analysisResult.statusOperationBreakdown}
               variant="default"
             />
 
@@ -271,24 +264,17 @@ export default function ExcelDataAnalyzer() {
             />
 
             <BreakdownCard
-              title="نوع التأمين"
-              icon={CreditCard}
-              data={analysisResult.insuranceBreakdown}
+              title="منسق الحالة"
+              icon={Users}
+              data={analysisResult.caseCoordinatorBreakdown}
               variant="secondary"
             />
 
             <BreakdownCard
-              title="حالة الموافقة"
-              icon={FileSpreadsheet}
-              data={analysisResult.approvalStatusBreakdown}
+              title="المستشفى المحول إليه"
+              icon={Building}
+              data={analysisResult.referredHospitalBreakdown}
               variant="outline"
-            />
-
-            <BreakdownCard
-              title="الحالة العامة"
-              icon={Users}
-              data={analysisResult.statusBreakdown}
-              variant="default"
             />
           </div>
 
