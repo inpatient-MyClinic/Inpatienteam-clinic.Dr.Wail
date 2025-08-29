@@ -759,6 +759,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      debug_excel_data_for_month: {
+        Args: { p_month: number; p_year: number }
+        Returns: {
+          date_parsing_stats: Json
+          raw_data_sample: Json
+          status_mapping: Json
+          total_by_method: Json
+        }[]
+      }
       generate_otp: {
         Args: { user_email: string }
         Returns: string

@@ -43,28 +43,28 @@ export function useSIAFilters() {
 
   const buildWhereClause = useMemo(() => {
     const conditions: string[] = [
-      `parse_excel_date("Date") >= '${dateRange.start}'::date`,
-      `parse_excel_date("Date") <= '${dateRange.end}'::date`
+      `parse_excel_date(raw_data->>'Date of Request:') >= '${dateRange.start}'::date`,
+      `parse_excel_date(raw_data->>'Date of Request:') <= '${dateRange.end}'::date`
     ];
 
     if (filters.statuses.length > 0) {
       const statusList = filters.statuses.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`"Status" IN (${statusList})`);
+      conditions.push(`raw_data->>'Status of operation' IN (${statusList})`);
     }
 
     if (filters.hospitals.length > 0) {
       const hospitalList = filters.hospitals.map(h => `'${h.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`"Hospital Name" IN (${hospitalList})`);
+      conditions.push(`raw_data->>'Referred Hospital' IN (${hospitalList})`);
     }
 
     if (filters.specialties.length > 0) {
       const specialtyList = filters.specialties.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`"Specialty" IN (${specialtyList})`);
+      conditions.push(`raw_data->>'Specialty' IN (${specialtyList})`);
     }
 
     if (filters.branches.length > 0) {
       const branchList = filters.branches.map(b => `'${b.replace(/'/g, "''")}'`).join(',');
-      conditions.push(`"Branch" IN (${branchList})`);
+      conditions.push(`raw_data->>'My Clinic Branch' IN (${branchList})`);
     }
 
     return conditions.join(' AND ');
