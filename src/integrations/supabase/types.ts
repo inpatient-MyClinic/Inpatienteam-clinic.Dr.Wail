@@ -734,6 +734,16 @@ export type Database = {
           total_cases: number
         }[]
       }
+      analyze_excel_cases_monthly_pivot_match: {
+        Args: { p_month: number; p_year: number }
+        Returns: {
+          branch_breakdown: Json
+          hospital_breakdown: Json
+          specialty_breakdown: Json
+          status_breakdown: Json
+          total_cases: number
+        }[]
+      }
       analyze_excel_data_by_month: {
         Args: { target_month: number; target_year: number }
         Returns: {
