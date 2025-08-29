@@ -107,8 +107,8 @@ export default function ExcelDataAnalyzer() {
         analysisData.approvalStatusBreakdown[approvalStatus] = 
           (analysisData.approvalStatusBreakdown[approvalStatus] || 0) + 1;
 
-        // General status (could be from multiple fields)
-        const generalStatus = row['Status of operation'] || row['Approval Status'] || 'غير محدد';
+        // General status (prioritize Status of operation)
+        const generalStatus = row['Status of operation'] || 'غير محدد';
         analysisData.statusBreakdown[generalStatus] = 
           (analysisData.statusBreakdown[generalStatus] || 0) + 1;
       });
