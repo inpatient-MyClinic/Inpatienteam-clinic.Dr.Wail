@@ -16,6 +16,7 @@ interface ExcelAnalysisResult {
   specialtyBreakdown: Record<string, number>;
   caseCoordinatorBreakdown: Record<string, number>;
   referredHospitalBreakdown: Record<string, number>;
+  monthBreakdown: Record<string, number>;
   rawData: any[];
 }
 
@@ -74,6 +75,7 @@ export default function ExcelDataAnalyzer() {
         specialtyBreakdown: {},
         caseCoordinatorBreakdown: {},
         referredHospitalBreakdown: {},
+        monthBreakdown: {},
         rawData: filteredData.slice(0, 10) // Keep sample for debugging
       };
 
@@ -103,6 +105,24 @@ export default function ExcelDataAnalyzer() {
         const referredHospital = row['Referred Hospital'] || 'غير محدد';
         analysisData.referredHospitalBreakdown[referredHospital] = 
           (analysisData.referredHospitalBreakdown[referredHospital] || 0) + 1;
+
+        // Month breakdown from column AP (extract month from date fields)
+        const dateFields = [
+          row['Date of Request:'],
+          row['Date of File Opening'], 
+          row['Agreed - Booked - OR date(mm/dd/yyyy)']
+        ];
+        
+        dateFields.forEach(dateStr => {
+          if (dateStr) {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+              const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+              analysisData.monthBreakdown[monthYear] = 
+                (analysisData.monthBreakdown[monthYear] || 0) + 1;
+            }
+          }
+        });
       });
 
       setAnalysisResult(analysisData);
@@ -275,6 +295,13 @@ export default function ExcelDataAnalyzer() {
               icon={Building}
               data={analysisResult.referredHospitalBreakdown}
               variant="outline"
+            />
+
+            <BreakdownCard
+              title="الأشهر الموجودة (عمود AP)"
+              icon={CalendarIcon}
+              data={analysisResult.monthBreakdown}
+              variant="default"
             />
           </div>
 
