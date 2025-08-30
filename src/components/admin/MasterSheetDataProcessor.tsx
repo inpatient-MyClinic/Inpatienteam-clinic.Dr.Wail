@@ -105,9 +105,7 @@ export default function MasterSheetDataProcessor() {
       // Fetch all Excel data
       const { data, error } = await supabase
         .from('excel_rows_raw')
-        .select('*')
-        .not('raw_data->Patient\'s Name:', 'is', null)
-        .not('raw_data->Status of operation', 'is', null);
+        .select('*');
 
       if (error) throw error;
 
