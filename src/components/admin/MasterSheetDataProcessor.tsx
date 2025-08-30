@@ -106,65 +106,71 @@ export default function MasterSheetDataProcessor() {
       const { data, error } = await supabase
         .from('excel_rows_raw')
         .select('*')
-        .not('raw_data->Patient\'s Name:', 'is', null)
-        .not('raw_data->Patient\'s Name:', 'eq', '')
-        .not('raw_data->Status of operation', 'is', null)
-        .not('raw_data->Status of operation', 'eq', '');
+        .not('raw_data', 'is', null);
 
       if (error) throw error;
 
-      const masterSheetData: MasterSheetRow[] = data.map((row) => {
-        const rawData = row.raw_data || {};
-        
-        return {
-          // Patient Information
-          "Patient Name": rawData["Patient's Name:"] || "",
-          "Patient ID": rawData["Patient's MRN:"] || "",
-          "Patient Phone": rawData["Patient's Mobile No.:"] || "",
-          "Patient Email": rawData["Email"] || "",
-          "Patient National ID": rawData["Patient's National ID:"] || "",
+      const masterSheetData: MasterSheetRow[] = data
+        .filter(row => {
+          const rawData = row.raw_data || {};
+          // Filter for valid requests with required fields
+          return rawData["Patient's Name:"] && 
+                 rawData["Patient's Name:"].toString().trim() !== '' &&
+                 rawData["Status of operation"] && 
+                 rawData["Status of operation"].toString().trim() !== '';
+        })
+        .map((row) => {
+          const rawData = row.raw_data || {};
           
-          // Medical Information
-          "Medical Condition": rawData["Medical Condition"] || "",
-          "Specialty": rawData["Specialty"] || "",
-          "Service Description": rawData["Service Description of referred service"] || "",
-          "Treating Doctor Name": rawData["Treating Doctor's Name"] || "",
-          "Type of Admission": rawData["Type of Admission"] || "",
-          
-          // Hospital Information
-          "Hospital Name": rawData["Referred Hospital"] || "",
-          "Hospital File Number": rawData["Hospital File Number"] || "",
-          "Branch": rawData["My Clinic Branch"] || "",
-          
-          // Case Management (Column P - Status)
-          "Status": normalizeStatus(rawData["Status of operation"] || ""),
-          "Case Coordinator": rawData["Case coordinator"] || "",
-          "Case Manager": rawData["Case coordinator"] || "", // Same as coordinator
-          "Notes": rawData["Notes: if you want to add"] || "",
-          
-          // Insurance Information
-          "Insurance Cash": rawData["Insurance/Cash"] || "",
-          "Insurance Number": rawData["Insurance Number"] || "",
-          "Approval Status": rawData["Approval Status"] || "",
-          "Approval Number": rawData["Approval Number"] || "",
-          
-          // Financial Information
-          "Paid Amount": rawData["Paid Amount"] || "",
-          "Currency": rawData["Currency"] || "SAR",
-          
-          // Date Information (Column X - Date)
-          "Date": convertExcelDate(rawData["Date of Request:"]), // Main date for monthly filtering
-          "Date of File Opening": convertExcelDate(rawData["Date of File Opening"]),
-          "Expected Surgery Date": convertExcelDate(rawData["Expected date of Surgery"]),
-          "Agreed Booked Date": convertExcelDate(rawData["Agreed - Booked - OR date(mm/dd/yyyy)"]),
-          "Date of Order Submission": convertExcelDate(rawData["Date of Order Submission"]),
-          
-          // Additional Fields
-          "Category of Failure": rawData["Category of Failure"] || "",
-          "Reason of Pending Cancellation": rawData["Reason of pending or cancellation"] || "",
-          "Email": rawData["Email"] || ""
-        };
-      });
+          return {
+            // Patient Information
+            "Patient Name": rawData["Patient's Name:"] || "",
+            "Patient ID": rawData["Patient's MRN:"] || "",
+            "Patient Phone": rawData["Patient's Mobile No.:"] || "",
+            "Patient Email": rawData["Email"] || "",
+            "Patient National ID": rawData["Patient's National ID:"] || "",
+            
+            // Medical Information
+            "Medical Condition": rawData["Medical Condition"] || "",
+            "Specialty": rawData["Specialty"] || "",
+            "Service Description": rawData["Service Description of referred service"] || "",
+            "Treating Doctor Name": rawData["Treating Doctor's Name"] || "",
+            "Type of Admission": rawData["Type of Admission"] || "",
+            
+            // Hospital Information
+            "Hospital Name": rawData["Referred Hospital"] || "",
+            "Hospital File Number": rawData["Hospital File Number"] || "",
+            "Branch": rawData["My Clinic Branch"] || "",
+            
+            // Case Management (Column P - Status)
+            "Status": normalizeStatus(rawData["Status of operation"] || ""),
+            "Case Coordinator": rawData["Case coordinator"] || "",
+            "Case Manager": rawData["Case coordinator"] || "", // Same as coordinator
+            "Notes": rawData["Notes: if you want to add"] || "",
+            
+            // Insurance Information
+            "Insurance Cash": rawData["Insurance/Cash"] || "",
+            "Insurance Number": rawData["Insurance Number"] || "",
+            "Approval Status": rawData["Approval Status"] || "",
+            "Approval Number": rawData["Approval Number"] || "",
+            
+            // Financial Information
+            "Paid Amount": rawData["Paid Amount"] || "",
+            "Currency": rawData["Currency"] || "SAR",
+            
+            // Date Information (Column X - Date)
+            "Date": convertExcelDate(rawData["Date of Request:"]), // Main date for monthly filtering
+            "Date of File Opening": convertExcelDate(rawData["Date of File Opening"]),
+            "Expected Surgery Date": convertExcelDate(rawData["Expected date of Surgery"]),
+            "Agreed Booked Date": convertExcelDate(rawData["Agreed - Booked - OR date(mm/dd/yyyy)"]),
+            "Date of Order Submission": convertExcelDate(rawData["Date of Order Submission"]),
+            
+            // Additional Fields
+            "Category of Failure": rawData["Category of Failure"] || "",
+            "Reason of Pending Cancellation": rawData["Reason of pending or cancellation"] || "",
+            "Email": rawData["Email"] || ""
+          };
+        });
 
       setProcessedData(masterSheetData);
       setTotalRows(masterSheetData.length);
