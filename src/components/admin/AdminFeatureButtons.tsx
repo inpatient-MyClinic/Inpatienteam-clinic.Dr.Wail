@@ -17,6 +17,7 @@ interface AdminFeatureButtonsProps {
   onShowPivotUpload?: () => void;
   onShowExcelInspector?: () => void;
   onShowExcelAnalyzer?: () => void;
+  onShowMasterSheet?: () => void;
 }
 
 export default function AdminFeatureButtons({
@@ -33,6 +34,7 @@ export default function AdminFeatureButtons({
   onShowPivotUpload,
   onShowExcelInspector,
   onShowExcelAnalyzer,
+  onShowMasterSheet,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -65,6 +67,14 @@ export default function AdminFeatureButtons({
   return (
     <>
       <div className="mb-6 flex flex-wrap gap-2">
+        {onShowMasterSheet && (
+          <button
+            onClick={onShowMasterSheet}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
+          >
+            📋 Master Sheet Structure
+          </button>
+        )}
         <button
           onClick={onTogglePrivilegesSearch}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${

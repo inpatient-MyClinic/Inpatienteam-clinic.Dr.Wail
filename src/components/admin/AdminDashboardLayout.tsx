@@ -45,6 +45,7 @@ interface AdminDashboardLayoutProps {
   onShowPivotUpload: () => void;
   onShowExcelInspector: () => void;
   onShowExcelAnalyzer: () => void;
+  onShowMasterSheet: () => void;
 }
 
 export default function AdminDashboardLayout({
@@ -85,6 +86,7 @@ export default function AdminDashboardLayout({
   onShowPivotUpload,
   onShowExcelInspector,
   onShowExcelAnalyzer,
+  onShowMasterSheet,
 }: AdminDashboardLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
@@ -126,9 +128,10 @@ export default function AdminDashboardLayout({
             onToggleSIASlide={onToggleSIASlide}
             onShowChart={onShowChart}
             onShowMonthlyAnalytics={onShowMonthlyAnalytics}
-            onShowPivotUpload={onShowPivotUpload}
-            onShowExcelInspector={onShowExcelInspector}
-            onShowExcelAnalyzer={onShowExcelAnalyzer}
+              onShowPivotUpload={onShowPivotUpload}
+              onShowExcelInspector={onShowExcelInspector}
+              onShowExcelAnalyzer={onShowExcelAnalyzer}
+              onShowMasterSheet={onShowMasterSheet}
           />
 
           {/* Main Content */}
