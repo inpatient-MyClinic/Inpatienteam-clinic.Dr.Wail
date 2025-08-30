@@ -17,6 +17,7 @@ import ExcelDataAnalyzer from "@/components/admin/ExcelDataAnalyzer";
 import PivotTableUpload from "@/components/admin/PivotTableUpload";
 import ServerSIADashboard from "@/components/admin/ServerSIADashboard";
 import MasterSheetStructure from "@/components/admin/MasterSheetStructure";
+import MasterSheetDataProcessor from "@/components/admin/MasterSheetDataProcessor";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
   const [showExcelAnalyzer, setShowExcelAnalyzer] = useState(false);
   const [showServerSIA, setShowServerSIA] = useState(false);
   const [showMasterSheet, setShowMasterSheet] = useState(false);
+  const [showMasterSheetProcessor, setShowMasterSheetProcessor] = useState(false);
 
   const {
     activeFilter,
@@ -299,6 +301,24 @@ export default function AdminDashboard() {
     );
   }
 
+  if (showMasterSheetProcessor) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6">
+            <Button 
+              onClick={() => setShowMasterSheetProcessor(false)}
+              variant="outline"
+            >
+              ← Back to Dashboard
+            </Button>
+          </div>
+          <MasterSheetDataProcessor />
+        </div>
+      </div>
+    );
+  }
+
   if (showSIASlide) {
     const dateOnlyFilteredForSIA = filterAdminData(
       cleanedData,
@@ -391,6 +411,7 @@ export default function AdminDashboard() {
       onShowExcelInspector={() => setShowExcelInspector(true)}
       onShowExcelAnalyzer={() => setShowExcelAnalyzer(true)}
       onShowMasterSheet={() => setShowMasterSheet(true)}
+      onShowMasterSheetProcessor={() => setShowMasterSheetProcessor(true)}
     />
     </div>
   );

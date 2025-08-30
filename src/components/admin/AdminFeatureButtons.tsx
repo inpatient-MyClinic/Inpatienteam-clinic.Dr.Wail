@@ -18,6 +18,7 @@ interface AdminFeatureButtonsProps {
   onShowExcelInspector?: () => void;
   onShowExcelAnalyzer?: () => void;
   onShowMasterSheet?: () => void;
+  onShowMasterSheetProcessor?: () => void;
 }
 
 export default function AdminFeatureButtons({
@@ -35,6 +36,7 @@ export default function AdminFeatureButtons({
   onShowExcelInspector,
   onShowExcelAnalyzer,
   onShowMasterSheet,
+  onShowMasterSheetProcessor,
 }: AdminFeatureButtonsProps) {
   const [showNewUserRequests, setShowNewUserRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -73,6 +75,14 @@ export default function AdminFeatureButtons({
             className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
           >
             📋 Master Sheet Structure
+          </button>
+        )}
+        {onShowMasterSheetProcessor && (
+          <button
+            onClick={onShowMasterSheetProcessor}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            📊 Fill Master Sheet (1413 Requests)
           </button>
         )}
         <button

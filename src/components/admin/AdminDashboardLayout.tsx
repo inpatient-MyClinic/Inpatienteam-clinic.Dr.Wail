@@ -46,6 +46,7 @@ interface AdminDashboardLayoutProps {
   onShowExcelInspector: () => void;
   onShowExcelAnalyzer: () => void;
   onShowMasterSheet: () => void;
+  onShowMasterSheetProcessor?: () => void;
 }
 
 export default function AdminDashboardLayout({
@@ -87,6 +88,7 @@ export default function AdminDashboardLayout({
   onShowExcelInspector,
   onShowExcelAnalyzer,
   onShowMasterSheet,
+  onShowMasterSheetProcessor,
 }: AdminDashboardLayoutProps) {
   return (
     <div className="flex min-h-screen w-full">
@@ -132,6 +134,7 @@ export default function AdminDashboardLayout({
               onShowExcelInspector={onShowExcelInspector}
               onShowExcelAnalyzer={onShowExcelAnalyzer}
               onShowMasterSheet={onShowMasterSheet}
+              onShowMasterSheetProcessor={onShowMasterSheetProcessor}
           />
 
           {/* Main Content */}
