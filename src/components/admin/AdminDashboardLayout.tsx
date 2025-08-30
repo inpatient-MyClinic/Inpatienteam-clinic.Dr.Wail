@@ -97,62 +97,60 @@ export default function AdminDashboardLayout({
         onToggleAnalytics={onToggleAnalytics}
       />
 
-      <main className="flex-1 bg-white">
-        <ScrollArea className="h-screen">
-          {/* Header */}
-          <AdminHeader
+      <main className="flex-1 bg-white overflow-y-auto">
+        {/* Header */}
+        <AdminHeader
+          selectedDates={selectedDates}
+          selectedWeeks={selectedWeeks}
+          selectedMonths={selectedMonths}
+          onDateSelect={onDateSelect}
+          onWeekSelect={onWeekSelect}
+          onMonthSelect={onMonthSelect}
+          onClearAllDateFilters={onClearAllDateFilters}
+          onExcelUpload={onExcelUpload}
+          onExport={onExport}
+          onPrint={onPrint}
+          unreadCount={unreadCount}
+        />
+
+        <div className="p-6">
+          {/* Feature Toggle Buttons */}
+          <AdminFeatureButtons
+            showPrivilegesSearch={showPrivilegesSearch}
+            showTeamMonitoring={showTeamMonitoring}
+            showAIAssistant={showAIAssistant}
+            showSIASlide={showSIASlide}
+            onTogglePrivilegesSearch={onTogglePrivilegesSearch}
+            onToggleTeamMonitoring={onToggleTeamMonitoring}
+            onToggleAIAssistant={onToggleAIAssistant}
+            onToggleSIASlide={onToggleSIASlide}
+            onShowChart={onShowChart}
+            onShowMonthlyAnalytics={onShowMonthlyAnalytics}
+            onShowPivotUpload={onShowPivotUpload}
+            onShowExcelInspector={onShowExcelInspector}
+            onShowExcelAnalyzer={onShowExcelAnalyzer}
+          />
+
+          {/* Main Content */}
+          <AdminMainContent
+            showAnalytics={showAnalytics}
+            showPrivilegesSearch={showPrivilegesSearch}
+            showTeamMonitoring={showTeamMonitoring}
+            showGeneralReport={showGeneralReport}
+            showAIAssistant={showAIAssistant}
+            showFinanceAnalytics={showFinanceAnalytics}
+            showNewUserRequests={showNewUserRequests}
+            adminData={adminData}
+            filteredData={filteredData}
             selectedDates={selectedDates}
             selectedWeeks={selectedWeeks}
             selectedMonths={selectedMonths}
-            onDateSelect={onDateSelect}
-            onWeekSelect={onWeekSelect}
-            onMonthSelect={onMonthSelect}
-            onClearAllDateFilters={onClearAllDateFilters}
-            onExcelUpload={onExcelUpload}
-            onExport={onExport}
-            onPrint={onPrint}
-            unreadCount={unreadCount}
+            onShowGeneralReport={onShowGeneralReport}
+            onShowFinanceAnalytics={onShowFinanceAnalytics}
+            onToggleNewUserRequests={onToggleNewUserRequests}
+            onCloseFinanceAnalytics={onCloseFinanceAnalytics}
           />
-
-          <div className="p-6">
-            {/* Feature Toggle Buttons */}
-            <AdminFeatureButtons
-              showPrivilegesSearch={showPrivilegesSearch}
-              showTeamMonitoring={showTeamMonitoring}
-              showAIAssistant={showAIAssistant}
-              showSIASlide={showSIASlide}
-              onTogglePrivilegesSearch={onTogglePrivilegesSearch}
-              onToggleTeamMonitoring={onToggleTeamMonitoring}
-              onToggleAIAssistant={onToggleAIAssistant}
-              onToggleSIASlide={onToggleSIASlide}
-              onShowChart={onShowChart}
-              onShowMonthlyAnalytics={onShowMonthlyAnalytics}
-              onShowPivotUpload={onShowPivotUpload}
-              onShowExcelInspector={onShowExcelInspector}
-              onShowExcelAnalyzer={onShowExcelAnalyzer}
-            />
-
-            {/* Main Content */}
-            <AdminMainContent
-              showAnalytics={showAnalytics}
-              showPrivilegesSearch={showPrivilegesSearch}
-              showTeamMonitoring={showTeamMonitoring}
-              showGeneralReport={showGeneralReport}
-              showAIAssistant={showAIAssistant}
-              showFinanceAnalytics={showFinanceAnalytics}
-              showNewUserRequests={showNewUserRequests}
-              adminData={adminData}
-              filteredData={filteredData}
-              selectedDates={selectedDates}
-              selectedWeeks={selectedWeeks}
-              selectedMonths={selectedMonths}
-              onShowGeneralReport={onShowGeneralReport}
-              onShowFinanceAnalytics={onShowFinanceAnalytics}
-              onToggleNewUserRequests={onToggleNewUserRequests}
-              onCloseFinanceAnalytics={onCloseFinanceAnalytics}
-            />
-          </div>
-        </ScrollArea>
+        </div>
       </main>
     </div>
   );
