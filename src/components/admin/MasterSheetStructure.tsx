@@ -43,7 +43,7 @@ export default function MasterSheetStructure() {
     // Case Management
     { columnName: "Case Coordinator", dataType: "text", required: false, description: "Assigned case coordinator", exampleValue: "Sarah Al-Mahmoud", category: "Case Management" },
     { columnName: "Case Manager", dataType: "text", required: false, description: "Case manager (same as coordinator)", exampleValue: "Sarah Al-Mahmoud", category: "Case Management" },
-    { columnName: "Status", dataType: "text", required: true, description: "Current status of the request", exampleValue: "Completed", category: "Case Management" },
+    { columnName: "Status", dataType: "text", required: true, description: "Status of operation (Column P): done, canceled/rejected, under process, scheduled, pending, planned NVD", exampleValue: "done", category: "Case Management" },
     { columnName: "Notes", dataType: "text", required: false, description: "Additional notes or comments", exampleValue: "Patient requires special care", category: "Case Management" },
     
     // Insurance Information
@@ -57,7 +57,7 @@ export default function MasterSheetStructure() {
     { columnName: "Currency", dataType: "text", required: false, description: "Currency of the paid amount", exampleValue: "SAR", category: "Financial" },
     
     // Date Information
-    { columnName: "Date", dataType: "text", required: true, description: "Date of request or operation", exampleValue: "2024-01-15", category: "Dates" },
+    { columnName: "Date", dataType: "text", required: true, description: "Date of surgery/month (Column X) - used for monthly filtering", exampleValue: "2024-01-15", category: "Dates" },
     { columnName: "Date of File Opening", dataType: "text", required: false, description: "Date when file was opened", exampleValue: "2024-01-10", category: "Dates" },
     { columnName: "Expected Surgery Date", dataType: "text", required: false, description: "Expected date of surgery", exampleValue: "2024-01-20", category: "Dates" },
     { columnName: "Agreed Booked Date", dataType: "text", required: false, description: "Agreed booking date", exampleValue: "2024-01-18", category: "Dates" },
