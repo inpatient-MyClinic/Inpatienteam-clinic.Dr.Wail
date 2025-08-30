@@ -102,10 +102,14 @@ export default function MasterSheetDataProcessor() {
   const processExcelData = async () => {
     setIsLoading(true);
     try {
-      // Fetch all Excel data
+      // Fetch all valid Excel data (1413 requests)
       const { data, error } = await supabase
         .from('excel_rows_raw')
-        .select('*');
+        .select('*')
+        .not('raw_data->Patient\'s Name:', 'is', null)
+        .not('raw_data->Patient\'s Name:', 'eq', '')
+        .not('raw_data->Status of operation', 'is', null)
+        .not('raw_data->Status of operation', 'eq', '');
 
       if (error) throw error;
 
