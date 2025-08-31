@@ -7,6 +7,8 @@ import { EnvironmentBanner } from "@/components/auth/EnvironmentBanner";
 import { AuthHealthCheck } from "@/components/auth/AuthHealthCheck";
 import { NewLoginForm } from "@/components/auth/NewLoginForm";
 import { InviteLink } from "@/components/auth/InviteLink";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EmailOtpLogin from "@/components/auth/EmailOtpLogin";
 
 import { QATestRunner } from "@/components/auth/QATestRunner";
 
@@ -60,7 +62,18 @@ const Login = () => {
               <p className="text-blue-700 text-sm">Surgical Case Management System</p>
             </div>
 
-            <NewLoginForm />
+            <Tabs defaultValue="password" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="password">كلمة المرور</TabsTrigger>
+                <TabsTrigger value="otp">رمز OTP</TabsTrigger>
+              </TabsList>
+              <TabsContent value="password" className="space-y-4">
+                <NewLoginForm />
+              </TabsContent>
+              <TabsContent value="otp" className="space-y-4">
+                <EmailOtpLogin onSuccess={() => navigate('/admin', { replace: true })} />
+              </TabsContent>
+            </Tabs>
             <InviteLink />
           </div>
         </div>
