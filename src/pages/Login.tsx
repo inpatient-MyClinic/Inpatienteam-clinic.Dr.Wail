@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
 import { EnvironmentBanner } from "@/components/auth/EnvironmentBanner";
 import { AuthHealthCheck } from "@/components/auth/AuthHealthCheck";
+import { AuthHealthPanel } from "@/components/auth/AuthHealthPanel";
 import { NewLoginForm } from "@/components/auth/NewLoginForm";
 import { InviteLink } from "@/components/auth/InviteLink";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +45,9 @@ const Login = () => {
       <div className="w-1/3 p-6 border-r bg-muted/30">
         <EnvironmentBanner />
         <AuthHealthCheck />
+        <div className="mt-4">
+          <AuthHealthPanel />
+        </div>
         <QATestRunner />
       </div>
 

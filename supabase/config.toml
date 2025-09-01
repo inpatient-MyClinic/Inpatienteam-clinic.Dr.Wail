@@ -5,6 +5,7 @@ verify_jwt = false
 
 [functions.send-otp-email]
 verify_jwt = false
+# Function disabled - using Supabase built-in OTP instead
 
 [functions.email-debug]
 verify_jwt = false

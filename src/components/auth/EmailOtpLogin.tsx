@@ -17,30 +17,20 @@ export default function EmailOtpLogin({ onSuccess }: { onSuccess: () => void }) 
     setBusy(true); 
     setErr(null);
     
-    try {
-      const { data, error } = await supabase.functions.invoke('send-otp-email', {
-        body: { email: email.trim() }
-      });
-      
-      setBusy(false);
-      
-      if (error) {
-        setErr(error.message);
-        return;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: `${window.location.origin}/admin`,
+        shouldCreateUser: false
       }
-      
-      if (data?.success) {
-        setCodeSent(true);
-        if (data.warning) {
-          setErr("تم إنشاء الرمز، لكن فشل إرسال البريد. تحقق من كونسول المطور للحصول على الرمز.");
-        }
-      } else {
-        setErr("فشل في إرسال الرمز");
-      }
-    } catch (error: any) {
-      setBusy(false);
-      setErr(error.message || "فشل في إرسال الرمز");
+    });
+    
+    setBusy(false);
+    if (error) { 
+      setErr(`Supabase OTP Error: ${error.message}`); 
+      return; 
     }
+    setCodeSent(true);
   };
 
   // التحقق من الرمز وتسجيل الدخول
@@ -48,68 +38,18 @@ export default function EmailOtpLogin({ onSuccess }: { onSuccess: () => void }) 
     setBusy(true); 
     setErr(null);
     
-    try {
-      // First verify the OTP using the database function
-      const { data: verifyData, error: verifyError } = await supabase
-        .rpc('verify_otp', { 
-          user_email: email.trim(), 
-          submitted_code: code.trim() 
-        });
-      
-      if (verifyError || !verifyData) {
-        setBusy(false);
-        setErr("رمز OTP غير صحيح أو منتهي الصلاحية");
-        return;
-      }
-      
-      // If OTP is valid, sign in the user
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: code.trim() // Use OTP as temporary password
-      });
-      
-      // If password signin fails, try magic link
-      if (signInError) {
-        const { error: magicError } = await supabase.auth.signInWithOtp({
-          email: email.trim(),
-          options: {
-            shouldCreateUser: false
-          }
-        });
-        
-        if (!magicError) {
-          // Auto verify the magic link with our OTP
-          const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-            type: "email",
-            email: email.trim(),
-            token: code.trim()
-          });
-          
-          setBusy(false);
-          if (sessionError) {
-            setErr("فشل في تسجيل الدخول");
-            return;
-          }
-          
-          if (sessionData?.session) {
-            onSuccess();
-            return;
-          }
-        }
-        
-        setBusy(false);
-        setErr("فشل في تسجيل الدخول");
-        return;
-      }
-      
-      setBusy(false);
-      if (signInData?.session) {
-        onSuccess();
-      }
-    } catch (error: any) {
-      setBusy(false);
-      setErr(error.message || "فشل في التحقق من الرمز");
+    const { data, error } = await supabase.auth.verifyOtp({
+      type: "email",
+      email: email.trim(),
+      token: code.trim()
+    });
+    
+    setBusy(false);
+    if (error) { 
+      setErr(`Supabase Verify Error: ${error.message}`); 
+      return; 
     }
+    if (data?.session) onSuccess();
   };
 
   return (
