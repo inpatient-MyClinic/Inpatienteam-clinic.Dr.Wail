@@ -7,9 +7,9 @@ import { RequestFormData } from "@/types/request";
 import { requestStorage } from "@/services/requestStorage";
 import { getCurrentUserEmail } from "@/utils/auth";
 import PatientInfoSection from "@/components/request/PatientInfoSection";
-import HospitalInfoSection from "@/components/request/HospitalInfoSection";
 import MedicalInfoSection from "@/components/request/MedicalInfoSection";
 import SpecialtySpecificFields from "@/components/request/SpecialtySpecificFields";
+import AdditionalInfoSection from "@/components/request/AdditionalInfoSection";
 import SurgeryDetailsSection from "@/components/request/SurgeryDetailsSection";
 import NotesSection from "@/components/request/NotesSection";
 import AttachmentSection from "@/components/request/AttachmentSection";
@@ -276,9 +276,10 @@ const CreateRequest = () => {
               handleInputChange={handleFieldChange}
             />
             
-            <HospitalInfoSection 
+            <AdditionalInfoSection 
               form={form} 
-              onFieldChange={handleFieldChange} 
+              onFieldChange={handleFieldChange}
+              selectedSpecialty={selectedSpecialty}
             />
             
             <SurgeryDetailsSection 

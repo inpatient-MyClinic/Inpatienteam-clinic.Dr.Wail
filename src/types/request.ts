@@ -28,6 +28,10 @@ export interface RequestFormData {
   
   // Service Information
   serviceDescription: string;
+  diagnosis?: string;
+  urgency?: string;
+  admissionDuration?: string;
+  coverageType?: string;
   
   // Case Management
   caseManager?: string;
