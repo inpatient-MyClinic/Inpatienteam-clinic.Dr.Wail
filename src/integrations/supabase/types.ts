@@ -757,6 +757,14 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
+      audit_excel_data_access: {
+        Args: {
+          access_type: string
+          columns_accessed: string[]
+          table_id: string
+        }
+        Returns: boolean
+      }
       can_access_patient_data: {
         Args: { patient_request_id: string; required_access_level?: string }
         Returns: boolean
@@ -883,6 +891,16 @@ export type Database = {
           table_name: string
         }
         Returns: undefined
+      }
+      mask_excel_patient_data: {
+        Args: {
+          patient_email: string
+          patient_id: string
+          patient_mobile: string
+          patient_name: string
+          user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: Json
       }
       mask_patient_data: {
         Args: {
