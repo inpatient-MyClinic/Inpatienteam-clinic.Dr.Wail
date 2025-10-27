@@ -84,25 +84,48 @@ export class DataExcelMigrationService {
       console.log(`📊 Migration validation: ${withValidDates}/${allRequests.length} records with valid dates, ${julyRecords} July 2025 records found`);
       console.log('📋 Sample date parsing:', sampleDates);
 
-      // Since import_excel_rows function was dropped, show error
-      console.log('⚠️ import_excel_rows function was reset - migration not available');
-      
-      const error = { message: 'Function import_excel_rows does not exist' };
-      const data = 0;
+      // Create upload batch
+      const { data: batch, error: batchError } = await supabase
+        .from('excel_upload_batches')
+        .insert({
+          filename: `LocalStorage_Migration_${new Date().toISOString()}`,
+          uploaded_by: (await supabase.auth.getUser()).data.user?.id,
+          status: 'processing',
+          processed_rows: 0,
+          success_count: 0,
+          error_count: 0
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Migration not available after database reset:', error);
-        throw new Error('Database migration functions not available after reset');
+      if (batchError || !batch) {
+        console.error('Failed to create migration batch:', batchError);
+        throw new Error(`Failed to create migration batch: ${batchError?.message}`);
       }
 
-      console.log(`✅ Successfully migrated ${data} records to Excel tables`);
+      // Call import function
+      const { error: importError } = await supabase.rpc('import_excel_rows', {
+        batch_id: batch.id,
+        rows_data: rawRows
+      });
 
-      // Skip validation since tables don't exist
-      // await this.validateMigration(julyRecords);
+      if (importError) {
+        console.error('Migration failed:', importError);
+        await supabase
+          .from('excel_upload_batches')
+          .update({ status: 'failed', error_count: rawRows.length })
+          .eq('id', batch.id);
+        throw new Error(`Migration failed: ${importError.message}`);
+      }
+
+      const migratedCount = rawRows.length;
+      console.log(`✅ Successfully migrated ${migratedCount} records to Excel tables`);
+
+      await this.validateMigration(julyRecords);
 
       return { 
         success: true, 
-        migratedCount: data,
+        migratedCount,
         validationResults: {
           totalProcessed: allRequests.length,
           withValidDates,
@@ -157,33 +180,51 @@ export class DataExcelMigrationService {
     try {
       console.log(`Uploading ${excelData.length} rows from ${filename}`);
 
-      // Map Excel data to the expected raw format
+      // Map Excel data to the expected raw format with all fields
       const rawRows = excelData.map((row, index) => ({
-        __row: index + 1,
-        Date: this.extractExcelDate(row),
-        Branch: this.extractExcelBranch(row),
-        "Hospital Code": this.extractExcelHospitalCode(row),
-        "Hospital Name": this.extractExcelHospitalName(row),
-        Specialty: this.extractExcelSpecialty(row),
-        Status: this.extractExcelStatus(row),
-        "Loss Reason": this.extractExcelLossReason(row),
-        "Paid Amount": this.extractExcelPaidAmount(row)
+        ...row, // Include all original row data
+        __row: index + 1
       }));
 
-      // Since import_excel_rows function was dropped, show error
-      console.log('⚠️ import_excel_rows function was reset');
-      
-      const error = { message: 'Function import_excel_rows does not exist' };
-      const data = 0;
+      // Create upload batch
+      const { data: batch, error: batchError } = await supabase
+        .from('excel_upload_batches')
+        .insert({
+          filename,
+          uploaded_by: (await supabase.auth.getUser()).data.user?.id,
+          status: 'processing',
+          processed_rows: 0,
+          success_count: 0,
+          error_count: 0
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Excel upload not available after database reset:', error);
-        throw new Error('Database import functions not available after reset');
+      if (batchError || !batch) {
+        console.error('Failed to create upload batch:', batchError);
+        throw new Error(`Failed to create upload batch: ${batchError?.message}`);
       }
 
-      console.log(`Successfully uploaded ${data} records to Excel tables`);
+      console.log(`Created upload batch: ${batch.id}`);
 
-      return { success: true, migratedCount: data };
+      // Call import function
+      const { error: importError } = await supabase.rpc('import_excel_rows', {
+        batch_id: batch.id,
+        rows_data: rawRows
+      });
+
+      if (importError) {
+        console.error('Excel upload failed:', importError);
+        await supabase
+          .from('excel_upload_batches')
+          .update({ status: 'failed', error_count: rawRows.length })
+          .eq('id', batch.id);
+        throw new Error(`Excel upload failed: ${importError.message}`);
+      }
+
+      console.log(`Successfully uploaded ${rawRows.length} records to Excel tables`);
+
+      return { success: true, migratedCount: rawRows.length };
 
     } catch (error) {
       console.error('Excel upload failed:', error);
@@ -450,8 +491,14 @@ export class DataExcelMigrationService {
   }> {
     const localRequests = this.getAllLocalStorageRequests();
     
-    // Since excel_rows_raw was dropped, return 0 count
-    const count = 0;
+    // Check if we have data in Supabase
+    const { count, error } = await supabase
+      .from('excel_rows_raw')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      console.error('Error checking Supabase data:', error);
+    }
 
     return {
       hasLocalData: localRequests.length > 0,
