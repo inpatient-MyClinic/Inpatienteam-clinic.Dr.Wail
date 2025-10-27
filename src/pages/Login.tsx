@@ -19,9 +19,24 @@ const Login = () => {
   // Check for authenticated user and redirect
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/admin', { replace: true });
+      try {
+        // Clear any invalid sessions first
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+          // Clear invalid session from localStorage
+          await supabase.auth.signOut({ scope: 'local' });
+          return;
+        }
+        
+        if (session) {
+          navigate('/admin', { replace: true });
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        // Clear localStorage on connection failure
+        await supabase.auth.signOut({ scope: 'local' });
       }
     };
     
