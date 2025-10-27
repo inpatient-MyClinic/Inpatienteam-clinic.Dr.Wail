@@ -20,7 +20,7 @@ export type Database = {
           action: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           record_id: string
           table_name: string
           timestamp: string | null
@@ -32,7 +32,7 @@ export type Database = {
           action: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id: string
           table_name: string
           timestamp?: string | null
@@ -44,7 +44,7 @@ export type Database = {
           action?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string
           table_name?: string
           timestamp?: string | null
@@ -753,10 +753,7 @@ export type Database = {
           total_cases: number
         }[]
       }
-      approve_user: {
-        Args: { user_id: string }
-        Returns: undefined
-      }
+      approve_user: { Args: { user_id: string }; Returns: undefined }
       audit_excel_data_access: {
         Args: {
           access_type: string
@@ -773,10 +770,7 @@ export type Database = {
         Args: { new_password_hash: string; user_id_param: string }
         Returns: boolean
       }
-      cleanup_old_passwords: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_old_passwords: { Args: never; Returns: undefined }
       debug_excel_data_for_month: {
         Args: { p_month: number; p_year: number }
         Returns: {
@@ -786,12 +780,9 @@ export type Database = {
           total_by_method: Json
         }[]
       }
-      generate_otp: {
-        Args: { user_email: string }
-        Returns: string
-      }
+      generate_otp: { Args: { user_email: string }; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
       get_monthly_branch_stats: {
@@ -853,7 +844,7 @@ export type Database = {
         }[]
       }
       health_ping: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           db: string
           now_utc: string
@@ -863,14 +854,8 @@ export type Database = {
         Args: { batch_id: string; rows_data: Json[] }
         Returns: undefined
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin_email: {
-        Args: { email_address: string }
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
+      is_admin_email: { Args: { email_address: string }; Returns: boolean }
       is_email_allowed_to_register: {
         Args: { check_email: string }
         Returns: boolean
@@ -879,10 +864,7 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
-      is_password_expired: {
-        Args: { user_id_param: string }
-        Returns: boolean
-      }
+      is_password_expired: { Args: { user_id_param: string }; Returns: boolean }
       log_sensitive_data_access: {
         Args: {
           accessed_columns?: string[]
@@ -911,22 +893,10 @@ export type Database = {
         }
         Returns: Json
       }
-      norm_status: {
-        Args: { s: string }
-        Returns: string
-      }
-      norm_text: {
-        Args: { t: string }
-        Returns: string
-      }
-      norm_upper: {
-        Args: { t: string }
-        Returns: string
-      }
-      parse_excel_date: {
-        Args: { raw: string }
-        Returns: string
-      }
+      norm_status: { Args: { s: string }; Returns: string }
+      norm_text: { Args: { t: string }; Returns: string }
+      norm_upper: { Args: { t: string }; Returns: string }
+      parse_excel_date: { Args: { raw: string }; Returns: string }
       search_users: {
         Args: { search_term: string }
         Returns: {
