@@ -11,6 +11,9 @@ export default function ClearAllDataButton() {
     // Clear ALL localStorage data
     localStorage.clear();
     
+    // Set flag to prevent sample data re-initialization
+    localStorage.setItem('sample_data_cleared', 'true');
+    
     // Trigger events to notify all components
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new CustomEvent('requestsUpdated'));
@@ -20,6 +23,9 @@ export default function ClearAllDataButton() {
       title: "All Data Cleared",
       description: "All requests and stored data have been completely removed."
     });
+    
+    // Force page reload to apply changes
+    setTimeout(() => window.location.reload(), 500);
   };
 
   return (
