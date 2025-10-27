@@ -99,7 +99,7 @@ export default function ExcelDataInspector() {
               <div>
                 <div className="font-medium">{analytics.latestUpload.filename}</div>
                 <div className="text-sm text-muted-foreground">
-                  {new Date(analytics.latestUpload.uploaded_at).toLocaleString()} • {analytics.latestUpload.total_rows} rows
+                  {new Date(analytics.latestUpload.uploaded_at || analytics.latestUpload.created_at).toLocaleString()} • {analytics.latestUpload.total_rows || 0} rows
                 </div>
               </div>
               <Button variant="outline" size="sm" asChild>

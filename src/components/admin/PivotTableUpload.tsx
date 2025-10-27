@@ -53,6 +53,20 @@ export default function PivotTableUpload({ onPivotDataLoaded, onDataImported }: 
     setShowDatabaseError(false);
     
     try {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to upload data",
+          variant: "destructive"
+        });
+        setIsProcessing(false);
+        window.location.href = '/login';
+        return;
+      }
+
       // Parse file to JSON
       const rowsJson = await parseFileToJSON(uploadedFile);
       
@@ -62,14 +76,14 @@ export default function PivotTableUpload({ onPivotDataLoaded, onDataImported }: 
 
       console.log(`📊 Uploading ${rowsJson.length} rows to Supabase...`);
 
-      // Create upload record first - using excel_upload_batches which exists
+      // Create upload record first
       const { data: uploadData, error: uploadError } = await supabase
         .from('excel_upload_batches')
         .insert({
           filename: uploadedFile.name,
           total_rows: rowsJson.length,
           status: 'processing',
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id || ''
+          uploaded_by: user.id
         })
         .select()
         .single();

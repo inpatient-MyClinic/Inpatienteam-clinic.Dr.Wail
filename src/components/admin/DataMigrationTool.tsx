@@ -45,7 +45,21 @@ export default function DataMigrationTool() {
     setMigrationResult(null);
 
     try {
-      // Check multiple possible localStorage keys - including the correct medical_requests key
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to migrate data",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        window.location.href = '/login';
+        return;
+      }
+
+      // Check multiple possible localStorage keys
       const possibleKeys = ['medical_requests', 'excel_data_imported', 'allData', 'adminData', 'requests', 'excelData'];
       let allData: any[] = [];
       let sourceKey = '';
@@ -80,7 +94,7 @@ export default function DataMigrationTool() {
           filename: 'localStorage_migration.xlsx',
           total_rows: allData.length,
           status: 'processing',
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id || ''
+          uploaded_by: user.id
         })
         .select()
         .single();

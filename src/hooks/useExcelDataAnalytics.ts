@@ -7,7 +7,8 @@ export interface ExcelDataAnalytics {
   latestUpload: {
     id: string;
     filename: string;
-    uploaded_at: string;
+    uploaded_at?: string;
+    created_at?: string;
     total_rows: number;
   } | null;
   availableMonths: Array<{
@@ -40,11 +41,11 @@ export function useExcelDataAnalytics() {
 
   const loadAnalytics = async () => {
     try {
-      // Get upload stats - using existing excel_upload_batches table
+      // Get upload stats
       const { data: uploads, error: uploadsError } = await supabase
         .from('excel_upload_batches')
         .select('*')
-        .order('uploaded_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (uploadsError) throw uploadsError;
 
