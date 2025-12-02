@@ -60,7 +60,7 @@ const AdditionalInfoSection = ({ form, onFieldChange, selectedSpecialty }: Addit
               </SelectItem>
             ))}
             {availableServices.length === 0 && (
-              <SelectItem value="" disabled>
+              <SelectItem value="no-service-placeholder" disabled>
                 {selectedSpecialty ? "No services available for this specialty" : "Select a specialty first"}
               </SelectItem>
             )}
