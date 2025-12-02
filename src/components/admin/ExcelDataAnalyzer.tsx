@@ -54,12 +54,14 @@ export default function ExcelDataAnalyzer() {
 
       // Filter data by the selected month using column AP and other date fields
       const filteredData = rawData?.filter(row => {
-        // Column AP is the primary date field for filtering - access via raw_data
+        // Access raw_data which contains the actual Excel data
         const rawDataObj = typeof row.raw_data === 'object' ? row.raw_data as Record<string, any> : null;
-        const columnAP = rawDataObj?.AP || row['Date of Request:'];
+        if (!rawDataObj) return false;
+        
+        const columnAP = rawDataObj?.AP || rawDataObj?.['Date of Request:'] || rawDataObj?.Date || rawDataObj?.['Date'];
         const otherDateFields = [
-          row['Date of File Opening'],
-          row['Agreed - Booked - OR date(mm/dd/yyyy)']
+          rawDataObj?.['Date of File Opening'],
+          rawDataObj?.['Agreed - Booked - OR date(mm/dd/yyyy)']
         ];
 
         // Check column AP first (primary)
@@ -96,37 +98,41 @@ export default function ExcelDataAnalyzer() {
 
       // Process each row for analysis
       filteredData.forEach(row => {
-        // Status of operation breakdown - use column AI from raw_data
-        const rawDataObj = typeof row.raw_data === 'object' ? row.raw_data as Record<string, any> : null;
-        const operationStatus = rawDataObj?.AI || row['Status of operation'] || 'غير محدد';
+        // Access raw_data for actual Excel values
+        const rawDataObj = typeof row.raw_data === 'object' ? row.raw_data as Record<string, any> : {};
+        
+        // Status of operation breakdown - use column AI or Status field
+        const operationStatus = rawDataObj?.AI || rawDataObj?.['Status of operation'] || rawDataObj?.Status || 'غير محدد';
         analysisData.statusOperationBreakdown[operationStatus] = 
           (analysisData.statusOperationBreakdown[operationStatus] || 0) + 1;
 
         // My Clinic Branch breakdown
-        const branch = row['My Clinic Branch'] || 'غير محدد';
+        const branch = rawDataObj?.['My Clinic Branch'] || rawDataObj?.Branch || 'غير محدد';
         analysisData.branchBreakdown[branch] = 
           (analysisData.branchBreakdown[branch] || 0) + 1;
 
         // Specialty breakdown
-        const specialty = row['Specialty'] || 'غير محدد';
+        const specialty = rawDataObj?.Specialty || rawDataObj?.['Specialty'] || 'غير محدد';
         analysisData.specialtyBreakdown[specialty] = 
           (analysisData.specialtyBreakdown[specialty] || 0) + 1;
 
         // Case coordinator breakdown
-        const caseCoordinator = row['Case coordinator'] || 'غير محدد';
+        const caseCoordinator = rawDataObj?.['Case coordinator'] || rawDataObj?.['Case Coordinator'] || 'غير محدد';
         analysisData.caseCoordinatorBreakdown[caseCoordinator] = 
           (analysisData.caseCoordinatorBreakdown[caseCoordinator] || 0) + 1;
 
         // Referred Hospital breakdown
-        const referredHospital = row['Referred Hospital'] || 'غير محدد';
+        const referredHospital = rawDataObj?.['Referred Hospital'] || rawDataObj?.['Hospital Name'] || 'غير محدد';
         analysisData.referredHospitalBreakdown[referredHospital] = 
           (analysisData.referredHospitalBreakdown[referredHospital] || 0) + 1;
 
-        // Month breakdown from column AP (extract month from date fields)
+        // Month breakdown from date fields
         const dateFields = [
-          row['Date of Request:'],
-          row['Date of File Opening'], 
-          row['Agreed - Booked - OR date(mm/dd/yyyy)']
+          rawDataObj?.['Date of Request:'],
+          rawDataObj?.['Date of File Opening'], 
+          rawDataObj?.['Agreed - Booked - OR date(mm/dd/yyyy)'],
+          rawDataObj?.Date,
+          rawDataObj?.AP
         ];
         
         dateFields.forEach(dateStr => {
@@ -329,15 +335,18 @@ export default function ExcelDataAnalyzer() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {analysisResult.rawData.slice(0, 3).map((item, index) => (
-                    <div key={index} className="text-xs bg-muted p-3 rounded">
-                      <div><strong>اسم المريض:</strong> {item["Patient's Name:"] || 'غير محدد'}</div>
-                      <div><strong>التخصص:</strong> {item["Specialty"] || 'غير محدد'}</div>
-                      <div><strong>فرع العيادة:</strong> {item["My Clinic Branch"] || 'غير محدد'}</div>
-                      <div><strong>حالة العملية:</strong> {item["Status of operation"] || 'غير محدد'}</div>
-                      <div><strong>نوع التأمين:</strong> {item["Insurance/Cash"] || 'غير محدد'}</div>
-                    </div>
-                  ))}
+                  {analysisResult.rawData.slice(0, 3).map((item, index) => {
+                    const rawData = typeof item.raw_data === 'object' ? item.raw_data as Record<string, any> : {};
+                    return (
+                      <div key={index} className="text-xs bg-muted p-3 rounded">
+                        <div><strong>اسم المريض:</strong> {rawData["Patient's Name:"] || rawData["Patient Name"] || 'غير محدد'}</div>
+                        <div><strong>التخصص:</strong> {rawData["Specialty"] || 'غير محدد'}</div>
+                        <div><strong>فرع العيادة:</strong> {rawData["My Clinic Branch"] || rawData["Branch"] || 'غير محدد'}</div>
+                        <div><strong>حالة العملية:</strong> {rawData["Status of operation"] || rawData["Status"] || 'غير محدد'}</div>
+                        <div><strong>نوع التأمين:</strong> {rawData["Insurance/Cash"] || 'غير محدد'}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
