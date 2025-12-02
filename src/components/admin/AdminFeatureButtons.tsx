@@ -13,10 +13,8 @@ interface AdminFeatureButtonsProps {
   onToggleAIAssistant: () => void;
   onToggleSIASlide: () => void;
   onShowChart: () => void;
-  onShowMonthlyAnalytics: () => void;
   onShowPivotUpload?: () => void;
   onShowExcelInspector?: () => void;
-  onShowExcelAnalyzer?: () => void;
   onShowMasterSheet?: () => void;
   onShowMasterSheetProcessor?: () => void;
 }
@@ -31,10 +29,8 @@ export default function AdminFeatureButtons({
   onToggleAIAssistant,
   onToggleSIASlide,
   onShowChart,
-  onShowMonthlyAnalytics,
   onShowPivotUpload,
   onShowExcelInspector,
-  onShowExcelAnalyzer,
   onShowMasterSheet,
   onShowMasterSheetProcessor,
 }: AdminFeatureButtonsProps) {
@@ -142,12 +138,6 @@ export default function AdminFeatureButtons({
         >
           📊 Lifecycle Chart
         </button>
-        <button
-          onClick={onShowMonthlyAnalytics}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200"
-        >
-          📈 Monthly Analytics
-        </button>
         {onShowPivotUpload && (
           <button
             onClick={onShowPivotUpload}
@@ -162,14 +152,6 @@ export default function AdminFeatureButtons({
             className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-100 text-orange-700 hover:bg-orange-200"
           >
             📋 Data Inspector
-          </button>
-        )}
-        {onShowExcelAnalyzer && (
-          <button
-            onClick={onShowExcelAnalyzer}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-          >
-            📊 Excel Month Analysis
           </button>
         )}
       </div>
