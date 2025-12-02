@@ -47,7 +47,7 @@ export function ExcelDebugger() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
