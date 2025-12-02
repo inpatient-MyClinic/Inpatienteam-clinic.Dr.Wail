@@ -200,45 +200,65 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
     // Combine all request sources, prioritizing medical_requests but falling back to requestStorage
     const allRequests = medicalRequests.length > 0 ? medicalRequests : requestStorageData;
     
+    // Helper: extract field from item, checking both direct properties and raw_data object
+    const getField = (item: any, fieldNames: string[]): any => {
+      // First check raw_data if it exists
+      if (item?.raw_data && typeof item.raw_data === 'object') {
+        for (const field of fieldNames) {
+          if (item.raw_data[field] !== undefined && item.raw_data[field] !== null && item.raw_data[field] !== '') {
+            return item.raw_data[field];
+          }
+        }
+      }
+      // Then check direct properties
+      for (const field of fieldNames) {
+        if (item?.[field] !== undefined && item?.[field] !== null && item?.[field] !== '') {
+          return item[field];
+        }
+      }
+      return null;
+    };
+    
     // Helper: robustly extract the date from a record
-const getItemDate = (item: any) => {
-  const raw = item.date ?? item.dateCreated ?? item.requestDate ?? item.created_at ?? item.createdAt ?? item['Date'] ?? item['Created At'] ?? item['Request Date'] ?? item.transaction_date;
-  if (raw === undefined || raw === null || raw === '') return null as Date | null;
-  if (typeof raw === 'number' && raw > 25000) {
-    return new Date((raw - 25569) * 86400 * 1000);
-  }
-  if (typeof raw === 'string') {
-    const t = raw.trim();
-    const n = Number(t);
-    if (!isNaN(n) && n > 25000) {
-      return new Date((n - 25569) * 86400 * 1000);
-    }
-    const d2 = new Date(t);
-    return isNaN(d2.getTime()) ? null : d2;
-  }
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? null : d;
-};
+    const getItemDate = (item: any) => {
+      const dateFields = ['Date', 'date', 'dateCreated', 'requestDate', 'created_at', 'createdAt', 'Request Date', 'Created At', 'transaction_date', 'AP'];
+      const raw = getField(item, dateFields);
+      if (raw === undefined || raw === null || raw === '') return null as Date | null;
+      if (typeof raw === 'number' && raw > 25000) {
+        return new Date((raw - 25569) * 86400 * 1000);
+      }
+      if (typeof raw === 'string') {
+        const t = raw.trim();
+        const n = Number(t);
+        if (!isNaN(n) && n > 25000) {
+          return new Date((n - 25569) * 86400 * 1000);
+        }
+        const d2 = new Date(t);
+        return isNaN(d2.getTime()) ? null : d2;
+      }
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : d;
+    };
     
     // Helper: robustly extract the date from a finance record
-const getFinanceDate = (item: any) => {
-  const raw = item.transaction_date ?? item.date ?? item['Transaction Date'] ?? item['Date'] ?? item.createdAt;
-  if (raw === undefined || raw === null || raw === '') return null as Date | null;
-  if (typeof raw === 'number' && raw > 25000) {
-    return new Date((raw - 25569) * 86400 * 1000);
-  }
-  if (typeof raw === 'string') {
-    const t = raw.trim();
-    const n = Number(t);
-    if (!isNaN(n) && n > 25000) {
-      return new Date((n - 25569) * 86400 * 1000);
-    }
-    const d2 = new Date(t);
-    return isNaN(d2.getTime()) ? null : d2;
-  }
-  const d = new Date(raw);
-  return isNaN(d.getTime()) ? null : d;
-};
+    const getFinanceDate = (item: any) => {
+      const raw = getField(item, ['transaction_date', 'date', 'Transaction Date', 'Date', 'createdAt']);
+      if (raw === undefined || raw === null || raw === '') return null as Date | null;
+      if (typeof raw === 'number' && raw > 25000) {
+        return new Date((raw - 25569) * 86400 * 1000);
+      }
+      if (typeof raw === 'string') {
+        const t = raw.trim();
+        const n = Number(t);
+        if (!isNaN(n) && n > 25000) {
+          return new Date((n - 25569) * 86400 * 1000);
+        }
+        const d2 = new Date(t);
+        return isNaN(d2.getTime()) ? null : d2;
+      }
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : d;
+    };
     
     // Normalization helpers for hospital and specialty names
     const normalizeHospitalName = (val: any): string | null => {
@@ -281,12 +301,12 @@ const getFinanceDate = (item: any) => {
       return s; // default as-is
     };
     
-// Filter by the currently selected month/year
-const consolidatedData = (Array.isArray(data) && data.length > 0) ? data : allRequests;
-const currentMonthData = consolidatedData.filter((item: any) => {
-  const d = getItemDate(item);
-  return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
-});
+    // Filter by the currently selected month/year
+    const consolidatedData = (Array.isArray(data) && data.length > 0) ? data : allRequests;
+    const currentMonthData = consolidatedData.filter((item: any) => {
+      const d = getItemDate(item);
+      return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+    });
     const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
     const previousMonthData = consolidatedData.filter((item: any) => {
@@ -305,25 +325,18 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     console.log('Selected Month:', selectedMonth, 'Selected Year:', selectedYear);
     console.log('Sample current month data:', currentMonthData.slice(0, 3));
 
+    // Helper to get branch value
+    const getBranchValue = (req: any): string => {
+      const branchFields = ['My Clinic Branch', 'clinicBranch', 'Branch', 'Clinic Branch', 'MC Branch', 
+                           'branchCode', 'branch_code', 'Branch Code', 'H', 'referredFrom', 'referred_from',
+                           'Hospital Code', 'source', 'origin'];
+      const val = getField(req, branchFields);
+      return val ? String(val).toLowerCase().trim() : '';
+    };
+
     // Filter to only include referred cases (exclude direct admissions)
     const referredCases = currentMonthData.filter((req: any) => {
-      const possibleFields = [
-        req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
-        req['My Clinic Branch'], req.clinicBranch, req['Column H'],
-        req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
-        req['Referred From'], req['Hospital Code'], req.source, req.origin,
-        req['Branch'], req['Clinic Branch'], req['MC Branch'],
-        req.branchCode, req.branch_code, req['Branch Code']
-      ];
-      
-      const columnHValue = possibleFields.find((val: any) => {
-        if (val === undefined || val === null || val === '') return false;
-        const str = String(val).trim();
-        return str.length > 0;
-      }) || '';
-      
-      const valueStr = String(columnHValue).toLowerCase().trim();
-      
+      const valueStr = getBranchValue(req);
       // Only count cases that are actually referred from MC branches
       return valueStr.includes('mcj') || valueStr.includes('mc j') || 
              valueStr.includes('muhammadiyah') || valueStr.includes('safa') ||
@@ -332,47 +345,13 @@ const currentMonthData = consolidatedData.filter((item: any) => {
 
     // MC branch counts based on referred cases only
     const mcj1Cases = referredCases.filter((req: any) => {
-      const possibleFields = [
-        req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
-        req['My Clinic Branch'], req.clinicBranch, req['Column H'],
-        req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
-        req['Referred From'], req['Hospital Code'], req.source, req.origin,
-        req['Branch'], req['Clinic Branch'], req['MC Branch'],
-        req.branchCode, req.branch_code, req['Branch Code']
-      ];
-      
-      const columnHValue = possibleFields.find((val: any) => {
-        if (val === undefined || val === null || val === '') return false;
-        const str = String(val).trim();
-        return str.length > 0;
-      }) || '';
-      
-      const valueStr = String(columnHValue).toLowerCase().trim();
-      
-      // MCJ1 detection - exact patterns matching Excel sheet
+      const valueStr = getBranchValue(req);
       return valueStr.includes('mcj1') || valueStr.includes('mc j1') || 
              valueStr.includes('muhammadiyah') || valueStr.includes('mc al muhammadiyah');
     });
     
     const mcj2Cases = referredCases.filter((req: any) => {
-      const possibleFields = [
-        req.H, req['H'], req.__EMPTY_7, req.__EMPTY_6, req.__EMPTY_8,
-        req['My Clinic Branch'], req.clinicBranch, req['Column H'],
-        req.referredFrom, req.referred_from, req.branch, req.hospitalCode,
-        req['Referred From'], req['Hospital Code'], req.source, req.origin,
-        req['Branch'], req['Clinic Branch'], req['MC Branch'],
-        req.branchCode, req.branch_code, req['Branch Code']
-      ];
-      
-      const columnHValue = possibleFields.find((val: any) => {
-        if (val === undefined || val === null || val === '') return false;
-        const str = String(val).trim();
-        return str.length > 0;
-      }) || '';
-      
-      const valueStr = String(columnHValue).toLowerCase().trim();
-      
-      // MCJ2 detection - exact patterns matching Excel sheet
+      const valueStr = getBranchValue(req);
       return valueStr.includes('mcj2') || valueStr.includes('mc j2') || 
              valueStr.includes('safa') || valueStr.includes('mc al safa');
     });
@@ -380,43 +359,37 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     console.log('MCJ1 Cases found:', mcj1Cases.length);
     console.log('MCJ2 Cases found:', mcj2Cases.length);
     
+    // Helper to get status value
+    const getStatusValue = (req: any): string => {
+      const statusFields = ['Status', 'status', 'operationStatus', 'Operation Status', 'Status of operation', 'AI'];
+      const val = getField(req, statusFields);
+      return val ? String(val).toLowerCase().trim() : '';
+    };
+    
     // Status distribution and conversion counts from REFERRED cases only
     const statusCounts = {
       completed: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-        const status = statusFields.find((s: any) => s) || '';
-        const s = String(status).toLowerCase().trim();
-        // Match exact status patterns from Excel
+        const s = getStatusValue(req);
         return s === 'done' || s === 'completed' || s === 'complete' || s === 'finished';
       }).length,
       pending: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-        const status = statusFields.find((s: any) => s) || '';
-        const s = String(status).toLowerCase().trim();
-        return s === 'pending' || s === 'waiting' || s === 'review' || s === 'under review';
+        const s = getStatusValue(req);
+        return s === 'pending' || s === 'waiting' || s === 'review' || s === 'under review' || s === 'under process';
       }).length,
       cancelled: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-        const status = statusFields.find((s: any) => s) || '';
-        const s = String(status).toLowerCase().trim();
-        return s === 'cancelled' || s === 'canceled' || s === 'cancel';
+        const s = getStatusValue(req);
+        return s === 'cancelled' || s === 'canceled' || s === 'cancel' || s.includes('cancel');
       }).length,
       rejected: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-        const status = statusFields.find((s: any) => s) || '';
-        const s = String(status).toLowerCase().trim();
+        const s = getStatusValue(req);
         return s === 'rejected' || s === 'declined' || s === 'deny' || s === 'denied';
       }).length,
       scheduled: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-        const status = statusFields.find((s: any) => s) || '';
-        const s = String(status).toLowerCase().trim();
+        const s = getStatusValue(req);
         return s === 'scheduled' || s === 'booked' || s === 'appointment' || s === 'confirmed';
       }).length,
       plannedNVD: referredCases.filter((req: any) => {
-        const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-        const status = statusFields.find((s: any) => s) || '';
-        const s = String(status).toLowerCase().trim();
+        const s = getStatusValue(req);
         return s === 'planned' || s === 'nvd' || s === 'planned nvd' || s === 'planning';
       }).length
     };
@@ -425,24 +398,21 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     const doneCount = statusCounts.completed;
     const scheduledCount = statusCounts.scheduled;
     const plannedNVDCount = statusCounts.plannedNVD;
-    const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount; // This should be 165 for July
+    const totalDoneAndScheduled = doneCount + scheduledCount + plannedNVDCount;
     
-    // Total cases should be only referred cases (209 for July)
+    // Total cases should be only referred cases
     const totalReferredCases = referredCases.length;
     
     // Conversion rate: (done + scheduled + planned NVD) / total referred cases * 100
     const conversionRateValue = totalReferredCases > 0 ? (totalDoneAndScheduled / totalReferredCases) * 100 : 0;
     
     // Debug: log unique status values found
-    const uniqueStatuses = [...new Set(referredCases.map((req: any) => {
-      const statusFields = [req.status, req.operationStatus, req['Status'], req['Operation Status'], req.F, req['F']];
-      const status = statusFields.find((s: any) => s) || '';
-      return String(status).trim();
-    }).filter(s => s))];
+    const uniqueStatuses = [...new Set(currentMonthData.map((req: any) => getStatusValue(req)).filter(s => s))];
     console.log('Unique status values found:', uniqueStatuses);
     
     console.log(`SIA Calculation Debug:
       Month: ${selectedMonth}/${selectedYear}
+      Total Current Month Data: ${currentMonthData.length}
       Total Referred Cases: ${totalReferredCases}
       MCJ1 Cases: ${mcj1Cases.length}
       MCJ2 Cases: ${mcj2Cases.length}
@@ -455,13 +425,12 @@ const currentMonthData = consolidatedData.filter((item: any) => {
     
     // Top hospitals/specialties based on current month data (with normalization)
     const hospitalCounts = currentMonthData.reduce((acc: any, req: any) => {
-      const hospitalFields = [
-        req.hospitalName, req.referredToHospital, req.hospital,
-        req['Hospital Name'], req['Referred To Hospital'], req['Hospital'],
-        req.referredTo, req['Referred To'], req.hospitalCode, req['Hospital Code'],
-        req.destinationHospital, req['Destination Hospital'], req.partnerHospital, req['Partner Hospital']
-      ];
-      const raw = hospitalFields.find((h: any) => h !== undefined && h !== null && String(h).trim() !== '');
+      const hospitalFields = ['Hospital Name', 'hospitalName', 'referredToHospital', 'hospital',
+                             'Referred To Hospital', 'Hospital', 'referredTo', 'Referred To', 
+                             'hospitalCode', 'Hospital Code', 'destinationHospital', 
+                             'Destination Hospital', 'partnerHospital', 'Partner Hospital',
+                             'Referred Hospital'];
+      const raw = getField(req, hospitalFields);
       const key = normalizeHospitalName(raw);
       if (!key) return acc;
       acc[key] = (acc[key] || 0) + 1;
@@ -473,11 +442,10 @@ const currentMonthData = consolidatedData.filter((item: any) => {
       .map(([hospital, count]) => ({ hospital, count }));
     
     const specialtyCounts = currentMonthData.reduce((acc: any, req: any) => {
-      const specialtyFields = [
-        req.specialty, req.medical_specialty, req['Specialty'], req['Medical Specialty'], req.medicalSpecialty, req.department,
-        req['Speciality'], req['Specialization'], req['Department/Specialty'], req.spec, req.Spec, req['Specialty Name']
-      ];
-      const raw = specialtyFields.find((s: any) => s !== undefined && s !== null && String(s).trim() !== '');
+      const specialtyFields = ['Specialty', 'specialty', 'medical_specialty', 'Medical Specialty', 
+                               'medicalSpecialty', 'department', 'Speciality', 'Specialization', 
+                               'Department/Specialty', 'spec', 'Spec', 'Specialty Name'];
+      const raw = getField(req, specialtyFields);
       const key = normalizeSpecialtyName(raw) || 'General';
       acc[key] = (acc[key] || 0) + 1;
       return acc;
