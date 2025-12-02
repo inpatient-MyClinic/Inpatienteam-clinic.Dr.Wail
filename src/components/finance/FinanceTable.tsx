@@ -40,7 +40,7 @@ export default function FinanceTable({
         <TableHeader>
           <TableRow>
             <TableHead>Patient Name</TableHead>
-            <TableHead>Service Description</TableHead>
+            <TableHead>Service Code</TableHead>
             <TableHead>ID</TableHead>
             <TableHead>Hospital</TableHead>
             <TableHead>Doctor</TableHead>
