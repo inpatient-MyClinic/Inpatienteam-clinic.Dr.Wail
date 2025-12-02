@@ -140,15 +140,28 @@ export default function DataMigrationTool() {
         };
       });
 
-      // Import to database using RPC function
-      const { error: importError } = await supabase
-        .rpc('import_excel_rows', {
-          batch_id: uploadData.id,
-          rows_data: transformedData
-        });
+      // Import directly to excel_rows_raw table instead of using RPC
+      const rowsToInsert = transformedData.map((row: any, idx: number) => ({
+        batch_id: uploadData.id,
+        row_number: idx + 1,
+        raw_data: row
+      }));
 
-      if (importError) {
-        throw new Error(`Failed to import rows: ${importError.message}`);
+      // Insert in batches of 100 to avoid payload size limits
+      const batchSize = 100;
+      let insertedCount = 0;
+      
+      for (let i = 0; i < rowsToInsert.length; i += batchSize) {
+        const batch = rowsToInsert.slice(i, i + batchSize);
+        const { error: insertError } = await supabase
+          .from('excel_rows_raw')
+          .insert(batch);
+        
+        if (insertError) {
+          console.error('Insert batch error:', insertError);
+          throw new Error(`Failed to import rows: ${insertError.message}`);
+        }
+        insertedCount += batch.length;
       }
 
       // Update batch status

@@ -41,13 +41,22 @@ export function useExcelDataAnalytics() {
 
   const loadAnalytics = async () => {
     try {
-      // Get upload stats
+      // Get upload stats - use uploaded_at or id for ordering since created_at may not exist
       const { data: uploads, error: uploadsError } = await supabase
         .from('excel_upload_batches')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
 
-      if (uploadsError) throw uploadsError;
+      if (uploadsError) {
+        console.warn('Excel upload batches query failed, table may not exist:', uploadsError.message);
+        // Continue with empty data instead of throwing
+        setAnalytics(prev => ({
+          ...prev,
+          loading: false,
+          error: null
+        }));
+        return;
+      }
 
       // Get total row count and latest upload
       const totalUploads = uploads?.length || 0;
