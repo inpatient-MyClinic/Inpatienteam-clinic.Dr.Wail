@@ -10,11 +10,84 @@ import VATInvoicesTab from './VATInvoicesTab';
 import { PriceComparison, UploadBatch, VATInvoice, VATInvoiceLineItem, VAT_RATE } from '@/types/billing';
 import { useToast } from '@/hooks/use-toast';
 
+// Sample data for demonstration
+const samplePriceComparisons: PriceComparison[] = [
+  // Hospital A - some matched, some not
+  { id: '1', serviceCode: 'CONS-001', serviceName: 'General Consultation', hospital: 'King Fahad Hospital', systemPrice: 150, uploadedPrice: 150, priceDifference: 0, percentageDifference: 0, quantity: 25, grossAmount: 3750, discount: 0, amountAfterDiscount: 3750, patientShare: 375, insuranceShare: 3375, status: 'matched', uploadBatchId: 'batch1' },
+  { id: '2', serviceCode: 'LAB-002', serviceName: 'Complete Blood Count (CBC)', hospital: 'King Fahad Hospital', systemPrice: 80, uploadedPrice: 95, priceDifference: 15, percentageDifference: 18.75, quantity: 40, grossAmount: 3800, discount: 200, amountAfterDiscount: 3600, patientShare: 360, insuranceShare: 3240, status: 'pending', uploadBatchId: 'batch1' },
+  { id: '3', serviceCode: 'RAD-003', serviceName: 'Chest X-Ray', hospital: 'King Fahad Hospital', systemPrice: 200, uploadedPrice: 220, priceDifference: 20, percentageDifference: 10, quantity: 15, grossAmount: 3300, discount: 0, amountAfterDiscount: 3300, patientShare: 330, insuranceShare: 2970, status: 'agreed', uploadBatchId: 'batch1' },
+  { id: '4', serviceCode: 'SURG-004', serviceName: 'Minor Surgery', hospital: 'King Fahad Hospital', systemPrice: 2500, uploadedPrice: 2800, priceDifference: 300, percentageDifference: 12, quantity: 5, grossAmount: 14000, discount: 500, amountAfterDiscount: 13500, patientShare: 1350, insuranceShare: 12150, status: 'pending', uploadBatchId: 'batch1' },
+  
+  // Hospital B - all matched
+  { id: '5', serviceCode: 'CONS-001', serviceName: 'General Consultation', hospital: 'Saudi German Hospital', systemPrice: 150, uploadedPrice: 150, priceDifference: 0, percentageDifference: 0, quantity: 30, grossAmount: 4500, discount: 0, amountAfterDiscount: 4500, patientShare: 450, insuranceShare: 4050, status: 'matched', uploadBatchId: 'batch2' },
+  { id: '6', serviceCode: 'LAB-002', serviceName: 'Complete Blood Count (CBC)', hospital: 'Saudi German Hospital', systemPrice: 80, uploadedPrice: 80, priceDifference: 0, percentageDifference: 0, quantity: 50, grossAmount: 4000, discount: 0, amountAfterDiscount: 4000, patientShare: 400, insuranceShare: 3600, status: 'matched', uploadBatchId: 'batch2' },
+  { id: '7', serviceCode: 'ECG-005', serviceName: 'Electrocardiogram', hospital: 'Saudi German Hospital', systemPrice: 120, uploadedPrice: 120, priceDifference: 0, percentageDifference: 0, quantity: 20, grossAmount: 2400, discount: 0, amountAfterDiscount: 2400, patientShare: 240, insuranceShare: 2160, status: 'matched', uploadBatchId: 'batch2' },
+  
+  // Hospital C - high differences
+  { id: '8', serviceCode: 'MRI-006', serviceName: 'MRI Brain', hospital: 'Dr. Soliman Fakeeh Hospital', systemPrice: 1500, uploadedPrice: 1850, priceDifference: 350, percentageDifference: 23.33, quantity: 8, grossAmount: 14800, discount: 800, amountAfterDiscount: 14000, patientShare: 1400, insuranceShare: 12600, status: 'pending', uploadBatchId: 'batch3' },
+  { id: '9', serviceCode: 'CT-007', serviceName: 'CT Scan Abdomen', hospital: 'Dr. Soliman Fakeeh Hospital', systemPrice: 900, uploadedPrice: 1100, priceDifference: 200, percentageDifference: 22.22, quantity: 12, grossAmount: 13200, discount: 600, amountAfterDiscount: 12600, patientShare: 1260, insuranceShare: 11340, status: 'pending', uploadBatchId: 'batch3' },
+  { id: '10', serviceCode: 'PHYS-008', serviceName: 'Physiotherapy Session', hospital: 'Dr. Soliman Fakeeh Hospital', systemPrice: 180, uploadedPrice: 200, priceDifference: 20, percentageDifference: 11.11, quantity: 35, grossAmount: 7000, discount: 350, amountAfterDiscount: 6650, patientShare: 665, insuranceShare: 5985, status: 'agreed', uploadBatchId: 'batch3' },
+];
+
+const sampleUploadBatches: UploadBatch[] = [
+  { id: 'batch1', hospital: 'King Fahad Hospital', fileName: 'KFH_prices_dec_2024.xlsx', uploadedAt: '2024-12-01T10:30:00Z', month: 'December', year: 2024, itemCount: 4, status: 'pending' },
+  { id: 'batch2', hospital: 'Saudi German Hospital', fileName: 'SGH_invoice_dec_2024.xlsx', uploadedAt: '2024-12-02T14:15:00Z', month: 'December', year: 2024, itemCount: 3, status: 'reviewed' },
+  { id: 'batch3', hospital: 'Dr. Soliman Fakeeh Hospital', fileName: 'DSF_billing_dec_2024.xlsx', uploadedAt: '2024-12-03T09:45:00Z', month: 'December', year: 2024, itemCount: 3, status: 'pending' },
+];
+
+const sampleVatInvoices: VATInvoice[] = [
+  {
+    id: 'inv1',
+    invoiceNumber: 'NC01-0000001',
+    hospital: 'Saudi German Hospital',
+    hospitalVatNumber: '300816757310003',
+    batchType: 'In Patient services',
+    batchName: 'In Patient services SGH - November 2024',
+    batchDateFrom: '2024-11-01',
+    batchDateTo: '2024-11-30',
+    month: 'November',
+    year: 2024,
+    lineItems: [
+      { code: 'CONS-001', natureOfService: 'General Consultation', details: 'Nov 2024', quantity: 28, grossUnitPrice: 150, grossAmount: 4200, discount: 0, amountAfterDiscount: 4200, patientShare: 420, insuranceShare: 3780, vatRate: 15, vatAmount: 567, itemSubtotal: 4347, vatCategoryCode: 'S' },
+      { code: 'LAB-002', natureOfService: 'Complete Blood Count', details: 'Nov 2024', quantity: 45, grossUnitPrice: 80, grossAmount: 3600, discount: 0, amountAfterDiscount: 3600, patientShare: 360, insuranceShare: 3240, vatRate: 15, vatAmount: 486, itemSubtotal: 4086, vatCategoryCode: 'S' },
+    ],
+    subtotal: 7800,
+    vatRate: 15,
+    vatAmount: 1170,
+    total: 8970,
+    issuedAt: '2024-11-28T16:00:00Z',
+    status: 'sent',
+    emailSentAt: '2024-11-28T16:30:00Z'
+  },
+  {
+    id: 'inv2',
+    invoiceNumber: 'NC01-0000002',
+    hospital: 'King Fahad Hospital',
+    hospitalVatNumber: '300912345610003',
+    batchType: 'In Patient services',
+    batchName: 'In Patient services KFH - November 2024',
+    batchDateFrom: '2024-11-01',
+    batchDateTo: '2024-11-30',
+    month: 'November',
+    year: 2024,
+    lineItems: [
+      { code: 'CONS-001', natureOfService: 'General Consultation', details: 'Nov 2024', quantity: 22, grossUnitPrice: 150, grossAmount: 3300, discount: 0, amountAfterDiscount: 3300, patientShare: 330, insuranceShare: 2970, vatRate: 15, vatAmount: 445.5, itemSubtotal: 3415.5, vatCategoryCode: 'S' },
+      { code: 'RAD-003', natureOfService: 'Chest X-Ray', details: 'Nov 2024', quantity: 18, grossUnitPrice: 200, grossAmount: 3600, discount: 200, amountAfterDiscount: 3400, patientShare: 340, insuranceShare: 3060, vatRate: 15, vatAmount: 459, itemSubtotal: 3519, vatCategoryCode: 'S' },
+    ],
+    subtotal: 6700,
+    vatRate: 15,
+    vatAmount: 1005,
+    total: 7705,
+    issuedAt: '2024-11-29T11:00:00Z',
+    status: 'issued'
+  },
+];
+
 export default function BillingDialog() {
   const [isOpen, setIsOpen] = useState(false);
-  const [priceComparisons, setPriceComparisons] = useState<PriceComparison[]>([]);
-  const [uploadBatches, setUploadBatches] = useState<UploadBatch[]>([]);
-  const [vatInvoices, setVatInvoices] = useState<VATInvoice[]>([]);
+  const [priceComparisons, setPriceComparisons] = useState<PriceComparison[]>(samplePriceComparisons);
+  const [uploadBatches, setUploadBatches] = useState<UploadBatch[]>(sampleUploadBatches);
+  const [vatInvoices, setVatInvoices] = useState<VATInvoice[]>(sampleVatInvoices);
   const { toast } = useToast();
 
   const handlePriceComparisonUpdate = (comparisons: PriceComparison[]) => {
