@@ -17,13 +17,6 @@ const urgencyOptions = [
   { value: "emergency", label: "Emergency" }
 ];
 
-const coverageTypes = [
-  { value: "full", label: "Full Coverage" },
-  { value: "partial", label: "Partial Coverage" },
-  { value: "self_pay", label: "Self Pay" },
-  { value: "insurance", label: "Insurance" }
-];
-
 const AdditionalInfoSection = ({ form, onFieldChange, selectedSpecialty }: AdditionalInfoSectionProps) => {
   // Get services for the selected specialty
   const availableServices = selectedSpecialty && servicesBySpecialty[selectedSpecialty as keyof typeof servicesBySpecialty] 
@@ -98,24 +91,6 @@ const AdditionalInfoSection = ({ form, onFieldChange, selectedSpecialty }: Addit
         />
       </div>
 
-      <div>
-        <label className="block font-medium text-gray-600 mb-1">Coverage Type</label>
-        <Select 
-          value={form.coverageType || ""} 
-          onValueChange={(value) => onFieldChange("coverageType", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select coverage type" />
-          </SelectTrigger>
-          <SelectContent>
-            {coverageTypes.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   );
 };

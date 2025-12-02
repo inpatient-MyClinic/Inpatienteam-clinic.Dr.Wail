@@ -171,6 +171,24 @@ export default function HospitalTab({ request, onFieldChange }: HospitalTabProps
               </SelectContent>
             </Select>
           </div>
+          
+          <div>
+            <Label htmlFor="coverageType">Coverage Type</Label>
+            <Select 
+              defaultValue={request.coverageType || ""} 
+              onValueChange={(value) => onFieldChange("coverageType", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select coverage type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Full Coverage</SelectItem>
+                <SelectItem value="partial">Partial Coverage</SelectItem>
+                <SelectItem value="self_pay">Self Pay</SelectItem>
+                <SelectItem value="insurance">Insurance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Surgery & Operation Information */}
