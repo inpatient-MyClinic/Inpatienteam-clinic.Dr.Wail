@@ -178,6 +178,7 @@ export default function BillingDialog() {
             <HospitalMatchStatusTab 
               priceComparisons={priceComparisons}
               vatInvoices={vatInvoices}
+              onStatusChange={handleStatusChange}
               onIssueVATInvoice={handleIssueVATInvoice}
               onIssueAllVATInvoices={handleIssueAllVATInvoices}
             />
