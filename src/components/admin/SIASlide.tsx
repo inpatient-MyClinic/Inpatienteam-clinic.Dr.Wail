@@ -301,12 +301,30 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
       return s; // default as-is
     };
     
-    // Filter by the currently selected month/year
+    // Get consolidated data
     const consolidatedData = (Array.isArray(data) && data.length > 0) ? data : allRequests;
-    const currentMonthData = consolidatedData.filter((item: any) => {
+    
+    // Debug: Log all available dates in data
+    const availableDates = consolidatedData.map((item: any) => {
+      const d = getItemDate(item);
+      return d ? `${d.getMonth() + 1}/${d.getFullYear()}` : 'no-date';
+    });
+    console.log('Available dates in data:', [...new Set(availableDates)]);
+    console.log('Total records:', consolidatedData.length);
+    
+    // Filter by the currently selected month/year
+    let currentMonthData = consolidatedData.filter((item: any) => {
       const d = getItemDate(item);
       return d && d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
     });
+    
+    // If no data for selected month, use ALL data (ignore date filter)
+    const useAllData = currentMonthData.length === 0 && consolidatedData.length > 0;
+    if (useAllData) {
+      console.log('No data for selected month, using ALL data instead');
+      currentMonthData = consolidatedData;
+    }
+    
     const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
     const previousMonthData = consolidatedData.filter((item: any) => {
@@ -323,6 +341,7 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
     // Debug: Log the filtered data for the current month
     console.log('Current Month Data Count:', currentMonthData.length);
     console.log('Selected Month:', selectedMonth, 'Selected Year:', selectedYear);
+    console.log('Using all data (date filter bypassed):', useAllData);
     console.log('Sample current month data:', currentMonthData.slice(0, 3));
 
     // Helper to get branch value
@@ -334,23 +353,18 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
       return val ? String(val).toLowerCase().trim() : '';
     };
 
-    // Filter to only include referred cases (exclude direct admissions)
-    const referredCases = currentMonthData.filter((req: any) => {
-      const valueStr = getBranchValue(req);
-      // Only count cases that are actually referred from MC branches
-      return valueStr.includes('mcj') || valueStr.includes('mc j') || 
-             valueStr.includes('muhammadiyah') || valueStr.includes('safa') ||
-             valueStr.includes('mc al');
-    });
+    // Use ALL current month data for analytics (not just MC branch referred)
+    // MC branch filtering was too restrictive - show all data
+    const referredCases = currentMonthData; // Show all cases, not just MC branch referred
 
-    // MC branch counts based on referred cases only
-    const mcj1Cases = referredCases.filter((req: any) => {
+    // MC branch counts (for display purposes)
+    const mcj1Cases = currentMonthData.filter((req: any) => {
       const valueStr = getBranchValue(req);
       return valueStr.includes('mcj1') || valueStr.includes('mc j1') || 
              valueStr.includes('muhammadiyah') || valueStr.includes('mc al muhammadiyah');
     });
     
-    const mcj2Cases = referredCases.filter((req: any) => {
+    const mcj2Cases = currentMonthData.filter((req: any) => {
       const valueStr = getBranchValue(req);
       return valueStr.includes('mcj2') || valueStr.includes('mc j2') || 
              valueStr.includes('safa') || valueStr.includes('mc al safa');
@@ -461,18 +475,21 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
     const mtdGrowthValue = previousMonthData.length > 0 ? (((currentMonthData.length - previousMonthData.length) / previousMonthData.length) * 100).toFixed(1) : '0';
     const ytdGrowthValue = '15.5';
     
+    // Use currentMonthData.length as totalCases (all data, not just MC branch referred)
+    const totalCasesCount = currentMonthData.length;
+    
     return {
       consolidatedData,
       financeData: currentMonthFinance,
       customerCareData,
-      totalCases: totalReferredCases,
+      totalCases: totalCasesCount,
       mcj1Cases: mcj1Cases.length,
       mcj2Cases: mcj2Cases.length,
       mcBranchCounts: { mcj1: mcj1Cases.length, mcj2: mcj2Cases.length, total: mcj1Cases.length + mcj2Cases.length },
       conversionData: {
         done: totalDoneAndScheduled,
-        total: totalReferredCases,
-        rate: conversionRateValue.toFixed(1),
+        total: totalCasesCount,
+        rate: totalCasesCount > 0 ? ((totalDoneAndScheduled / totalCasesCount) * 100).toFixed(1) : '0.0',
         breakdown: { doneCount, scheduledCount, plannedNVDCount }
       },
       metrics: {
