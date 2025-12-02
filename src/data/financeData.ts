@@ -5,6 +5,7 @@ export const initialTransactions: Transaction[] = [
   {
     id: "FIN001",
     patientName: "Ahmed Mohammed",
+    serviceCode: "CSC-001",
     serviceDescription: "Cardiac Surgery Consultation",
     hospital: "King Abdulaziz Hospital",
     doctor: "Dr. Ahmed Al-Rashid",
@@ -16,6 +17,7 @@ export const initialTransactions: Transaction[] = [
   {
     id: "FIN002", 
     patientName: "Fatima Hassan",
+    serviceCode: "OJR-002",
     serviceDescription: "Orthopedic Joint Replacement",
     hospital: "Prince Sultan Hospital",
     doctor: "Dr. Sarah Al-Mahmoud",
@@ -27,6 +29,7 @@ export const initialTransactions: Transaction[] = [
   {
     id: "FIN003",
     patientName: "Omar Ali",
+    serviceCode: "GSP-003",
     serviceDescription: "General Surgery Procedure",
     hospital: "Medical Center",
     doctor: "Dr. Mohammed Hassan",

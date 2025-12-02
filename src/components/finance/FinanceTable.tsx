@@ -54,7 +54,7 @@ export default function FinanceTable({
           {transactions.map((transaction) => (
             <TableRow key={transaction.id} className="hover:bg-gray-50">
               <TableCell className="font-medium">{transaction.patientName}</TableCell>
-              <TableCell className="text-gray-600">{transaction.serviceDescription}</TableCell>
+              <TableCell className="text-gray-600">{transaction.serviceCode}</TableCell>
               <TableCell className="text-gray-600">{transaction.id}</TableCell>
               <TableCell className="text-gray-600">{transaction.hospital}</TableCell>
               <TableCell className="text-gray-600">{transaction.doctor}</TableCell>

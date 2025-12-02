@@ -2,7 +2,8 @@
 export interface Transaction {
   id: string;
   patientName: string;
-  serviceDescription: string;
+  serviceCode: string;
+  serviceDescription?: string;
   hospital: string;
   doctor: string;
   specialty: string;
