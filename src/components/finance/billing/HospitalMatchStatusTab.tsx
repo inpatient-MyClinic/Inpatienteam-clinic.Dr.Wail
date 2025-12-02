@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, CheckCircle, XCircle, ChevronDown, ChevronUp, Eye, Printer } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, ChevronDown, ChevronUp, Eye, Printer, Download } from 'lucide-react';
 import { PriceComparison, VATInvoice, VAT_RATE } from '@/types/billing';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import VATInvoicePrintView from './VATInvoicePrintView';
+import * as XLSX from 'xlsx';
 
 interface HospitalMatchStatusTabProps {
   priceComparisons: PriceComparison[];
@@ -61,6 +62,7 @@ export default function HospitalMatchStatusTab({
         agreedCount,
         totalItems: items.length,
         totalBill,
+        totalSystemPrice,
         totalDifference,
         differencePercentage,
         isFullyMatched: notMatchedItems.length === 0,
@@ -93,6 +95,48 @@ export default function HospitalMatchStatusTab({
         onIssueVATInvoice(h.hospital, selectedMonth, selectedYear);
       }
     });
+  };
+
+  const exportHospitalBreakdown = (hospital: string, items: PriceComparison[]) => {
+    const exportData = items.map(item => ({
+      'Code': item.serviceCode,
+      'Service Name': item.serviceName,
+      'Quantity': item.quantity,
+      'Our Price (SAR)': item.systemPrice,
+      'Hospital Price (SAR)': item.uploadedPrice,
+      'Difference (SAR)': item.priceDifference,
+      'Difference %': `${item.percentageDifference.toFixed(2)}%`,
+      'Gross Amount': item.grossAmount,
+      'Discount': item.discount,
+      'After Discount': item.amountAfterDiscount,
+      'Patient Share': item.patientShare,
+      'Insurance Share': item.insuranceShare,
+      'Status': item.status === 'matched' ? 'Matched' : 
+                item.status === 'agreed' || agreedItems.has(item.id) ? 'Agreed' : 'Not Agreed'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Price Breakdown');
+    
+    const summaryData = [{
+      'Code': 'TOTAL',
+      'Service Name': '',
+      'Quantity': items.reduce((s, i) => s + i.quantity, 0),
+      'Our Price (SAR)': items.reduce((s, i) => s + (i.systemPrice * i.quantity), 0),
+      'Hospital Price (SAR)': items.reduce((s, i) => s + (i.uploadedPrice * i.quantity), 0),
+      'Difference (SAR)': items.reduce((s, i) => s + Math.abs(i.priceDifference * i.quantity), 0),
+      'Difference %': '',
+      'Gross Amount': items.reduce((s, i) => s + i.grossAmount, 0),
+      'Discount': items.reduce((s, i) => s + i.discount, 0),
+      'After Discount': items.reduce((s, i) => s + i.amountAfterDiscount, 0),
+      'Patient Share': items.reduce((s, i) => s + i.patientShare, 0),
+      'Insurance Share': items.reduce((s, i) => s + i.insuranceShare, 0),
+      'Status': ''
+    }];
+    XLSX.utils.sheet_add_json(ws, summaryData, { skipHeader: true, origin: -1 });
+
+    XLSX.writeFile(wb, `${hospital}_Price_Breakdown_${selectedMonth}_${selectedYear}.xlsx`);
   };
 
   const totalAgreedHospitals = hospitalData.filter(h => h.agreedCount > 0 && !h.hasInvoice).length;
@@ -276,8 +320,17 @@ export default function HospitalMatchStatusTab({
                           size="sm" 
                           variant="outline" 
                           onClick={() => setPreviewInvoice(generatePreviewInvoice(hospital.hospital))}
+                          title="Preview VAT Invoice"
                         >
                           <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => exportHospitalBreakdown(hospital.hospital, hospital.items)}
+                          title="Export Breakdown"
+                        >
+                          <Download className="w-4 h-4" />
                         </Button>
                         {!hospital.hasInvoice && hospital.agreedCount > 0 && (
                           <Button 
@@ -296,17 +349,28 @@ export default function HospitalMatchStatusTab({
                     <TableRow>
                       <TableCell colSpan={9} className="bg-muted/30 p-0">
                         <div className="p-4">
-                          <h4 className="font-medium mb-3">Price Breakdown - {hospital.hospital}</h4>
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="font-medium">Price Breakdown - {hospital.hospital}</h4>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => exportHospitalBreakdown(hospital.hospital, hospital.items)}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Export Excel
+                            </Button>
+                          </div>
                           <Table>
                             <TableHeader>
-                              <TableRow>
+                              <TableRow className="bg-muted/50">
                                 <TableHead className="w-12">Agree</TableHead>
                                 <TableHead>Code</TableHead>
                                 <TableHead>Service</TableHead>
-                                <TableHead className="text-right">Our Price</TableHead>
-                                <TableHead className="text-right">Hospital Price</TableHead>
-                                <TableHead className="text-right">Difference</TableHead>
-                                <TableHead className="text-right">Diff %</TableHead>
+                                <TableHead className="text-right">Qty</TableHead>
+                                <TableHead className="text-right bg-blue-50">Our Price</TableHead>
+                                <TableHead className="text-right bg-orange-50">Hospital Price</TableHead>
+                                <TableHead className="text-right bg-red-50">Diff (SAR)</TableHead>
+                                <TableHead className="text-right bg-red-50">Diff %</TableHead>
                                 <TableHead>Status</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -314,11 +378,12 @@ export default function HospitalMatchStatusTab({
                               {hospital.items.map((item) => {
                                 const isAgreed = item.status === 'agreed' || item.status === 'matched' || agreedItems.has(item.id);
                                 const hasDifference = item.priceDifference !== 0;
+                                const isHighDiff = Math.abs(item.percentageDifference) > 10;
                                 
                                 return (
                                   <TableRow 
                                     key={item.id} 
-                                    className={hasDifference ? 'bg-red-50' : ''}
+                                    className={hasDifference ? (isHighDiff ? 'bg-red-100' : 'bg-yellow-50') : ''}
                                   >
                                     <TableCell>
                                       <Checkbox 
@@ -327,16 +392,19 @@ export default function HospitalMatchStatusTab({
                                         disabled={item.status === 'matched'}
                                       />
                                     </TableCell>
-                                    <TableCell className="font-mono">{item.serviceCode}</TableCell>
-                                    <TableCell>{item.serviceName}</TableCell>
-                                    <TableCell className="text-right">{item.systemPrice.toLocaleString()} SAR</TableCell>
-                                    <TableCell className={`text-right ${hasDifference ? 'font-bold text-red-600' : ''}`}>
+                                    <TableCell className="font-mono text-sm">{item.serviceCode}</TableCell>
+                                    <TableCell className="max-w-48 truncate" title={item.serviceName}>{item.serviceName}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell className="text-right bg-blue-50/50 font-medium">
+                                      {item.systemPrice.toLocaleString()} SAR
+                                    </TableCell>
+                                    <TableCell className={`text-right bg-orange-50/50 font-medium ${hasDifference ? 'text-orange-700' : ''}`}>
                                       {item.uploadedPrice.toLocaleString()} SAR
                                     </TableCell>
-                                    <TableCell className={`text-right ${hasDifference ? 'font-bold text-red-600 bg-red-100' : 'text-green-600'}`}>
+                                    <TableCell className={`text-right font-bold ${hasDifference ? (isHighDiff ? 'bg-red-200 text-red-800' : 'bg-yellow-100 text-yellow-800') : 'text-green-600'}`}>
                                       {item.priceDifference > 0 ? '+' : ''}{item.priceDifference.toLocaleString()} SAR
                                     </TableCell>
-                                    <TableCell className={`text-right ${Math.abs(item.percentageDifference) > 10 ? 'font-bold text-red-600 bg-red-100' : hasDifference ? 'text-yellow-600' : 'text-green-600'}`}>
+                                    <TableCell className={`text-right font-bold ${hasDifference ? (isHighDiff ? 'bg-red-200 text-red-800' : 'bg-yellow-100 text-yellow-800') : 'text-green-600'}`}>
                                       {item.percentageDifference > 0 ? '+' : ''}{item.percentageDifference.toFixed(1)}%
                                     </TableCell>
                                     <TableCell>
@@ -351,6 +419,15 @@ export default function HospitalMatchStatusTab({
                                   </TableRow>
                                 );
                               })}
+                              <TableRow className="bg-muted font-bold border-t-2">
+                                <TableCell colSpan={3}>TOTAL</TableCell>
+                                <TableCell className="text-right">{hospital.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
+                                <TableCell className="text-right bg-blue-100">{hospital.totalSystemPrice.toLocaleString()} SAR</TableCell>
+                                <TableCell className="text-right bg-orange-100">{hospital.items.reduce((s, i) => s + (i.uploadedPrice * i.quantity), 0).toLocaleString()} SAR</TableCell>
+                                <TableCell className="text-right bg-red-100">{hospital.totalDifference.toLocaleString()} SAR</TableCell>
+                                <TableCell className="text-right bg-red-100">{hospital.differencePercentage.toFixed(1)}%</TableCell>
+                                <TableCell></TableCell>
+                              </TableRow>
                             </TableBody>
                           </Table>
                         </div>

@@ -4,12 +4,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Printer, Mail, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Printer, Mail, Eye, ChevronDown, ChevronUp, Download, FileText, Loader2 } from 'lucide-react';
 import { VATInvoice } from '@/types/billing';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import VATInvoicePrintView from './VATInvoicePrintView';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VATInvoicesTabProps {
   vatInvoices: VATInvoice[];
@@ -18,11 +19,19 @@ interface VATInvoicesTabProps {
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+// Hospital email mapping (in real app, this would come from database)
+const hospitalEmails: Record<string, string> = {
+  'Hospital A': 'hospital.a@example.com',
+  'Hospital B': 'hospital.b@example.com',
+  'Hospital C': 'hospital.c@example.com',
+};
+
 export default function VATInvoicesTab({ vatInvoices, onSendEmail }: VATInvoicesTabProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedHospital, setSelectedHospital] = useState<string>('all');
   const [expandedHospital, setExpandedHospital] = useState<string | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<VATInvoice | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const { toast } = useToast();
 
   const hospitals = useMemo(() => [...new Set(vatInvoices.map(inv => inv.hospital))], [vatInvoices]);
@@ -62,20 +71,82 @@ export default function VATInvoicesTab({ vatInvoices, onSendEmail }: VATInvoices
     setTimeout(() => window.print(), 100);
   };
 
-  const handleSendEmail = (invoice: VATInvoice) => {
-    onSendEmail(invoice.id);
-    toast({ title: "Email Sent", description: `Invoice ${invoice.invoiceNumber} sent to ${invoice.hospital}` });
+  const exportInvoicePDF = (invoice: VATInvoice) => {
+    // For PDF export, we'll open print dialog with the invoice
+    setViewingInvoice(invoice);
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
+
+  const handleSendEmail = async (invoice: VATInvoice) => {
+    setSendingEmail(invoice.id);
+    
+    try {
+      const hospitalEmail = hospitalEmails[invoice.hospital] || `billing@${invoice.hospital.toLowerCase().replace(/\s+/g, '')}.com`;
+      
+      const { data, error } = await supabase.functions.invoke('send-vat-invoice-email', {
+        body: {
+          hospitalEmail,
+          hospitalName: invoice.hospital,
+          invoiceNumber: invoice.invoiceNumber,
+          invoiceMonth: invoice.month,
+          invoiceYear: invoice.year,
+          subtotal: invoice.subtotal,
+          vatAmount: invoice.vatAmount,
+          total: invoice.total,
+        }
+      });
+
+      if (error) throw error;
+
+      onSendEmail(invoice.id);
+      toast({ 
+        title: "Email Sent", 
+        description: `Invoice ${invoice.invoiceNumber} sent to ${hospitalEmail}` 
+      });
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast({ 
+        title: "Email Failed", 
+        description: error.message || "Failed to send email. Please check SMTP configuration.",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingEmail(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = { 'issued': 'bg-blue-100 text-blue-800', 'sent': 'bg-green-100 text-green-800', 'paid': 'bg-emerald-100 text-emerald-800', 'cancelled': 'bg-red-100 text-red-800' };
+    const colors: Record<string, string> = { 
+      'issued': 'bg-blue-100 text-blue-800', 
+      'sent': 'bg-green-100 text-green-800', 
+      'paid': 'bg-emerald-100 text-emerald-800', 
+      'cancelled': 'bg-red-100 text-red-800' 
+    };
     return <Badge className={colors[status] || 'bg-gray-100'}>{status}</Badge>;
   };
 
   if (viewingInvoice) {
     return (
       <div className="p-4">
-        <Button variant="outline" onClick={() => setViewingInvoice(null)} className="mb-4 print:hidden">← Back</Button>
+        <div className="flex gap-2 mb-4 print:hidden">
+          <Button variant="outline" onClick={() => setViewingInvoice(null)}>← Back</Button>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="w-4 h-4 mr-2" />Print / Save as PDF
+          </Button>
+          <Button 
+            onClick={() => handleSendEmail(viewingInvoice)}
+            disabled={sendingEmail === viewingInvoice.id}
+          >
+            {sendingEmail === viewingInvoice.id ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Mail className="w-4 h-4 mr-2" />
+            )}
+            Send Email
+          </Button>
+        </div>
         <VATInvoicePrintView invoice={viewingInvoice} />
       </div>
     );
@@ -155,9 +226,30 @@ export default function VATInvoicesTab({ vatInvoices, onSendEmail }: VATInvoices
                         <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => setViewingInvoice(invoice)}><Eye className="w-4 h-4" /></Button>
-                            <Button size="sm" variant="ghost" onClick={() => handlePrint(invoice)}><Printer className="w-4 h-4" /></Button>
-                            {invoice.status !== 'sent' && <Button size="sm" variant="ghost" onClick={() => handleSendEmail(invoice)}><Mail className="w-4 h-4" /></Button>}
+                            <Button size="sm" variant="ghost" onClick={() => setViewingInvoice(invoice)} title="View">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handlePrint(invoice)} title="Print">
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => exportInvoicePDF(invoice)} title="Export PDF">
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            {invoice.status !== 'sent' && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => handleSendEmail(invoice)}
+                                disabled={sendingEmail === invoice.id}
+                                title="Send Email"
+                              >
+                                {sendingEmail === invoice.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Mail className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
