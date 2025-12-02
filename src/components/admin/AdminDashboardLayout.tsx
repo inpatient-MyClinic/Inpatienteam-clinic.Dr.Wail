@@ -38,13 +38,11 @@ interface AdminDashboardLayoutProps {
   onToggleSIASlide: () => void;
   onShowGeneralReport: () => void;
   onShowChart: () => void;
-  onShowMonthlyAnalytics: () => void;
   onShowFinanceAnalytics: () => void;
   onToggleNewUserRequests: () => void;
   onCloseFinanceAnalytics: () => void;
   onShowPivotUpload: () => void;
   onShowExcelInspector: () => void;
-  onShowExcelAnalyzer: () => void;
   onShowMasterSheet: () => void;
   onShowMasterSheetProcessor?: () => void;
 }
@@ -80,13 +78,11 @@ export default function AdminDashboardLayout({
   onToggleSIASlide,
   onShowGeneralReport,
   onShowChart,
-  onShowMonthlyAnalytics,
   onShowFinanceAnalytics,
   onToggleNewUserRequests,
   onCloseFinanceAnalytics,
   onShowPivotUpload,
   onShowExcelInspector,
-  onShowExcelAnalyzer,
   onShowMasterSheet,
   onShowMasterSheetProcessor,
 }: AdminDashboardLayoutProps) {
@@ -129,12 +125,10 @@ export default function AdminDashboardLayout({
             onToggleAIAssistant={onToggleAIAssistant}
             onToggleSIASlide={onToggleSIASlide}
             onShowChart={onShowChart}
-            onShowMonthlyAnalytics={onShowMonthlyAnalytics}
-              onShowPivotUpload={onShowPivotUpload}
-              onShowExcelInspector={onShowExcelInspector}
-              onShowExcelAnalyzer={onShowExcelAnalyzer}
-              onShowMasterSheet={onShowMasterSheet}
-              onShowMasterSheetProcessor={onShowMasterSheetProcessor}
+            onShowPivotUpload={onShowPivotUpload}
+            onShowExcelInspector={onShowExcelInspector}
+            onShowMasterSheet={onShowMasterSheet}
+            onShowMasterSheetProcessor={onShowMasterSheetProcessor}
           />
 
           {/* Main Content */}
