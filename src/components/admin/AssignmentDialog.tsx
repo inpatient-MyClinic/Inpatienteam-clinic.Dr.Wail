@@ -32,11 +32,54 @@ const AssignmentDialog = ({ request, onAssign }: AssignmentDialogProps) => {
   ];
 
   useEffect(() => {
-    // Load coordinator-hospital assignments
-    const assignments = JSON.parse(localStorage.getItem('coordinator_hospital_assignments') || '[]');
-    const allCoordinators = assignments.map((a: any) => a.coordinatorName);
-    setCoordinators(allCoordinators);
-    setFilteredCoordinators(allCoordinators);
+    // Load coordinators from multiple sources for robustness
+    const loadCoordinators = () => {
+      const coordinatorSet = new Set<string>();
+      
+      // Source 1: coordinator_hospital_assignments
+      try {
+        const assignments = JSON.parse(localStorage.getItem('coordinator_hospital_assignments') || '[]');
+        assignments.forEach((a: any) => {
+          if (a.coordinatorName) coordinatorSet.add(a.coordinatorName);
+        });
+      } catch (e) { console.error('Error loading assignments:', e); }
+      
+      // Source 2: Users with case-coordinator role
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        users.forEach((u: any) => {
+          if (u.category?.toLowerCase().includes('coordinator') || u.role?.toLowerCase().includes('coordinator')) {
+            if (u.name || u.fullName || u.email) {
+              coordinatorSet.add(u.name || u.fullName || u.email.split('@')[0]);
+            }
+          }
+        });
+      } catch (e) { console.error('Error loading users:', e); }
+      
+      // Source 3: Existing requests with assigned coordinators
+      try {
+        const requests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
+        requests.forEach((r: any) => {
+          if (r.assignedCoordinator) coordinatorSet.add(r.assignedCoordinator);
+          if (r.caseCoordinator) coordinatorSet.add(r.caseCoordinator);
+        });
+      } catch (e) { console.error('Error loading requests:', e); }
+      
+      // Source 4: Admin data with coordinators
+      try {
+        const adminData = JSON.parse(localStorage.getItem('admin_data') || '[]');
+        adminData.forEach((d: any) => {
+          if (d.caseCoordinator && d.caseCoordinator !== 'No') coordinatorSet.add(d.caseCoordinator);
+          if (d.assignedCoordinator) coordinatorSet.add(d.assignedCoordinator);
+        });
+      } catch (e) { console.error('Error loading admin data:', e); }
+      
+      const allCoordinators = Array.from(coordinatorSet).filter(Boolean).sort();
+      setCoordinators(allCoordinators);
+      setFilteredCoordinators(allCoordinators);
+    };
+    
+    loadCoordinators();
   }, []);
 
   useEffect(() => {
