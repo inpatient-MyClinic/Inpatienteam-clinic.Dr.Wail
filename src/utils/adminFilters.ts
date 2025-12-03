@@ -103,8 +103,28 @@ export function filterAdminData(
     return `Week ${Math.min(Math.max(week, 1), 5)}`; // clamp to 1..5
   };
 
+  // Status groupings to match sidebar behavior
+  const statusGroupings: Record<string, string[]> = {
+    'Done': ['Done', 'Completed'],
+    'Pending': ['Pending'],
+    'Scheduled': ['Scheduled'],
+    'Cancelled': ['Cancelled', 'Case Canceled', 'Canceled'],
+    'Planned NVD': ['Planned NVD']
+  };
+
   return adminData.filter(item => {
-    const matchesStatus = !activeFilter || item.status === activeFilter || item.priority === activeFilter;
+    let matchesStatus = true;
+    if (activeFilter) {
+      const statusGroup = statusGroupings[activeFilter];
+      if (statusGroup) {
+        matchesStatus = statusGroup.some(s => 
+          item.status?.toLowerCase() === s.toLowerCase() ||
+          item.operationStatus?.toLowerCase() === s.toLowerCase()
+        );
+      } else {
+        matchesStatus = item.status === activeFilter || item.priority === activeFilter;
+      }
+    }
 
     const itemDate = getItemDate(item);
 
