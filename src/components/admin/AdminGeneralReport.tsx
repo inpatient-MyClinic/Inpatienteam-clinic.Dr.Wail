@@ -122,17 +122,70 @@ const AdminGeneralReport = () => {
   };
 
   const downloadReport = () => {
+    // Get actual data from localStorage
+    let allData: any[] = [];
+    
+    try {
+      // Try multiple data sources
+      const adminData = JSON.parse(localStorage.getItem('admin_data') || '[]');
+      const medicalRequests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
+      const siaData = JSON.parse(localStorage.getItem('siaExcelData') || '[]');
+      
+      allData = [...adminData, ...medicalRequests, ...siaData];
+      
+      // If no localStorage data, use filtered cases
+      if (allData.length === 0) {
+        allData = filteredCases;
+      }
+    } catch (e) {
+      allData = filteredCases;
+    }
+    
+    // Apply filters to actual data
+    const reportData = allData.filter(item => {
+      const matchesSpecialty = selectedSpecialties.length === 0 || selectedSpecialties.includes(item.specialty);
+      const matchesDoctor = selectedDoctors.length === 0 || selectedDoctors.includes(item.user || item.doctor || item.doctorName);
+      const matchesMonth = selectedMonths.length === 0 || selectedMonths.some(m => {
+        const itemMonth = item.month || item.Month || (item.date && new Date(item.date).toLocaleDateString('en-US', { month: 'long' }));
+        return itemMonth?.toLowerCase().includes(m.toLowerCase());
+      });
+      return matchesSpecialty && matchesDoctor && matchesMonth;
+    });
+    
+    // Generate CSV content
+    const headers = ['ID', 'Patient Name', 'Specialty', 'Doctor', 'Hospital', 'Status', 'Date', 'Month'];
+    const csvRows = [headers.join(',')];
+    
+    reportData.forEach((item, index) => {
+      const row = [
+        item.id || item.patientMRN || `REQ-${index + 1}`,
+        (item.patientName || item.patient_name || 'N/A').replace(/,/g, ' '),
+        item.specialty || item.Specialty || 'N/A',
+        item.user || item.doctor || item.doctorName || 'N/A',
+        item.hospital || item.Hospital || 'N/A',
+        item.status || item.Status || 'N/A',
+        item.date || item.requestDate || item.created_at || 'N/A',
+        item.month || item.Month || 'N/A'
+      ];
+      csvRows.push(row.map(cell => `"${cell}"`).join(','));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
     const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,Filtered Report Content');
-    element.setAttribute('download', `filtered-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    element.setAttribute('href', url);
+    element.setAttribute('download', `admin-report-${new Date().toISOString().split('T')[0]}.csv`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+    URL.revokeObjectURL(url);
     
     toast({
-      title: "Download Started",
-      description: "Your filtered report is being downloaded",
+      title: "Download Complete",
+      description: `Report downloaded with ${reportData.length} records`,
     });
   };
 
