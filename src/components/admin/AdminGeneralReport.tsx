@@ -122,61 +122,176 @@ const AdminGeneralReport = () => {
   };
 
   const downloadReport = () => {
-    // Get actual data from localStorage
-    let allData: any[] = [];
+    // Collect all data from backend/localStorage organized by category
+    const reportSections: string[] = [];
+    let totalRecords = 0;
     
-    try {
-      // Try multiple data sources
-      const adminData = JSON.parse(localStorage.getItem('admin_data') || '[]');
-      const medicalRequests = JSON.parse(localStorage.getItem('medical_requests') || '[]');
-      const siaData = JSON.parse(localStorage.getItem('siaExcelData') || '[]');
-      
-      allData = [...adminData, ...medicalRequests, ...siaData];
-      
-      // If no localStorage data, use filtered cases
-      if (allData.length === 0) {
-        allData = filteredCases;
-      }
-    } catch (e) {
-      allData = filteredCases;
-    }
+    // Helper to safely get data
+    const getData = (key: string) => {
+      try {
+        return JSON.parse(localStorage.getItem(key) || '[]');
+      } catch { return []; }
+    };
     
-    // Apply filters to actual data
-    const reportData = allData.filter(item => {
-      const matchesSpecialty = selectedSpecialties.length === 0 || selectedSpecialties.includes(item.specialty);
-      const matchesDoctor = selectedDoctors.length === 0 || selectedDoctors.includes(item.user || item.doctor || item.doctorName);
-      const matchesMonth = selectedMonths.length === 0 || selectedMonths.some(m => {
-        const itemMonth = item.month || item.Month || (item.date && new Date(item.date).toLocaleDateString('en-US', { month: 'long' }));
-        return itemMonth?.toLowerCase().includes(m.toLowerCase());
+    // Helper to create CSV section
+    const createSection = (title: string, data: any[], columns: {key: string, label: string}[]) => {
+      if (data.length === 0) return '';
+      totalRecords += data.length;
+      
+      const lines: string[] = [];
+      lines.push(`\n=== ${title.toUpperCase()} (${data.length} records) ===`);
+      lines.push(columns.map(c => c.label).join(','));
+      
+      data.forEach((item, idx) => {
+        const row = columns.map(col => {
+          let val = item[col.key] || item[col.key.toLowerCase()] || item[col.key.toUpperCase()] || '';
+          if (typeof val === 'object') val = JSON.stringify(val);
+          return `"${String(val).replace(/"/g, '""').replace(/,/g, ' ')}"`;
+        });
+        lines.push(row.join(','));
       });
-      return matchesSpecialty && matchesDoctor && matchesMonth;
-    });
+      
+      return lines.join('\n');
+    };
     
-    // Generate CSV content
-    const headers = ['ID', 'Patient Name', 'Specialty', 'Doctor', 'Hospital', 'Status', 'Date', 'Month'];
-    const csvRows = [headers.join(',')];
+    // 1. ADMIN DATA
+    const adminData = [...getData('admin_data'), ...getData('medical_requests'), ...getData('siaExcelData')];
+    reportSections.push(createSection('Admin Requests Data', adminData, [
+      {key: 'id', label: 'ID'},
+      {key: 'patientName', label: 'Patient Name'},
+      {key: 'patientMRN', label: 'MRN'},
+      {key: 'specialty', label: 'Specialty'},
+      {key: 'hospital', label: 'Hospital'},
+      {key: 'status', label: 'Status'},
+      {key: 'caseCoordinator', label: 'Case Coordinator'},
+      {key: 'date', label: 'Date'},
+      {key: 'month', label: 'Month'}
+    ]));
     
-    reportData.forEach((item, index) => {
-      const row = [
-        item.id || item.patientMRN || `REQ-${index + 1}`,
-        (item.patientName || item.patient_name || 'N/A').replace(/,/g, ' '),
-        item.specialty || item.Specialty || 'N/A',
-        item.user || item.doctor || item.doctorName || 'N/A',
-        item.hospital || item.Hospital || 'N/A',
-        item.status || item.Status || 'N/A',
-        item.date || item.requestDate || item.created_at || 'N/A',
-        item.month || item.Month || 'N/A'
-      ];
-      csvRows.push(row.map(cell => `"${cell}"`).join(','));
-    });
+    // 2. DOCTOR DATA
+    const doctorRequests = getData('doctor_requests');
+    reportSections.push(createSection('Doctor Requests', doctorRequests, [
+      {key: 'id', label: 'ID'},
+      {key: 'patientName', label: 'Patient Name'},
+      {key: 'doctorName', label: 'Doctor'},
+      {key: 'specialty', label: 'Specialty'},
+      {key: 'status', label: 'Status'},
+      {key: 'hospital', label: 'Hospital'},
+      {key: 'requestDate', label: 'Request Date'}
+    ]));
     
-    const csvContent = csvRows.join('\n');
+    // 3. NURSE DATA  
+    const nurseRequests = getData('nurse_requests');
+    reportSections.push(createSection('Nurse Requests', nurseRequests, [
+      {key: 'id', label: 'ID'},
+      {key: 'patientName', label: 'Patient Name'},
+      {key: 'nurseName', label: 'Nurse'},
+      {key: 'status', label: 'Status'},
+      {key: 'hospital', label: 'Hospital'},
+      {key: 'requestDate', label: 'Request Date'}
+    ]));
+    
+    // 4. CASE COORDINATOR DATA
+    const coordinatorData = getData('coordinator_hospital_assignments');
+    reportSections.push(createSection('Case Coordinator Assignments', coordinatorData, [
+      {key: 'coordinatorName', label: 'Coordinator Name'},
+      {key: 'hospitals', label: 'Assigned Hospitals'}
+    ]));
+    
+    // 5. HOSPITAL DATA
+    const hospitalCodes = getData('hospital_codes');
+    reportSections.push(createSection('Hospital Codes', hospitalCodes, [
+      {key: 'code', label: 'Code'},
+      {key: 'hospitalName', label: 'Hospital Name'},
+      {key: 'branch', label: 'Branch'}
+    ]));
+    
+    // 6. FINANCE DATA
+    const financeData = [...getData('finance_data'), ...getData('siaFinanceData')];
+    reportSections.push(createSection('Finance Data', financeData, [
+      {key: 'id', label: 'ID'},
+      {key: 'hospital', label: 'Hospital'},
+      {key: 'serviceCode', label: 'Service Code'},
+      {key: 'amount', label: 'Amount'},
+      {key: 'status', label: 'Status'},
+      {key: 'invoiceNumber', label: 'Invoice Number'},
+      {key: 'date', label: 'Date'}
+    ]));
+    
+    // VAT Invoices
+    const vatInvoices = getData('vat_invoices');
+    reportSections.push(createSection('VAT Invoices', vatInvoices, [
+      {key: 'invoiceNumber', label: 'Invoice Number'},
+      {key: 'hospitalName', label: 'Hospital'},
+      {key: 'totalAmount', label: 'Total Amount'},
+      {key: 'vatAmount', label: 'VAT Amount'},
+      {key: 'status', label: 'Status'},
+      {key: 'issueDate', label: 'Issue Date'}
+    ]));
+    
+    // 7. CUSTOMER CARE DATA
+    const customerCareData = getData('customerCareData');
+    reportSections.push(createSection('Customer Care Survey Responses', customerCareData, [
+      {key: 'patientName', label: 'Patient Name'},
+      {key: 'hospital', label: 'Hospital'},
+      {key: 'npsScore', label: 'NPS Score'},
+      {key: 'feedback', label: 'Feedback'},
+      {key: 'date', label: 'Date'}
+    ]));
+    
+    const complaints = getData('complaints');
+    reportSections.push(createSection('Complaints', complaints, [
+      {key: 'id', label: 'ID'},
+      {key: 'title', label: 'Title'},
+      {key: 'description', label: 'Description'},
+      {key: 'status', label: 'Status'},
+      {key: 'priority', label: 'Priority'},
+      {key: 'createdAt', label: 'Created At'}
+    ]));
+    
+    // 8. USER MANAGEMENT DATA
+    const users = getData('users');
+    reportSections.push(createSection('System Users', users, [
+      {key: 'name', label: 'Name'},
+      {key: 'email', label: 'Email'},
+      {key: 'category', label: 'Role/Category'},
+      {key: 'specialty', label: 'Specialty'},
+      {key: 'status', label: 'Status'}
+    ]));
+    
+    // 9. ADDITIONAL DATA
+    const servicePricing = getData('service_pricing');
+    reportSections.push(createSection('Service Pricing', servicePricing, [
+      {key: 'code', label: 'Service Code'},
+      {key: 'description', label: 'Description'},
+      {key: 'price', label: 'Price'},
+      {key: 'category', label: 'Category'}
+    ]));
+    
+    const doctorPricing = getData('doctor_pricing');
+    reportSections.push(createSection('Doctor Pricing', doctorPricing, [
+      {key: 'doctorName', label: 'Doctor Name'},
+      {key: 'specialty', label: 'Specialty'},
+      {key: 'hospital', label: 'Hospital'},
+      {key: 'price', label: 'Price'}
+    ]));
+    
+    // Create final report
+    const reportHeader = [
+      `COMPREHENSIVE SYSTEM REPORT`,
+      `Generated: ${new Date().toLocaleString()}`,
+      `Total Records: ${totalRecords}`,
+      ``,
+      `Report includes: Admin, Doctor, Nurse, Case Coordinator, Hospital, Finance, Customer Care, and Additional Data`
+    ].join('\n');
+    
+    const csvContent = reportHeader + '\n' + reportSections.filter(s => s).join('\n\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     
     const element = document.createElement('a');
     element.setAttribute('href', url);
-    element.setAttribute('download', `admin-report-${new Date().toISOString().split('T')[0]}.csv`);
+    element.setAttribute('download', `comprehensive-report-${new Date().toISOString().split('T')[0]}.csv`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -184,8 +299,8 @@ const AdminGeneralReport = () => {
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Download Complete",
-      description: `Report downloaded with ${reportData.length} records`,
+      title: "Comprehensive Report Downloaded",
+      description: `Report contains ${totalRecords} records across all categories`,
     });
   };
 
