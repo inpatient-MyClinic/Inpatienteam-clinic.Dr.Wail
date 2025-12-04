@@ -37,5 +37,89 @@ export const initialTransactions: Transaction[] = [
     amount: "₹12,000",
     status: "Delay Payment",
     date: "2025-06-08"
+  },
+  {
+    id: "FIN004",
+    patientName: "Khalid Ibrahim",
+    serviceCode: "NEU-004",
+    serviceDescription: "Neurology Consultation",
+    hospital: "King Fahad Hospital",
+    doctor: "Dr. Nasser Al-Otaibi",
+    specialty: "Neurology",
+    amount: "₹9,200",
+    status: "Paid",
+    date: "2025-06-12"
+  },
+  {
+    id: "FIN005",
+    patientName: "Maryam Abdullah",
+    serviceCode: "PED-005",
+    serviceDescription: "Pediatric Surgery",
+    hospital: "Children's Hospital",
+    doctor: "Dr. Layla Mansour",
+    specialty: "Pediatrics",
+    amount: "₹7,800",
+    status: "Pending",
+    date: "2025-06-05"
+  },
+  {
+    id: "FIN006",
+    patientName: "Youssef Saleh",
+    serviceCode: "ONC-006",
+    serviceDescription: "Oncology Treatment",
+    hospital: "Cancer Center",
+    doctor: "Dr. Hani Al-Qahtani",
+    specialty: "Oncology",
+    amount: "₹25,000",
+    status: "Delay Payment",
+    date: "2025-06-01"
+  },
+  {
+    id: "FIN007",
+    patientName: "Noura Al-Harbi",
+    serviceCode: "GYN-007",
+    serviceDescription: "Gynecology Procedure",
+    hospital: "Women's Health Center",
+    doctor: "Dr. Amina Faisal",
+    specialty: "Gynecology",
+    amount: "₹11,500",
+    status: "Paid",
+    date: "2025-06-14"
+  },
+  {
+    id: "FIN008",
+    patientName: "Sami Al-Dosari",
+    serviceCode: "URO-008",
+    serviceDescription: "Urology Surgery",
+    hospital: "King Abdulaziz Hospital",
+    doctor: "Dr. Tariq Al-Shamsi",
+    specialty: "Urology",
+    amount: "₹18,000",
+    status: "Pending",
+    date: "2025-06-09"
+  },
+  {
+    id: "FIN009",
+    patientName: "Huda Mohammed",
+    serviceCode: "DER-009",
+    serviceDescription: "Dermatology Treatment",
+    hospital: "Skin Care Clinic",
+    doctor: "Dr. Reem Hassan",
+    specialty: "Dermatology",
+    amount: "₹4,500",
+    status: "Paid",
+    date: "2025-06-13"
+  },
+  {
+    id: "FIN010",
+    patientName: "Abdullah Al-Mutairi",
+    serviceCode: "ENT-010",
+    serviceDescription: "ENT Surgery",
+    hospital: "Prince Sultan Hospital",
+    doctor: "Dr. Khaled Nasser",
+    specialty: "ENT",
+    amount: "₹6,800",
+    status: "Delay Payment",
+    date: "2025-06-03"
   }
 ];

@@ -6,10 +6,9 @@ import { savePaymentUpdateToSystem, loadSystemPaymentUpdates } from '@/utils/fin
 import { useToast } from '@/hooks/use-toast';
 
 export const useFinanceDashboard = () => {
-  // Check if data was cleared and initialize accordingly
+  // Always show finance transactions - they're independent sample data
   const getInitialTransactions = () => {
-    const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
-    return dataCleared ? [] : initialTransactions;
+    return initialTransactions;
   };
   
   const [transactions, setTransactions] = useState<Transaction[]>(getInitialTransactions());
@@ -23,14 +22,6 @@ export const useFinanceDashboard = () => {
 
   // Load system payment updates on component mount
   useEffect(() => {
-    // Check if data was cleared
-    const dataCleared = localStorage.getItem('sample_data_cleared') === 'true';
-    
-    if (dataCleared) {
-      setTransactions([]);
-      return;
-    }
-    
     const systemUpdates = loadSystemPaymentUpdates();
     if (Object.keys(systemUpdates).length > 0) {
       setTransactions(prev => prev.map(transaction => {
