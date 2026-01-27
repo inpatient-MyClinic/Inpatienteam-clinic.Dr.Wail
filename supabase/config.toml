@@ -1,17 +1,1 @@
-project_id = "ixivawgjdoahqzlghtcz"
-
-[functions.auto-confirm-admin]
-verify_jwt = false
-
-[functions.send-otp-email]
-verify_jwt = false
-# Function disabled - using Supabase built-in OTP instead
-
-[functions.email-debug]
-verify_jwt = false
-
-[functions.email-test]
-verify_jwt = false
-
-[functions.health-check]
-verify_jwt = false
+project_id = "xinslkxcxntaertkzmwh"
