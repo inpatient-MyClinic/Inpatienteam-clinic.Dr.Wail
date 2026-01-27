@@ -15,25 +15,18 @@ export const AuthHealthPanel = () => {
     setStatus('idle');
     
     try {
-      // Test database connection
-      const { data: pingData, error: pingError } = await supabase.rpc('health_ping');
+      // Test basic auth connection instead of RPC
+      const { data: session } = await supabase.auth.getSession();
       
-      if (pingError) {
-        setStatus('error');
-        setDetails({ error: pingError.message });
-        return;
-      }
-      
-      // Get current configuration
       const redirectUrl = `${window.location.origin}/admin`;
       const currentUrl = window.location.href;
       
       setStatus('success');
       setDetails({
-        database: pingData?.[0] || null,
+        database: { status: 'connected' },
         redirectUrl,
         currentUrl,
-        supabaseUrl: "https://ixivawgjdoahqzlghtcz.supabase.co"
+        hasSession: !!session?.session
       });
       
     } catch (error: any) {

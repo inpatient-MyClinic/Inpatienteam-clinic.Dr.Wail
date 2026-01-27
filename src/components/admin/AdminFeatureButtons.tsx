@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/supabaseClient";
 import NewUserRequests from "./NewUserRequests";
 
 interface AdminFeatureButtonsProps {
@@ -46,7 +46,7 @@ export default function AdminFeatureButtons({
 
   const updatePendingCount = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('profiles')
         .select('id')
         .eq('status', 'pending');
