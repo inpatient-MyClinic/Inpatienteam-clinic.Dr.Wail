@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, User, History } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/lib/supabaseClient";
 import UserApproval from "./UserApproval";
 
 interface NewUserRequestsProps {
@@ -29,7 +29,7 @@ export default function NewUserRequests({ onClose }: NewUserRequestsProps) {
 
   const updatePendingCount = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('profiles')
         .select('id')
         .eq('status', 'pending');
@@ -48,7 +48,7 @@ export default function NewUserRequests({ onClose }: NewUserRequestsProps) {
   const fetchHistoryUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('profiles')
         .select('id, full_name, email, role, status, created_at, approved_at, approved_by')
         .in('status', ['active', 'suspended'])

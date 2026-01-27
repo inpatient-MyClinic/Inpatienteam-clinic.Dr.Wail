@@ -1,101 +1,161 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Footer from "@/components/Footer";
-import { EnvironmentBanner } from "@/components/auth/EnvironmentBanner";
-import { AuthHealthCheck } from "@/components/auth/AuthHealthCheck";
-import { AuthHealthPanel } from "@/components/auth/AuthHealthPanel";
-import { NewLoginForm } from "@/components/auth/NewLoginForm";
-import { InviteLink } from "@/components/auth/InviteLink";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import EmailOtpLogin from "@/components/auth/EmailOtpLogin";
-
-import { QATestRunner } from "@/components/auth/QATestRunner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Check for authenticated user and redirect
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        // Clear any invalid sessions first
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Session error:', error);
-          // Clear invalid session from localStorage
-          await supabase.auth.signOut({ scope: 'local' });
-          return;
-        }
-        
-        if (session) {
-          navigate('/admin', { replace: true });
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-        // Clear localStorage on connection failure
-        await supabase.auth.signOut({ scope: 'local' });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/admin', { replace: true });
       }
     };
-    
     checkAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         navigate('/admin', { replace: true });
-      } else if (event === 'SIGNED_OUT') {
-        navigate('/', { replace: true });
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      if (data.user) {
+        toast.success('Login successful!');
+        navigate('/admin', { replace: true });
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      setError('Please enter email and password');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      toast.success('Account created! You can now login.');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex">
-      {/* Left Column - Health Check */}
-      <div className="w-1/3 p-6 border-r bg-muted/30">
-        <EnvironmentBanner />
-        <AuthHealthCheck />
-        <div className="mt-4">
-          <AuthHealthPanel />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <img 
+            src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
+            alt="My Clinic Logo" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold text-blue-900">My Clinic – In-patient</h1>
+          <p className="text-blue-700 text-sm">Surgical Case Management System</p>
         </div>
-        <QATestRunner />
-      </div>
 
-      {/* Right Column - Login Form */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-md">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <img 
-                src="/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png" 
-                alt="My Clinic Logo" 
-                className="h-16 w-auto mx-auto mb-4"
-              />
-              <h1 className="text-2xl font-bold text-blue-900">My Clinic – In-patient</h1>
-              <p className="text-blue-700 text-sm">Surgical Case Management System</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sign In</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@myclinic.com.sa"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+
+            <div className="border-t pt-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleSignUp}
+                disabled={isLoading}
+              >
+                Create Account
+              </Button>
             </div>
-
-            <Tabs defaultValue="password" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="password">كلمة المرور</TabsTrigger>
-                <TabsTrigger value="otp">رمز OTP</TabsTrigger>
-              </TabsList>
-              <TabsContent value="password" className="space-y-4">
-                <NewLoginForm />
-              </TabsContent>
-              <TabsContent value="otp" className="space-y-4">
-                <EmailOtpLogin onSuccess={() => navigate('/admin', { replace: true })} />
-              </TabsContent>
-            </Tabs>
-            <InviteLink />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
         <Footer />
       </div>
     </div>

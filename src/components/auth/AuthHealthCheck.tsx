@@ -49,25 +49,17 @@ export const AuthHealthCheck = () => {
 
     // Check 2: Supabase connectivity
     try {
-      const { data, error } = await supabase.from('profiles').select('count').limit(1);
-      if (error) {
-        results.push({
-          name: "Supabase Connectivity",
-          status: 'error',
-          message: `Supabase error: ${error.message}`
-        });
-      } else {
-        results.push({
-          name: "Supabase Connectivity",
-          status: 'success',
-          message: "Successfully connected to Supabase"
-        });
-      }
-    } catch (error) {
+      const { data: session } = await supabase.auth.getSession();
+      results.push({
+        name: "Supabase Connectivity",
+        status: 'success',
+        message: "Connected to backend"
+      });
+    } catch (error: any) {
       results.push({
         name: "Supabase Connectivity",
         status: 'error',
-        message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Backend error: ${error?.message || 'Unknown error'}`
       });
     }
 

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/supabaseClient';
 import { UserCheck, UserX, Clock, Mail, Phone, Building2, Edit3 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -43,7 +43,7 @@ export default function UserApproval() {
 
   const fetchPendingUsers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('profiles')
         .select('*')
         .eq('status', 'pending')
@@ -69,7 +69,7 @@ export default function UserApproval() {
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('profiles')
         .update({ role: newRole as any })
         .eq('id', userId);
@@ -107,7 +107,7 @@ export default function UserApproval() {
     setProcessingUsers(prev => new Set(prev).add(userId));
     
     try {
-      const { error } = await supabase.rpc('approve_user', { user_id: userId });
+      const { error } = await db.rpc('approve_user', { user_id: userId });
 
       if (error) {
         console.error('Error approving user:', error);
@@ -146,7 +146,7 @@ export default function UserApproval() {
     setProcessingUsers(prev => new Set(prev).add(userId));
     
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('profiles')
         .update({ status: 'suspended' })
         .eq('id', userId);
