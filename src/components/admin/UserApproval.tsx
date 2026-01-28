@@ -42,29 +42,10 @@ export default function UserApproval() {
   }, []);
 
   const fetchPendingUsers = async () => {
-    try {
-      const { data, error } = await db
-        .from('profiles')
-        .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching pending users:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch pending users",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setPendingUsers(data || []);
-    } catch (error) {
-      console.error('Error in fetchPendingUsers:', error);
-    } finally {
-      setLoading(false);
-    }
+    // User approval workflow not yet implemented - status column doesn't exist
+    // This will be implemented when user approval feature is added
+    setPendingUsers([]);
+    setLoading(false);
   };
 
   const updateUserRole = async (userId: string, newRole: string) => {

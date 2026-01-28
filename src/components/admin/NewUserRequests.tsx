@@ -28,44 +28,16 @@ export default function NewUserRequests({ onClose }: NewUserRequestsProps) {
   }, []);
 
   const updatePendingCount = async () => {
-    try {
-      const { data, error } = await db
-        .from('profiles')
-        .select('id')
-        .eq('status', 'pending');
-      
-      if (error) {
-        console.error('Error fetching pending users:', error);
-        return;
-      }
-      
-      setPendingCount(data?.length || 0);
-    } catch (error) {
-      console.error('Error fetching pending users:', error);
-    }
+    // User approval workflow not yet implemented - status column doesn't exist
+    // This will be implemented when user approval feature is added
+    setPendingCount(0);
   };
 
   const fetchHistoryUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await db
-        .from('profiles')
-        .select('id, full_name, email, role, status, created_at, approved_at, approved_by')
-        .in('status', ['active', 'suspended'])
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (error) {
-        console.error('Error fetching history users:', error);
-        return;
-      }
-      
-      setHistoryUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching history users:', error);
-    } finally {
-      setLoading(false);
-    }
+    // User approval workflow not yet implemented - status column doesn't exist
+    // This will be implemented when user approval feature is added
+    setLoading(false);
+    setHistoryUsers([]);
   };
 
   return (
