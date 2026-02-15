@@ -8,6 +8,7 @@ export interface RawExcelMetrics {
   mcj2Cases: number;
   doneCases: number;
   conversionRate: number;
+  conversionTotal: number; // total cases by agreed date
   statusBreakdown: Record<string, number>;
   branchBreakdown: Record<string, number>;
   hospitalBreakdown: Record<string, number>;
@@ -34,6 +35,7 @@ export function useRawExcelAnalytics(year: number, month: number) {
     mcj2Cases: 0,
     doneCases: 0,
     conversionRate: 0,
+    conversionTotal: 0,
     statusBreakdown: {},
     branchBreakdown: {},
     hospitalBreakdown: {},
@@ -53,7 +55,6 @@ export function useRawExcelAnalytics(year: number, month: number) {
       setError(null);
 
       try {
-        // Fetch all rows from excel_rows_raw
         const { data, error: fetchError } = await supabase
           .from('excel_rows_raw')
           .select('raw_data');
@@ -69,71 +70,87 @@ export function useRawExcelAnalytics(year: number, month: number) {
 
         console.log(`📊 Processing ${data.length} rows from excel_rows_raw`);
 
-        // Filter by year/month and aggregate
+        // --- Metrics by START DATE (Date of Request) ---
         const statusBreakdown: Record<string, number> = {};
         const branchBreakdown: Record<string, number> = {};
         const hospitalBreakdown: Record<string, number> = {};
         const specialtyBreakdown: Record<string, number> = {};
-
         let totalCases = 0;
+
+        // --- Conversion rate by AGREED DATE ---
+        let conversionTotal = 0; // total rows whose agreed date falls in selected month
+        let conversionDone = 0;  // done/scheduled/planned NVD among those
+
+        const doneStatuses = ['Done', 'Completed', 'Scheduled', 'Planned NVD', 'Planned nvd'];
 
         data.forEach(row => {
           const raw = row.raw_data as any;
           if (!raw) return;
 
-          // Parse date from "Date of Request:" field
-          const dateValue = raw['Date of Request:'] || raw['Date of Request'] || raw['date_of_request'];
-          const date = excelDateToJS(dateValue);
+          // ---- Start date filter (Date of Request) ----
+          const startDateValue = raw['Date of Request:'] || raw['Date of Request'] || raw['date_of_request'];
+          const startDate = excelDateToJS(startDateValue);
 
-          if (!date) return;
+          const inStartMonth = startDate &&
+            startDate.getFullYear() === year &&
+            (startDate.getMonth() + 1) === month;
 
-          // Filter by selected month/year
-          if (date.getFullYear() !== year || (date.getMonth() + 1) !== month) {
-            return;
+          if (inStartMonth) {
+            totalCases++;
+
+            const status = raw['Status of operation:'] || raw['Status of Operation:'] || raw['status_of_operation'] || 'Unknown';
+            statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+
+            const branch = raw['Branch:'] || raw['Branch'] || raw['branch'] || 'Unknown';
+            branchBreakdown[branch] = (branchBreakdown[branch] || 0) + 1;
+
+            const hospital = raw['Hospital Name:'] || raw['Hospital Name'] || raw['hospital_name'] || 'Unknown';
+            hospitalBreakdown[hospital] = (hospitalBreakdown[hospital] || 0) + 1;
+
+            const specialty = raw['Specialty:'] || raw['Specialty'] || raw['specialty'] || 'Unknown';
+            specialtyBreakdown[specialty] = (specialtyBreakdown[specialty] || 0) + 1;
           }
 
-          totalCases++;
+          // ---- Agreed date filter (for conversion rate) ----
+          const agreedDateValue = raw['Agreed Date:'] || raw['Agreed Date'] || raw['agreed_date']
+            || raw['Agreed date:'] || raw['Agreed date'];
+          const agreedDate = excelDateToJS(agreedDateValue);
 
-          // Extract status
-          const status = raw['Status of operation:'] || raw['Status of Operation:'] || raw['status_of_operation'] || 'Unknown';
-          statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+          const inAgreedMonth = agreedDate &&
+            agreedDate.getFullYear() === year &&
+            (agreedDate.getMonth() + 1) === month;
 
-          // Extract branch
-          const branch = raw['Branch:'] || raw['Branch'] || raw['branch'] || 'Unknown';
-          branchBreakdown[branch] = (branchBreakdown[branch] || 0) + 1;
-
-          // Extract hospital
-          const hospital = raw['Hospital Name:'] || raw['Hospital Name'] || raw['hospital_name'] || 'Unknown';
-          hospitalBreakdown[hospital] = (hospitalBreakdown[hospital] || 0) + 1;
-
-          // Extract specialty
-          const specialty = raw['Specialty:'] || raw['Specialty'] || raw['specialty'] || 'Unknown';
-          specialtyBreakdown[specialty] = (specialtyBreakdown[specialty] || 0) + 1;
+          if (inAgreedMonth) {
+            conversionTotal++;
+            const status = raw['Status of operation:'] || raw['Status of Operation:'] || raw['status_of_operation'] || '';
+            if (doneStatuses.some(s => status.toLowerCase().includes(s.toLowerCase()))) {
+              conversionDone++;
+            }
+          }
         });
 
-        // Calculate MCJ1/MCJ2 from branch
+        // MCJ1 / MCJ2 from branch breakdown
         const mcj1Cases = Object.entries(branchBreakdown)
           .filter(([k]) => /mcj\s*1/i.test(k))
           .reduce((acc, [, v]) => acc + v, 0);
-        
+
         const mcj2Cases = Object.entries(branchBreakdown)
           .filter(([k]) => /mcj\s*2/i.test(k))
           .reduce((acc, [, v]) => acc + v, 0);
 
-        // Calculate done cases (Done + Scheduled + Planned NVD)
-        const doneStatuses = ['Done', 'Completed', 'Scheduled', 'Planned NVD', 'Planned nvd'];
+        // Done cases from start-date status breakdown (for display)
         const doneCases = Object.entries(statusBreakdown)
           .filter(([k]) => doneStatuses.some(s => k.toLowerCase().includes(s.toLowerCase())))
           .reduce((acc, [, v]) => acc + v, 0);
 
-        const conversionRate = totalCases > 0 ? Math.round((doneCases / totalCases) * 100) : 0;
+        // Conversion rate = done cases by agreed date / total by agreed date
+        const conversionRate = conversionTotal > 0 ? Math.round((conversionDone / conversionTotal) * 100) : 0;
 
         console.log(`📊 Raw Excel Analytics for ${month}/${year}:
-      Total Cases: ${totalCases}
-      MCJ1: ${mcj1Cases}
-      MCJ2: ${mcj2Cases}
-      Done: ${doneCases}
-      Conversion: ${conversionRate}%`);
+      Total Cases (start date): ${totalCases}
+      MCJ1: ${mcj1Cases}, MCJ2: ${mcj2Cases}
+      Done (start date): ${doneCases}
+      Conversion (agreed date): ${conversionDone}/${conversionTotal} = ${conversionRate}%`);
 
         setMetrics({
           totalCases,
@@ -141,6 +158,7 @@ export function useRawExcelAnalytics(year: number, month: number) {
           mcj2Cases,
           doneCases,
           conversionRate,
+          conversionTotal,
           statusBreakdown,
           branchBreakdown,
           hospitalBreakdown,
