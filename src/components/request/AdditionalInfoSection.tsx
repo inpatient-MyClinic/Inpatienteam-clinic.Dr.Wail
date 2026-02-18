@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { RequestFormData } from "@/types/request";
 import { servicesBySpecialty } from "@/data/medicalData";
+import VoiceDictationButton from "./VoiceDictationButton";
 
 interface AdditionalInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -18,7 +19,6 @@ const urgencyOptions = [
 ];
 
 const AdditionalInfoSection = ({ form, onFieldChange, selectedSpecialty }: AdditionalInfoSectionProps) => {
-  // Get services for the selected specialty
   const availableServices = selectedSpecialty && servicesBySpecialty[selectedSpecialty as keyof typeof servicesBySpecialty] 
     ? servicesBySpecialty[selectedSpecialty as keyof typeof servicesBySpecialty]
     : [];
@@ -50,13 +50,21 @@ const AdditionalInfoSection = ({ form, onFieldChange, selectedSpecialty }: Addit
 
       <div>
         <label className="block font-medium text-gray-600 mb-1">Admission Duration (days)</label>
-        <Input
-          type="number"
-          value={form.admissionDuration || ""}
-          onChange={(e) => onFieldChange("admissionDuration", e.target.value)}
-          placeholder="Enter admission duration in days"
-          min="0"
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            type="number"
+            value={form.admissionDuration || ""}
+            onChange={(e) => onFieldChange("admissionDuration", e.target.value)}
+            placeholder="Enter admission duration in days"
+            min="0"
+            className="flex-1"
+          />
+          <VoiceDictationButton
+            currentValue={form.admissionDuration || ""}
+            onResult={(text) => onFieldChange("admissionDuration", text)}
+            append={false}
+          />
+        </div>
       </div>
 
     </div>
