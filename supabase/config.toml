@@ -1,1 +1,4 @@
 project_id = "xinslkxcxntaertkzmwh"
+
+[functions.suggest-icd-history]
+verify_jwt = false
