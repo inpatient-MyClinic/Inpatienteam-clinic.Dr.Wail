@@ -188,7 +188,7 @@ const NotificationTemplates = () => {
       trigger_event: form.trigger_event as any,
       channel: form.channel as any,
       target: form.target as any,
-      target_specialty: form.target_specialty || null,
+      target_specialty: form.target_specialty && form.target_specialty !== "all" ? form.target_specialty : null,
       target_doctor_id: form.target_doctor_id || null,
       content: form.content,
       ai_generated_content: form.ai_generated_content || null,
@@ -734,7 +734,7 @@ const NotificationTemplates = () => {
                 <Select value={form.target_specialty} onValueChange={v => setForm(p => ({ ...p, target_specialty: v }))}>
                   <SelectTrigger><SelectValue placeholder="All specialties" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Specialties</SelectItem>
+                    <SelectItem value="all">All Specialties</SelectItem>
                     {specialties.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
