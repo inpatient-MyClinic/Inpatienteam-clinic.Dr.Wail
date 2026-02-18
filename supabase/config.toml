@@ -2,3 +2,9 @@ project_id = "xinslkxcxntaertkzmwh"
 
 [functions.suggest-icd-history]
 verify_jwt = false
+
+[functions.generate-sms]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false

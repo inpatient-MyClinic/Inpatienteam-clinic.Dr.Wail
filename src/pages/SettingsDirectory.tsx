@@ -19,6 +19,7 @@ import HospitalCodes from "@/components/settings/HospitalCodes";
 import SettingsDataManager from "@/components/settings/SettingsDataManager";
 import PreApprovedEmails from "@/components/settings/PreApprovedEmails";
 import CoordinatorHospitalMatrix from "@/components/settings/CoordinatorHospitalMatrix";
+import NotificationTemplates from "@/components/settings/NotificationTemplates";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 
@@ -158,13 +159,18 @@ const SettingsDirectory = () => {
           {/* Data & Monitoring */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">📊 Data & Monitoring</h3>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="notifications">SMS / WhatsApp</TabsTrigger>
               <TabsTrigger value="data">Data Manager</TabsTrigger>
               <TabsTrigger value="audit">Audit Trail</TabsTrigger>
               <TabsTrigger value="tracker">User Tracker</TabsTrigger>
             </TabsList>
           </div>
         </div>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <NotificationTemplates />
+        </TabsContent>
 
         <TabsContent value="data" className="space-y-6">
           <SettingsDataManager />
