@@ -2,6 +2,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { RequestFormData } from "@/types/request";
+import VoiceDictationButton from "./VoiceDictationButton";
 
 interface PatientInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -15,29 +16,53 @@ const PatientInfoSection = ({ form, onFieldChange }: PatientInfoSectionProps) =>
       
       <div>
         <label className="block font-medium text-gray-600 mb-1">Patient Name</label>
-        <Input
-          value={form.patientName || ""}
-          onChange={(e) => onFieldChange("patientName", e.target.value)}
-          required
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            value={form.patientName || ""}
+            onChange={(e) => onFieldChange("patientName", e.target.value)}
+            required
+            className="flex-1"
+          />
+          <VoiceDictationButton
+            currentValue={form.patientName || ""}
+            onResult={(text) => onFieldChange("patientName", text)}
+            append={false}
+          />
+        </div>
       </div>
 
       <div>
         <label className="block font-medium text-gray-600 mb-1">Patient National ID</label>
-        <Input
-          value={form.patientNationalId || ""}
-          onChange={(e) => onFieldChange("patientNationalId", e.target.value)}
-          required
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            value={form.patientNationalId || ""}
+            onChange={(e) => onFieldChange("patientNationalId", e.target.value)}
+            required
+            className="flex-1"
+          />
+          <VoiceDictationButton
+            currentValue={form.patientNationalId || ""}
+            onResult={(text) => onFieldChange("patientNationalId", text)}
+            append={false}
+          />
+        </div>
       </div>
 
       <div>
         <label className="block font-medium text-gray-600 mb-1">Patient Mobile No.</label>
-        <Input
-          value={form.patientMobileNo || ""}
-          onChange={(e) => onFieldChange("patientMobileNo", e.target.value)}
-          required
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            value={form.patientMobileNo || ""}
+            onChange={(e) => onFieldChange("patientMobileNo", e.target.value)}
+            required
+            className="flex-1"
+          />
+          <VoiceDictationButton
+            currentValue={form.patientMobileNo || ""}
+            onResult={(text) => onFieldChange("patientMobileNo", text)}
+            append={false}
+          />
+        </div>
       </div>
     </div>
   );

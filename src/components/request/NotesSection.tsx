@@ -10,6 +10,7 @@ import { RequestFormData } from "@/types/request";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Check, X, Loader2, Lightbulb, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import VoiceDictationButton from "./VoiceDictationButton";
 
 interface NotesSectionProps {
   form: Partial<RequestFormData>;
@@ -288,12 +289,20 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
       {/* History */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">History</label>
-        <Textarea
-          value={form.history || ""}
-          onChange={(e) => onFieldChange("history", e.target.value)}
-          rows={3}
-          placeholder="Enter patient clinical history..."
-        />
+        <div className="relative">
+          <Textarea
+            value={form.history || ""}
+            onChange={(e) => onFieldChange("history", e.target.value)}
+            rows={3}
+            placeholder="Enter patient clinical history or use voice dictation..."
+          />
+          <VoiceDictationButton
+            currentValue={form.history || ""}
+            onResult={(text) => onFieldChange("history", text)}
+            append={true}
+            className="absolute top-1 right-1"
+          />
+        </div>
       </div>
 
       {/* AI Button */}
@@ -583,11 +592,19 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
       {/* Notes */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">Notes (optional)</label>
-        <Textarea
-          value={form.notes || ""}
-          onChange={(e) => onFieldChange("notes", e.target.value)}
-          rows={2}
-        />
+        <div className="relative">
+          <Textarea
+            value={form.notes || ""}
+            onChange={(e) => onFieldChange("notes", e.target.value)}
+            rows={2}
+          />
+          <VoiceDictationButton
+            currentValue={form.notes || ""}
+            onResult={(text) => onFieldChange("notes", text)}
+            append={true}
+            className="absolute top-1 right-1"
+          />
+        </div>
       </div>
     </div>
   );

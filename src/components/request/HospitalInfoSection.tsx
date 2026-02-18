@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestFormData } from "@/types/request";
 import { hospitals, getHospitalsBySpecialty } from "@/data/medicalData";
+import VoiceDictationButton from "./VoiceDictationButton";
 
 interface HospitalInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -11,7 +12,6 @@ interface HospitalInfoSectionProps {
 }
 
 const HospitalInfoSection = ({ form, onFieldChange }: HospitalInfoSectionProps) => {
-  // Get appropriate hospitals based on specialty
   const availableHospitals = form.specialty ? getHospitalsBySpecialty(form.specialty) : hospitals;
   return (
     <div className="space-y-5">
@@ -19,11 +19,19 @@ const HospitalInfoSection = ({ form, onFieldChange }: HospitalInfoSectionProps) 
       
       <div>
         <label className="block font-medium text-gray-600 mb-1">Hospital MRN</label>
-        <Input
-          value={form.hospitalMRN || ""}
-          onChange={(e) => onFieldChange("hospitalMRN", e.target.value)}
-          required
-        />
+        <div className="flex items-center gap-1">
+          <Input
+            value={form.hospitalMRN || ""}
+            onChange={(e) => onFieldChange("hospitalMRN", e.target.value)}
+            required
+            className="flex-1"
+          />
+          <VoiceDictationButton
+            currentValue={form.hospitalMRN || ""}
+            onResult={(text) => onFieldChange("hospitalMRN", text)}
+            append={false}
+          />
+        </div>
       </div>
 
       <div>
