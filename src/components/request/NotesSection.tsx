@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,14 +29,89 @@ interface AISuggestion {
   tips: string[];
 }
 
+interface AutocompleteItem {
+  code: string;
+  description: string;
+  relevant: boolean;
+}
+
+interface DiagnosisEntry {
+  text: string;
+  relevant: boolean;
+}
+
+// Custom hook for debounced autocomplete
+function useCodeAutocomplete(type: "diagnosis" | "procedure", history: string, specialty: string) {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const search = useCallback(async (q: string) => {
+    if (q.trim().length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("code-autocomplete", {
+        body: { query: q, type, history, specialty },
+      });
+      if (!error && data?.suggestions) {
+        setSuggestions(data.suggestions);
+        setShowDropdown(data.suggestions.length > 0);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, [type, history, specialty]);
+
+  const onQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => search(value), 500);
+  }, [search]);
+
+  const close = useCallback(() => {
+    setShowDropdown(false);
+  }, []);
+
+  return { query, setQuery, suggestions, loading, showDropdown, onQueryChange, close, setShowDropdown };
+}
+
 const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null);
   const [selectedIcdCodes, setSelectedIcdCodes] = useState<Set<string>>(new Set());
   const [selectedProcCodes, setSelectedProcCodes] = useState<Set<string>>(new Set());
-  const [freeTextDiagnosis, setFreeTextDiagnosis] = useState("");
-  const [freeTextProcedure, setFreeTextProcedure] = useState("");
+  // Track relevance per entry
+  const [diagnosisRelevance, setDiagnosisRelevance] = useState<Map<string, boolean>>(new Map());
+  const [procedureRelevance, setProcedureRelevance] = useState<Map<string, boolean>>(new Map());
   const { toast } = useToast();
+
+  const diagAutocomplete = useCodeAutocomplete("diagnosis", form.history || "", form.specialty || "");
+  const procAutocomplete = useCodeAutocomplete("procedure", form.history || "", form.specialty || "");
+
+  const diagDropdownRef = useRef<HTMLDivElement>(null);
+  const procDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (diagDropdownRef.current && !diagDropdownRef.current.contains(e.target as Node)) {
+        diagAutocomplete.close();
+      }
+      if (procDropdownRef.current && !procDropdownRef.current.contains(e.target as Node)) {
+        procAutocomplete.close();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Parse current multi-value fields
   const diagnosisList = (form.diagnosis || "").split(";").map(s => s.trim()).filter(Boolean);
@@ -114,6 +189,10 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
 
   const applySelectedDiagnoses = () => {
     const newItems = Array.from(selectedIcdCodes).filter(item => !diagnosisList.includes(item));
+    // All AI-suggested items are relevant
+    const newRelevance = new Map(diagnosisRelevance);
+    newItems.forEach(item => newRelevance.set(item, true));
+    setDiagnosisRelevance(newRelevance);
     updateDiagnosis([...diagnosisList, ...newItems]);
     setSelectedIcdCodes(new Set());
     toast({ title: "Added", description: `${newItems.length} diagnosis code(s) added.` });
@@ -121,21 +200,62 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
 
   const applySelectedProcedures = () => {
     const newItems = Array.from(selectedProcCodes).filter(item => !procedureList.includes(item));
+    const newRelevance = new Map(procedureRelevance);
+    newItems.forEach(item => newRelevance.set(item, true));
+    setProcedureRelevance(newRelevance);
     updateProcedures([...procedureList, ...newItems]);
     setSelectedProcCodes(new Set());
     toast({ title: "Added", description: `${newItems.length} procedure code(s) added.` });
   };
 
+  const addFromAutocomplete = (item: AutocompleteItem, type: "diagnosis" | "procedure") => {
+    const text = `${item.code} - ${item.description}`;
+    if (type === "diagnosis") {
+      if (!diagnosisList.includes(text)) {
+        const newRelevance = new Map(diagnosisRelevance);
+        newRelevance.set(text, item.relevant);
+        setDiagnosisRelevance(newRelevance);
+        updateDiagnosis([...diagnosisList, text]);
+      }
+      diagAutocomplete.setQuery("");
+      diagAutocomplete.close();
+    } else {
+      if (!procedureList.includes(text)) {
+        const newRelevance = new Map(procedureRelevance);
+        newRelevance.set(text, item.relevant);
+        setProcedureRelevance(newRelevance);
+        updateProcedures([...procedureList, text]);
+      }
+      procAutocomplete.setQuery("");
+      procAutocomplete.close();
+    }
+  };
+
   const addFreeTextDiagnosis = () => {
-    if (!freeTextDiagnosis.trim()) return;
-    updateDiagnosis([...diagnosisList, freeTextDiagnosis.trim()]);
-    setFreeTextDiagnosis("");
+    if (!diagAutocomplete.query.trim()) return;
+    const text = diagAutocomplete.query.trim();
+    if (!diagnosisList.includes(text)) {
+      // Free text without AI check = unknown relevance, mark as not relevant (red)
+      const newRelevance = new Map(diagnosisRelevance);
+      newRelevance.set(text, false);
+      setDiagnosisRelevance(newRelevance);
+      updateDiagnosis([...diagnosisList, text]);
+    }
+    diagAutocomplete.setQuery("");
+    diagAutocomplete.close();
   };
 
   const addFreeTextProcedure = () => {
-    if (!freeTextProcedure.trim()) return;
-    updateProcedures([...procedureList, freeTextProcedure.trim()]);
-    setFreeTextProcedure("");
+    if (!procAutocomplete.query.trim()) return;
+    const text = procAutocomplete.query.trim();
+    if (!procedureList.includes(text)) {
+      const newRelevance = new Map(procedureRelevance);
+      newRelevance.set(text, false);
+      setProcedureRelevance(newRelevance);
+      updateProcedures([...procedureList, text]);
+    }
+    procAutocomplete.setQuery("");
+    procAutocomplete.close();
   };
 
   const removeDiagnosis = (index: number) => {
@@ -151,6 +271,14 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
       onFieldChange("history", suggestion.suggestedHistory);
       toast({ title: "Accepted", description: "Suggested history has been applied." });
     }
+  };
+
+  const getBadgeClasses = (item: string, relevanceMap: Map<string, boolean>, baseColor: string, unrelevantColor: string) => {
+    const isRelevant = relevanceMap.get(item);
+    // If relevance is unknown (not in map), treat as neutral
+    if (isRelevant === undefined) return `${baseColor} px-3 py-1`;
+    if (isRelevant) return `${baseColor} px-3 py-1`;
+    return `${unrelevantColor} px-3 py-1 border border-red-300`;
   };
 
   return (
@@ -180,63 +308,125 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
         {isLoading ? "Analyzing..." : "Get ICD Codes, Procedures & Approval Suggestions"}
       </Button>
 
-      {/* Selected Diagnoses */}
+      {/* Diagnosis Codes with Autocomplete */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">Diagnosis Codes</label>
         <div className="flex flex-wrap gap-2 mb-2 min-h-[32px]">
-          {diagnosisList.map((item, idx) => (
-            <Badge key={idx} variant="secondary" className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1">
-              {item}
-              <button type="button" onClick={() => removeDiagnosis(idx)} className="ml-1 hover:text-red-600">
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </Badge>
-          ))}
+          {diagnosisList.map((item, idx) => {
+            const isRelevant = diagnosisRelevance.get(item);
+            const badgeBg = isRelevant === false ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800";
+            return (
+              <Badge key={idx} variant="secondary" className={`flex items-center gap-1 ${badgeBg} px-3 py-1 ${isRelevant === false ? 'border border-red-300' : ''}`}>
+                {isRelevant === false && <X className="w-3 h-3 text-red-500 mr-0.5" />}
+                {item}
+                <button type="button" onClick={() => removeDiagnosis(idx)} className="ml-1 hover:text-red-600">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </Badge>
+            );
+          })}
           {diagnosisList.length === 0 && (
             <span className="text-sm text-gray-400">No diagnosis codes added yet</span>
           )}
         </div>
-        <div className="flex gap-2">
-          <Input
-            value={freeTextDiagnosis}
-            onChange={(e) => setFreeTextDiagnosis(e.target.value)}
-            placeholder="Add custom diagnosis code or text..."
-            className="flex-1"
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFreeTextDiagnosis(); } }}
-          />
-          <Button type="button" variant="outline" size="sm" onClick={addFreeTextDiagnosis}>
-            <Plus className="w-4 h-4" />
-          </Button>
+        <div className="relative" ref={diagDropdownRef}>
+          <div className="flex gap-2">
+            <Input
+              value={diagAutocomplete.query}
+              onChange={(e) => diagAutocomplete.onQueryChange(e.target.value)}
+              onFocus={() => { if (diagAutocomplete.suggestions.length > 0) diagAutocomplete.setShowDropdown(true); }}
+              placeholder="Type to search ICD-10 codes or add custom text..."
+              className="flex-1"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFreeTextDiagnosis(); } }}
+            />
+            {diagAutocomplete.loading && <Loader2 className="w-4 h-4 animate-spin absolute right-14 top-2.5 text-gray-400" />}
+            <Button type="button" variant="outline" size="sm" onClick={addFreeTextDiagnosis}>
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          {diagAutocomplete.showDropdown && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {diagAutocomplete.suggestions.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => addFromAutocomplete(item, "diagnosis")}
+                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2 border-b last:border-0 ${
+                    !item.relevant ? "bg-red-50/50" : ""
+                  }`}
+                >
+                  <Badge variant="secondary" className={`font-mono text-xs shrink-0 ${item.relevant ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"}`}>
+                    {item.code}
+                  </Badge>
+                  <span className="text-sm text-gray-700 flex-1">{item.description}</span>
+                  {!item.relevant && (
+                    <span className="text-xs text-red-500 shrink-0">Not related</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Selected Procedures */}
+      {/* Procedure Codes with Autocomplete */}
       <div>
         <label className="block font-medium text-gray-600 mb-1">Procedure / Package Codes</label>
         <div className="flex flex-wrap gap-2 mb-2 min-h-[32px]">
-          {procedureList.map((item, idx) => (
-            <Badge key={idx} variant="secondary" className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1">
-              {item}
-              <button type="button" onClick={() => removeProcedure(idx)} className="ml-1 hover:text-red-600">
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </Badge>
-          ))}
+          {procedureList.map((item, idx) => {
+            const isRelevant = procedureRelevance.get(item);
+            const badgeBg = isRelevant === false ? "bg-red-100 text-red-800" : "bg-purple-100 text-purple-800";
+            return (
+              <Badge key={idx} variant="secondary" className={`flex items-center gap-1 ${badgeBg} px-3 py-1 ${isRelevant === false ? 'border border-red-300' : ''}`}>
+                {isRelevant === false && <X className="w-3 h-3 text-red-500 mr-0.5" />}
+                {item}
+                <button type="button" onClick={() => removeProcedure(idx)} className="ml-1 hover:text-red-600">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </Badge>
+            );
+          })}
           {procedureList.length === 0 && (
             <span className="text-sm text-gray-400">No procedure codes added yet</span>
           )}
         </div>
-        <div className="flex gap-2">
-          <Input
-            value={freeTextProcedure}
-            onChange={(e) => setFreeTextProcedure(e.target.value)}
-            placeholder="Add custom procedure code or text..."
-            className="flex-1"
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFreeTextProcedure(); } }}
-          />
-          <Button type="button" variant="outline" size="sm" onClick={addFreeTextProcedure}>
-            <Plus className="w-4 h-4" />
-          </Button>
+        <div className="relative" ref={procDropdownRef}>
+          <div className="flex gap-2">
+            <Input
+              value={procAutocomplete.query}
+              onChange={(e) => procAutocomplete.onQueryChange(e.target.value)}
+              onFocus={() => { if (procAutocomplete.suggestions.length > 0) procAutocomplete.setShowDropdown(true); }}
+              placeholder="Type to search procedure/package codes or add custom text..."
+              className="flex-1"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFreeTextProcedure(); } }}
+            />
+            {procAutocomplete.loading && <Loader2 className="w-4 h-4 animate-spin absolute right-14 top-2.5 text-gray-400" />}
+            <Button type="button" variant="outline" size="sm" onClick={addFreeTextProcedure}>
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          {procAutocomplete.showDropdown && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {procAutocomplete.suggestions.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => addFromAutocomplete(item, "procedure")}
+                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2 border-b last:border-0 ${
+                    !item.relevant ? "bg-red-50/50" : ""
+                  }`}
+                >
+                  <Badge variant="secondary" className={`font-mono text-xs shrink-0 ${item.relevant ? "bg-purple-100 text-purple-800" : "bg-red-100 text-red-800"}`}>
+                    {item.code}
+                  </Badge>
+                  <span className="text-sm text-gray-700 flex-1">{item.description}</span>
+                  {!item.relevant && (
+                    <span className="text-xs text-red-500 shrink-0">Not related</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
