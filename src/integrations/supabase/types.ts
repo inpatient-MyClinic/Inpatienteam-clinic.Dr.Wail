@@ -14,6 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
+      notification_logs: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          content: string
+          error_message: string | null
+          id: string
+          recipient_name: string | null
+          recipient_phone: string | null
+          recipient_role: string | null
+          request_id: string | null
+          sent_at: string
+          sent_by: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          content: string
+          error_message?: string | null
+          id?: string
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          recipient_role?: string | null
+          request_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          content?: string
+          error_message?: string | null
+          id?: string
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          recipient_role?: string | null
+          request_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          ai_generated_content: string | null
+          approval_note: string | null
+          approval_status: Database["public"]["Enums"]["approval_status"]
+          approved_by: string | null
+          channel: Database["public"]["Enums"]["notification_channel"]
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          target: Database["public"]["Enums"]["template_target"]
+          target_doctor_id: string | null
+          target_specialty: string | null
+          title: string
+          trigger_event: Database["public"]["Enums"]["notification_trigger"]
+          updated_at: string
+        }
+        Insert: {
+          ai_generated_content?: string | null
+          approval_note?: string | null
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approved_by?: string | null
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          target?: Database["public"]["Enums"]["template_target"]
+          target_doctor_id?: string | null
+          target_specialty?: string | null
+          title: string
+          trigger_event?: Database["public"]["Enums"]["notification_trigger"]
+          updated_at?: string
+        }
+        Update: {
+          ai_generated_content?: string | null
+          approval_note?: string | null
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approved_by?: string | null
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          target?: Database["public"]["Enums"]["template_target"]
+          target_doctor_id?: string | null
+          target_specialty?: string | null
+          title?: string
+          trigger_event?: Database["public"]["Enums"]["notification_trigger"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -50,6 +160,77 @@ export type Database = {
           phone?: string | null
           specialty?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      template_approvals: {
+        Row: {
+          created_at: string
+          id: string
+          new_content: string
+          new_title: string | null
+          old_content: string | null
+          requested_by: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["approval_status"]
+          template_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_content: string
+          new_title?: string | null
+          old_content?: string | null
+          requested_by: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["approval_status"]
+          template_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_content?: string
+          new_title?: string | null
+          old_content?: string | null
+          requested_by?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["approval_status"]
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_approvals_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_approvers: {
+        Row: {
+          created_at: string
+          granted_by: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -100,6 +281,15 @@ export type Database = {
         | "case-coordinator"
         | "finance"
         | "customer-care"
+      approval_status: "pending" | "approved" | "rejected"
+      notification_channel: "sms" | "whatsapp" | "both"
+      notification_trigger:
+        | "request_created"
+        | "request_approved"
+        | "anesthesia_date_set"
+        | "surgery_date_agreed"
+        | "manual"
+      template_target: "patient" | "doctor" | "coordinator" | "all"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -236,6 +426,16 @@ export const Constants = {
         "finance",
         "customer-care",
       ],
+      approval_status: ["pending", "approved", "rejected"],
+      notification_channel: ["sms", "whatsapp", "both"],
+      notification_trigger: [
+        "request_created",
+        "request_approved",
+        "anesthesia_date_set",
+        "surgery_date_agreed",
+        "manual",
+      ],
+      template_target: ["patient", "doctor", "coordinator", "all"],
     },
   },
 } as const
