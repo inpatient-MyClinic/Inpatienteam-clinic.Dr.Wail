@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { RequestFormData } from "@/types/request";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Check, X, Loader2, Lightbulb, Plus, Trash2 } from "lucide-react";
@@ -267,7 +267,9 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
                           : "bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/50"
                       }`}
                     >
-                      <Checkbox checked={isSelected} className="mt-1" />
+                      <div className={`mt-1 h-4 w-4 rounded-sm border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-300'}`}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
                       <div className="flex-1">
                         <Badge variant="secondary" className="font-mono text-sm bg-blue-100 text-blue-800 mb-1">
                           {icd.code}
@@ -317,7 +319,9 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
                           : "bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50/50"
                       }`}
                     >
-                      <Checkbox checked={isSelected} className="mt-1" />
+                      <div className={`mt-1 h-4 w-4 rounded-sm border flex items-center justify-center shrink-0 ${isSelected ? 'bg-purple-600 border-purple-600 text-white' : 'border-gray-300'}`}>
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
                       <div className="flex-1">
                         <Badge variant="secondary" className="font-mono text-sm bg-purple-100 text-purple-800 mb-1">
                           {proc.code}
