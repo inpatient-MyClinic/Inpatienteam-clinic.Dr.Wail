@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   MessageSquare, Plus, Sparkles, Send, Edit, Trash2, CheckCircle, XCircle, 
-  Clock, Users, Phone, Bell, Shield, Copy, Eye
+  Clock, Users, Phone, Bell, Shield, Copy, Eye, Search, PhoneCall, User
 } from "lucide-react";
 
 const triggerLabels: Record<string, string> = {
@@ -44,6 +44,10 @@ const specialties = [
   "Cardiology", "ENT", "GIT (Gastroenterology)", "General Surgery",
   "Neurology", "Neurosurgery", "OBGYN", "Ophthalmology",
   "Orthopaedic", "Urology", "Vascular Surgery"
+];
+
+const userCategories = [
+  "Admin", "Doctor", "Nurse", "Hospital", "Case Coordinator", "Finance", "Customer Care"
 ];
 
 interface Template {
@@ -80,10 +84,24 @@ const NotificationTemplates = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showQuickMessageDialog, setShowQuickMessageDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [sendTarget, setSendTarget] = useState({ type: "all", value: "" });
+  const [logSearch, setLogSearch] = useState("");
+
+  // Quick message state
+  const [quickMessage, setQuickMessage] = useState({
+    recipientPhone: "",
+    recipientName: "",
+    content: "",
+    channel: "whatsapp"
+  });
+
+  // Coordinator phone config
+  const [senderPhone, setSenderPhone] = useState(() => localStorage.getItem('coordinator_sender_phone') || "");
+  const [showPhoneConfig, setShowPhoneConfig] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -92,6 +110,7 @@ const NotificationTemplates = () => {
     channel: "whatsapp",
     target: "patient",
     target_specialty: "",
+    target_doctor_id: "",
     content: "",
     ai_generated_content: ""
   });
@@ -108,10 +127,7 @@ const NotificationTemplates = () => {
       .from('notification_templates')
       .select('*')
       .order('created_at', { ascending: false });
-    
-    if (!error && data) {
-      setTemplates(data as any);
-    }
+    if (!error && data) setTemplates(data as any);
     setLoading(false);
   };
 
@@ -129,7 +145,7 @@ const NotificationTemplates = () => {
       .from('notification_logs')
       .select('*')
       .order('sent_at', { ascending: false })
-      .limit(50);
+      .limit(100);
     if (data) setLogs(data);
   };
 
@@ -141,12 +157,7 @@ const NotificationTemplates = () => {
     setAiLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-sms', {
-        body: {
-          originalContent: form.content,
-          trigger: form.trigger_event,
-          target: form.target,
-          channel: form.channel
-        }
+        body: { originalContent: form.content, trigger: form.trigger_event, target: form.target, channel: form.channel }
       });
       if (error) throw error;
       setForm(prev => ({ ...prev, ai_generated_content: data.content }));
@@ -169,16 +180,16 @@ const NotificationTemplates = () => {
       toast({ title: "Title and content are required", variant: "destructive" });
       return;
     }
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const templateData = {
       title: form.title,
-      trigger_event: form.trigger_event as "request_created" | "request_approved" | "anesthesia_date_set" | "surgery_date_agreed" | "manual",
-      channel: form.channel as "sms" | "whatsapp" | "both",
-      target: form.target as "patient" | "doctor" | "coordinator" | "all",
+      trigger_event: form.trigger_event as any,
+      channel: form.channel as any,
+      target: form.target as any,
       target_specialty: form.target_specialty || null,
+      target_doctor_id: form.target_doctor_id || null,
       content: form.content,
       ai_generated_content: form.ai_generated_content || null,
       created_by: user.id,
@@ -186,37 +197,27 @@ const NotificationTemplates = () => {
     };
 
     if (editingTemplate) {
-      const { error } = await supabase
-        .from('notification_templates')
-        .update(templateData)
-        .eq('id', editingTemplate.id);
-      if (error) {
-        toast({ title: "Failed to update template", variant: "destructive" });
-        return;
-      }
+      const { error } = await supabase.from('notification_templates').update(templateData).eq('id', editingTemplate.id);
+      if (error) { toast({ title: "Failed to update template", variant: "destructive" }); return; }
     } else {
-      const { error } = await supabase
-        .from('notification_templates')
-        .insert([templateData]);
-      if (error) {
-        toast({ title: "Failed to create template", variant: "destructive" });
-        return;
-      }
+      const { error } = await supabase.from('notification_templates').insert([templateData]);
+      if (error) { toast({ title: "Failed to create template", variant: "destructive" }); return; }
     }
 
     toast({ title: editingTemplate ? "Template updated" : "Template created" });
     setShowCreateDialog(false);
     setEditingTemplate(null);
-    setForm({ title: "", trigger_event: "manual", channel: "whatsapp", target: "patient", target_specialty: "", content: "", ai_generated_content: "" });
+    resetForm();
     loadTemplates();
+  };
+
+  const resetForm = () => {
+    setForm({ title: "", trigger_event: "manual", channel: "whatsapp", target: "patient", target_specialty: "", target_doctor_id: "", content: "", ai_generated_content: "" });
   };
 
   const deleteTemplate = async (id: string) => {
     const { error } = await supabase.from('notification_templates').delete().eq('id', id);
-    if (!error) {
-      toast({ title: "Template deleted" });
-      loadTemplates();
-    }
+    if (!error) { toast({ title: "Template deleted" }); loadTemplates(); }
   };
 
   const toggleTemplate = async (id: string, active: boolean) => {
@@ -245,15 +246,36 @@ const NotificationTemplates = () => {
     }
   };
 
+  const sendQuickMessage = async () => {
+    if (!quickMessage.content || !quickMessage.recipientPhone) {
+      toast({ title: "Phone and message are required", variant: "destructive" });
+      return;
+    }
+    try {
+      const { error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          content: quickMessage.content,
+          channel: quickMessage.channel,
+          recipients: [{ phone: quickMessage.recipientPhone, name: quickMessage.recipientName || "Patient", role: "patient" }]
+        }
+      });
+      if (error) throw error;
+      toast({ title: "Message sent!" });
+      setShowQuickMessageDialog(false);
+      setQuickMessage({ recipientPhone: "", recipientName: "", content: "", channel: "whatsapp" });
+      loadLogs();
+    } catch (e) {
+      toast({ title: "Failed to send message", variant: "destructive" });
+    }
+  };
+
   const handleApproval = async (approvalId: string, status: 'approved' | 'rejected') => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const { error } = await supabase
       .from('template_approvals')
       .update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
       .eq('id', approvalId);
-
     if (!error) {
       toast({ title: `Template change ${status}` });
       loadApprovals();
@@ -269,11 +291,27 @@ const NotificationTemplates = () => {
       channel: template.channel,
       target: template.target,
       target_specialty: template.target_specialty || "",
+      target_doctor_id: template.target_doctor_id || "",
       content: template.content,
       ai_generated_content: template.ai_generated_content || ""
     });
     setShowCreateDialog(true);
   };
+
+  const saveSenderPhone = () => {
+    localStorage.setItem('coordinator_sender_phone', senderPhone);
+    toast({ title: "Sender phone number saved" });
+    setShowPhoneConfig(false);
+  };
+
+  const filteredLogs = logSearch
+    ? logs.filter(l =>
+        (l.recipient_name || "").toLowerCase().includes(logSearch.toLowerCase()) ||
+        (l.recipient_phone || "").includes(logSearch) ||
+        (l.content || "").toLowerCase().includes(logSearch.toLowerCase()) ||
+        (l.status || "").toLowerCase().includes(logSearch.toLowerCase())
+      )
+    : logs;
 
   return (
     <div className="space-y-6">
@@ -288,10 +326,20 @@ const NotificationTemplates = () => {
             Manage automated and manual message templates with AI assistance
           </p>
         </div>
-        <Button onClick={() => { setEditingTemplate(null); setForm({ title: "", trigger_event: "manual", channel: "whatsapp", target: "patient", target_specialty: "", content: "", ai_generated_content: "" }); setShowCreateDialog(true); }}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Template
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPhoneConfig(true)}>
+            <Phone className="w-4 h-4 mr-2" />
+            {senderPhone ? `Sender: ${senderPhone}` : "Set Sender Phone"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowQuickMessageDialog(true)}>
+            <Send className="w-4 h-4 mr-2" />
+            Quick Message
+          </Button>
+          <Button onClick={() => { setEditingTemplate(null); resetForm(); setShowCreateDialog(true); }}>
+            <Plus className="w-4 h-4 mr-2" />
+            New Template
+          </Button>
+        </div>
       </div>
 
       {/* Pending Approvals */}
@@ -330,6 +378,7 @@ const NotificationTemplates = () => {
         <TabsList>
           <TabsTrigger value="templates">📝 Templates</TabsTrigger>
           <TabsTrigger value="auto-triggers">⚡ Auto Triggers</TabsTrigger>
+          <TabsTrigger value="send-message">✉️ Send Message</TabsTrigger>
           <TabsTrigger value="logs">📊 Send Log</TabsTrigger>
           <TabsTrigger value="access">🔐 Access Control</TabsTrigger>
         </TabsList>
@@ -356,7 +405,7 @@ const NotificationTemplates = () => {
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <h3 className="font-semibold text-lg">{t.title}</h3>
                           <Badge variant={t.is_active ? "default" : "secondary"}>
                             {t.is_active ? "Active" : "Inactive"}
@@ -365,6 +414,9 @@ const NotificationTemplates = () => {
                           <Badge variant="outline" className="bg-blue-50">{targetLabels[t.target]}</Badge>
                           {t.target_specialty && (
                             <Badge variant="outline" className="bg-purple-50">{t.target_specialty}</Badge>
+                          )}
+                          {t.target_doctor_id && (
+                            <Badge variant="outline" className="bg-yellow-50">Doctor: {t.target_doctor_id}</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
@@ -445,42 +497,139 @@ const NotificationTemplates = () => {
           </Card>
         </TabsContent>
 
+        {/* Send Message Tab - compose ad-hoc messages */}
+        <TabsContent value="send-message" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="w-5 h-5 text-green-600" />
+                Compose & Send Message
+              </CardTitle>
+              <CardDescription>
+                Send a custom message to a patient or use an existing template. You can also send additional messages outside of template roles.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Recipient Name</Label>
+                  <Input
+                    value={quickMessage.recipientName}
+                    onChange={e => setQuickMessage(p => ({ ...p, recipientName: e.target.value }))}
+                    placeholder="Patient or recipient name"
+                  />
+                </div>
+                <div>
+                  <Label>Phone Number</Label>
+                  <Input
+                    value={quickMessage.recipientPhone}
+                    onChange={e => setQuickMessage(p => ({ ...p, recipientPhone: e.target.value }))}
+                    placeholder="+966XXXXXXXXX"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Channel</Label>
+                <Select value={quickMessage.channel} onValueChange={v => setQuickMessage(p => ({ ...p, channel: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(channelLabels).map(([k, v]) => (
+                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Optionally pick an existing template */}
+              {templates.length > 0 && (
+                <div>
+                  <Label>Use Template (optional)</Label>
+                  <Select onValueChange={v => {
+                    const tpl = templates.find(t => t.id === v);
+                    if (tpl) setQuickMessage(p => ({ ...p, content: tpl.content }));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Choose a template or write your own" /></SelectTrigger>
+                    <SelectContent>
+                      {templates.filter(t => t.is_active).map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div>
+                <Label>Message Content</Label>
+                <Textarea
+                  value={quickMessage.content}
+                  onChange={e => setQuickMessage(p => ({ ...p, content: e.target.value }))}
+                  placeholder="Type your message here..."
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can write any custom message or pick a template above and modify it.
+                </p>
+              </div>
+              <Button onClick={sendQuickMessage} className="bg-green-600 hover:bg-green-700">
+                <Send className="w-4 h-4 mr-2" /> Send Message
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Logs Tab */}
         <TabsContent value="logs" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Notification Send Log</CardTitle>
-              <CardDescription>History of all sent SMS/WhatsApp messages</CardDescription>
+              <CardDescription>Complete trail of all SMS/WhatsApp messages sent</CardDescription>
             </CardHeader>
             <CardContent>
-              {logs.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No notifications sent yet</p>
+              <div className="flex items-center gap-2 mb-4">
+                <Search className="w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={logSearch}
+                  onChange={e => setLogSearch(e.target.value)}
+                  placeholder="Search by name, phone, content, or status..."
+                  className="max-w-sm"
+                />
+                <Badge variant="outline">{filteredLogs.length} records</Badge>
+              </div>
+              {filteredLogs.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">No notifications found</p>
               ) : (
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[500px]">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
+                        <TableHead>Date & Time</TableHead>
                         <TableHead>Recipient</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead>Channel</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Content</TableHead>
+                        <TableHead>Message</TableHead>
+                        <TableHead>Error</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {logs.map(log => (
+                      {filteredLogs.map(log => (
                         <TableRow key={log.id}>
-                          <TableCell className="text-xs">{new Date(log.sent_at).toLocaleString()}</TableCell>
-                          <TableCell>{log.recipient_name || "—"}</TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">{new Date(log.sent_at).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <div>
+                              <span className="font-medium">{log.recipient_name || "—"}</span>
+                              {log.recipient_role && (
+                                <Badge variant="outline" className="ml-1 text-[10px]">{log.recipient_role}</Badge>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="font-mono text-xs">{log.recipient_phone || "—"}</TableCell>
-                          <TableCell><Badge variant="outline">{channelLabels[log.channel]}</Badge></TableCell>
+                          <TableCell><Badge variant="outline">{channelLabels[log.channel] || log.channel}</Badge></TableCell>
                           <TableCell>
                             <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
                               {log.status}
                             </Badge>
                           </TableCell>
                           <TableCell className="max-w-xs truncate text-xs">{log.content}</TableCell>
+                          <TableCell className="max-w-[150px] truncate text-xs text-red-500">{log.error_message || ""}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -497,7 +646,40 @@ const NotificationTemplates = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Create/Edit Dialog */}
+      {/* Sender Phone Config Dialog */}
+      <Dialog open={showPhoneConfig} onOpenChange={setShowPhoneConfig}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PhoneCall className="w-5 h-5" />
+              Sender Phone Number
+            </DialogTitle>
+            <DialogDescription>
+              Set the phone number that will be used to send WhatsApp/SMS messages.
+              Coordinators can identify messages from this number in their WhatsApp (browser or phone).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Sender Phone Number</Label>
+              <Input
+                value={senderPhone}
+                onChange={e => setSenderPhone(e.target.value)}
+                placeholder="+966XXXXXXXXX"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                This number will appear as the sender when coordinators receive messages via WhatsApp Web or mobile.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPhoneConfig(false)}>Cancel</Button>
+            <Button onClick={saveSenderPhone}>Save Number</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Template Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -546,17 +728,28 @@ const NotificationTemplates = () => {
               </div>
             </div>
 
-            <div>
-              <Label>Target Specialty (optional)</Label>
-              <Select value={form.target_specialty} onValueChange={v => setForm(p => ({ ...p, target_specialty: v }))}>
-                <SelectTrigger><SelectValue placeholder="All specialties" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Specialties</SelectItem>
-                  {specialties.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Target Specialty (optional)</Label>
+                <Select value={form.target_specialty} onValueChange={v => setForm(p => ({ ...p, target_specialty: v }))}>
+                  <SelectTrigger><SelectValue placeholder="All specialties" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Specialties</SelectItem>
+                    {specialties.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Specific Doctor (optional)</Label>
+                <Input
+                  value={form.target_doctor_id}
+                  onChange={e => setForm(p => ({ ...p, target_doctor_id: e.target.value }))}
+                  placeholder="Doctor name or ID"
+                />
+              </div>
             </div>
 
+            {/* Message Content */}
             <div>
               <Label>Message Content</Label>
               <Textarea 
@@ -570,6 +763,7 @@ const NotificationTemplates = () => {
               </p>
             </div>
 
+            {/* AI Section */}
             <div className="border rounded-lg p-4 bg-blue-50/50">
               <div className="flex items-center justify-between mb-2">
                 <Label className="flex items-center gap-2">
@@ -608,7 +802,7 @@ const NotificationTemplates = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Send Dialog */}
+      {/* Send Template Dialog */}
       <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
         <DialogContent>
           <DialogHeader>
@@ -624,7 +818,7 @@ const NotificationTemplates = () => {
                   <SelectItem value="all">All Patients</SelectItem>
                   <SelectItem value="specialty">By Specialty</SelectItem>
                   <SelectItem value="doctor">Specific Doctor</SelectItem>
-                  <SelectItem value="selected">Selected Patients</SelectItem>
+                  <SelectItem value="patient">Specific Patient</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -645,6 +839,14 @@ const NotificationTemplates = () => {
                 <Input value={sendTarget.value} onChange={e => setSendTarget(p => ({ ...p, value: e.target.value }))} placeholder="Enter doctor name or email" />
               </div>
             )}
+            {sendTarget.type === "patient" && (
+              <div className="space-y-3">
+                <div>
+                  <Label>Patient Phone Number</Label>
+                  <Input value={sendTarget.value} onChange={e => setSendTarget(p => ({ ...p, value: e.target.value }))} placeholder="+966XXXXXXXXX" />
+                </div>
+              </div>
+            )}
             <div className="bg-muted/50 p-3 rounded-lg">
               <Label className="text-xs text-muted-foreground">Preview:</Label>
               <p className="text-sm mt-1 whitespace-pre-wrap">{selectedTemplate?.content}</p>
@@ -658,54 +860,110 @@ const NotificationTemplates = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Quick Message Dialog */}
+      <Dialog open={showQuickMessageDialog} onOpenChange={setShowQuickMessageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Quick Message</DialogTitle>
+            <DialogDescription>Send a custom one-off message to a patient</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Recipient Name</Label>
+                <Input value={quickMessage.recipientName} onChange={e => setQuickMessage(p => ({ ...p, recipientName: e.target.value }))} placeholder="Name" />
+              </div>
+              <div>
+                <Label>Phone</Label>
+                <Input value={quickMessage.recipientPhone} onChange={e => setQuickMessage(p => ({ ...p, recipientPhone: e.target.value }))} placeholder="+966XXXXXXXXX" />
+              </div>
+            </div>
+            <div>
+              <Label>Message</Label>
+              <Textarea value={quickMessage.content} onChange={e => setQuickMessage(p => ({ ...p, content: e.target.value }))} rows={4} placeholder="Type your message..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowQuickMessageDialog(false)}>Cancel</Button>
+            <Button onClick={sendQuickMessage} className="bg-green-600 hover:bg-green-700">
+              <Send className="w-4 h-4 mr-2" /> Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// Access Control Panel for template approvers
+// Access Control Panel with category-based user selection
 const AccessControlPanel = () => {
   const { toast } = useToast();
   const [approvers, setApprovers] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [newApproverEmail, setNewApproverEmail] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [addMode, setAddMode] = useState<"category" | "manual">("manual");
 
   useEffect(() => { loadApprovers(); }, []);
 
   const loadApprovers = async () => {
     const { data } = await supabase
       .from('template_approvers')
-      .select('*')
+      .select('*, profiles:user_id(email, full_name)')
       .order('created_at');
     if (data) setApprovers(data);
   };
 
+  const loadUsersByCategory = async (category: string) => {
+    setSelectedCategory(category);
+    // Map display category to app_role enum
+    const roleMap: Record<string, string> = {
+      "Admin": "admin",
+      "Doctor": "doctor",
+      "Nurse": "nurse",
+      "Hospital": "hospital",
+      "Case Coordinator": "case-coordinator",
+      "Finance": "finance",
+      "Customer Care": "customer-care"
+    };
+    const role = roleMap[category];
+    if (!role) return;
+
+    const { data } = await supabase
+      .from('user_roles')
+      .select('user_id, profiles:user_id(email, full_name)')
+      .eq('role', role as any);
+    if (data) setProfiles(data);
+  };
+
+  const addApproverById = async (userId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase
+      .from('template_approvers')
+      .insert({ user_id: userId, granted_by: user.id });
+    if (error) {
+      toast({ title: error.message.includes('duplicate') ? "Already an approver" : "Failed to add approver", variant: "destructive" });
+    } else {
+      toast({ title: "Approver added" });
+      loadApprovers();
+    }
+  };
+
   const addApprover = async () => {
     if (!newApproverEmail) return;
-    // Look up user by email in profiles
     const { data: profile } = await supabase
       .from('profiles')
       .select('id, email, full_name')
       .eq('email', newApproverEmail)
       .single();
-
     if (!profile) {
       toast({ title: "User not found", variant: "destructive" });
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('template_approvers')
-      .insert({ user_id: profile.id, granted_by: user.id });
-
-    if (error) {
-      toast({ title: "Failed to add approver", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Approver added" });
-      setNewApproverEmail("");
-      loadApprovers();
-    }
+    await addApproverById(profile.id);
+    setNewApproverEmail("");
   };
 
   const removeApprover = async (id: string) => {
@@ -726,17 +984,66 @@ const AccessControlPanel = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            value={newApproverEmail}
-            onChange={e => setNewApproverEmail(e.target.value)}
-            placeholder="Enter user email to grant access..."
-            className="flex-1"
-          />
-          <Button onClick={addApprover}>
-            <Plus className="w-4 h-4 mr-2" /> Add Approver
+        {/* Toggle between category and manual add */}
+        <div className="flex gap-2 mb-2">
+          <Button
+            variant={addMode === "category" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAddMode("category")}
+          >
+            <Users className="w-4 h-4 mr-1" /> By Category
+          </Button>
+          <Button
+            variant={addMode === "manual" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAddMode("manual")}
+          >
+            <User className="w-4 h-4 mr-1" /> Manual Entry
           </Button>
         </div>
+
+        {addMode === "manual" ? (
+          <div className="flex gap-2">
+            <Input
+              value={newApproverEmail}
+              onChange={e => setNewApproverEmail(e.target.value)}
+              placeholder="Enter user email to grant access..."
+              className="flex-1"
+            />
+            <Button onClick={addApprover}>
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <Label>Select User Category</Label>
+              <Select value={selectedCategory} onValueChange={loadUsersByCategory}>
+                <SelectTrigger><SelectValue placeholder="Choose category..." /></SelectTrigger>
+                <SelectContent>
+                  {userCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {profiles.length > 0 && (
+              <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
+                {profiles.map((p: any) => (
+                  <div key={p.user_id} className="flex items-center justify-between py-1">
+                    <div>
+                      <span className="font-medium text-sm">{p.profiles?.full_name || "—"}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{p.profiles?.email}</span>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => addApproverById(p.user_id)}>
+                      <Plus className="w-3 h-3 mr-1" /> Add
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Current approvers list */}
         {approvers.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
             Only admins can manage templates. Add approvers to delegate access.
@@ -745,7 +1052,8 @@ const AccessControlPanel = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User ID</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Added</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -753,7 +1061,8 @@ const AccessControlPanel = () => {
             <TableBody>
               {approvers.map(a => (
                 <TableRow key={a.id}>
-                  <TableCell className="font-mono text-xs">{a.user_id}</TableCell>
+                  <TableCell className="font-medium">{(a.profiles as any)?.full_name || "—"}</TableCell>
+                  <TableCell className="text-sm">{(a.profiles as any)?.email || a.user_id}</TableCell>
                   <TableCell className="text-sm">{new Date(a.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" className="text-red-500" onClick={() => removeApprover(a.id)}>
