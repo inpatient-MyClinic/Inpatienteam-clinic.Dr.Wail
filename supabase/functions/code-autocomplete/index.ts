@@ -25,11 +25,24 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const codeType = type === "procedure" ? "CPT/HCPCS procedure and package codes per CHI Saudi Arabia guidelines" : "ICD-10 diagnosis codes";
+    const isProcedure = type === "procedure";
 
-    const systemPrompt = `You are a medical coding lookup assistant. Given a search query, return matching ${codeType}.
+    const systemPrompt = isProcedure
+      ? `You are a medical procedure coding specialist. Given a search query, return ONLY procedure codes — specifically CPT codes, ICD-10-PCS procedure codes, or CHI Saudi Arabia package codes.
 
-For each result, determine if it is RELEVANT to the provided patient history. A code is relevant if it could reasonably be associated with the clinical scenario described.
+IMPORTANT: Do NOT return ICD-10-CM diagnosis codes. Only return codes that represent medical/surgical PROCEDURES, interventions, or service packages.
+
+For each result, determine if it is RELEVANT to the provided patient history.
+
+Respond ONLY with valid JSON array (no wrapping object, just the array):
+[
+  { "code": "CODE", "description": "Description", "relevant": true/false }
+]
+
+Return up to 8 suggestions. If no matches, return empty array [].`
+      : `You are a medical diagnosis coding specialist. Given a search query, return matching ICD-10-CM diagnosis codes.
+
+For each result, determine if it is RELEVANT to the provided patient history.
 
 Respond ONLY with valid JSON array (no wrapping object, just the array):
 [
@@ -42,7 +55,7 @@ Return up to 8 suggestions. If no matches, return empty array [].`;
 ${specialty ? `Specialty: ${specialty}` : ""}
 ${history ? `Patient history: ${history}` : "No history provided"}
 
-Return matching ${type === "procedure" ? "procedure/package" : "ICD-10 diagnosis"} codes.`;
+Return matching ${isProcedure ? "CPT/ICD-10-PCS procedure or CHI package" : "ICD-10-CM diagnosis"} codes. ${isProcedure ? "Do NOT include any diagnosis codes." : ""}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
