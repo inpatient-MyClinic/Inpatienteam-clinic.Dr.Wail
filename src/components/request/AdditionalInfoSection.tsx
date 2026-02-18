@@ -27,39 +27,7 @@ const AdditionalInfoSection = ({ form, onFieldChange, selectedSpecialty }: Addit
     <div className="space-y-5">
       <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Additional Information</h3>
       
-      <div>
-        <label className="block font-medium text-gray-600 mb-1">Diagnosis</label>
-        <Textarea
-          value={form.diagnosis || ""}
-          onChange={(e) => onFieldChange("diagnosis", e.target.value)}
-          placeholder="Enter diagnosis details"
-          rows={3}
-        />
-      </div>
-
-      <div>
-        <label className="block font-medium text-gray-600 mb-1">Service Description</label>
-        <Select 
-          value={form.serviceDescription || ""} 
-          onValueChange={(value) => onFieldChange("serviceDescription", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select service description" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableServices.map((service) => (
-              <SelectItem key={service} value={service}>
-                {service}
-              </SelectItem>
-            ))}
-            {availableServices.length === 0 && (
-              <SelectItem value="no-service-placeholder" disabled>
-                {selectedSpecialty ? "No services available for this specialty" : "Select a specialty first"}
-              </SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Diagnosis and Service Description moved to NotesSection (AI-assisted) */}
 
       <div>
         <label className="block font-medium text-gray-600 mb-1">Urgency</label>
