@@ -72,41 +72,61 @@ ${history || "No history provided"}
 
 Please suggest appropriate ICD-10 diagnosis codes and procedure/package codes per CHI Saudi Arabia and European guidelines, and rewrite the history to maximize insurance approval.`;
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage },
-          ],
-        }),
-      }
-    );
+    const models = ["openai/gpt-5-mini", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
+    let response: Response | null = null;
+    let lastError = "";
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    for (const model of models) {
+      console.log(`Trying model: ${model}`);
+      try {
+        response = await fetch(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userMessage },
+              ],
+            }),
+          }
         );
+
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "AI credits exhausted. Please add credits." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (response.ok) {
+          console.log(`Success with model: ${model}`);
+          break;
+        }
+
+        lastError = await response.text();
+        console.error(`Model ${model} failed (${response.status}):`, lastError);
+        response = null;
+      } catch (e) {
+        console.error(`Model ${model} fetch error:`, e);
+        response = null;
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+    }
+
+    if (!response || !response.ok) {
       return new Response(
-        JSON.stringify({ error: `AI service temporarily unavailable (${response.status}). Please try again in a few moments.` }),
+        JSON.stringify({ error: "AI service temporarily unavailable. Please try again in a few moments." }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
