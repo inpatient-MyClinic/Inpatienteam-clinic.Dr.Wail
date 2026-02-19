@@ -14,6 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_items: {
+        Row: {
+          agreed_split_amount: number
+          created_at: string
+          discount: number
+          doctor_name: string
+          doctor_payment_amount: number | null
+          doctor_split_percentage: number | null
+          finance_notes: string | null
+          flag_reason: string | null
+          gross_amount: number
+          hospital_price: number | null
+          id: string
+          insurance_share: number
+          justification: string | null
+          net_amount: number
+          patient_id: string | null
+          patient_name: string
+          patient_share: number
+          procedure_date: string
+          procedure_name: string
+          specialty: string | null
+          statement_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agreed_split_amount?: number
+          created_at?: string
+          discount?: number
+          doctor_name: string
+          doctor_payment_amount?: number | null
+          doctor_split_percentage?: number | null
+          finance_notes?: string | null
+          flag_reason?: string | null
+          gross_amount?: number
+          hospital_price?: number | null
+          id?: string
+          insurance_share?: number
+          justification?: string | null
+          net_amount?: number
+          patient_id?: string | null
+          patient_name: string
+          patient_share?: number
+          procedure_date: string
+          procedure_name: string
+          specialty?: string | null
+          statement_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agreed_split_amount?: number
+          created_at?: string
+          discount?: number
+          doctor_name?: string
+          doctor_payment_amount?: number | null
+          doctor_split_percentage?: number | null
+          finance_notes?: string | null
+          flag_reason?: string | null
+          gross_amount?: number
+          hospital_price?: number | null
+          id?: string
+          insurance_share?: number
+          justification?: string | null
+          net_amount?: number
+          patient_id?: string | null
+          patient_name?: string
+          patient_share?: number
+          procedure_date?: string
+          procedure_name?: string
+          specialty?: string | null
+          statement_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_items_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "billing_statements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_statements: {
+        Row: {
+          created_at: string
+          hospital_name: string
+          id: string
+          month: string
+          notes: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string | null
+          total_amount: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          hospital_name: string
+          id?: string
+          month: string
+          notes?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          total_amount?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          hospital_name?: string
+          id?: string
+          month?: string
+          notes?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          total_amount?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      doctor_payment_splits: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doctor_name: string
+          doctor_type: string
+          id: string
+          split_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doctor_name: string
+          doctor_type?: string
+          id?: string
+          split_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doctor_name?: string
+          doctor_type?: string
+          id?: string
+          split_percentage?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_kpi_settings: {
+        Row: {
+          created_at: string
+          id: string
+          kpi_label: string
+          kpi_name: string
+          target_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi_label: string
+          kpi_name: string
+          target_days: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi_label?: string
+          kpi_name?: string
+          target_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]
@@ -254,6 +439,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vat_invoices: {
+        Row: {
+          created_at: string
+          hospital_name: string
+          id: string
+          invoice_number: string
+          issued_at: string
+          month: string
+          paid_at: string | null
+          sent_at: string | null
+          statement_id: string
+          status: string
+          subtotal: number
+          total: number
+          vat_amount: number
+          vat_rate: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          hospital_name: string
+          id?: string
+          invoice_number: string
+          issued_at?: string
+          month: string
+          paid_at?: string | null
+          sent_at?: string | null
+          statement_id: string
+          status?: string
+          subtotal?: number
+          total?: number
+          vat_amount?: number
+          vat_rate?: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          hospital_name?: string
+          id?: string
+          invoice_number?: string
+          issued_at?: string
+          month?: string
+          paid_at?: string | null
+          sent_at?: string | null
+          statement_id?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          vat_amount?: number
+          vat_rate?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vat_invoices_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "billing_statements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

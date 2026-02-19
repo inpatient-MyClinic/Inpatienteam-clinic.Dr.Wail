@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ExportButton from "@/components/ExportButton";
+import HospitalBillingStatement from "@/components/hospital/HospitalBillingStatement";
 import HospitalSidebar from "@/components/hospital/HospitalSidebar";
 import HospitalFilters from "@/components/hospital/HospitalFilters";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
@@ -175,6 +176,7 @@ export default function HospitalDashboard() {
           <div className="p-6">
             {/* Header with Export, Print and Messaging */}
             <div className="mb-4 flex justify-end items-center gap-2">
+              <HospitalBillingStatement requests={requests} />
               <MessagingIcons currentUserRole="hospital" unreadCount={unreadCount} />
               <Button 
                 variant="outline" 
