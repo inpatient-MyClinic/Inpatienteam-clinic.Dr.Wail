@@ -81,7 +81,7 @@ Please suggest appropriate ICD-10 diagnosis codes and procedure/package codes pe
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage },
@@ -105,7 +105,10 @@ Please suggest appropriate ICD-10 diagnosis codes and procedure/package codes pe
       }
       const errText = await response.text();
       console.error("AI gateway error:", response.status, errText);
-      throw new Error("AI gateway error");
+      return new Response(
+        JSON.stringify({ error: `AI service temporarily unavailable (${response.status}). Please try again in a few moments.` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();

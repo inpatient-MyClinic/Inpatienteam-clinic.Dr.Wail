@@ -150,7 +150,13 @@ const NotesSection = ({ form, onFieldChange }: NotesSectionProps) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check for specific error status codes
+        const errorBody = error?.context?.body ? await error.context.body.json?.().catch(() => null) : null;
+        const errorMsg = errorBody?.error || data?.error || "AI service temporarily unavailable. Please try again in a few moments.";
+        toast({ title: "AI Error", description: errorMsg, variant: "destructive" });
+        return;
+      }
       if (data?.error) {
         toast({ title: "AI Error", description: data.error, variant: "destructive" });
         return;
