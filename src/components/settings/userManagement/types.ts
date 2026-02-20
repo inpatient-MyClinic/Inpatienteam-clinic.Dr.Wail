@@ -1,9 +1,12 @@
 
+export type DoctorType = "FT" | "PT";
+
 export type User = {
   id: string;
   email: string;
   category: string;
   specialty?: string;
+  doctorType?: DoctorType;
   status: "Active" | "Inactive";
   createdAt: string;
   fieldPermissions: Record<string, "none" | "view" | "edit">;

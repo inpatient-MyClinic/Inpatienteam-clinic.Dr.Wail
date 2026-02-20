@@ -141,6 +141,7 @@ const EnhancedUserManagement = () => {
         onCancel={cancelEditing}
         onDelete={deleteUser}
         onUpdatePermission={updatePermission}
+        onUpdateUser={updateUser}
         categoryFilter={categoryFilter}
         specialtyFilter={specialtyFilter}
         statusFilter={statusFilter}
