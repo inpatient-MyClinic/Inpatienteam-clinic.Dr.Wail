@@ -46,13 +46,7 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
     month: months[new Date().getMonth()],
     year: new Date().getFullYear(),
     totalPatientsDone: 0,
-    totalSurveysSent: 0,
     totalResponses: 0,
-    promoters: 0,
-    passives: 0,
-    detractors: 0,
-    complaintsCount: 0,
-    complaintsClosed: 0,
   });
 
   // Load saved NPS entries from localStorage
@@ -142,23 +136,21 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
   }, [npsEntries, hospitals, requests, selectedPeriod]);
 
   const saveEntry = () => {
-    const npsScore = entryForm.totalResponses > 0 
-      ? Math.round(((entryForm.promoters - entryForm.detractors) / entryForm.totalResponses) * 100) 
-      : 0;
-
+    // With only done cases and responses, we store simplified data
+    // NPS breakdown (promoters/passives/detractors) will come from survey uploads
     const newEntry: NPSEntry = {
       hospital: entryForm.hospital,
       month: entryForm.month,
       year: entryForm.year,
       totalPatientsDone: entryForm.totalPatientsDone,
-      totalSurveysSent: entryForm.totalSurveysSent,
+      totalSurveysSent: entryForm.totalResponses, // responses = surveys sent for simplified entry
       totalResponses: entryForm.totalResponses,
-      promoters: entryForm.promoters,
-      passives: entryForm.passives,
-      detractors: entryForm.detractors,
-      npsScore,
-      complaintsCount: entryForm.complaintsCount,
-      complaintsClosed: entryForm.complaintsClosed,
+      promoters: 0,
+      passives: 0,
+      detractors: 0,
+      npsScore: 0,
+      complaintsCount: 0,
+      complaintsClosed: 0,
     };
 
     const updated = [...npsEntries.filter(e => !(e.hospital === newEntry.hospital && e.month === newEntry.month && e.year === newEntry.year)), newEntry];
@@ -285,16 +277,12 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
                         <SelectContent>{months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    <div><Label>Total Patients Done</Label><Input type="number" value={entryForm.totalPatientsDone} onChange={e => setEntryForm(f => ({ ...f, totalPatientsDone: +e.target.value }))} /></div>
-                    <div><Label>Total Responses</Label><Input type="number" value={entryForm.totalResponses} onChange={e => setEntryForm(f => ({ ...f, totalResponses: +e.target.value }))} /></div>
-                    <div><Label>Promoters (9-10)</Label><Input type="number" value={entryForm.promoters} onChange={e => setEntryForm(f => ({ ...f, promoters: +e.target.value }))} /></div>
-                    <div><Label>Passives (7-8)</Label><Input type="number" value={entryForm.passives} onChange={e => setEntryForm(f => ({ ...f, passives: +e.target.value }))} /></div>
-                    <div><Label>Detractors (0-6)</Label><Input type="number" value={entryForm.detractors} onChange={e => setEntryForm(f => ({ ...f, detractors: +e.target.value }))} /></div>
-                    <div><Label>Complaints</Label><Input type="number" value={entryForm.complaintsCount} onChange={e => setEntryForm(f => ({ ...f, complaintsCount: +e.target.value }))} /></div>
+                    <div><Label>Number of Done Cases</Label><Input type="number" value={entryForm.totalPatientsDone} onChange={e => setEntryForm(f => ({ ...f, totalPatientsDone: +e.target.value }))} /></div>
+                    <div><Label>Number of Responses</Label><Input type="number" value={entryForm.totalResponses} onChange={e => setEntryForm(f => ({ ...f, totalResponses: +e.target.value }))} /></div>
                   </div>
                   <div className="mt-2 p-3 bg-blue-50 rounded text-sm">
-                    <strong>Calculated NPS:</strong> {entryForm.totalResponses > 0 ? Math.round(((entryForm.promoters - entryForm.detractors) / entryForm.totalResponses) * 100) : 0}
-                    <span className="ml-2 text-xs text-muted-foreground">(Promoters - Detractors) / Responses × 100</span>
+                    <strong>Response Rate:</strong> {entryForm.totalPatientsDone > 0 ? Math.round((entryForm.totalResponses / entryForm.totalPatientsDone) * 100) : 0}%
+                    <span className="ml-2 text-xs text-muted-foreground">(Responses / Done Cases) × 100</span>
                   </div>
                   <Button onClick={saveEntry} disabled={!entryForm.hospital}>Save Entry</Button>
                 </DialogContent>

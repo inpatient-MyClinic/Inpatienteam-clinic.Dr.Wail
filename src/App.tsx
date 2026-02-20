@@ -88,6 +88,7 @@ function App() {
               <Route path="/nurse-dashboard" element={<ProtectedRoute><NurseDashboard /></ProtectedRoute>} />
               <Route path="/hospital-dashboard" element={<ProtectedRoute><HospitalDashboard /></ProtectedRoute>} />
               <Route path="/case-coordinator-dashboard" element={<ProtectedRoute><CaseCoordinatorDashboard /></ProtectedRoute>} />
+              <Route path="/case-coordinator" element={<ProtectedRoute><CaseCoordinatorDashboard /></ProtectedRoute>} />
               <Route path="/finance-dashboard" element={<ProtectedRoute><FinanceDashboard /></ProtectedRoute>} />
               <Route path="/customer-care-dashboard" element={<ProtectedRoute><CustomerCareDashboard /></ProtectedRoute>} />
               <Route path="/create-request" element={<ProtectedRoute><CreateRequest /></ProtectedRoute>} />
