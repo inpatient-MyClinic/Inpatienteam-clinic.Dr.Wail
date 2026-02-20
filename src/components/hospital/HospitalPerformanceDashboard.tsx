@@ -8,10 +8,9 @@ import { differenceInDays, parseISO } from "date-fns";
 
 interface HospitalPerformanceDashboardProps {
   requests: any[];
-  hospitalName: string;
 }
 
-export default function HospitalPerformanceDashboard({ requests, hospitalName }: HospitalPerformanceDashboardProps) {
+export default function HospitalPerformanceDashboard({ requests }: HospitalPerformanceDashboardProps) {
   const metrics = useMemo(() => {
     const total = requests.length;
     const done = requests.filter(r => r.status === "Done").length;
@@ -61,14 +60,6 @@ export default function HospitalPerformanceDashboard({ requests, hospitalName }:
 
   return (
     <div className="space-y-6 mt-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Performance Dashboard — {hospitalName}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <Card className="text-center p-4">
@@ -174,8 +165,6 @@ export default function HospitalPerformanceDashboard({ requests, hospitalName }:
               </Table>
             </div>
           </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -22,6 +22,8 @@ interface HospitalRequestsTableProps {
   setDoctorFilter: (value: string) => void;
   statusFilter: string;
   setStatusFilter: (value: string) => void;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
 }
 
 export default function HospitalRequestsTable({
@@ -34,7 +36,9 @@ export default function HospitalRequestsTable({
   doctorFilter,
   setDoctorFilter,
   statusFilter,
-  setStatusFilter
+  setStatusFilter,
+  searchQuery,
+  setSearchQuery
 }: HospitalRequestsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -162,6 +166,16 @@ export default function HospitalRequestsTable({
         <CardTitle>Hospital Requests ({filteredRequests.length} of {totalRequests})</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Search by MRN / Patient ID */}
+        <div className="mb-4">
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by MRN or Patient ID..."
+            className="max-w-sm"
+          />
+        </div>
+
         {/* Pagination Info */}
         <div className="mb-4 flex justify-between items-center text-sm text-gray-600">
           <div>
