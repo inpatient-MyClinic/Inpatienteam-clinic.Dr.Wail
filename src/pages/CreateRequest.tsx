@@ -13,6 +13,7 @@ import AdditionalInfoSection from "@/components/request/AdditionalInfoSection";
 import SurgeryDetailsSection from "@/components/request/SurgeryDetailsSection";
 import NotesSection from "@/components/request/NotesSection";
 import AttachmentSection from "@/components/request/AttachmentSection";
+import MedicalCodingReference from "@/components/hospital/ViewRequestDialog/MedicalCodingReference";
 import Footer from "@/components/Footer";
 import { FileText } from "lucide-react";
 
@@ -297,6 +298,8 @@ const CreateRequest = () => {
               onFileUpload={handleFileUpload}
               onRemoveAttachment={removeAttachment}
             />
+
+            <MedicalCodingReference request={form} />
 
             <Button type="submit" className="w-full">
               Create Request

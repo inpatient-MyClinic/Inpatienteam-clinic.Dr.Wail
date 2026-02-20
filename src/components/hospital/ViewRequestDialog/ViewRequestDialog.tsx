@@ -104,11 +104,11 @@ export default function ViewRequestDialog({ request, onStatusUpdate }: ViewReque
           <InsuranceContactSection localData={localData} onFieldChange={handleFieldChange} />
           <AdditionalInfoSection localData={localData} onFieldChange={handleFieldChange} />
           
+          <MedicalCodingReference request={request} />
+          
           {request.attachments && request.attachments.length > 0 && (
             <AttachmentsSection attachments={request.attachments} />
           )}
-          
-          <MedicalCodingReference request={request} />
           
           {hasModifications && (
             <DialogActions onSubmit={handleSubmit} />
