@@ -13,17 +13,20 @@ import TablePagination from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import ExportButton from "./ExportButton";
 import { DoctorRequest, REQUEST_STATUSES } from "@/hooks/useDoctorRequests";
+import { ClipboardList } from "lucide-react";
 
 interface RequestsTableProps {
   filteredRequests: DoctorRequest[];
   updateStatus: (requestId: number, newStatus: string) => void;
   updatePaymentStatus?: (requestId: number, paymentStatus: "Paid" | "Not Paid") => void;
+  onAddProcedureReport?: (request: DoctorRequest) => void;
 }
 
 export default function RequestsTable({
   filteredRequests,
   updateStatus,
-  updatePaymentStatus
+  updatePaymentStatus,
+  onAddProcedureReport
 }: RequestsTableProps) {
   const [justificationText, setJustificationText] = useState("");
   
@@ -626,7 +629,14 @@ export default function RequestsTable({
                         <ViewRequestDialog request={req} />
                       </>
                     ) : (
-                      <ViewRequestDialog request={req} />
+                      <div className="flex gap-1">
+                        <ViewRequestDialog request={req} />
+                        {onAddProcedureReport && (
+                          <Button size="sm" variant="outline" onClick={() => onAddProcedureReport(req)} title="Add Procedure Report">
+                            <ClipboardList className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </td>
