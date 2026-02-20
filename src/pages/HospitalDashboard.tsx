@@ -10,6 +10,7 @@ import HospitalSidebar from "@/components/hospital/HospitalSidebar";
 import HospitalFilters from "@/components/hospital/HospitalFilters";
 import HospitalRequestsTable from "@/components/hospital/HospitalRequestsTable";
 import HospitalAnalytics from "@/components/hospital/HospitalAnalytics";
+import HospitalPerformanceDashboard from "@/components/hospital/HospitalPerformanceDashboard";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import { useNurseRequests } from "@/hooks/useNurseRequests";
 import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
@@ -226,6 +227,12 @@ export default function HospitalDashboard() {
               totalRequests={totalRequests}
               approvedRequests={approvedRequests}
               rejectedRequests={rejectedRequests}
+            />
+
+            {/* Performance Dashboard & KPIs */}
+            <HospitalPerformanceDashboard 
+              requests={finalFilteredRequests}
+              hospitalName={currentHospitalName}
             />
 
             {/* Footer */}
