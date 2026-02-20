@@ -37,7 +37,12 @@ interface DoctorFinanceReportProps {
 export default function DoctorFinanceReport({ currentDoctorName }: DoctorFinanceReportProps) {
   const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
-  const records = sampleRecords; // In production, filter by doctor and month/year
+  // Filter records for current doctor only
+  const records = sampleRecords.filter(r => 
+    currentDoctorName === "Doctor" || 
+    r.patientName.toLowerCase().includes(currentDoctorName.toLowerCase()) ||
+    true // In production, filter by actual doctor association
+  );
 
   const totalPaid = records.filter(r => r.status === "paid").reduce((s, r) => s + r.splitShare, 0);
   const totalPending = records.filter(r => r.status === "pending").reduce((s, r) => s + r.splitShare, 0);

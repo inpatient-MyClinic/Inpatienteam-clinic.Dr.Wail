@@ -309,6 +309,69 @@ export type Database = {
         }
         Relationships: []
       }
+      nps_monthly_entries: {
+        Row: {
+          complaints_closed: number
+          complaints_count: number
+          created_at: string
+          created_by: string | null
+          detractors: number
+          doctor_name: string | null
+          hospital_name: string
+          id: string
+          month: string
+          nps_score: number | null
+          passives: number
+          promoters: number
+          specialty: string | null
+          total_patients_done: number
+          total_responses: number
+          total_surveys_sent: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          complaints_closed?: number
+          complaints_count?: number
+          created_at?: string
+          created_by?: string | null
+          detractors?: number
+          doctor_name?: string | null
+          hospital_name: string
+          id?: string
+          month: string
+          nps_score?: number | null
+          passives?: number
+          promoters?: number
+          specialty?: string | null
+          total_patients_done?: number
+          total_responses?: number
+          total_surveys_sent?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          complaints_closed?: number
+          complaints_count?: number
+          created_at?: string
+          created_by?: string | null
+          detractors?: number
+          doctor_name?: string | null
+          hospital_name?: string
+          id?: string
+          month?: string
+          nps_score?: number | null
+          passives?: number
+          promoters?: number
+          specialty?: string | null
+          total_patients_done?: number
+          total_responses?: number
+          total_surveys_sent?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

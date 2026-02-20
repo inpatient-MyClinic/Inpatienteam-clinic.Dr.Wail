@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import NurseDateFilters from "@/components/nurse/NurseDateFilters";
 import CustomerCareAnalytics from "@/components/customercare/CustomerCareAnalytics";
+import NPSPerformanceDashboard from "@/components/customercare/NPSPerformanceDashboard";
 import CommentViewDialog from "@/components/customercare/CommentViewDialog";
 import SurveyResponseUpload from "@/components/customercare/SurveyResponseUpload";
 import ComplaintUpload from "@/components/customercare/ComplaintUpload";
@@ -807,6 +808,12 @@ export default function CustomerCareDashboard() {
             monthlyNPSBreakdown={monthlyNPSBreakdown}
             onComplaintFilter={handleComplaintFilter}
             activeComplaintFilter={complaintFilter}
+          />
+
+          {/* NPS Performance Dashboard with Hospital Filters & Export */}
+          <NPSPerformanceDashboard 
+            requests={requests}
+            targetNPS={targetNPS}
           />
 
           {/* Footer */}
