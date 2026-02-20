@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
@@ -13,8 +13,10 @@ import DoctorAnalytics from "@/components/DoctorAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
 import DoctorFinanceReport from "@/components/doctor/DoctorFinanceReport";
 import ProcedureDayReport from "@/components/doctor/ProcedureDayReport";
-import { useDoctorRequests } from "@/hooks/useDoctorRequests";
-import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
+import type { ProcedureDayReportHandle } from "@/components/doctor/ProcedureDayReport";
+import { useDoctorRequests, DoctorRequest } from "@/hooks/useDoctorRequests";
+import { isWithinInterval, startOfDay, endOfDay, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DoctorDashboard() {
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
@@ -29,7 +31,11 @@ export default function DoctorDashboard() {
     selectedMonths: []
   });
   
+  // Ref to trigger procedure report creation from the table
+  const procedureReportRef = useRef<ProcedureDayReportHandle>(null);
+  
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Get current user's name from localStorage
   useEffect(() => {
@@ -51,50 +57,35 @@ export default function DoctorDashboard() {
   // Apply additional filters beyond the hook's filtering
   const applyFilters = (requests: typeof filteredRequests) => {
     return requests.filter(request => {
-      // Status filter from sidebar
       const matchesStatus = !activeStatusFilter || 
         (activeStatusFilter === 'delayed' ? request.isDelayed : request.status === activeStatusFilter);
       
-      // Date filters
       const requestDate = new Date(request.createdAt);
       let matchesDateFilter = true;
       
       if (dateFilters.selectedDays.length > 0 || dateFilters.selectedWeeks.length > 0 || dateFilters.selectedMonths.length > 0) {
         matchesDateFilter = false;
         
-        // Check selected days
         if (dateFilters.selectedDays.length > 0) {
           matchesDateFilter = dateFilters.selectedDays.some(day => 
-            isWithinInterval(requestDate, {
-              start: startOfDay(day),
-              end: endOfDay(day)
-            })
+            isWithinInterval(requestDate, { start: startOfDay(day), end: endOfDay(day) })
           );
         }
         
-        // Check selected weeks
         if (!matchesDateFilter && dateFilters.selectedWeeks.length > 0) {
           matchesDateFilter = dateFilters.selectedWeeks.some(monthWeeks => 
             monthWeeks.weekNumbers.some(weekNumber => {
               const firstDayOfMonth = startOfMonth(monthWeeks.month);
               const weekStart = addDays(firstDayOfMonth, (weekNumber - 1) * 7);
               const weekEnd = addDays(weekStart, 6);
-              
-              return isWithinInterval(requestDate, {
-                start: startOfDay(weekStart),
-                end: endOfDay(weekEnd)
-              });
+              return isWithinInterval(requestDate, { start: startOfDay(weekStart), end: endOfDay(weekEnd) });
             })
           );
         }
         
-        // Check selected months
         if (!matchesDateFilter && dateFilters.selectedMonths.length > 0) {
           matchesDateFilter = dateFilters.selectedMonths.some(month => 
-            isWithinInterval(requestDate, {
-              start: startOfMonth(month),
-              end: endOfMonth(month)
-            })
+            isWithinInterval(requestDate, { start: startOfMonth(month), end: endOfMonth(month) })
           );
         }
       }
@@ -105,7 +96,6 @@ export default function DoctorDashboard() {
 
   const finalFilteredRequests = applyFilters(filteredRequests);
 
-  // Check if there are active filters
   const hasActiveFilters = Boolean(
     activeStatusFilter ||
     dateFilters.selectedDays.length > 0 ||
@@ -113,16 +103,14 @@ export default function DoctorDashboard() {
     dateFilters.selectedMonths.length > 0
   );
 
-  const createNewRequest = () => {
-    navigate("/create-request");
-  };
+  const createNewRequest = () => navigate("/create-request");
+  const handlePrint = () => window.print();
+  const handleDateFilterChange = (filters: typeof dateFilters) => setDateFilters(filters);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDateFilterChange = (filters: typeof dateFilters) => {
-    setDateFilters(filters);
+  const handleAddProcedureReport = (request: DoctorRequest) => {
+    if (procedureReportRef.current) {
+      procedureReportRef.current.createFromRequest(request);
+    }
   };
 
   return (
@@ -146,7 +134,11 @@ export default function DoctorDashboard() {
               <div className="flex gap-2 flex-wrap">
                 <MessagingIcons currentUserRole="doctor" />
                 <DoctorFinanceReport currentDoctorName={currentDoctorName} />
-                <ProcedureDayReport currentDoctorName={currentDoctorName} requests={filteredRequests} />
+                <ProcedureDayReport 
+                  ref={procedureReportRef}
+                  currentDoctorName={currentDoctorName} 
+                  requests={filteredRequests} 
+                />
                 <Button 
                   variant="outline" 
                   onClick={handlePrint}
@@ -167,6 +159,7 @@ export default function DoctorDashboard() {
               filteredRequests={finalFilteredRequests}
               updateStatus={updateStatus}
               updatePaymentStatus={updatePaymentStatus}
+              onAddProcedureReport={handleAddProcedureReport}
             />
 
             {/* Hospital Privileges */}
@@ -176,7 +169,7 @@ export default function DoctorDashboard() {
             <DoctorAnalytics filteredRequests={filteredRequests} currentDoctorName={currentDoctorName} />
 
             {/* Footer */}
-            <div className="mt-8 text-center text-sm text-gray-500 border-t pt-4">
+            <div className="mt-8 text-center text-sm text-muted-foreground border-t pt-4">
               Created by Dr. Wail Ahmed @ My Clinic
             </div>
           </div>
