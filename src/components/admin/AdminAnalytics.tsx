@@ -15,6 +15,7 @@ import AdminOverdueAnalytics from "./analytics/AdminOverdueAnalytics";
 import AdminCoordinatorPerformanceTable from "./analytics/AdminCoordinatorPerformanceTable";
 import AdminRejectionAnalytics from "./analytics/AdminRejectionAnalytics";
 import AdminCoordinatorLeadTime from "./analytics/AdminCoordinatorLeadTime";
+import AdminNPSAnalytics from "./analytics/AdminNPSAnalytics";
 import FilterableTable from "./analytics/FilterableTable";
 import AnalyticsValidationPanel from "./analytics/AnalyticsValidationPanel";
 import { Badge } from "@/components/ui/badge";
@@ -418,6 +419,9 @@ export default function AdminAnalytics({ data, selectedDates, selectedWeeks, sel
 
       {/* New Analytics - Rejection Analysis */}
       <AdminRejectionAnalytics data={filteredData} />
+
+      {/* NPS Analytics by Specialty/Doctor */}
+      <AdminNPSAnalytics data={filteredData} />
 
       {/* New Analytics - Coordinator Lead Time */}
       <AdminCoordinatorLeadTime data={filteredData} />
