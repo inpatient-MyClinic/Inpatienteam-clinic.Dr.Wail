@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ClipboardList, FileText, Plus, Eye, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AIRewriteButton from "@/components/AIRewriteButton";
+import { getPrintHeaderHtml } from "@/utils/logoUtils";
 
 interface ProcedureReport {
   id: string;
@@ -98,11 +99,8 @@ export default function ProcedureDayReport({ currentDoctorName, requests }: Proc
         .footer { margin-top: 40px; text-align: center; color: #999; font-size: 11px; border-top: 1px solid #e5e7eb; padding-top: 15px; }
         @media print { body { padding: 20px; } }
       </style></head><body>
-      <div class="header">
-        <h1>My Clinic</h1>
-        <p>Procedure Day Report</p>
-        <p style="font-size:12px;color:#999;">Generated: ${new Date().toLocaleDateString()}</p>
-      </div>
+      ${getPrintHeaderHtml('Procedure Day Report')}
+      <p style="text-align:center;font-size:12px;color:#999;">Generated: ${new Date().toLocaleDateString()}</p>
 
       <div class="grid">
         <div class="field"><label>Patient Name:</label><div class="value">${report.patientName}</div></div>

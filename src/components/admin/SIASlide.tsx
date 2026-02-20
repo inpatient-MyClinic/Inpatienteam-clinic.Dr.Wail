@@ -904,7 +904,7 @@ export default function SIASlide({ data, onClose, initialMonth, initialYear }: S
         </head>
         <body>
           <div class="header">
-            <div class="logo">🏥 SIA Executive Dashboard</div>
+            <div class="logo"><img src="${window.location.origin}/logo-report.png" style="height:50px;width:auto;display:inline-block;vertical-align:middle;margin-right:10px;" /> SIA Executive Dashboard</div>
             <div>
               <div>${monthName} ${selectedYear}</div>
               <div class="version">${version} | Generated: ${currentDate}</div>

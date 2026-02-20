@@ -2,19 +2,21 @@
 import React from 'react';
 import { VATInvoice, PROVIDER_INFO } from '@/types/billing';
 import { format } from 'date-fns';
+import { getLogoUrl } from '@/utils/logoUtils';
 
 interface VATInvoicePrintViewProps {
   invoice: VATInvoice;
 }
 
 export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProps) {
+  const logoUrl = getLogoUrl();
   return (
     <div className="bg-white p-8 max-w-5xl mx-auto text-sm print:p-4" dir="ltr">
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-primary pb-4 mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-24 h-24 bg-primary/10 rounded-lg flex items-center justify-center">
-            <span className="text-2xl font-bold text-primary">MC</span>
+          <div className="w-24 h-24 bg-primary/10 rounded-lg flex items-center justify-center overflow-hidden">
+            <img src={logoUrl} alt="My Clinic" className="w-20 h-20 object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-bold">{PROVIDER_INFO.name}</h1>
