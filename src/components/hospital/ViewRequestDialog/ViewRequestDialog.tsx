@@ -10,6 +10,7 @@ import MedicalHistorySection from "./MedicalHistorySection";
 import InsuranceContactSection from "./InsuranceContactSection";
 import AdditionalInfoSection from "./AdditionalInfoSection";
 import AttachmentsSection from "./AttachmentsSection";
+import MedicalCodingReference from "./MedicalCodingReference";
 import DialogActions from "./DialogActions";
 
 interface ViewRequestDialogProps {
@@ -106,6 +107,8 @@ export default function ViewRequestDialog({ request, onStatusUpdate }: ViewReque
           {request.attachments && request.attachments.length > 0 && (
             <AttachmentsSection attachments={request.attachments} />
           )}
+          
+          <MedicalCodingReference request={request} />
           
           {hasModifications && (
             <DialogActions onSubmit={handleSubmit} />
