@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Receipt, CheckCircle, XCircle, FileText, Send, Download, Printer, Archive, Filter, AlertTriangle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PROVIDER_INFO } from '@/types/billing';
+import { generateInvoiceNumber, generateBatchName, getHospitalInfo } from '@/utils/providerInfoUtils';
 
 type DoctorEmploymentType = 'FT' | 'PT';
 
@@ -125,14 +126,17 @@ export default function FinanceBillingWorkflow() {
 
     const subtotal = hospitalAgreed.reduce((s, i) => s + i.agreedSplitAmount, 0);
     const vatAmount = Math.round(subtotal * 0.15 * 100) / 100;
-    const invoiceNum = `NC01-${String(vatInvoices.length + 1).padStart(7, '0')}`;
+    const invoiceNum = generateInvoiceNumber(vatInvoices.length);
+    const currentMonth = months[new Date().getMonth()];
+    const currentYear = new Date().getFullYear();
+    const hospitalData = getHospitalInfo(hospital);
 
     const newInvoice: VATInvoiceRecord = {
       id: `INV-${Date.now()}`,
       invoiceNumber: invoiceNum,
       hospitalName: hospital,
-      month: months[new Date().getMonth()],
-      year: new Date().getFullYear(),
+      month: currentMonth,
+      year: currentYear,
       subtotal,
       vatAmount,
       total: subtotal + vatAmount,
