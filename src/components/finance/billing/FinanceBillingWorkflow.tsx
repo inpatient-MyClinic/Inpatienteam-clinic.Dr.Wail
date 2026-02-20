@@ -12,6 +12,8 @@ import { Receipt, CheckCircle, XCircle, FileText, Send, Download, Printer, Archi
 import { useToast } from '@/hooks/use-toast';
 import { PROVIDER_INFO } from '@/types/billing';
 
+type DoctorEmploymentType = 'FT' | 'PT';
+
 interface BillingLineItem {
   id: string;
   statementId: string;
@@ -32,6 +34,7 @@ interface BillingLineItem {
   status: 'pending' | 'agreed' | 'flagged' | 'justified' | 'resolved';
   flagReason?: string;
   justification?: string;
+  doctorType: DoctorEmploymentType;
   doctorSplitPercentage: number;
   doctorPaymentAmount: number;
 }
@@ -53,11 +56,11 @@ interface VATInvoiceRecord {
 
 // Sample submitted billing items from hospitals
 const sampleBillingItems: BillingLineItem[] = [
-  { id: 'B1', statementId: 'S1', hospitalName: 'King Fahad Hospital', patientName: 'Ahmed Ali', patientId: 'MRN-2001', doctorName: 'Dr. Khalid', specialty: 'Orthopedics', procedureName: 'Knee Replacement', procedureDate: '2026-01-15', grossAmount: 45000, discount: 2000, netAmount: 43000, patientShare: 4300, insuranceShare: 38700, agreedSplitAmount: 38700, hospitalPrice: 40000, status: 'pending', doctorSplitPercentage: 85, doctorPaymentAmount: 32895 },
-  { id: 'B2', statementId: 'S1', hospitalName: 'King Fahad Hospital', patientName: 'Sara Mohammed', patientId: 'MRN-2002', doctorName: 'Dr. Fatima', specialty: 'Cardiology', procedureName: 'Cardiac Catheterization', procedureDate: '2026-01-20', grossAmount: 28000, discount: 0, netAmount: 28000, patientShare: 2800, insuranceShare: 25200, agreedSplitAmount: 25200, hospitalPrice: 26000, status: 'pending', doctorSplitPercentage: 85, doctorPaymentAmount: 21420 },
-  { id: 'B3', statementId: 'S2', hospitalName: 'Saudi German Hospital', patientName: 'Khalid Hassan', patientId: 'MRN-2003', doctorName: 'Dr. Ahmed', specialty: 'General Surgery', procedureName: 'Appendectomy', procedureDate: '2026-01-18', grossAmount: 12000, discount: 500, netAmount: 11500, patientShare: 1150, insuranceShare: 10350, agreedSplitAmount: 10350, hospitalPrice: 10350, status: 'pending', doctorSplitPercentage: 15, doctorPaymentAmount: 1552.5 },
-  { id: 'B4', statementId: 'S2', hospitalName: 'Saudi German Hospital', patientName: 'Fatima Omar', patientId: 'MRN-2004', doctorName: 'Dr. Sara', specialty: 'Neurology', procedureName: 'Spinal Fusion', procedureDate: '2026-01-22', grossAmount: 65000, discount: 3000, netAmount: 62000, patientShare: 6200, insuranceShare: 55800, agreedSplitAmount: 55800, hospitalPrice: 58000, status: 'pending', doctorSplitPercentage: 85, doctorPaymentAmount: 47430 },
-  { id: 'B5', statementId: 'S3', hospitalName: 'Dr. Soliman Fakeeh Hospital', patientName: 'Mohammed Saleh', patientId: 'MRN-2005', doctorName: 'Dr. Khalid', specialty: 'Orthopedics', procedureName: 'Hip Replacement', procedureDate: '2026-02-01', grossAmount: 38000, discount: 1500, netAmount: 36500, patientShare: 3650, insuranceShare: 32850, agreedSplitAmount: 32850, hospitalPrice: 35000, status: 'pending', doctorSplitPercentage: 85, doctorPaymentAmount: 27922.5 },
+  { id: 'B1', statementId: 'S1', hospitalName: 'King Fahad Hospital', patientName: 'Ahmed Ali', patientId: 'MRN-2001', doctorName: 'Dr. Khalid', specialty: 'Orthopedics', procedureName: 'Knee Replacement', procedureDate: '2026-01-15', grossAmount: 45000, discount: 2000, netAmount: 43000, patientShare: 4300, insuranceShare: 38700, agreedSplitAmount: 38700, hospitalPrice: 40000, status: 'pending', doctorType: 'PT', doctorSplitPercentage: 85, doctorPaymentAmount: 32895 },
+  { id: 'B2', statementId: 'S1', hospitalName: 'King Fahad Hospital', patientName: 'Sara Mohammed', patientId: 'MRN-2002', doctorName: 'Dr. Fatima', specialty: 'Cardiology', procedureName: 'Cardiac Catheterization', procedureDate: '2026-01-20', grossAmount: 28000, discount: 0, netAmount: 28000, patientShare: 2800, insuranceShare: 25200, agreedSplitAmount: 25200, hospitalPrice: 26000, status: 'pending', doctorType: 'PT', doctorSplitPercentage: 85, doctorPaymentAmount: 21420 },
+  { id: 'B3', statementId: 'S2', hospitalName: 'Saudi German Hospital', patientName: 'Khalid Hassan', patientId: 'MRN-2003', doctorName: 'Dr. Ahmed', specialty: 'General Surgery', procedureName: 'Appendectomy', procedureDate: '2026-01-18', grossAmount: 12000, discount: 500, netAmount: 11500, patientShare: 1150, insuranceShare: 10350, agreedSplitAmount: 10350, hospitalPrice: 10350, status: 'pending', doctorType: 'FT', doctorSplitPercentage: 15, doctorPaymentAmount: 1552.5 },
+  { id: 'B4', statementId: 'S2', hospitalName: 'Saudi German Hospital', patientName: 'Fatima Omar', patientId: 'MRN-2004', doctorName: 'Dr. Sara', specialty: 'Neurology', procedureName: 'Spinal Fusion', procedureDate: '2026-01-22', grossAmount: 65000, discount: 3000, netAmount: 62000, patientShare: 6200, insuranceShare: 55800, agreedSplitAmount: 55800, hospitalPrice: 58000, status: 'pending', doctorType: 'PT', doctorSplitPercentage: 85, doctorPaymentAmount: 47430 },
+  { id: 'B5', statementId: 'S3', hospitalName: 'Dr. Soliman Fakeeh Hospital', patientName: 'Mohammed Saleh', patientId: 'MRN-2005', doctorName: 'Dr. Khalid', specialty: 'Orthopedics', procedureName: 'Hip Replacement', procedureDate: '2026-02-01', grossAmount: 38000, discount: 1500, netAmount: 36500, patientShare: 3650, insuranceShare: 32850, agreedSplitAmount: 32850, hospitalPrice: 35000, status: 'pending', doctorType: 'PT', doctorSplitPercentage: 85, doctorPaymentAmount: 27922.5 },
 ];
 
 const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -94,6 +97,16 @@ export default function FinanceBillingWorkflow() {
   const handleAgree = (id: string) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'agreed' as const } : i));
     toast({ title: "Item Agreed", description: "Amount matches agreed split" });
+  };
+
+  const handleDoctorTypeChange = (id: string, newType: DoctorEmploymentType) => {
+    setItems(prev => prev.map(i => {
+      if (i.id !== id) return i;
+      const splitPct = newType === 'PT' ? 85 : 15;
+      const payment = Math.round(i.insuranceShare * splitPct / 100 * 100) / 100;
+      return { ...i, doctorType: newType, doctorSplitPercentage: splitPct, doctorPaymentAmount: payment };
+    }));
+    toast({ title: "Doctor Type Updated", description: `Set to ${newType === 'FT' ? 'Full Time (15%)' : 'Part Time (85%)'}` });
   };
 
   const handleFlag = (id: string, reason: string) => {
@@ -426,6 +439,7 @@ export default function FinanceBillingWorkflow() {
                 <TableHeader>
                   <TableRow className="bg-blue-50">
                     <TableHead>Doctor</TableHead>
+                    <TableHead>FT/PT</TableHead>
                     <TableHead>Patient</TableHead>
                     <TableHead>Hospital</TableHead>
                     <TableHead>Procedure</TableHead>
@@ -440,18 +454,36 @@ export default function FinanceBillingWorkflow() {
                   {filterItems(items.filter(i => i.status === 'agreed')).map(item => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.doctorName}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={item.doctorType}
+                          onValueChange={(val: DoctorEmploymentType) => handleDoctorTypeChange(item.id, val)}
+                        >
+                          <SelectTrigger className="w-20 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="FT">FT</SelectItem>
+                            <SelectItem value="PT">PT</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                       <TableCell>{item.patientName}</TableCell>
                       <TableCell>{item.hospitalName}</TableCell>
                       <TableCell>{item.procedureName}</TableCell>
                       <TableCell>{item.procedureDate}</TableCell>
                       <TableCell className="text-right">{item.insuranceShare.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">{item.doctorSplitPercentage}%</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={item.doctorType === 'FT' ? 'secondary' : 'default'}>
+                          {item.doctorSplitPercentage}%
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right font-bold">{item.doctorPaymentAmount.toLocaleString()}</TableCell>
                       <TableCell>{statusBadge('agreed')}</TableCell>
                     </TableRow>
                   ))}
                   {filterItems(items.filter(i => i.status === 'agreed')).length === 0 && (
-                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-gray-500">No agreed items yet</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No agreed items yet</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

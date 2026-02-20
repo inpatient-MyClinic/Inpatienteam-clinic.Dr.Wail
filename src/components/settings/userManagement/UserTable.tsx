@@ -2,7 +2,7 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, userCategories, specialties } from "./types";
+import { User, DoctorType, userCategories, specialties } from "./types";
 import UserTableActions from "./UserTableActions";
 import PermissionsEditor from "./PermissionsEditor";
 import PermissionsDisplay from "./PermissionsDisplay";
@@ -16,6 +16,7 @@ interface UserTableProps {
   onCancel: () => void;
   onDelete: (userId: string) => void;
   onUpdatePermission: (fieldId: string, permission: "none" | "view" | "edit") => void;
+  onUpdateUser?: (userId: string, updates: Partial<User>) => void;
   categoryFilter: string;
   specialtyFilter: string;
   statusFilter: string;
@@ -33,6 +34,7 @@ const UserTable = ({
   onCancel,
   onDelete,
   onUpdatePermission,
+  onUpdateUser,
   categoryFilter,
   specialtyFilter,
   statusFilter,
@@ -101,6 +103,7 @@ const UserTable = ({
             <TableHead>Email</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Specialty</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Field Permissions</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created</TableHead>
@@ -118,7 +121,25 @@ const UserTable = ({
                 {user.specialty ? (
                   <Badge variant="secondary">{user.specialty}</Badge>
                 ) : (
-                  <span className="text-gray-400">-</span>
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {user.category === "Doctor" ? (
+                  <Select
+                    value={user.doctorType || "PT"}
+                    onValueChange={(val: DoctorType) => onUpdateUser?.(user.id, { doctorType: val })}
+                  >
+                    <SelectTrigger className="w-20 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FT">FT</SelectItem>
+                      <SelectItem value="PT">PT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
               <TableCell>

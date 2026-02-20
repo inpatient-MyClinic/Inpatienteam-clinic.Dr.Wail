@@ -16,6 +16,7 @@ interface UserTableSectionProps {
   onCancel: () => void;
   onDelete: (userId: string) => void;
   onUpdatePermission: (fieldId: string, permission: "none" | "view" | "edit") => void;
+  onUpdateUser?: (userId: string, updates: Partial<User>) => void;
   categoryFilter: string;
   specialtyFilter: string;
   statusFilter: string;
@@ -35,6 +36,7 @@ const UserTableSection = ({
   onCancel,
   onDelete,
   onUpdatePermission,
+  onUpdateUser,
   categoryFilter,
   specialtyFilter,
   statusFilter,
@@ -64,6 +66,7 @@ const UserTableSection = ({
             onCancel={onCancel}
             onDelete={onDelete}
             onUpdatePermission={onUpdatePermission}
+            onUpdateUser={onUpdateUser}
             categoryFilter={categoryFilter}
             specialtyFilter={specialtyFilter}
             statusFilter={statusFilter}
