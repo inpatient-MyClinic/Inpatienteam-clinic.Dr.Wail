@@ -24,6 +24,9 @@ interface AuditEntry {
 
 export default function AuditTrail() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [mrnSearch, setMrnSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [filterAction, setFilterAction] = useState("all");
   const [filterUser, setFilterUser] = useState("all");
   const [selectedRequestId, setSelectedRequestId] = useState("all");
@@ -41,13 +44,34 @@ export default function AuditTrail() {
         entry.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (entry.details && JSON.stringify(entry.details).toLowerCase().includes(searchTerm.toLowerCase()));
       
+      // MRN search - check in details object and requestId
+      const detailsStr = entry.details ? JSON.stringify(entry.details).toLowerCase() : "";
+      const matchesMRN = !mrnSearch || 
+        detailsStr.includes(mrnSearch.toLowerCase()) ||
+        entry.requestId.toLowerCase().includes(mrnSearch.toLowerCase());
+
+      // Date range filter
+      let matchesDate = true;
+      if (dateFrom || dateTo) {
+        const entryDate = entry.date; // format varies, try parsing
+        const entryDateObj = new Date(entry.timestamp || entry.date);
+        if (dateFrom) {
+          matchesDate = matchesDate && entryDateObj >= new Date(dateFrom);
+        }
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          toDate.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && entryDateObj <= toDate;
+        }
+      }
+
       const matchesAction = filterAction === "all" || entry.action === filterAction;
       const matchesUser = filterUser === "all" || entry.userEmail === filterUser;
       const matchesRequest = selectedRequestId === "all" || entry.requestId === selectedRequestId;
       
-      return matchesSearch && matchesAction && matchesUser && matchesRequest;
+      return matchesSearch && matchesMRN && matchesDate && matchesAction && matchesUser && matchesRequest;
     });
-  }, [auditData, searchTerm, filterAction, filterUser, selectedRequestId]);
+  }, [auditData, searchTerm, mrnSearch, dateFrom, dateTo, filterAction, filterUser, selectedRequestId]);
 
   const uniqueActions = [...new Set(auditData.map((entry: AuditEntry) => entry.action))];
   const uniqueUsers = [...new Set(auditData.map((entry: AuditEntry) => entry.userEmail))];
@@ -115,7 +139,35 @@ export default function AuditTrail() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
+          {/* MRN + Date Range Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-muted/30 rounded-lg border">
+            <div>
+              <label className="text-sm font-medium mb-1 block">🔍 Search by MRN</label>
+              <Input
+                placeholder="Enter MRN number..."
+                value={mrnSearch}
+                onChange={(e) => setMrnSearch(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">📅 Date From</label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">📅 Date To</label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* General Filters */}
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="flex-1 min-w-64">
               <div className="relative">

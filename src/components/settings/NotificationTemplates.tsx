@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import FollowUpRules from "./FollowUpRules";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -375,13 +376,19 @@ const NotificationTemplates = () => {
       )}
 
       <Tabs defaultValue="templates">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="templates">📝 Templates</TabsTrigger>
+          <TabsTrigger value="followup-rules">📅 Follow-Up Rules</TabsTrigger>
           <TabsTrigger value="auto-triggers">⚡ Auto Triggers</TabsTrigger>
           <TabsTrigger value="send-message">✉️ Send Message</TabsTrigger>
           <TabsTrigger value="logs">📊 Send Log</TabsTrigger>
           <TabsTrigger value="access">🔐 Access Control</TabsTrigger>
         </TabsList>
+
+        {/* Follow-Up Rules Tab */}
+        <TabsContent value="followup-rules">
+          <FollowUpRules />
+        </TabsContent>
 
         {/* Templates Tab */}
         <TabsContent value="templates" className="space-y-4">
