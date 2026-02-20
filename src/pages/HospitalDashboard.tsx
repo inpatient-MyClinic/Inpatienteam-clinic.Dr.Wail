@@ -32,6 +32,7 @@ export default function HospitalDashboard() {
   // Add missing filter states for HospitalRequestsTable
   const [surgeryDateFilter, setSurgeryDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Add missing filter states for HospitalFilters
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -55,6 +56,11 @@ export default function HospitalDashboard() {
     return requests.filter(request => {
       const matchesSpecialty = specialtyFilter === "all" || request.specialty === specialtyFilter;
       const matchesDoctor = doctorFilter === "all" || request.assignedDoctorValue === doctorFilter;
+      
+      // Search by MRN / Patient ID
+      const matchesSearch = !searchQuery || 
+        (request.mrn && request.mrn.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (request.patientName && request.patientName.toLowerCase().includes(searchQuery.toLowerCase()));
       
       // Status filter from sidebar
       const matchesStatus = !activeStatusFilter || 
@@ -104,7 +110,7 @@ export default function HospitalDashboard() {
         }
       }
       
-      return matchesSpecialty && matchesDoctor && matchesStatus && matchesDateFilter;
+      return matchesSpecialty && matchesDoctor && matchesStatus && matchesDateFilter && matchesSearch;
     });
   };
 
@@ -216,6 +222,8 @@ export default function HospitalDashboard() {
               setDoctorFilter={(value) => setDoctorFilter(value || "all")}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
             />
 
             {/* Analytics */}
@@ -232,7 +240,6 @@ export default function HospitalDashboard() {
             {/* Performance Dashboard & KPIs */}
             <HospitalPerformanceDashboard 
               requests={finalFilteredRequests}
-              hospitalName={currentHospitalName}
             />
 
             {/* Footer */}
