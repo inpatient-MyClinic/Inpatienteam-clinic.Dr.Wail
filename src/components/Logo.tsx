@@ -16,7 +16,7 @@ export default function Logo({ size = "md", showText = true, className = "" }: L
 
   return (
     <div className={`text-center ${className}`}>
-      <div className="bg-primary rounded-lg p-3 mb-2">
+      <div className="bg-[#1e3a5f] rounded-lg p-3 mb-2">
         <img 
           src={localStorage.getItem('clinicLogo') || "/lovable-uploads/c67ccb49-2aa9-4695-b493-032a2724eaa7.png"}
           alt="My Clinic Logo" 
