@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, LogOut, FileQuestion, Clock, Eye, Send, FileText, Download } from "lucide-react";
+import AIRewriteButton from "@/components/AIRewriteButton";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -107,11 +108,19 @@ export default function DoctorSidebar({
 
                     <div className="bg-green-50 p-3 rounded">
                       <Label className="font-semibold text-green-800">Provide Medical Justification</Label>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Write your justification below</span>
+                        <AIRewriteButton
+                          text={justificationText}
+                          onAccept={(text) => setJustificationText(text)}
+                          context="medical justification"
+                        />
+                      </div>
                       <Textarea
                         placeholder="Include clinical findings, diagnostic results, treatment history, and medical necessity..."
                         value={justificationText}
                         onChange={(e) => setJustificationText(e.target.value)}
-                        className="mt-2"
+                        className="mt-1"
                         rows={3}
                       />
                       <div className="flex gap-2 mt-3">

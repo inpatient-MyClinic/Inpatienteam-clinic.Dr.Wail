@@ -11,6 +11,8 @@ import RequestsTable from "@/components/RequestsTable";
 import HospitalPrivileges from "@/components/HospitalPrivileges";
 import DoctorAnalytics from "@/components/DoctorAnalytics";
 import MessagingIcons from "@/components/messaging/MessagingIcons";
+import DoctorFinanceReport from "@/components/doctor/DoctorFinanceReport";
+import ProcedureDayReport from "@/components/doctor/ProcedureDayReport";
 import { useDoctorRequests } from "@/hooks/useDoctorRequests";
 import { isWithinInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from "date-fns";
 
@@ -141,8 +143,10 @@ export default function DoctorDashboard() {
               <div>
                 <NurseDateFilters onDateFilterChange={handleDateFilterChange} />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <MessagingIcons currentUserRole="doctor" />
+                <DoctorFinanceReport currentDoctorName={currentDoctorName} />
+                <ProcedureDayReport currentDoctorName={currentDoctorName} requests={filteredRequests} />
                 <Button 
                   variant="outline" 
                   onClick={handlePrint}
