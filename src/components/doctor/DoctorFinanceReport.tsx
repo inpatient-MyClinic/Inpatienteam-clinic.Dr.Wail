@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DollarSign, Download, FileText } from "lucide-react";
 import * as XLSX from "xlsx";
+import { getPrintHeaderHtml } from "@/utils/logoUtils";
 
 interface FinanceRecord {
   id: string;
@@ -66,9 +67,6 @@ export default function DoctorFinanceReport({ currentDoctorName }: DoctorFinance
       <html><head><title>Doctor Finance Report</title>
       <style>
         body { font-family: Arial, sans-serif; padding: 30px; }
-        .logo { text-align: center; margin-bottom: 20px; }
-        .logo h1 { color: #1e40af; margin: 0; }
-        .logo p { color: #666; margin: 4px 0; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #1e40af; color: white; }
@@ -76,7 +74,7 @@ export default function DoctorFinanceReport({ currentDoctorName }: DoctorFinance
         .paid { color: green; font-weight: bold; }
         .pending { color: orange; font-weight: bold; }
       </style></head><body>
-      <div class="logo"><h1>My Clinic</h1><p>Doctor Monthly Finance Report</p></div>
+      ${getPrintHeaderHtml('Doctor Monthly Finance Report')}
       <p><strong>Doctor:</strong> ${currentDoctorName} | <strong>Period:</strong> ${selectedMonth} ${selectedYear}</p>
       <table>
         <thead><tr><th>Patient Name</th><th>Patient ID</th><th>Hospital</th><th>Procedure</th><th>Date</th><th>Type</th><th>Split %</th><th>Amount (SAR)</th><th>Status</th></tr></thead>
