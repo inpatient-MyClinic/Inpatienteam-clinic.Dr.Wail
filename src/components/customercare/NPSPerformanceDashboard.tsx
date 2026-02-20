@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { TrendingUp, TrendingDown, Download, FileText, Plus, Users, BarChart3 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { getPrintHeaderHtml } from "@/utils/logoUtils";
+import { hospitals as masterHospitalList } from "@/data/medicalData";
 
 interface NPSEntry {
   hospital: string;
@@ -60,11 +61,11 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Get unique hospitals from both requests and entries
+  // Use master hospital list, supplemented by any from entries/requests
   const hospitals = useMemo(() => {
     const fromRequests = requests.map(r => r.Hospital).filter(Boolean);
     const fromEntries = npsEntries.map(e => e.hospital);
-    return [...new Set([...fromRequests, ...fromEntries])].sort();
+    return [...new Set([...masterHospitalList, ...fromRequests, ...fromEntries])].sort();
   }, [requests, npsEntries]);
 
   // Calculate NPS from requests data per hospital
