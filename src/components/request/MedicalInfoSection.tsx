@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RequestFormData } from "@/types/request";
-import { specialties, getDoctorsBySpecialtyFresh, servicesBySpecialty, referralSources, getHospitalsBySpecialty } from "@/data/medicalData";
+import { specialties, getDoctorsBySpecialtyFresh, servicesBySpecialty, referralSources, getHospitalsBySpecialty, hospitals } from "@/data/medicalData";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import SearchableCombobox from "./SearchableCombobox";
+import { DataSyncService } from "@/services/dataSync";
 
 interface MedicalInfoSectionProps {
   form: Partial<RequestFormData>;
@@ -59,6 +61,13 @@ const MedicalInfoSection = ({
     ? availableHospitals 
     : (doctorHospitals.length > 0 ? [...doctorHospitals, "DSFH (main)", "DSFH (Basateen Branch)"] : availableHospitals);
 
+  // Aggregate all hospitals and doctors from storage + static data for type-ahead
+  const allHospitalNames = [...new Set([...hospitals, ...hospitalOptions, ...DataSyncService.getAllHospitalNames()])];
+  const allDoctorNames = [...new Set([
+    ...availableDoctors.map(d => d.label),
+    ...DataSyncService.getAllDoctorNames()
+  ])];
+
   const handleHospitalChange = (hospital: string) => {
     setSelectedHospital(hospital);
     onFieldChange("referredToHospital", hospital);
@@ -106,43 +115,23 @@ const MedicalInfoSection = ({
         </Select>
       </div>
 
-      {/* Doctor Selection */}
+      {/* Doctor Selection - Type-ahead search */}
       {selectedSpecialty && (
         <div>
-          <label className="block font-medium text-gray-600 mb-1">
+          <label className="block font-medium text-muted-foreground mb-1">
             Treating Doctor Name
-            <span className="text-sm text-gray-400 ml-2">
-              ({availableDoctors.length} doctor{availableDoctors.length !== 1 ? 's' : ''} available)
+            <span className="text-sm text-muted-foreground/60 ml-2">
+              ({availableDoctors.length} doctor{availableDoctors.length !== 1 ? 's' : ''} available — type to search)
             </span>
           </label>
-          <Select value={selectedDoctor} onValueChange={onDoctorChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue 
-                placeholder={
-                  availableDoctors.length > 0 
-                    ? "Select doctor" 
-                    : `No doctors available for ${selectedSpecialty}`
-                } 
-              />
-            </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
-              {availableDoctors.length > 0 ? (
-                availableDoctors.map((doctor, index) => (
-                  <SelectItem 
-                    key={`${doctor.value}-${index}`}
-                    value={doctor.label}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    {doctor.label}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="no-doctors" disabled className="text-gray-400">
-                  No doctors available for {selectedSpecialty}
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+          <SearchableCombobox
+            options={[...allDoctorNames, ...availableDoctors.map(d => d.label)].filter((v, i, a) => a.indexOf(v) === i)}
+            value={selectedDoctor}
+            onChange={onDoctorChange}
+            placeholder="Type doctor name to search..."
+            emptyMessage={`No doctors found for ${selectedSpecialty}`}
+            allowCustom={false}
+          />
         </div>
       )}
 
@@ -167,25 +156,17 @@ const MedicalInfoSection = ({
         </Select>
       </div>
 
-      {/* Hospital Selection */}
+      {/* Hospital Selection - Type-ahead search */}
       <div>
-        <label className="block font-medium text-gray-600 mb-1">Referred To Hospital</label>
-        <Select value={selectedHospital} onValueChange={handleHospitalChange}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select hospital" />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg z-50 max-h-60 overflow-y-auto">
-            {hospitalOptions.map((hospital) => (
-              <SelectItem 
-                key={hospital} 
-                value={hospital}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {hospital}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <label className="block font-medium text-muted-foreground mb-1">Referred To Hospital</label>
+        <SearchableCombobox
+          options={allHospitalNames}
+          value={selectedHospital}
+          onChange={handleHospitalChange}
+          placeholder="Type hospital name to search..."
+          emptyMessage="No hospitals found"
+          allowCustom={false}
+        />
       </div>
 
       {/* DSFH OPD Booking Date */}
