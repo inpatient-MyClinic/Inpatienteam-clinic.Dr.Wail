@@ -42,7 +42,6 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
   const [selectedMonth, setSelectedMonth] = useState<string>(months[new Date().getMonth()]);
   const [showEntryDialog, setShowEntryDialog] = useState(false);
   const [entryForm, setEntryForm] = useState({
-    hospital: "",
     month: months[new Date().getMonth()],
     year: new Date().getFullYear(),
     totalPatientsDone: 0,
@@ -139,7 +138,7 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
     // With only done cases and responses, we store simplified data
     // NPS breakdown (promoters/passives/detractors) will come from survey uploads
     const newEntry: NPSEntry = {
-      hospital: entryForm.hospital,
+      hospital: "All",
       month: entryForm.month,
       year: entryForm.year,
       totalPatientsDone: entryForm.totalPatientsDone,
@@ -262,15 +261,6 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
                   <DialogHeader><DialogTitle>Add Monthly NPS Entry</DialogTitle></DialogHeader>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>Hospital</Label>
-                      <Select value={entryForm.hospital} onValueChange={v => setEntryForm(f => ({ ...f, hospital: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select hospital" /></SelectTrigger>
-                        <SelectContent>
-                          {hospitals.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
                       <Label>Month</Label>
                       <Select value={entryForm.month} onValueChange={v => setEntryForm(f => ({ ...f, month: v }))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -284,7 +274,7 @@ export default function NPSPerformanceDashboard({ requests, targetNPS }: NPSPerf
                     <strong>Response Rate:</strong> {entryForm.totalPatientsDone > 0 ? Math.round((entryForm.totalResponses / entryForm.totalPatientsDone) * 100) : 0}%
                     <span className="ml-2 text-xs text-muted-foreground">(Responses / Done Cases) × 100</span>
                   </div>
-                  <Button onClick={saveEntry} disabled={!entryForm.hospital}>Save Entry</Button>
+                  <Button onClick={saveEntry}>Save Entry</Button>
                 </DialogContent>
               </Dialog>
               <Button size="sm" variant="outline" onClick={exportExcel}><Download className="w-4 h-4 mr-1" />Excel</Button>
