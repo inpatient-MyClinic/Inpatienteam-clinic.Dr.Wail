@@ -14,6 +14,8 @@ import { Switch } from "@/components/ui/switch";
 import { Trash2, Edit, Plus, Upload, History, X, Shield, Search, FileSpreadsheet, Database, Image, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
+import ProviderInfoSettings from "@/components/settings/ProviderInfoSettings";
+import HospitalDirectorySettings from "@/components/settings/HospitalDirectorySettings";
 
 const userCategories = [
   "Admin",
@@ -190,41 +192,39 @@ const SystemSettings = () => {
     if (file) {
       setLogoFile(file);
       
-      // Create URL for preview and save to history
-      const logoUrl = URL.createObjectURL(file);
-      const historyEntry: LogoHistory = {
-        id: Date.now().toString(),
-        url: logoUrl,
-        uploadedAt: new Date().toISOString(),
-        fileName: file.name
-      };
-      
-      // Save current logo to history before changing
-      if (currentLogo) {
-        const currentHistoryEntry: LogoHistory = {
-          id: (Date.now() - 1).toString(),
-          url: currentLogo,
-          uploadedAt: new Date().toISOString(),
-          fileName: "previous-logo"
-        };
-        const newHistory = [...logoHistory, currentHistoryEntry];
-        setLogoHistory(newHistory);
-        localStorage.setItem('logoHistory', JSON.stringify(newHistory));
-      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const logoUrl = e.target?.result as string;
+        
+        // Save current logo to history before changing
+        if (currentLogo && !currentLogo.startsWith('/')) {
+          const currentHistoryEntry: LogoHistory = {
+            id: (Date.now() - 1).toString(),
+            url: currentLogo,
+            uploadedAt: new Date().toISOString(),
+            fileName: "previous-logo"
+          };
+          const newHistory = [...logoHistory, currentHistoryEntry];
+          setLogoHistory(newHistory);
+          localStorage.setItem('logoHistory', JSON.stringify(newHistory));
+        }
 
-      setCurrentLogo(logoUrl);
-      localStorage.setItem('currentLogo', logoUrl);
-      
-      toast({
-        title: "Success",
-        description: "Logo uploaded successfully"
-      });
+        setCurrentLogo(logoUrl);
+        // Save to both keys for backward compat
+        localStorage.setItem('currentLogo', logoUrl);
+        localStorage.setItem('clinicLogo', logoUrl);
+        
+        toast({
+          title: "Success",
+          description: "Logo uploaded successfully — all reports and invoices will use this logo"
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleDeleteCurrentLogo = () => {
     if (currentLogo) {
-      // Save to history before deleting
       const historyEntry: LogoHistory = {
         id: Date.now().toString(),
         url: currentLogo,
@@ -238,6 +238,7 @@ const SystemSettings = () => {
     
     setCurrentLogo("");
     localStorage.removeItem('currentLogo');
+    localStorage.removeItem('clinicLogo');
     toast({
       title: "Success",
       description: "Current logo deleted and saved to history"
@@ -247,6 +248,7 @@ const SystemSettings = () => {
   const handleRestoreLogo = (historyItem: LogoHistory) => {
     setCurrentLogo(historyItem.url);
     localStorage.setItem('currentLogo', historyItem.url);
+    localStorage.setItem('clinicLogo', historyItem.url);
     toast({
       title: "Success",
       description: "Logo restored successfully"
@@ -406,6 +408,12 @@ const SystemSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Provider / VAT Info */}
+      <ProviderInfoSettings />
+
+      {/* Hospital Directory */}
+      <HospitalDirectorySettings />
 
       {/* System Capabilities */}
       <Card>

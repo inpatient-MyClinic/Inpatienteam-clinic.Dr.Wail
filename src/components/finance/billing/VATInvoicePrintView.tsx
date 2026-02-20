@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { VATInvoice, PROVIDER_INFO } from '@/types/billing';
+import { VATInvoice } from '@/types/billing';
 import { format } from 'date-fns';
 import { getLogoUrl } from '@/utils/logoUtils';
+import { getProviderInfo, getHospitalInfo, generateBatchName } from '@/utils/providerInfoUtils';
 
 interface VATInvoicePrintViewProps {
   invoice: VATInvoice;
@@ -10,17 +11,22 @@ interface VATInvoicePrintViewProps {
 
 export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProps) {
   const logoUrl = getLogoUrl();
+  const provider = getProviderInfo();
+  const hospitalInfo = getHospitalInfo(invoice.hospital);
+
+  const batchName = invoice.batchName || generateBatchName(invoice.hospital, invoice.month, invoice.year);
+
   return (
     <div className="bg-white p-8 max-w-5xl mx-auto text-sm print:p-4" dir="ltr">
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-primary pb-4 mb-6">
         <div className="flex items-center gap-4">
           <div className="w-24 h-24 bg-primary/10 rounded-lg flex items-center justify-center overflow-hidden">
-            <img src={logoUrl} alt="My Clinic" className="w-20 h-20 object-contain" />
+            <img src={logoUrl} alt={provider.name} className="w-20 h-20 object-contain" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">{PROVIDER_INFO.name}</h1>
-            <p className="text-muted-foreground text-xs">{PROVIDER_INFO.nameAr}</p>
+            <h1 className="text-xl font-bold">{provider.name}</h1>
+            <p className="text-muted-foreground text-xs">{provider.nameAr}</p>
           </div>
         </div>
         <div className="text-center">
@@ -38,23 +44,23 @@ export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProp
         <div className="space-y-1">
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Provider's Name:</span>
-            <span>{PROVIDER_INFO.name}</span>
+            <span>{provider.name}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Address:</span>
-            <span>{PROVIDER_INFO.address}</span>
+            <span>{provider.address}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">VAT Number:</span>
-            <span className="font-mono">{PROVIDER_INFO.vatNumber}</span>
+            <span className="font-mono">{provider.vatNumber}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">CR No:</span>
-            <span className="font-mono">{PROVIDER_INFO.crNumber}</span>
+            <span className="font-mono">{provider.crNumber}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Share Capital:</span>
-            <span>{PROVIDER_INFO.shareCapital}</span>
+            <span>{provider.shareCapital}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Date of Supply:</span>
@@ -66,7 +72,7 @@ export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProp
           </div>
         </div>
 
-        {/* Customer */}
+        {/* Customer - auto-populated from hospital directory */}
         <div className="space-y-1">
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Customer Name:</span>
@@ -74,11 +80,11 @@ export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProp
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Address:</span>
-            <span>{invoice.hospitalAddress || 'N/A'}</span>
+            <span>{invoice.hospitalAddress || hospitalInfo.address}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">VAT Number:</span>
-            <span className="font-mono">{invoice.hospitalVatNumber || 'N/A'}</span>
+            <span className="font-mono">{invoice.hospitalVatNumber || hospitalInfo.vatNumber}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Invoice Number:</span>
@@ -90,11 +96,11 @@ export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProp
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Batch Type:</span>
-            <span>{invoice.batchType}</span>
+            <span>{invoice.batchType || 'In Patient Services'}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Batch Name:</span>
-            <span>{invoice.batchName}</span>
+            <span>{batchName}</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Batch Date:</span>
@@ -179,6 +185,13 @@ export default function VATInvoicePrintView({ invoice }: VATInvoicePrintViewProp
           <p>المبلغ الإجمالي شاملاً ضريبة القيمة المضافة (SAR)</p>
           <p>إجمالي المبلغ المستحق (SAR)</p>
         </div>
+      </div>
+
+      {/* Footer with provider info */}
+      <div className="mt-8 pt-4 border-t text-xs text-muted-foreground text-center">
+        <p>{provider.name}</p>
+        <p>{provider.nameAr}</p>
+        <p>VAT: {provider.vatNumber} | CR: {provider.crNumber}</p>
       </div>
     </div>
   );
